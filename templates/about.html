@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsAbout">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsAbout">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#workflow">HPC + AI Workflow</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="section-light py-5">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <h1 class="section-title mb-3">About SMAD</h1>
+                    <p class="section-subtitle mb-0">
+                        This page provides a technical overview of the software stack, HPC environment, screening workflows,
+                        and the policies around using and citing SMAD in scientific work.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3" id="aboutTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="software-tab" data-bs-toggle="tab" data-bs-target="#software" type="button" role="tab">
+                        Software stack
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="hpc-tab" data-bs-toggle="tab" data-bs-target="#hpc" type="button" role="tab">
+                        HPC & infrastructure
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="screening-tab" data-bs-toggle="tab" data-bs-target="#screening" type="button" role="tab">
+                        Screening workflows
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="news-tab" data-bs-toggle="tab" data-bs-target="#news" type="button" role="tab">
+                        News & updates
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="publications-tab" data-bs-toggle="tab" data-bs-target="#publications" type="button" role="tab">
+                        Publications
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="terms-tab" data-bs-toggle="tab" data-bs-target="#terms" type="button" role="tab">
+                        Terms of use
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="cite-tab" data-bs-toggle="tab" data-bs-target="#cite" type="button" role="tab">
+                        How to cite
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="aboutTabsContent">
+                <!-- Software stack -->
+                <div class="tab-pane fade show active" id="software" role="tabpanel" aria-labelledby="software-tab">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">Software stack</h2>
+                            <p>
+                                SMAD is built as a modular scientific platform. The current instance runs on:
+                            </p>
+                            <ul>
+                                <li><strong>Backend</strong>: FastAPI (Python) for high‑performance REST and WebSocket APIs.</li>
+                                <li><strong>Database</strong>: SQLite with SQLAlchemy ORM for structured materials data.</li>
+                                <li><strong>Remote access</strong>: Paramiko‑based SSH bridge for interacting with HPC login nodes.</li>
+                                <li><strong>Frontend</strong>: Bootstrap 5 with custom CSS for a lightweight, responsive UI.</li>
+                                <li><strong>Automation & AI</strong>: Pluggable Python workflows for optimization, surrogate models, and active learning.</li>
+                            </ul>
+                            <p class="mb-0 small text-muted">
+                                You can extend this stack with additional databases, schedulers, or AI libraries according to the
+                                needs of your project or institution.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HPC & infrastructure -->
+                <div class="tab-pane fade" id="hpc" role="tabpanel" aria-labelledby="hpc-tab">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">HPC & infrastructure</h2>
+                            <p>
+                                SMAD is designed to sit on top of institutional HPC clusters or cloud‑based resources.
+                                Typical deployments include:
+                            </p>
+                            <ul>
+                                <li><strong>Login nodes</strong> accessed via SSH for job submission and monitoring.</li>
+                                <li><strong>Schedulers</strong> such as SLURM, PBS, or similar batch systems.</li>
+                                <li><strong>Compute partitions</strong> with CPU‑only and GPU‑accelerated nodes.</li>
+                                <li><strong>High‑performance storage</strong> for wavefunctions, checkpoints, and derived datasets.</li>
+                            </ul>
+                            <p class="mb-0">
+                                This instance exposes an experimental cluster console for lightweight commands; production
+                                workflows should be encoded as automated pipelines rather than manual terminal usage.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screening workflows -->
+                <div class="tab-pane fade" id="screening" role="tabpanel" aria-labelledby="screening-tab">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">Screening and optimization workflows</h2>
+                            <p>
+                                SMAD supports multi‑stage superconducting materials discovery campaigns. A typical workflow is:
+                            </p>
+                            <ol>
+                                <li>Curate candidate structures (from databases or generative models).</li>
+                                <li>Submit large‑scale electronic‑structure or model Hamiltonian calculations on the cluster.</li>
+                                <li>Aggregate results into the SMAD database with metadata and provenance.</li>
+                                <li>Train surrogate models to predict \(T_c\), stability, and other target properties.</li>
+                                <li>Use active learning or Bayesian optimization to propose new candidates.</li>
+                                <li>Iterate until convergence on high‑value superconducting families.</li>
+                            </ol>
+                            <p class="mb-0 small text-muted">
+                                The exact codes (e.g. DFT, DMFT, Monte Carlo) and optimization strategies can be customized for
+                                your project and should be documented in your workflow configuration or lab documentation.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News & updates -->
+                <div class="tab-pane fade" id="news" role="tabpanel" aria-labelledby="news-tab">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">News & updates</h2>
+                            <p class="mb-3">
+                                Use this space to track major changes to the SMAD platform and your discovery campaigns.
+                            </p>
+                            <ul class="small">
+                                <li><strong>[YYYY‑MM‑DD]</strong> Initial deployment of SMAD on the superconductivity cluster.</li>
+                                <li><strong>[YYYY‑MM‑DD]</strong> Added automated screening workflow for layered cuprates.</li>
+                                <li><strong>[YYYY‑MM‑DD]</strong> Integrated new AI model for predicting critical temperatures.</li>
+                            </ul>
+                            <p class="small text-muted mb-0">
+                                Replace these placeholder entries with your real release notes, campaign milestones, or
+                                announcements for collaborators.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Publications -->
+                <div class="tab-pane fade" id="publications" role="tabpanel" aria-labelledby="publications-tab">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">Publications using SMAD</h2>
+                            <p>
+                                List peer‑reviewed articles, preprints, and conference contributions that used SMAD or data
+                                generated by SMAD.
+                            </p>
+                            <ul class="small">
+                                <li>
+                                    <strong>[Author et al.]</strong> <em>Title of superconducting materials paper</em>,
+                                    Journal / arXiv:XXXX.XXXXX (Year).
+                                </li>
+                                <li>
+                                    <strong>[Author et al.]</strong> <em>High‑throughput search for unconventional superconductors</em>,
+                                    Conference / Workshop (Year).
+                                </li>
+                            </ul>
+                            <p class="small text-muted mb-0">
+                                You can link each entry to a DOI, arXiv record, or institutional repository.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms of use -->
+                <div class="tab-pane fade" id="terms" role="tabpanel" aria-labelledby="terms-tab">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">Terms of use</h2>
+                            <p>
+                                SMAD is intended for research and educational purposes. Access may be restricted to members of
+                                a specific institution, collaboration, or project.
+                            </p>
+                            <ul>
+                                <li><strong>Data responsibility</strong>: Users are responsible for verifying and interpreting results.</li>
+                                <li><strong>Compliance</strong>: All usage must comply with institutional HPC policies and software licenses.</li>
+                                <li><strong>Security</strong>: Do not store sensitive personal data; SSH access should use keys and strong practices.</li>
+                                <li><strong>Attribution</strong>: Publications must acknowledge SMAD and relevant funding sources.</li>
+                            </ul>
+                            <p class="small text-muted mb-0">
+                                Replace or extend this text with your official legal terms, institutional policies, or license statements.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How to cite -->
+                <div class="tab-pane fade" id="cite" role="tabpanel" aria-labelledby="cite-tab">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h4 mb-3">How to cite SMAD</h2>
+                            <p>
+                                If you use SMAD in a publication, please cite it so that others can trace the computational
+                                infrastructure behind your results. A suggested citation format is:
+                            </p>
+                            <p class="mb-2">
+                                <strong>Text citation</strong>:
+                                “This work used the SMAD (Superconducting Materials Automated Discovery) platform for
+                                high‑throughput screening and analysis of superconducting materials.”
+                            </p>
+                            <p class="mb-2"><strong>BibTeX (example)</strong>:</p>
+<pre class="console-output small mb-3">
+@misc{smad_platform,
+  title        = {SMAD: A Platform for Automated Discovery of Superconducting Materials},
+  author       = {Your Name and Collaborators},
+  year         = {2026},
+  howpublished = {\url{https://smad.live}},
+  note         = {High-performance computing and AI-assisted materials discovery platform}
+}
+</pre>
+                            <p class="small text-muted mb-0">
+                                Update authors, year, and other fields once a formal software paper or institutional report is available.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer py-4 text-center text-muted small">
+        <div class="container">
+            <div>© 2026 SMAD · Superconducting Materials Automated Discovery</div>
+            <div>Running on FastAPI · HPC + AI automation for superconducting materials</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

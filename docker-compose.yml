@@ -1,0 +1,19 @@
+# Local or single-server deployment for SMAD
+# Usage: docker compose up -d
+
+services:
+  smad:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - smad_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/smad.db
+      # Optional: set if using cluster console from this container
+      # - SSH_KEY_PATH=/app/secrets/ssh_key
+      # - SMAD_SSH_USER=youruser
+    restart: unless-stopped
+
+volumes:
+  smad_data:

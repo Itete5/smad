@@ -1,0 +1,27 @@
+# Fly.io config for SMAD
+# Run: fly launch (creates app) then fly volumes create smad_data --size 1
+# Then: fly deploy
+
+app = "smad"
+
+[build]
+
+[env]
+  DATABASE_URL = "sqlite:////app/data/smad.db"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[mounts]
+  source = "smad_data"
+  destination = "/app/data"

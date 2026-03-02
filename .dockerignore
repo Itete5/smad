@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+# Keep smad.db out of image; use volume at runtime
+smad.db
+.env
+.env.*
+*.md
+.DS_Store
