@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.db
+smad.db
 .env
 .env.*
 .DS_Store
