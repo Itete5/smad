@@ -1,28 +1,11 @@
-# Python
-venv/
+﻿venv/
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
-.Python
-*.egg-info/
-.eggs/
-dist/
-build/
-
-# Environment
+*.pyd
+*.db
 .env
 .env.*
-*.local
-
-# Database (create fresh on deploy; uncomment to commit seed data)
-smad.db
-
-# IDE
+.DS_Store
 .idea/
 .vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
