@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structures · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsStructures">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsStructures">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#workflow">HPC + AI Workflow</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="/structures">Structures</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="section-light py-5">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-lg-9">
+                    <h1 class="section-title mb-2">Structure Limits & Builder</h1>
+                    <p class="section-subtitle mb-0">
+                        One environment to create, transform, and analyze crystal structures: unit cells, supercells, and slabs.
+                        Paste a CIF or POSCAR to generate symmetry, lattice parameters, and interatomic distance reports.
+                    </p>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mb-3" id="structuresTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="builder-tab" data-bs-toggle="tab" data-bs-target="#builder" type="button" role="tab">
+                        Structure Builder
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="formula-tab" data-bs-toggle="tab" data-bs-target="#formula" type="button" role="tab">
+                        Empirical Formula & Units
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="structuresTabsContent">
+                <!-- Builder -->
+                <div class="tab-pane fade show active" id="builder" role="tabpanel" aria-labelledby="builder-tab">
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Inputs</h2>
+
+                                    <div class="mb-3">
+                                        <label for="structFormat" class="form-label">Input format</label>
+                                        <select id="structFormat" class="form-select">
+                                            <option value="auto" selected>Auto-detect (CIF / POSCAR)</option>
+                                            <option value="cif">CIF</option>
+                                            <option value="poscar">POSCAR</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="structText" class="form-label">Structure content</label>
+                                        <textarea id="structText" class="form-control" rows="10"
+                                                  placeholder="Paste CIF or POSCAR here..."></textarea>
+                                        <div class="form-text">
+                                            This powers: unit cell parameters, space-group identification, Wyckoff symbols,
+                                            interatomic distances, and transformations (supercell/slab).
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Supercell (a×b×c)</label>
+                                        <div class="row g-2">
+                                            <div class="col"><input id="scA" type="number" class="form-control" value="1" min="1"></div>
+                                            <div class="col"><input id="scB" type="number" class="form-control" value="1" min="1"></div>
+                                            <div class="col"><input id="scC" type="number" class="form-control" value="1" min="1"></div>
+                                        </div>
+                                        <div class="form-text">Set to 1×1×1 to keep the original unit cell.</div>
+                                    </div>
+
+                                    <div class="border rounded p-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label mb-0">Slab (optional)</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="slabEnable">
+                                                <label class="form-check-label small" for="slabEnable">Enable</label>
+                                            </div>
+                                        </div>
+                                        <div class="row g-2 mb-2">
+                                            <div class="col"><input id="mH" type="number" class="form-control" value="0"></div>
+                                            <div class="col"><input id="mK" type="number" class="form-control" value="0"></div>
+                                            <div class="col"><input id="mL" type="number" class="form-control" value="1"></div>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col">
+                                                <label class="form-label small mb-1" for="minSlab">Min slab (Å)</label>
+                                                <input id="minSlab" type="number" class="form-control" value="10" min="1" step="0.5">
+                                            </div>
+                                            <div class="col">
+                                                <label class="form-label small mb-1" for="minVac">Min vacuum (Å)</label>
+                                                <input id="minVac" type="number" class="form-control" value="15" min="1" step="0.5">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button class="btn btn-primary w-100" type="button" onclick="analyzeStructure()">
+                                        Generate & analyze
+                                    </button>
+                                    <div id="structStatus" class="small text-muted mt-2">Waiting for input.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-7">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h2 class="h5 mb-0">Summary</h2>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="downloadExport('cif')">Download CIF</button>
+                                            <button class="btn btn-outline-secondary" type="button" onclick="downloadExport('poscar')">Download POSCAR</button>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small mt-2" id="summaryHint">
+                                        Submit a structure to see lattice constants, crystal system inference, space group, and composition.
+                                    </div>
+                                    <div class="row g-3 mt-1" id="structSummary"></div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Interatomic distances</h2>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle" id="distTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Pair</th>
+                                                    <th>Distance (Å)</th>
+                                                    <th>Scaled</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr><td colspan="3" class="text-muted">No distances computed yet.</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="small text-muted">
+                                        Scaled distance uses \(V^{1/3}\) as a reference length for quick comparisons across cells.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formula -->
+                <div class="tab-pane fade" id="formula" role="tabpanel" aria-labelledby="formula-tab">
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Empirical formula</h2>
+                                    <div class="mb-3">
+                                        <label for="empFormula" class="form-label">Empirical formula</label>
+                                        <input id="empFormula" type="text" class="form-control" placeholder="e.g. YBa2Cu3O7">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="formulaUnits" class="form-label">Formula units (Z)</label>
+                                        <input id="formulaUnits" type="number" class="form-control" value="1" min="1">
+                                        <div class="form-text">
+                                            Used to compute total composition for a chosen number of formula units.
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary w-100" type="button" onclick="analyzeFormula()">
+                                        Analyze formula
+                                    </button>
+                                    <div id="formulaStatus" class="small text-muted mt-2">Waiting for input.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-7">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Results</h2>
+                                    <div id="formulaResults" class="text-muted small">
+                                        Enter a formula to compute reduced formula, elements, and total composition for Z units.
+                                        Space-group generation and unit cell parameters require structural information (use the Builder tab).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer py-4 text-center text-muted small">
+        <div class="container">
+            <div>© 2026 SMAD · Superconducting Materials Automated Discovery</div>
+            <div>Structure Builder · Unit cell, supercell, slab, symmetry & distances</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let lastExports = { cif: null, poscar: null };
+
+        function setStatus(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        function kv(label, value) {
+            const safe = (value === null || value === undefined || value === "") ? "—" : value;
+            return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="border rounded p-2 bg-white">
+                        <div class="text-muted small">${label}</div>
+                        <div class="fw-semibold">${safe}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function analyzeStructure() {
+            const text = document.getElementById("structText").value;
+            const fmt = document.getElementById("structFormat").value;
+            const scA = parseInt(document.getElementById("scA").value || "1", 10);
+            const scB = parseInt(document.getElementById("scB").value || "1", 10);
+            const scC = parseInt(document.getElementById("scC").value || "1", 10);
+            const slabEnable = document.getElementById("slabEnable").checked;
+
+            if (!text || !text.trim()) {
+                setStatus("structStatus", "Please paste a CIF or POSCAR first.");
+                return;
+            }
+
+            const payload = {
+                text,
+                fmt,
+                supercell: [scA, scB, scC]
+            };
+
+            if (slabEnable) {
+                const mH = parseInt(document.getElementById("mH").value || "0", 10);
+                const mK = parseInt(document.getElementById("mK").value || "0", 10);
+                const mL = parseInt(document.getElementById("mL").value || "1", 10);
+                const minSlab = parseFloat(document.getElementById("minSlab").value || "10");
+                const minVac = parseFloat(document.getElementById("minVac").value || "15");
+                payload.slab = { miller: [mH, mK, mL], min_slab: minSlab, min_vacuum: minVac };
+            }
+
+            setStatus("structStatus", "Generating and analyzing…");
+            document.getElementById("summaryHint").classList.add("d-none");
+            document.getElementById("structSummary").innerHTML = "";
+            document.querySelector("#distTable tbody").innerHTML =
+                "<tr><td colspan='3' class='text-muted'>Working…</td></tr>";
+
+            try {
+                const res = await fetch("/api/structures/parse", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    setStatus("structStatus", data.error || "Failed to analyze structure.");
+                    document.querySelector("#distTable tbody").innerHTML =
+                        `<tr><td colspan='3' class='text-danger'>${data.error || "Error"}</td></tr>`;
+                    return;
+                }
+
+                lastExports = data.exports || { cif: null, poscar: null };
+                const s = data.summary;
+
+                const spg = s.space_group && (s.space_group.symbol || s.space_group.number)
+                    ? `${s.space_group.symbol || "?"} (#${s.space_group.number || "?"})`
+                    : "—";
+
+                const latt = s.lattice || {};
+                const summaryHtml = [
+                    kv("Reduced formula", s.reduced_formula),
+                    kv("Formula", s.formula),
+                    kv("Elements", (s.elements || []).join(", ")),
+                    kv("Sites", s.num_sites),
+                    kv("Space group", spg),
+                    kv("a (Å)", latt.a?.toFixed?.(4) ?? latt.a),
+                    kv("b (Å)", latt.b?.toFixed?.(4) ?? latt.b),
+                    kv("c (Å)", latt.c?.toFixed?.(4) ?? latt.c),
+                    kv("α (°)", latt.alpha?.toFixed?.(3) ?? latt.alpha),
+                    kv("β (°)", latt.beta?.toFixed?.(3) ?? latt.beta),
+                    kv("γ (°)", latt.gamma?.toFixed?.(3) ?? latt.gamma),
+                    kv("Volume (Å³)", latt.volume?.toFixed?.(3) ?? latt.volume),
+                ].join("");
+
+                document.getElementById("structSummary").innerHTML = summaryHtml;
+
+                const pairs = data.distance_pairs || [];
+                if (!pairs.length) {
+                    document.querySelector("#distTable tbody").innerHTML =
+                        "<tr><td colspan='3' class='text-muted'>No neighbor pairs found for the current settings.</td></tr>";
+                } else {
+                    document.querySelector("#distTable tbody").innerHTML = pairs.map(p => {
+                        const pair = `${p.species_i}–${p.species_j}`;
+                        const dist = (typeof p.distance === "number") ? p.distance.toFixed(4) : p.distance;
+                        const scaled = (typeof p.scaled_distance === "number") ? p.scaled_distance.toFixed(4) : "—";
+                        return `<tr><td>${pair}</td><td>${dist}</td><td>${scaled}</td></tr>`;
+                    }).join("");
+                }
+
+                setStatus("structStatus", "Done.");
+            } catch (e) {
+                setStatus("structStatus", "Request failed: " + e);
+                document.querySelector("#distTable tbody").innerHTML =
+                    `<tr><td colspan='3' class='text-danger'>${e}</td></tr>`;
+            }
+        }
+
+        function downloadExport(kind) {
+            const content = lastExports?.[kind];
+            if (!content) {
+                alert(`No ${kind.toUpperCase()} available yet. Analyze a structure first.`);
+                return;
+            }
+            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = kind === "cif" ? "smad_structure.cif" : "POSCAR";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        async function analyzeFormula() {
+            const formula = document.getElementById("empFormula").value.trim();
+            const z = parseInt(document.getElementById("formulaUnits").value || "1", 10);
+            if (!formula) {
+                setStatus("formulaStatus", "Please enter a formula.");
+                return;
+            }
+
+            setStatus("formulaStatus", "Analyzing…");
+            const out = document.getElementById("formulaResults");
+            out.classList.remove("text-muted");
+            out.innerHTML = "";
+
+            try {
+                const res = await fetch("/api/structures/empirical", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ formula, formula_units: z })
+                });
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    setStatus("formulaStatus", data.error || "Failed to analyze formula.");
+                    out.innerHTML = `<div class="text-danger small">${data.error || "Error"}</div>`;
+                    return;
+                }
+
+                out.innerHTML = `
+                    <div class="row g-3">
+                        ${kv("Reduced formula", data.reduced_formula)}
+                        ${kv("Formula", data.formula)}
+                        ${kv("Elements", (data.elements || []).join(", "))}
+                        ${kv("Atoms (reduced)", data.num_atoms_reduced)}
+                        ${kv("Z (formula units)", data.formula_units)}
+                        ${kv("Formula (Z×)", data.formula_z)}
+                        ${kv("Weight", data.weight?.toFixed?.(4) ?? data.weight)}
+                        ${kv("Weight (Z×)", data.weight_z?.toFixed?.(4) ?? data.weight_z)}
+                    </div>
+                    <div class="small text-muted mt-3">
+                        Next step: use the Builder tab to generate unit cell parameters, space group, Wyckoff symbols,
+                        and interatomic distance constraints from a CIF/POSCAR.
+                    </div>
+                `;
+                setStatus("formulaStatus", "Done.");
+            } catch (e) {
+                setStatus("formulaStatus", "Request failed: " + e);
+                out.innerHTML = `<div class="text-danger small">${e}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
+

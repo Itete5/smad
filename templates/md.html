@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MD Simulations · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsMd">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsMd">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#workflow">HPC + AI Workflow</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="/md">MD Simulations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="section-light py-5">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <h1 class="section-title mb-3">Molecular dynamics with LAMMPS</h1>
+                    <p class="section-subtitle mb-0">
+                        This page provides a dedicated window for running test MD calculations using
+                        <strong>LAMMPS</strong> on your HPC login node. It is intended for small jobs and
+                        prototyping; production campaigns should be scripted and integrated into automated
+                        workflows.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Simulation setup</h2>
+                            <form id="mdForm" onsubmit="runMd(event)">
+                                <div class="mb-3">
+                                    <label for="mdHost" class="form-label">Login node</label>
+                                    <input id="mdHost" type="text" class="form-control" placeholder="hpc.example.org">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="mdCommand" class="form-label">LAMMPS command</label>
+                                    <input id="mdCommand" type="text" class="form-control"
+                                           value="lmp -in in.smad_md">
+                                    <div class="form-text">
+                                        Command is executed as-is on the remote host via SSH.
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="mdNotes" class="form-label">Notes (optional)</label>
+                                    <textarea id="mdNotes" class="form-control" rows="2"
+                                              placeholder="Short description of this run (e.g. &quot;NVT at 300 K, 50 ps&quot;)"></textarea>
+                                </div>
+                                <button class="btn btn-primary w-100" type="submit">Run MD</button>
+                                <div id="mdStatus" class="small text-muted mt-2">
+                                    Waiting for input.
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card console-output-card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h2 class="h6 mb-0">LAMMPS output</h2>
+                                <button class="btn btn-sm btn-outline-light" type="button" onclick="clearMdOutput()">Clear</button>
+                            </div>
+                            <pre id="mdOutput" class="console-output mb-0 flex-grow-1"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col">
+                    <div class="alert alert-warning small mb-0">
+                        <strong>Safety note:</strong> this interface executes the specified command directly on the
+                        remote host under your SSH account. Use it only for trusted LAMMPS commands and small
+                        exploratory jobs, and respect your cluster's usage policies.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer py-4 text-center text-muted small">
+        <div class="container">
+            <div>© 2026 SMAD · Superconducting Materials Automated Discovery</div>
+            <div>LAMMPS MD window · Experimental feature</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function runMd(event) {
+            event.preventDefault();
+            const host = document.getElementById("mdHost").value.trim();
+            const command = document.getElementById("mdCommand").value.trim();
+            const notes = document.getElementById("mdNotes").value.trim();
+            const statusEl = document.getElementById("mdStatus");
+
+            if (!host || !command) {
+                statusEl.textContent = "Please provide both a login node and a LAMMPS command.";
+                return;
+            }
+
+            statusEl.textContent = "Submitting MD job…";
+            appendMdOutput(`[client] Host: ${host}`);
+            if (notes) {
+                appendMdOutput(`[client] Notes: ${notes}`);
+            }
+            appendMdOutput(`[client] Command: ${command}`);
+
+            try {
+                const response = await fetch("/api/md/run", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ host, command })
+                });
+
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    appendMdOutput(`[error] ${data.error || "Unknown error running MD job."}`);
+                    statusEl.textContent = "MD job failed (see output).";
+                } else {
+                    appendMdOutput(data.output || "[no output returned]");
+                    statusEl.textContent = "MD job finished.";
+                }
+            } catch (err) {
+                appendMdOutput(`[error] ${err}`);
+                statusEl.textContent = "Request failed (see output).";
+            }
+        }
+
+        function appendMdOutput(text) {
+            const out = document.getElementById("mdOutput");
+            if (!out) return;
+            out.textContent += (out.textContent ? "\\n" : "") + text;
+            out.scrollTop = out.scrollHeight;
+        }
+
+        function clearMdOutput() {
+            const out = document.getElementById("mdOutput");
+            if (out) out.textContent = "";
+        }
+    </script>
+</body>
+</html>
