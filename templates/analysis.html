@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis & reporting · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsAnalysis">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsAnalysis">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/analysis">Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="section-light py-5">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-lg-9">
+                    <h1 class="section-title mb-2">Analysis & reporting</h1>
+                    <p class="section-subtitle mb-0">
+                        Phase diagrams, band gap, density of states (from QE results), Brillouin zone, charge density,
+                        and diffraction patterns with radiation source, shape factor, peak profile, and Scherrer crystallite size.
+                    </p>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mb-3" id="analysisTabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" id="phase-tab" data-bs-toggle="tab" data-bs-target="#phase" type="button" role="tab">Phase diagram</button></li>
+                <li class="nav-item"><button class="nav-link" id="bandgap-tab" data-bs-toggle="tab" data-bs-target="#bandgap" type="button" role="tab">Band gap</button></li>
+                <li class="nav-item"><button class="nav-link" id="dos-tab" data-bs-toggle="tab" data-bs-target="#dos" type="button" role="tab">Density of states</button></li>
+                <li class="nav-item"><button class="nav-link" id="bz-tab" data-bs-toggle="tab" data-bs-target="#bz" type="button" role="tab">Brillouin zone</button></li>
+                <li class="nav-item"><button class="nav-link" id="charge-tab" data-bs-toggle="tab" data-bs-target="#charge" type="button" role="tab">Charge density</button></li>
+                <li class="nav-item"><button class="nav-link" id="diffraction-tab" data-bs-toggle="tab" data-bs-target="#diffraction" type="button" role="tab">Diffraction</button></li>
+            </ul>
+
+            <div class="tab-content" id="analysisTabsContent">
+                <!-- Phase diagram -->
+                <div class="tab-pane fade show active" id="phase" role="tabpanel">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Phase diagram (from DB)</h2>
+                            <p class="small text-muted">Uses materials in your database: composition and energy per atom. Add materials with formula and energy_per_atom for a working diagram.</p>
+                            <button class="btn btn-primary btn-sm mb-3" type="button" onclick="loadPhaseDiagram()">Refresh</button>
+                            <div id="phaseDiagramPlot" style="height:420px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Band gap -->
+                <div class="tab-pane fade" id="bandgap" role="tabpanel">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Band gap</h2>
+                            <p class="small text-muted">From materials DB and QE results once structure runs are linked.</p>
+                            <button class="btn btn-primary btn-sm mb-3" type="button" onclick="loadBandGaps()">Refresh</button>
+                            <div id="bandGapPlot" style="height:360px;"></div>
+                            <div class="table-responsive mt-3">
+                                <table class="table table-sm" id="bandGapTable">
+                                    <thead><tr><th>Formula</th><th>Band gap (eV)</th><th>mp-id</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DOS -->
+                <div class="tab-pane fade" id="dos" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Density of states (QE)</h2>
+                                    <p class="small text-muted">Paste QE DOS output (energy and DOS columns). Uses data from QE results once structure run is available.</p>
+                                    <label class="form-label">DOS file content</label>
+                                    <textarea id="dosText" class="form-control font-monospace small" rows="12" placeholder="# energy  dos\n0.0  0.1\n..."></textarea>
+                                    <button class="btn btn-primary w-100 mt-2" type="button" onclick="plotDos()">Plot DOS</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div id="dosPlot" style="height:400px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brillouin zone -->
+                <div class="tab-pane fade" id="bz" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Brillouin zone</h2>
+                                    <p class="small text-muted">Paste CIF or POSCAR to get reciprocal lattice and high-symmetry k-path.</p>
+                                    <textarea id="bzStructText" class="form-control font-monospace small" rows="10" placeholder="Paste CIF or POSCAR..."></textarea>
+                                    <button class="btn btn-primary w-100 mt-2" type="button" onclick="loadBZ()">Get BZ / k-path</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <pre id="bzOutput" class="small bg-dark text-light p-3 rounded mb-0" style="max-height:320px;overflow:auto;"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charge density -->
+                <div class="tab-pane fade" id="charge" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Charge density</h2>
+                                    <p class="small text-muted">Paste a Gaussian cube file (e.g. from QE) to view a 2D slice.</p>
+                                    <label class="form-label">Cube file content</label>
+                                    <textarea id="chargeCubeText" class="form-control font-monospace small" rows="8" placeholder="Gaussian cube..."></textarea>
+                                    <div class="row g-2 mt-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Slice axis</label>
+                                            <select id="chargeAxis" class="form-select form-select-sm"><option value="z">z</option><option value="y">y</option><option value="x">x</option></select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Layer index</label>
+                                            <input id="chargeSliceIdx" type="number" class="form-control form-control-sm" value="0" min="0">
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary w-100 mt-2" type="button" onclick="plotChargeDensity()">Plot slice</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div id="chargePlot" style="height:400px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diffraction -->
+                <div class="tab-pane fade" id="diffraction" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Diffraction pattern</h2>
+                                    <p class="small text-muted">Radiation source, shape factor, peak profile, Scherrer crystallite size.</p>
+                                    <textarea id="diffStructText" class="form-control font-monospace small" rows="6" placeholder="CIF or POSCAR..."></textarea>
+                                    <div class="mt-2">
+                                        <label class="form-label small">Wavelength (Å)</label>
+                                        <input id="diffWavelength" type="number" class="form-control form-control-sm" value="1.5406" step="0.0001" placeholder="Cu Kα 1.5406">
+                                    </div>
+                                    <div class="mt-2">
+                                        <label class="form-label small">Shape factor (K)</label>
+                                        <input id="diffShapeFactor" type="number" class="form-control form-control-sm" value="0.9" step="0.1" min="0.1" max="1.5">
+                                    </div>
+                                    <div class="mt-2">
+                                        <label class="form-label small">Peak profile</label>
+                                        <select id="diffProfile" class="form-select form-select-sm">
+                                            <option value="gaussian">Gaussian</option>
+                                            <option value="lorentzian">Lorentzian</option>
+                                        </select>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label class="form-label small">Scherrer crystallite size (nm)</label>
+                                        <input id="diffScherrer" type="number" class="form-control form-control-sm" value="" placeholder="optional" min="0.1" step="0.1">
+                                    </div>
+                                    <button class="btn btn-primary w-100 mt-3" type="button" onclick="plotDiffraction()">Generate pattern</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div id="diffractionPlot" style="height:420px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer py-4 text-center text-muted small">
+        <div class="container">© 2026 SMAD · Analysis & reporting (phase diagram, band gap, DOS, BZ, charge density, diffraction)</div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function loadPhaseDiagram() {
+            const el = document.getElementById("phaseDiagramPlot");
+            try {
+                const res = await fetch("/api/analysis/phase_diagram");
+                const data = await res.json();
+                const materials = data.materials || [];
+                if (materials.length === 0) {
+                    Plotly.newPlot(el, [{ x: [], y: [], mode: "markers", type: "scatter", name: "No data" }], { title: "Phase diagram (add materials with formula and energy_per_atom)" }, { responsive: true });
+                    return;
+                }
+                const formulas = materials.map(m => m.formula);
+                const energies = materials.map(m => m.energy_per_atom != null ? m.energy_per_atom : null);
+                const hasEnergy = energies.some(e => e != null);
+                const x = hasEnergy ? energies : formulas.map((_, i) => i);
+                const y = formulas;
+                const trace = { x: x, y: y, mode: "markers+text", type: "scatter", text: formulas, textposition: "top center", marker: { size: 10 } };
+                const layout = { title: "Materials (energy per atom vs formula)", xaxis: { title: hasEnergy ? "Energy per atom (eV)" : "Index" }, yaxis: { title: "Formula" }, margin: { b: 80, l: 120 }, height: 400 };
+                Plotly.newPlot(el, [trace], layout, { responsive: true });
+            } catch (e) {
+                Plotly.newPlot(el, [], { title: "Error: " + e.message }, { responsive: true });
+            }
+        }
+
+        async function loadBandGaps() {
+            const el = document.getElementById("bandGapPlot");
+            const tableBody = document.querySelector("#bandGapTable tbody");
+            try {
+                const res = await fetch("/api/analysis/band_gaps");
+                const data = await res.json();
+                const materials = (data.materials || []).filter(m => m.band_gap != null && m.band_gap !== "");
+                tableBody.innerHTML = materials.length ? materials.map(m => `<tr><td>${m.formula || "—"}</td><td>${m.band_gap}</td><td>${m.mp_id || "—"}</td></tr>`).join("") : "<tr><td colspan='3' class='text-muted'>No band gap data. Link QE results or populate DB.</td></tr>";
+                const formulas = materials.map(m => m.formula || "?");
+                const gaps = materials.map(m => Number(m.band_gap));
+                if (gaps.length === 0) {
+                    Plotly.newPlot(el, [{ x: [], y: [], type: "bar" }], { title: "Band gap (eV)" }, { responsive: true });
+                    return;
+                }
+                Plotly.newPlot(el, [{ x: formulas, y: gaps, type: "bar", marker: { color: "steelblue" } }], { title: "Band gap (eV)", xaxis: { tickangle: -45 }, margin: { b: 100 }, height: 340 }, { responsive: true });
+            } catch (e) {
+                tableBody.innerHTML = "<tr><td colspan='3' class='text-danger'>" + e.message + "</td></tr>";
+            }
+        }
+
+        async function plotDos() {
+            const text = document.getElementById("dosText").value.trim();
+            const el = document.getElementById("dosPlot");
+            if (!text) { Plotly.newPlot(el, [], { title: "Paste QE DOS content and click Plot DOS" }, { responsive: true }); return; }
+            try {
+                const res = await fetch("/api/analysis/dos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+                const data = await res.json();
+                if (data.error) { Plotly.newPlot(el, [], { title: data.error }, { responsive: true }); return; }
+                Plotly.newPlot(el, [{ x: data.energy, y: data.dos, type: "scatter", mode: "lines", name: "DOS" }], { title: "Density of states", xaxis: { title: "Energy (eV)" }, yaxis: { title: "DOS" }, height: 380 }, { responsive: true });
+            } catch (e) {
+                Plotly.newPlot(el, [], { title: "Error: " + e.message }, { responsive: true });
+            }
+        }
+
+        async function loadBZ() {
+            const text = document.getElementById("bzStructText").value.trim();
+            const out = document.getElementById("bzOutput");
+            if (!text) { out.textContent = "Paste a CIF or POSCAR and click Get BZ / k-path."; return; }
+            try {
+                const res = await fetch("/api/analysis/brillouin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, fmt: "auto" }) });
+                const data = await res.json();
+                if (data.error) { out.textContent = "Error: " + data.error; return; }
+                out.textContent = "Reciprocal lattice (Å⁻¹):\n" + JSON.stringify(data.reciprocal_lattice, null, 2) + "\n\nHigh-symmetry k-path:\n" + JSON.stringify(data.kpath, null, 2);
+            } catch (e) {
+                out.textContent = "Error: " + e.message;
+            }
+        }
+
+        async function plotChargeDensity() {
+            const text = document.getElementById("chargeCubeText").value.trim();
+            const axis = document.getElementById("chargeAxis").value;
+            const idx = parseInt(document.getElementById("chargeSliceIdx").value || "0", 10);
+            const el = document.getElementById("chargePlot");
+            if (!text) { Plotly.newPlot(el, [], { title: "Paste cube file and click Plot slice" }, { responsive: true }); return; }
+            try {
+                const res = await fetch("/api/analysis/charge_density", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, slice_axis: axis, slice_index: idx }) });
+                const data = await res.json();
+                if (data.error) { Plotly.newPlot(el, [], { title: data.error }, { responsive: true }); return; }
+                const slice = data.slice;
+                Plotly.newPlot(el, [{ z: slice, type: "heatmap", colorscale: "Viridis" }], { title: "Charge density slice (" + axis + " = " + idx + ")", height: 380 }, { responsive: true });
+            } catch (e) {
+                Plotly.newPlot(el, [], { title: "Error: " + e.message }, { responsive: true });
+            }
+        }
+
+        async function plotDiffraction() {
+            const text = document.getElementById("diffStructText").value.trim();
+            const wavelength = parseFloat(document.getElementById("diffWavelength").value || "1.5406");
+            const shapeFactor = parseFloat(document.getElementById("diffShapeFactor").value || "0.9");
+            const profile = document.getElementById("diffProfile").value;
+            const scherrer = document.getElementById("diffScherrer").value.trim();
+            const el = document.getElementById("diffractionPlot");
+            if (!text) { Plotly.newPlot(el, [], { title: "Paste CIF or POSCAR and set parameters" }, { responsive: true }); return; }
+            const body = { text, fmt: "auto", wavelength, shape_factor: shapeFactor, peak_profile: profile, two_theta_min: 5, two_theta_max: 90 };
+            if (scherrer !== "") body.scherrer_crystallite_size_nm = parseFloat(scherrer);
+            try {
+                const res = await fetch("/api/analysis/diffraction", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+                const data = await res.json();
+                if (data.error) { Plotly.newPlot(el, [], { title: data.error }, { responsive: true }); return; }
+                Plotly.newPlot(el, [{ x: data.two_theta, y: data.intensity, type: "scatter", mode: "lines", name: "XRD" }], { title: "Diffraction pattern (λ = " + data.wavelength + " Å)", xaxis: { title: "2θ (°)" }, yaxis: { title: "Intensity" }, height: 400 }, { responsive: true });
+            } catch (e) {
+                Plotly.newPlot(el, [], { title: "Error: " + e.message }, { responsive: true });
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadPhaseDiagram();
+            loadBandGaps();
+        });
+    </script>
+</body>
+</html>

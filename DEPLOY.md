@@ -4,6 +4,25 @@ This guide covers deploying the SMAD platform to production with HTTPS.
 
 ---
 
+## Deploy in one command (after first-time Render setup)
+
+From the project root (`C:\smadlive` or `./smad`):
+
+**Windows (PowerShell):**
+```powershell
+.\deploy.ps1 "Your commit message"
+```
+
+**Mac/Linux:**
+```bash
+chmod +x deploy.sh
+./deploy.sh "Your commit message"
+```
+
+This commits all changes, pushes to `origin main`, and Render auto-deploys. Then check https://smad.live.
+
+---
+
 ## Quick options
 
 | Platform | Best for | SSL | WebSocket | Effort |

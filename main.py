@@ -62,11 +62,29 @@ async def structures_page(request: Request):
         {"request": request}
     )
 
+
+@app.get("/analysis", response_class=HTMLResponse)
+async def analysis_page(request: Request):
+    return templates.TemplateResponse(
+        "analysis.html",
+        {"request": request}
+    )
+
 @app.get("/api/materials")
 def list_materials():
     with SessionLocal() as db:
         mats = db.query(Material).all()
-        return [{"id": m.id, "mp_id": m.mp_id, "formula": m.formula, "space_group": m.space_group} for m in mats]
+        return [
+            {
+                "id": m.id,
+                "mp_id": m.mp_id,
+                "formula": m.formula,
+                "space_group": m.space_group,
+                "band_gap": m.band_gap,
+                "energy_per_atom": m.energy_per_atom,
+            }
+            for m in mats
+        ]
 
 @app.get("/api/materials/{mat_id}")
 def get_material(mat_id: int):
@@ -307,6 +325,244 @@ async def analyze_empirical(payload: EmpiricalFormulaRequest):
         "weight": float(comp.weight),
         "weight_z": float(comp_z.weight),
     }
+
+
+# -------------------------
+# Analysis & reporting APIs (phase diagram, band gap, DOS, BZ, diffraction)
+# -------------------------
+
+@app.get("/api/analysis/phase_diagram")
+def analysis_phase_diagram():
+    """Phase diagram data from materials DB: formula, composition fractions, energy_per_atom."""
+    from pymatgen.core.composition import Composition
+
+    with SessionLocal() as db:
+        mats = db.query(Material).filter(Material.formula.isnot(None)).all()
+    out = []
+    for m in mats:
+        if not m.formula or m.formula.strip() == "":
+            continue
+        try:
+            comp = Composition(m.formula)
+            frac = comp.fractional_composition
+            el_fracs = {el.symbol: frac[el] for el in frac.elements}
+            out.append({
+                "id": m.id,
+                "formula": m.formula,
+                "energy_per_atom": m.energy_per_atom,
+                "band_gap": m.band_gap,
+                "elements": list(el_fracs.keys()),
+                "composition": el_fracs,
+            })
+        except Exception:
+            continue
+    return {"materials": out}
+
+
+@app.get("/api/analysis/band_gaps")
+def analysis_band_gaps():
+    """Band gap data from materials DB (and QE results when linked)."""
+    with SessionLocal() as db:
+        mats = db.query(Material).filter(Material.formula.isnot(None)).all()
+    return {
+        "materials": [
+            {"id": m.id, "formula": m.formula, "band_gap": m.band_gap, "mp_id": m.mp_id}
+            for m in mats
+        ]
+    }
+
+
+class DosParseRequest(BaseModel):
+    text: str = Field(..., min_length=1, description="QE-style DOS file content (energy, DOS columns)")
+
+
+@app.post("/api/analysis/dos")
+async def analysis_dos_parse(payload: DosParseRequest):
+    """Parse QE-style DOS data (two-column: energy, DOS) for plotting. Uses data from QE results."""
+    lines = [s.strip() for s in payload.text.strip().splitlines() if s.strip()]
+    energy, dos = [], []
+    for line in lines:
+        if line.startswith("#") or line.startswith("!"):
+            continue
+        parts = line.split()
+        if len(parts) >= 2:
+            try:
+                energy.append(float(parts[0]))
+                # sum spin channels if more columns
+                dos.append(sum(float(parts[i]) for i in range(1, min(len(parts), 4))))
+            except ValueError:
+                continue
+    if not energy:
+        return JSONResponse({"error": "No numeric energy/DOS columns found."}, status_code=400)
+    return {"energy": energy, "dos": dos}
+
+
+class BrillouinRequest(BaseModel):
+    text: str = Field(..., min_length=1)
+    fmt: Literal["auto", "cif", "poscar"] = "auto"
+
+
+def _load_structure_from_text_analysis(text: str, fmt: str):
+    from pymatgen.core import Structure
+
+    if fmt == "cif":
+        return Structure.from_str(text, fmt="cif")
+    if fmt == "poscar":
+        return Structure.from_str(text, fmt="poscar")
+    try:
+        return Structure.from_str(text, fmt="cif")
+    except Exception:
+        return Structure.from_str(text, fmt="poscar")
+
+
+@app.post("/api/analysis/brillouin")
+async def analysis_brillouin(payload: BrillouinRequest):
+    """Brillouin zone: reciprocal lattice and high-symmetry k-path from structure."""
+    try:
+        structure = _load_structure_from_text_analysis(payload.text, payload.fmt)
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to parse structure: {str(e)}"}, status_code=400)
+    try:
+        from pymatgen.symmetry.kpath import HighSymmKpath
+
+        kpath = HighSymmKpath(structure)
+        path = kpath.get_kpath()
+        rec = structure.lattice.reciprocal_lattice
+        return {
+            "reciprocal_lattice": {
+                "a": rec.abc[0],
+                "b": rec.abc[1],
+                "c": rec.abc[2],
+                "alpha": rec.angles[0],
+                "beta": rec.angles[1],
+                "gamma": rec.angles[2],
+            },
+            "kpath": {
+                "path": path.get("path", []),
+                "kpoints": path.get("kpoints", {}),
+            },
+        }
+    except Exception as e:
+        return JSONResponse({"error": f"BZ/kpath failed: {str(e)}"}, status_code=400)
+
+
+class DiffractionRequest(BaseModel):
+    text: str = Field(..., min_length=1)
+    fmt: Literal["auto", "cif", "poscar"] = "auto"
+    wavelength: float = Field(1.5406, description="Wavelength (Å), e.g. Cu Kα 1.5406, Mo Kα 0.7107")
+    radiation: str | None = Field(None, description="Pre-set: CuKa, MoKa, etc.")
+    shape_factor: float = Field(0.9, ge=0.1, le=1.5, description="Scherrer constant K")
+    peak_profile: Literal["gaussian", "lorentzian"] = "gaussian"
+    scherrer_crystallite_size_nm: float | None = Field(None, ge=0.1, description="Crystallite size (nm) for broadening")
+    two_theta_min: float = 5.0
+    two_theta_max: float = 90.0
+
+
+@app.post("/api/analysis/diffraction")
+async def analysis_diffraction(payload: DiffractionRequest):
+    """Diffraction pattern with radiation source, shape factor, peak profile, Scherrer crystallite size."""
+    try:
+        structure = _load_structure_from_text_analysis(payload.text, payload.fmt)
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to parse structure: {str(e)}"}, status_code=400)
+
+    try:
+        from pymatgen.analysis.diffraction.xrd import XRDCalculator
+        import math
+
+        two_theta_range = (payload.two_theta_min, payload.two_theta_max)
+        rad = payload.radiation or "CuKa"
+        if payload.radiation:
+            calc = XRDCalculator(wavelength=rad)
+        else:
+            calc = XRDCalculator(wavelength=payload.wavelength)
+        pattern = calc.get_pattern(structure, two_theta_range=two_theta_range)
+    except Exception as e:
+        return JSONResponse({"error": f"XRD failed: {str(e)}"}, status_code=400)
+
+    two_theta = pattern.x.tolist()
+    intensity = pattern.y.tolist()
+    peak_list = []
+    for t, i, hkl_list in zip(pattern.x, pattern.y, pattern.hkls):
+        hkls = [d.get("hkl", (0, 0, 0)) for d in hkl_list] if isinstance(hkl_list, list) else []
+        peak_list.append({"two_theta": float(t), "intensity": float(i), "hkl": hkls})
+
+    L_nm = payload.scherrer_crystallite_size_nm
+    if L_nm is not None and L_nm > 0:
+        lam = getattr(calc, "wavelength", payload.wavelength)
+        if isinstance(lam, str):
+            lam = 1.5406
+        K = payload.shape_factor
+        broadened_x, broadened_y = [], []
+        for t2, I in zip(two_theta, intensity):
+            theta_rad = math.radians(t2 / 2.0)
+            cos_t = max(math.cos(theta_rad), 1e-6)
+            fwhm = K * lam / (L_nm * 10.0 * cos_t)
+            fwhm_deg = min(0.5, math.degrees(2 * math.asin(fwhm * 0.01)) if fwhm < 0.02 else 0.5)
+            for dx in [-1.5 * fwhm_deg, -0.5 * fwhm_deg, 0, 0.5 * fwhm_deg, 1.5 * fwhm_deg]:
+                broadened_x.append(t2 + dx)
+                if payload.peak_profile == "lorentzian":
+                    broadened_y.append(I * (fwhm_deg ** 2) / ((fwhm_deg ** 2) + (dx ** 2)))
+                else:
+                    broadened_y.append(I * math.exp(-0.5 * (dx / (fwhm_deg / 2.355)) ** 2))
+        two_theta = broadened_x
+        intensity = broadened_y
+
+    return {
+        "two_theta": two_theta,
+        "intensity": intensity,
+        "peak_list": peak_list,
+        "wavelength": getattr(calc, "wavelength", payload.wavelength),
+        "shape_factor": payload.shape_factor,
+        "peak_profile": payload.peak_profile,
+        "scherrer_size_nm": payload.scherrer_crystallite_size_nm,
+    }
+
+
+class ChargeDensityRequest(BaseModel):
+    text: str = Field(..., min_length=1, description="Gaussian cube file content")
+    slice_axis: Literal["x", "y", "z"] = "z"
+    slice_index: int = Field(0, ge=0, description="Layer index (0 = first)")
+
+
+@app.post("/api/analysis/charge_density")
+async def analysis_charge_density(payload: ChargeDensityRequest):
+    """Charge density 2D slice from cube file (e.g. from QE)."""
+    lines = [s.strip() for s in payload.text.strip().splitlines()]
+    if len(lines) < 6:
+        return JSONResponse({"error": "Cube file too short."}, status_code=400)
+    try:
+        # Standard Gaussian cube: line 0,1 comment; line 2 natoms ox oy oz; line 3,4,5 nx vx vy vz etc.
+        parts2 = lines[2].split()
+        natoms = int(parts2[0])
+        idx = 3
+        if natoms < 0:
+            natoms = -natoms
+        nx = int(lines[3].split()[0])
+        ny = int(lines[4].split()[0])
+        nz = int(lines[5].split()[0])
+        idx = 6 + natoms
+        data = []
+        for line in lines[idx:]:
+            data.extend([float(x) for x in line.split()])
+        if len(data) != nx * ny * nz:
+            return JSONResponse({"error": "Cube grid size mismatch."}, status_code=400)
+        axis = payload.slice_axis
+        si = min(max(0, payload.slice_index), {"x": nx, "y": ny, "z": nz}[axis] - 1)
+        slice_2d = []
+        if axis == "z":
+            for iy in range(ny):
+                slice_2d.append([data[ix + iy * nx + si * nx * ny] for ix in range(nx)])
+        elif axis == "y":
+            for iz in range(nz):
+                slice_2d.append([data[ix + si * nx + iz * nx * ny] for ix in range(nx)])
+        else:
+            for iz in range(nz):
+                slice_2d.append([data[si + iy * nx + iz * nx * ny] for iy in range(ny)])
+        return {"slice": slice_2d, "axis": axis, "index": si}
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to parse cube: {str(e)}"}, status_code=400)
+
 
 # -------------------------
 # WebSocket for SSH commands

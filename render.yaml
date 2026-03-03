@@ -1,0 +1,26 @@
+# Render Blueprint for SMAD (https://smad.live)
+# Connect this repo in Render; the service will use these settings.
+
+services:
+  - type: web
+    name: smad
+    runtime: python
+    region: oregon
+
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./smad.db
+      # Optional: for cluster console
+      # - key: SSH_KEY_PATH
+      #   sync: false
+      # - key: SMAD_SSH_USER
+      #   value: masternode1
+
+    # Optional: persistent disk for SQLite (uncomment and set size in Render dashboard)
+    # disk:
+    #   name: smad-data
+    #   mountPath: /opt/render/project/src
+    #   sizeGB: 1
