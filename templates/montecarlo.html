@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsMC">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsMC">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/montecarlo">Monte Carlo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="section-light py-5">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-lg-9">
+                    <h1 class="section-title mb-2">Monte Carlo</h1>
+                    <p class="section-subtitle mb-0">
+                        Configure and run Monte Carlo simulations: MCMC, kinetic Monte Carlo (kMC), Parallel Tempering,
+                        and Grand Canonical Monte Carlo (GCMC) for sampling, kinetics, and phase behavior.
+                    </p>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mb-3" id="mcTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="mcmc-tab" data-bs-toggle="tab" data-bs-target="#mcmc" type="button" role="tab">MCMC</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="kmc-tab" data-bs-toggle="tab" data-bs-target="#kmc" type="button" role="tab">kMC</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pt-tab" data-bs-toggle="tab" data-bs-target="#pt" type="button" role="tab">Parallel Tempering</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="gcmc-tab" data-bs-toggle="tab" data-bs-target="#gcmc" type="button" role="tab">GCMC</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="mcTabsContent">
+                <div class="tab-pane fade show active" id="mcmc" role="tabpanel" aria-labelledby="mcmc-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Markov chain Monte Carlo (MCMC)</h2>
+                            <p class="mb-2">
+                                Sample from posterior distributions (e.g. parameter fitting, uncertainty quantification).
+                                Configure proposal distribution, chain length, burn-in, and convergence diagnostics.
+                            </p>
+                            <ul class="small text-muted mb-0">
+                                <li>Metropolis–Hastings, Gibbs sampling, or Hamiltonian MC</li>
+                                <li>Link to likelihood from DFT or experiments</li>
+                                <li>Output: chains, autocorrelation, credible intervals</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="kmc" role="tabpanel" aria-labelledby="kmc-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Kinetic Monte Carlo (kMC)</h2>
+                            <p class="mb-2">
+                                Simulate rare events and long-time dynamics (e.g. diffusion, surface kinetics, defect evolution).
+                                Define events, rates, and lattice or off-lattice model.
+                            </p>
+                            <ul class="small text-muted mb-0">
+                                <li>Event lists and rate constants (from barriers or models)</li>
+                                <li>Residence-time algorithm or BKL</li>
+                                <li>Output: trajectories, mean first-passage times, statistics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="pt" role="tabpanel" aria-labelledby="pt-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Parallel Tempering (replica exchange)</h2>
+                            <p class="mb-2">
+                                Run replicas at different temperatures and swap configurations to improve sampling
+                                and escape local minima. Useful for phase transitions and rugged landscapes.
+                            </p>
+                            <ul class="small text-muted mb-0">
+                                <li>Temperature schedule and swap scheme</li>
+                                <li>Compatible with MCMC or molecular dynamics</li>
+                                <li>Output: acceptance ratios, free-energy estimates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="gcmc" role="tabpanel" aria-labelledby="gcmc-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Grand Canonical Monte Carlo (GCMC)</h2>
+                            <p class="mb-2">
+                                Sample at fixed chemical potential (and T, V) for adsorption, insertion, and
+                                open-system equilibria. Insertion/deletion and displacement moves.
+                            </p>
+                            <ul class="small text-muted mb-0">
+                                <li>Chemical potential, box size, interaction model</li>
+                                <li>Widom or histogram methods for μ</li>
+                                <li>Output: adsorption isotherms, density, fluctuations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4 mb-0">
+                <strong>Monte Carlo tab.</strong> This page is a placeholder for MCMC, kMC, Parallel Tempering, and GCMC
+                workflow configuration. Add backend routes and job launchers for your preferred codes, then wire inputs and
+                outputs here.
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer py-4 text-center text-muted small">
+        <div class="container">© 2026 SMAD · Monte Carlo (MCMC, kMC, Parallel Tempering, GCMC)</div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

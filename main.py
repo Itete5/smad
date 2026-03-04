@@ -1,6 +1,6 @@
 import asyncio
 import paramiko
-from typing import Literal
+from typing import Literal, List
 
 from fastapi import FastAPI, WebSocket, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -67,6 +67,31 @@ async def structures_page(request: Request):
 async def analysis_page(request: Request):
     return templates.TemplateResponse(
         "analysis.html",
+        {"request": request}
+    )
+
+
+@app.get("/console", response_class=HTMLResponse)
+async def console_page(request: Request):
+    token = generate_token()
+    return templates.TemplateResponse(
+        "console.html",
+        {"request": request, "ws_path": WS_PATH, "token": token}
+    )
+
+
+@app.get("/dft", response_class=HTMLResponse)
+async def dft_page(request: Request):
+    return templates.TemplateResponse(
+        "dft.html",
+        {"request": request}
+    )
+
+
+@app.get("/montecarlo", response_class=HTMLResponse)
+async def montecarlo_page(request: Request):
+    return templates.TemplateResponse(
+        "montecarlo.html",
         {"request": request}
     )
 
@@ -458,6 +483,34 @@ class DiffractionRequest(BaseModel):
     two_theta_max: float = 90.0
 
 
+class CustomAtom(BaseModel):
+    element: str
+    x: float
+    y: float
+    z: float
+    occupancy: float = 1.0
+    B_iso: float = 0.5
+
+
+class DiffractionCustomRequest(BaseModel):
+    """Custom unit cell + atoms (XRD from xrd_generator.py, no pymatgen)."""
+    a: float = Field(..., gt=0)
+    b: float = Field(..., gt=0)
+    c: float = Field(..., gt=0)
+    alpha: float = 90.0
+    beta: float = 90.0
+    gamma: float = 90.0
+    spacegroup: str = "P1"
+    atoms: List[CustomAtom] = Field(..., min_length=1)
+    wavelength: float = 1.5406
+    shape_factor: float = Field(0.9, ge=0.1, le=1.5)
+    scherrer_crystallite_size_nm: float | None = Field(None, ge=0.1)
+    two_theta_min: float = 5.0
+    two_theta_max: float = 90.0
+    hkl_max: int = Field(10, ge=1, le=15)
+    peak_width: float = Field(0.15, ge=0.02, le=1.0)
+
+
 @app.post("/api/analysis/diffraction")
 async def analysis_diffraction(payload: DiffractionRequest):
     """Diffraction pattern with radiation source, shape factor, peak profile, Scherrer crystallite size."""
@@ -515,6 +568,69 @@ async def analysis_diffraction(payload: DiffractionRequest):
         "wavelength": getattr(calc, "wavelength", payload.wavelength),
         "shape_factor": payload.shape_factor,
         "peak_profile": payload.peak_profile,
+        "scherrer_size_nm": payload.scherrer_crystallite_size_nm,
+    }
+
+
+@app.post("/api/analysis/diffraction/custom")
+async def analysis_diffraction_custom(payload: DiffractionCustomRequest):
+    """
+    XRD pattern from custom unit cell + atoms using the built-in generator
+    (Cromer-Mann form factors, systematic absences, LP correction, Scherrer broadening).
+    Use this when you have lattice parameters and fractional coordinates without a CIF.
+    """
+    try:
+        from xrd_generator import (
+            Crystal,
+            UnitCell,
+            Atom,
+            XRDPattern,
+        )
+    except ImportError as e:
+        return JSONResponse(
+            {"error": "xrd_generator module not available: " + str(e)},
+            status_code=500,
+        )
+    uc = UnitCell(
+        a=payload.a,
+        b=payload.b,
+        c=payload.c,
+        alpha=payload.alpha,
+        beta=payload.beta,
+        gamma=payload.gamma,
+        spacegroup=payload.spacegroup,
+        atoms=[
+            Atom(
+                element=a.element,
+                x=a.x,
+                y=a.y,
+                z=a.z,
+                occupancy=a.occupancy,
+                B_iso=a.B_iso,
+            )
+            for a in payload.atoms
+        ],
+    )
+    crystal = Crystal(unit_cell=uc)
+    xrd = XRDPattern(
+        crystal,
+        wavelength=payload.wavelength,
+        two_theta_range=(payload.two_theta_min, payload.two_theta_max),
+        hkl_max=payload.hkl_max,
+        peak_width=payload.peak_width,
+        scherrer_size_nm=payload.scherrer_crystallite_size_nm,
+        shape_factor_k=payload.shape_factor,
+    )
+    xrd.compute_reflections()
+    tt, intensity = xrd.generate_pattern(n_points=4000)
+    peak_list = xrd.get_peak_list()
+    return {
+        "two_theta": tt.tolist(),
+        "intensity": intensity.tolist(),
+        "peak_list": peak_list,
+        "wavelength": payload.wavelength,
+        "shape_factor": payload.shape_factor,
+        "peak_profile": "gaussian",
         "scherrer_size_nm": payload.scherrer_crystallite_size_nm,
     }
 
