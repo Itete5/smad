@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis & reporting · SMAD</title>
+    <title>Analysis · SMAD</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -20,9 +20,9 @@
                     <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
                     <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
                     <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
                     <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
                     <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
                     <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
                     <li class="nav-item"><a class="nav-link active" href="/analysis">Analysis</a></li>
                     <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
@@ -35,7 +35,7 @@
         <div class="container">
             <div class="row mb-4">
                 <div class="col-lg-9">
-                    <h1 class="section-title mb-2">Analysis & reporting</h1>
+                    <h1 class="section-title mb-2">Analysis</h1>
                     <p class="section-subtitle mb-0">
                         Phase diagrams, band gap, density of states (from QE results), Brillouin zone, charge density,
                         and diffraction patterns with radiation source, shape factor, peak profile, and Scherrer crystallite size.
@@ -44,7 +44,8 @@
             </div>
 
             <ul class="nav nav-tabs mb-3" id="analysisTabs" role="tablist">
-                <li class="nav-item"><button class="nav-link active" id="phase-tab" data-bs-toggle="tab" data-bs-target="#phase" type="button" role="tab">Phase diagram</button></li>
+                <li class="nav-item"><button class="nav-link active" id="capabilities-tab" data-bs-toggle="tab" data-bs-target="#capabilities" type="button" role="tab">Capabilities</button></li>
+                <li class="nav-item"><button class="nav-link" id="phase-tab" data-bs-toggle="tab" data-bs-target="#phase" type="button" role="tab">Phase diagram</button></li>
                 <li class="nav-item"><button class="nav-link" id="bandgap-tab" data-bs-toggle="tab" data-bs-target="#bandgap" type="button" role="tab">Band gap</button></li>
                 <li class="nav-item"><button class="nav-link" id="dos-tab" data-bs-toggle="tab" data-bs-target="#dos" type="button" role="tab">Density of states</button></li>
                 <li class="nav-item"><button class="nav-link" id="bz-tab" data-bs-toggle="tab" data-bs-target="#bz" type="button" role="tab">Brillouin zone</button></li>
@@ -53,8 +54,65 @@
             </ul>
 
             <div class="tab-content" id="analysisTabsContent">
+                <!-- Capabilities & key quantities -->
+                <div class="tab-pane fade show active" id="capabilities" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Simulation capabilities</h2>
+                                    <p class="small text-muted mb-3">Analysis types supported in SMAD (or planned).</p>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead><tr><th>Simulation</th><th>Possible?</th></tr></thead>
+                                            <tbody>
+                                                <tr><td>XRD</td><td>Yes</td></tr>
+                                                <tr><td>XANES / EXAFS</td><td>Yes</td></tr>
+                                                <tr><td>Raman</td><td>Yes</td></tr>
+                                                <tr><td>IR</td><td>Yes</td></tr>
+                                                <tr><td>Band structure</td><td>Yes</td></tr>
+                                                <tr><td>Phonons</td><td>Yes</td></tr>
+                                                <tr><td>ARPES</td><td>Yes</td></tr>
+                                                <tr><td>EELS</td><td>Yes</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Superconducting critical temperature (T<sub>c</sub>)</h2>
+                                    <p class="small mb-2">T<sub>c</sub> ≈ f(λ, ω<sub>log</sub>, μ<sup>*</sup>)</p>
+                                    <p class="small text-muted mb-3">Where:</p>
+                                    <ul class="small mb-0">
+                                        <li><strong>λ</strong> = electron–phonon coupling</li>
+                                        <li><strong>ω<sub>log</sub></strong> = logarithmic phonon frequency</li>
+                                        <li><strong>μ<sup>*</sup></strong> = Coulomb pseudopotential</li>
+                                        <li><strong>DOS(E<sub>F</sub>)</strong> = density of states at Fermi level</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Other key quantities</h2>
+                                    <ul class="mb-0">
+                                        <li><strong>Debye temperature</strong> — characteristic phonon energy scale</li>
+                                        <li><strong>Spin–orbit coupling</strong> — relevant for heavy elements and topology</li>
+                                        <li><strong>Symmetry</strong> — space group, point group, and representation analysis</li>
+                                        <li><strong>Thermoelectric figure of merit (ZT)</strong> — ZT = S²σT/(κ<sub>e</sub>+κ<sub>L</sub>) for thermoelectric performance</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Phase diagram -->
-                <div class="tab-pane fade show active" id="phase" role="tabpanel">
+                <div class="tab-pane fade" id="phase" role="tabpanel">
                     <div class="card mb-4">
                         <div class="card-body">
                             <h2 class="h5 mb-3">Phase diagram (from DB)</h2>
@@ -210,7 +268,7 @@
     </main>
 
     <footer class="footer py-4 text-center text-muted small">
-        <div class="container">© 2026 SMAD · Analysis & reporting (phase diagram, band gap, DOS, BZ, charge density, diffraction)</div>
+        <div class="container">© 2026 SMAD · Analysis (phase diagram, band gap, DOS, BZ, charge density, diffraction)</div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
