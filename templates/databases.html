@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materials DB Explorer · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .db-sidebar { background: var(--bs-dark); color: #fff; min-height: calc(100vh - 56px); }
+        .db-sidebar h3 { font-size: 0.85rem; text-transform: uppercase; color: #adb5bd; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .db-sidebar label { font-size: 0.8rem; color: #ced4da; }
+        .db-sidebar .form-control, .db-sidebar .form-select { background: #343a40; border-color: #495057; color: #fff; font-size: 0.85rem; }
+        .db-sidebar .form-control:focus, .db-sidebar .form-select:focus { background: #3d444b; border-color: #0d6efd; color: #fff; }
+        .nav-sub { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .nav-sub a { color: #adb5bd; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+        .nav-sub a:hover, .nav-sub a.active { background: #495057; color: #fff; }
+        .result-card { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+        .result-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .result-card.selected { border-color: #0d6efd; box-shadow: 0 0 0 2px rgba(13,110,253,0.25); }
+        .formula-badge { font-size: 1rem; font-weight: 600; }
+        .element-tag { display: inline-block; padding: 2px 6px; margin: 1px; border-radius: 3px; font-size: 0.7rem; font-weight: 500; }
+        .filter-examples { font-size: 0.75rem; }
+        .filter-examples code { background: #495057; padding: 1px 4px; border-radius: 2px; cursor: pointer; }
+        .filter-examples code:hover { background: #6c757d; }
+        .detail-panel { background: #f8f9fa; border-radius: 8px; }
+        .lattice-table td { font-family: monospace; font-size: 0.8rem; padding: 2px 6px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsDB">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsDB">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <aside class="col-lg-3 col-xl-2 db-sidebar p-3">
+                <h2 class="h5 mb-1">Materials DB Explorer</h2>
+                <p class="small text-muted mb-2">Search across multiple materials databases using the OPTIMADE API standard.</p>
+
+                <div class="nav-sub">
+                    <a href="/raman">Raman</a>
+                    <a href="/vibrations">Vibrations</a>
+                    <a href="/seekpath">k-path</a>
+                    <a href="/phonons">Phonons</a>
+                    <a href="/databases" class="active">DB Search</a>
+                </div>
+
+                <h3>Database</h3>
+                <div class="mb-2">
+                    <label for="providerSelect" class="form-label">Provider</label>
+                    <select id="providerSelect" class="form-select form-select-sm">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+
+                <h3>OPTIMADE Filter</h3>
+                <div class="mb-2">
+                    <label for="filterQuery" class="form-label">Query</label>
+                    <textarea id="filterQuery" class="form-control font-monospace" rows="3" placeholder='elements HAS "Si"'></textarea>
+                </div>
+                <div class="filter-examples text-muted mb-2">
+                    <strong>Examples:</strong><br>
+                    <code onclick="setFilter('elements HAS \"Si\"')">elements HAS "Si"</code><br>
+                    <code onclick="setFilter('nelements = 2')">nelements = 2</code><br>
+                    <code onclick="setFilter('chemical_formula_reduced = \"NaCl\"')">formula = "NaCl"</code><br>
+                    <code onclick="setFilter('elements HAS ALL \"Cu\",\"O\"')">Cu AND O</code><br>
+                    <code onclick="setFilter('nsites < 10')">nsites &lt; 10</code>
+                </div>
+
+                <div class="mb-2">
+                    <label for="pageLimit" class="form-label">Results per page</label>
+                    <select id="pageLimit" class="form-select form-select-sm">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <button id="searchBtn" class="btn btn-primary w-100 mb-2">Search</button>
+
+                <h3>About OPTIMADE</h3>
+                <p class="small text-muted mb-0">
+                    <a href="https://www.optimade.org/" target="_blank" class="text-info">OPTIMADE</a> is an open API standard for materials databases, enabling federated search across providers like Materials Project, AFLOW, COD, and more.
+                </p>
+            </aside>
+
+            <main class="col-lg-9 col-xl-10 p-4">
+                <div id="statusMsg" class="alert alert-info d-none"></div>
+
+                <div class="row">
+                    <div class="col-lg-7">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Results <span id="resultCount" class="badge bg-secondary">0</span></h5>
+                            <div id="pagination" class="btn-group btn-group-sm d-none">
+                                <button id="prevBtn" class="btn btn-outline-secondary" disabled>Prev</button>
+                                <button id="nextBtn" class="btn btn-outline-secondary">Next</button>
+                            </div>
+                        </div>
+                        <div id="resultsContainer" class="row g-3">
+                            <div class="col-12 text-center text-muted py-5">
+                                <p>Select a database and enter a filter query to search for materials.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="detail-panel p-3" id="detailPanel">
+                            <h5 class="mb-3">Structure Details</h5>
+                            <div id="detailContent">
+                                <p class="text-muted">Click on a result to view details.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let providers = [];
+        let currentResults = [];
+        let selectedStructure = null;
+        let currentOffset = 0;
+
+        const elementColors = {
+            H: '#ffffff', C: '#909090', N: '#3050f8', O: '#ff0d0d', F: '#90e050', S: '#ffff30',
+            Si: '#f0c8a0', Fe: '#e06633', Cu: '#c88033', Zn: '#7d80b0', Na: '#ab5cf2', Cl: '#1ff01f',
+            Ca: '#3dff00', Ti: '#bfc2c7', Mn: '#9c7ac7', Co: '#f090a0', Ni: '#50d050', Ga: '#c28f8f',
+            As: '#bd80e3', Br: '#a62929', Sr: '#00ff00', Y: '#94ffff', Zr: '#94e0e0', Mo: '#54b5b5',
+            Pd: '#006985', Ag: '#c0c0c0', Cd: '#ffd98f', In: '#a67573', Sn: '#668080', Sb: '#9e63b5',
+            Te: '#d47a00', I: '#940094', Ba: '#00c900', La: '#70d4ff', Pt: '#d0d0e0', Au: '#ffd123',
+            Pb: '#575961', Bi: '#9e4fb5',
+        };
+
+        function getElementColor(el) {
+            return elementColors[el] || '#cccccc';
+        }
+
+        async function loadProviders() {
+            try {
+                const resp = await fetch('/api/optimade/providers');
+                providers = await resp.json();
+                const select = document.getElementById('providerSelect');
+                select.innerHTML = providers.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            } catch (err) {
+                console.error('Failed to load providers:', err);
+            }
+        }
+
+        function setFilter(query) {
+            document.getElementById('filterQuery').value = query;
+        }
+
+        async function search(offset = 0) {
+            const statusMsg = document.getElementById('statusMsg');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            currentOffset = offset;
+            statusMsg.textContent = 'Searching...';
+            statusMsg.className = 'alert alert-info';
+            statusMsg.classList.remove('d-none');
+
+            const payload = {
+                provider_id: document.getElementById('providerSelect').value,
+                filter_query: document.getElementById('filterQuery').value,
+                page_limit: parseInt(document.getElementById('pageLimit').value),
+                page_offset: offset,
+            };
+
+            try {
+                const resp = await fetch('/api/optimade/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    statusMsg.textContent = 'Error: ' + data.error;
+                    statusMsg.className = 'alert alert-danger';
+                    return;
+                }
+
+                currentResults = data.structures || [];
+                displayResults(data);
+                statusMsg.classList.add('d-none');
+
+                document.getElementById('pagination').classList.toggle('d-none', currentResults.length === 0);
+                document.getElementById('prevBtn').disabled = offset === 0;
+                document.getElementById('nextBtn').disabled = !data.more_data_available;
+            } catch (err) {
+                statusMsg.textContent = 'Request failed: ' + err;
+                statusMsg.className = 'alert alert-danger';
+            }
+        }
+
+        function displayResults(data) {
+            const container = document.getElementById('resultsContainer');
+            document.getElementById('resultCount').textContent = data.data_returned || currentResults.length;
+
+            if (currentResults.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center text-muted py-4">No structures found.</div>';
+                return;
+            }
+
+            container.innerHTML = currentResults.map((s, i) => `
+                <div class="col-12">
+                    <div class="card result-card" onclick="selectStructure(${i})" id="result-${i}">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="formula-badge">${s.chemical_formula_reduced || s.chemical_formula_descriptive || '—'}</span>
+                                    <span class="text-muted ms-2 small">${s.id || ''}</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary">${s.nsites || '?'} sites</span>
+                                    <span class="badge bg-secondary">${s.nelements || '?'} elements</span>
+                                </div>
+                            </div>
+                            <div class="mt-1">
+                                ${(s.elements || []).map(el => `<span class="element-tag" style="background:${getElementColor(el)};color:${['H','F','S','Si','Ca','Sr','Y','Zr','Ag','Ba','Pt'].includes(el)?'#000':'#fff'}">${el}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectStructure(idx) {
+            document.querySelectorAll('.result-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(`result-${idx}`).classList.add('selected');
+
+            selectedStructure = currentResults[idx];
+            displayDetail(selectedStructure);
+        }
+
+        function displayDetail(s) {
+            if (!s) return;
+            const content = document.getElementById('detailContent');
+
+            let html = `
+                <table class="table table-sm">
+                    <tr><td class="text-muted">ID</td><td><strong>${s.id || '—'}</strong></td></tr>
+                    <tr><td class="text-muted">Formula (reduced)</td><td>${s.chemical_formula_reduced || '—'}</td></tr>
+                    <tr><td class="text-muted">Formula (descriptive)</td><td>${s.chemical_formula_descriptive || '—'}</td></tr>
+                    <tr><td class="text-muted">Elements</td><td>${(s.elements || []).join(', ')}</td></tr>
+                    <tr><td class="text-muted">N elements</td><td>${s.nelements || '—'}</td></tr>
+                    <tr><td class="text-muted">N sites</td><td>${s.nsites || '—'}</td></tr>
+                    <tr><td class="text-muted">Dimension</td><td>${(s.dimension_types || []).join(', ') || '—'}</td></tr>
+                </table>
+            `;
+
+            if (s.lattice_vectors) {
+                html += `
+                    <h6 class="mt-3">Lattice Vectors (Å)</h6>
+                    <table class="lattice-table table table-sm">
+                        <tr><td>a</td><td>${s.lattice_vectors[0]?.map(v => v?.toFixed(4)).join(', ') || '—'}</td></tr>
+                        <tr><td>b</td><td>${s.lattice_vectors[1]?.map(v => v?.toFixed(4)).join(', ') || '—'}</td></tr>
+                        <tr><td>c</td><td>${s.lattice_vectors[2]?.map(v => v?.toFixed(4)).join(', ') || '—'}</td></tr>
+                    </table>
+                `;
+            }
+
+            if (s.species && s.species.length > 0) {
+                html += `
+                    <h6 class="mt-3">Species</h6>
+                    <ul class="small mb-0">
+                        ${s.species.map(sp => `<li>${sp.name}: ${sp.chemical_symbols?.join(', ') || '—'}</li>`).join('')}
+                    </ul>
+                `;
+            }
+
+            html += `
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportCIF()">Export CIF (placeholder)</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="sendToStructures()">Open in Structures</button>
+                </div>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        function exportCIF() {
+            if (!selectedStructure) return;
+            alert('CIF export: In a full implementation, this would generate a CIF file from the lattice_vectors and cartesian_site_positions.');
+        }
+
+        function sendToStructures() {
+            if (!selectedStructure) return;
+            alert('This would open the structure in the Structures page for further analysis.');
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', () => search(0));
+        document.getElementById('prevBtn').addEventListener('click', () => search(Math.max(0, currentOffset - parseInt(document.getElementById('pageLimit').value))));
+        document.getElementById('nextBtn').addEventListener('click', () => search(currentOffset + parseInt(document.getElementById('pageLimit').value)));
+
+        document.getElementById('filterQuery').addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); search(0); }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadProviders);
+    </script>
+</body>
+</html>

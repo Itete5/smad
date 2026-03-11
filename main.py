@@ -128,6 +128,14 @@ async def phonons_page(request: Request):
     )
 
 
+@app.get("/databases", response_class=HTMLResponse)
+async def databases_page(request: Request):
+    return templates.TemplateResponse(
+        "databases.html",
+        {"request": request}
+    )
+
+
 # -------------------------
 # Raman / Vibrations API (placeholder stubs)
 # -------------------------
@@ -385,6 +393,97 @@ async def phonons_load(payload: PhononDataRequest):
     if example_key not in examples:
         example_key = "Si"
     return examples[example_key]
+
+
+# -------------------------
+# OPTIMADE / Materials Database Explorer
+# -------------------------
+OPTIMADE_PROVIDERS = [
+    {"id": "mp", "name": "Materials Project", "base_url": "https://optimade.materialsproject.org/v1"},
+    {"id": "aflow", "name": "AFLOW", "base_url": "https://aflow.org/API/optimade/v1"},
+    {"id": "cod", "name": "Crystallography Open Database", "base_url": "https://www.crystallography.net/cod/optimade/v1"},
+    {"id": "mc3d", "name": "Materials Cloud 3D", "base_url": "https://aiida.materialscloud.org/mc3d/optimade/v1"},
+    {"id": "mc2d", "name": "Materials Cloud 2D", "base_url": "https://aiida.materialscloud.org/mc2d/optimade/v1"},
+    {"id": "oqmd", "name": "OQMD", "base_url": "https://oqmd.org/optimade/v1"},
+    {"id": "mpds", "name": "MPDS", "base_url": "https://api.mpds.io/v1"},
+    {"id": "jarvis", "name": "JARVIS-DFT", "base_url": "https://jarvis.nist.gov/optimade/v1"},
+]
+
+
+@app.get("/api/optimade/providers")
+async def optimade_providers():
+    """List available OPTIMADE providers."""
+    return OPTIMADE_PROVIDERS
+
+
+class OptimadeQueryRequest(BaseModel):
+    provider_id: str
+    filter_query: str = ""
+    page_limit: int = 25
+    page_offset: int = 0
+
+
+@app.post("/api/optimade/search")
+async def optimade_search(payload: OptimadeQueryRequest):
+    """
+    Query an OPTIMADE provider for structures.
+    filter_query uses OPTIMADE filter syntax, e.g.:
+    - elements HAS "Si"
+    - nelements = 2
+    - chemical_formula_reduced = "NaCl"
+    """
+    import httpx
+
+    provider = next((p for p in OPTIMADE_PROVIDERS if p["id"] == payload.provider_id), None)
+    if not provider:
+        return JSONResponse({"error": f"Unknown provider: {payload.provider_id}"}, status_code=400)
+
+    base_url = provider["base_url"]
+    params = {
+        "page_limit": payload.page_limit,
+        "page_offset": payload.page_offset,
+    }
+    if payload.filter_query.strip():
+        params["filter"] = payload.filter_query.strip()
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(f"{base_url}/structures", params=params)
+            resp.raise_for_status()
+            data = resp.json()
+
+        structures = []
+        for item in data.get("data", []):
+            attrs = item.get("attributes", {})
+            structures.append({
+                "id": item.get("id"),
+                "type": item.get("type"),
+                "chemical_formula_reduced": attrs.get("chemical_formula_reduced"),
+                "chemical_formula_descriptive": attrs.get("chemical_formula_descriptive"),
+                "nelements": attrs.get("nelements"),
+                "elements": attrs.get("elements"),
+                "nsites": attrs.get("nsites"),
+                "dimension_types": attrs.get("dimension_types"),
+                "lattice_vectors": attrs.get("lattice_vectors"),
+                "species": attrs.get("species"),
+                "species_at_sites": attrs.get("species_at_sites"),
+                "cartesian_site_positions": attrs.get("cartesian_site_positions"),
+            })
+
+        meta = data.get("meta", {})
+        return {
+            "provider": provider["name"],
+            "structures": structures,
+            "data_returned": meta.get("data_returned", len(structures)),
+            "data_available": meta.get("data_available"),
+            "more_data_available": meta.get("more_data_available", False),
+        }
+    except httpx.HTTPStatusError as e:
+        return JSONResponse({"error": f"HTTP error from provider: {e.response.status_code}"}, status_code=502)
+    except httpx.RequestError as e:
+        return JSONResponse({"error": f"Request failed: {str(e)}"}, status_code=502)
+    except Exception as e:
+        return JSONResponse({"error": f"Query failed: {str(e)}"}, status_code=500)
 
 
 @app.get("/api/materials")

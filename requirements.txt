@@ -5,3 +5,4 @@ paramiko
 python-jose[cryptography]
 jinja2
 pymatgen
+httpx
