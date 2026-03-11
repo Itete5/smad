@@ -112,6 +112,14 @@ async def vibrations_page(request: Request):
     )
 
 
+@app.get("/seekpath", response_class=HTMLResponse)
+async def seekpath_page(request: Request):
+    return templates.TemplateResponse(
+        "seekpath.html",
+        {"request": request}
+    )
+
+
 # -------------------------
 # Raman / Vibrations API (placeholder stubs)
 # -------------------------
@@ -188,6 +196,96 @@ async def vibrations_load(payload: VibrationsLoadRequest):
             ],
         },
     }
+
+
+class SeekPathRequest(BaseModel):
+    structure_text: str
+    file_format: str = "cif"
+    symprec: float = 0.01
+
+
+@app.post("/api/seekpath/analyze")
+async def seekpath_analyze(payload: SeekPathRequest):
+    """
+    Analyze a crystal structure: find spacegroup, primitive cell, BZ, and k-path.
+    Uses pymatgen and spglib (via pymatgen's symmetry module).
+    """
+    try:
+        from pymatgen.core import Structure
+        from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+        from pymatgen.symmetry.bandstructure import HighSymmKpath
+        import numpy as np
+    except ImportError as e:
+        return JSONResponse({"error": f"pymatgen not available: {e}"}, status_code=500)
+
+    try:
+        if payload.file_format.lower() == "poscar":
+            from pymatgen.io.vasp import Poscar
+            poscar = Poscar.from_str(payload.structure_text)
+            structure = poscar.structure
+        else:
+            from pymatgen.io.cif import CifParser
+            parser = CifParser.from_str(payload.structure_text)
+            structure = parser.parse_structures()[0]
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to parse structure: {e}"}, status_code=400)
+
+    try:
+        sga = SpacegroupAnalyzer(structure, symprec=payload.symprec)
+        spacegroup_symbol = sga.get_space_group_symbol()
+        spacegroup_number = sga.get_space_group_number()
+        crystal_system = sga.get_crystal_system()
+        point_group = sga.get_point_group_symbol()
+        primitive = sga.get_primitive_standard_structure()
+
+        kpath = HighSymmKpath(structure, symprec=payload.symprec)
+        kpoints = kpath.kpath["kpoints"]
+        path = kpath.kpath["path"]
+
+        lattice = primitive.lattice
+        lattice_params = {
+            "a": float(lattice.a),
+            "b": float(lattice.b),
+            "c": float(lattice.c),
+            "alpha": float(lattice.alpha),
+            "beta": float(lattice.beta),
+            "gamma": float(lattice.gamma),
+        }
+        lattice_matrix = lattice.matrix.tolist()
+
+        recip_lattice = lattice.reciprocal_lattice
+        recip_matrix = recip_lattice.matrix.tolist()
+
+        atoms = []
+        for site in primitive:
+            atoms.append({
+                "element": str(site.specie),
+                "frac": site.frac_coords.tolist(),
+                "cart": site.coords.tolist(),
+            })
+
+        kpoints_out = {k: v.tolist() for k, v in kpoints.items()}
+
+        path_segments = []
+        for seg in path:
+            path_segments.append(list(seg))
+
+        return {
+            "spacegroup_symbol": spacegroup_symbol,
+            "spacegroup_number": spacegroup_number,
+            "crystal_system": crystal_system,
+            "point_group": point_group,
+            "lattice_params": lattice_params,
+            "lattice_matrix": lattice_matrix,
+            "reciprocal_matrix": recip_matrix,
+            "primitive_natoms": len(primitive),
+            "atoms": atoms,
+            "kpoints": kpoints_out,
+            "path": path_segments,
+            "formula": primitive.composition.reduced_formula,
+        }
+    except Exception as e:
+        return JSONResponse({"error": f"Symmetry analysis failed: {e}"}, status_code=500)
 
 
 @app.get("/api/materials")

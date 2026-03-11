@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeeK-path · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        .seek-sidebar { background: var(--bs-dark); color: #fff; min-height: calc(100vh - 56px); }
+        .seek-sidebar h3 { font-size: 0.85rem; text-transform: uppercase; color: #adb5bd; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .seek-sidebar label { font-size: 0.8rem; color: #ced4da; }
+        .seek-sidebar .form-control, .seek-sidebar .form-select { background: #343a40; border-color: #495057; color: #fff; font-size: 0.85rem; }
+        .seek-sidebar .form-control:focus, .seek-sidebar .form-select:focus { background: #3d444b; border-color: #0d6efd; color: #fff; }
+        .nav-sub { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .nav-sub a { color: #adb5bd; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+        .nav-sub a:hover, .nav-sub a.active { background: #495057; color: #fff; }
+        .result-card { background: #f8f9fa; }
+        .kpoint-table { font-size: 0.8rem; }
+        .kpoint-table th, .kpoint-table td { padding: 4px 8px; }
+        .path-display { font-family: monospace; font-size: 0.9rem; background: #e9ecef; padding: 0.5rem; border-radius: 4px; word-break: break-all; }
+        .copy-btn { font-size: 0.7rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsSeek">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsSeek">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <aside class="col-lg-3 col-xl-2 seek-sidebar p-3">
+                <h2 class="h5 mb-1">SeeK-path</h2>
+                <p class="small text-muted mb-2">K-path finder and Brillouin zone visualizer for band structure calculations.</p>
+
+                <div class="nav-sub">
+                    <a href="/raman">Raman</a>
+                    <a href="/vibrations">Vibrations</a>
+                    <a href="/seekpath" class="active">k-path</a>
+                </div>
+
+                <h3>Upload Structure</h3>
+                <div class="mb-2">
+                    <label for="fileFormat" class="form-label">File format</label>
+                    <select id="fileFormat" class="form-select form-select-sm">
+                        <option value="cif">CIF (.cif)</option>
+                        <option value="poscar">VASP POSCAR</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label for="structureText" class="form-label">Structure content</label>
+                    <textarea id="structureText" class="form-control font-monospace" rows="10" placeholder="Paste CIF or POSCAR here..."></textarea>
+                </div>
+                <div class="mb-2">
+                    <label for="symprec" class="form-label">Symmetry precision (Å)</label>
+                    <input type="number" id="symprec" class="form-control form-control-sm" value="0.01" step="0.001" min="0.001">
+                </div>
+                <button id="analyzeBtn" class="btn btn-primary w-100 mb-3">Analyze Structure</button>
+
+                <h3>What SeeK-path does</h3>
+                <ul class="small text-muted mb-0" style="padding-left: 1rem;">
+                    <li>Finds spacegroup</li>
+                    <li>Computes primitive cell</li>
+                    <li>Computes Brillouin zone</li>
+                    <li>High-symmetry k-points</li>
+                    <li>Band structure k-path</li>
+                </ul>
+
+                <div class="mt-3">
+                    <p class="small text-muted">Based on <a href="https://github.com/giovannipizzi/seekpath" target="_blank" class="text-info">seekpath</a> definitions (HPKOT paper).</p>
+                </div>
+            </aside>
+
+            <main class="col-lg-9 col-xl-10 p-4">
+                <div id="statusMsg" class="alert alert-info d-none"></div>
+
+                <div id="resultsContainer" class="d-none">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card result-card h-100">
+                                <div class="card-header">Symmetry Info</div>
+                                <div class="card-body">
+                                    <table class="table table-sm mb-0">
+                                        <tr><td class="text-muted">Formula</td><td id="resFormula" class="fw-bold">—</td></tr>
+                                        <tr><td class="text-muted">Space group</td><td id="resSpacegroup">—</td></tr>
+                                        <tr><td class="text-muted">Number</td><td id="resSgNumber">—</td></tr>
+                                        <tr><td class="text-muted">Crystal system</td><td id="resCrystalSystem">—</td></tr>
+                                        <tr><td class="text-muted">Point group</td><td id="resPointGroup">—</td></tr>
+                                        <tr><td class="text-muted">Primitive atoms</td><td id="resPrimitiveAtoms">—</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card result-card h-100">
+                                <div class="card-header">Lattice Parameters</div>
+                                <div class="card-body">
+                                    <table class="table table-sm mb-0">
+                                        <tr><td class="text-muted">a (Å)</td><td id="resA">—</td></tr>
+                                        <tr><td class="text-muted">b (Å)</td><td id="resB">—</td></tr>
+                                        <tr><td class="text-muted">c (Å)</td><td id="resC">—</td></tr>
+                                        <tr><td class="text-muted">α (°)</td><td id="resAlpha">—</td></tr>
+                                        <tr><td class="text-muted">β (°)</td><td id="resBeta">—</td></tr>
+                                        <tr><td class="text-muted">γ (°)</td><td id="resGamma">—</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card result-card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span>K-path</span>
+                                    <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyPath()">Copy</button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="resPath" class="path-display">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header">Brillouin Zone (3D)</div>
+                                <div class="card-body p-0">
+                                    <div id="bzPlot" style="height: 400px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span>High-symmetry k-points</span>
+                                    <button class="btn btn-outline-secondary btn-sm copy-btn" onclick="copyKpoints()">Copy (QE format)</button>
+                                </div>
+                                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table table-sm kpoint-table" id="kpointsTable">
+                                        <thead><tr><th>Label</th><th>k<sub>x</sub></th><th>k<sub>y</sub></th><th>k<sub>z</sub></th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">Primitive Cell Atoms</div>
+                                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                                    <table class="table table-sm" id="atomsTable">
+                                        <thead><tr><th>Element</th><th>x (frac)</th><th>y (frac)</th><th>z (frac)</th><th>X (Å)</th><th>Y (Å)</th><th>Z (Å)</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="placeholderMsg" class="text-center text-muted py-5">
+                    <h4>Upload a structure to analyze</h4>
+                    <p>Paste a CIF or POSCAR in the sidebar and click "Analyze Structure" to compute spacegroup, primitive cell, Brillouin zone, and k-path.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentResult = null;
+
+        async function analyzeStructure() {
+            const statusMsg = document.getElementById('statusMsg');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const placeholderMsg = document.getElementById('placeholderMsg');
+
+            statusMsg.textContent = 'Analyzing structure...';
+            statusMsg.className = 'alert alert-info';
+            statusMsg.classList.remove('d-none');
+            resultsContainer.classList.add('d-none');
+            placeholderMsg.classList.add('d-none');
+
+            const payload = {
+                structure_text: document.getElementById('structureText').value,
+                file_format: document.getElementById('fileFormat').value,
+                symprec: parseFloat(document.getElementById('symprec').value) || 0.01,
+            };
+
+            try {
+                const resp = await fetch('/api/seekpath/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    statusMsg.textContent = 'Error: ' + data.error;
+                    statusMsg.className = 'alert alert-danger';
+                    return;
+                }
+                currentResult = data;
+                displayResults(data);
+                statusMsg.classList.add('d-none');
+                resultsContainer.classList.remove('d-none');
+            } catch (err) {
+                statusMsg.textContent = 'Request failed: ' + err;
+                statusMsg.className = 'alert alert-danger';
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('resFormula').textContent = data.formula || '—';
+            document.getElementById('resSpacegroup').textContent = data.spacegroup_symbol || '—';
+            document.getElementById('resSgNumber').textContent = data.spacegroup_number || '—';
+            document.getElementById('resCrystalSystem').textContent = data.crystal_system || '—';
+            document.getElementById('resPointGroup').textContent = data.point_group || '—';
+            document.getElementById('resPrimitiveAtoms').textContent = data.primitive_natoms || '—';
+
+            const lp = data.lattice_params || {};
+            document.getElementById('resA').textContent = lp.a?.toFixed(4) || '—';
+            document.getElementById('resB').textContent = lp.b?.toFixed(4) || '—';
+            document.getElementById('resC').textContent = lp.c?.toFixed(4) || '—';
+            document.getElementById('resAlpha').textContent = lp.alpha?.toFixed(2) || '—';
+            document.getElementById('resBeta').textContent = lp.beta?.toFixed(2) || '—';
+            document.getElementById('resGamma').textContent = lp.gamma?.toFixed(2) || '—';
+
+            const pathStr = data.path ? data.path.map(seg => seg.join('–')).join(' | ') : '—';
+            document.getElementById('resPath').textContent = pathStr;
+
+            const kpTbody = document.querySelector('#kpointsTable tbody');
+            kpTbody.innerHTML = '';
+            if (data.kpoints) {
+                for (const [label, coords] of Object.entries(data.kpoints)) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><strong>${label}</strong></td><td>${coords[0]?.toFixed(4)}</td><td>${coords[1]?.toFixed(4)}</td><td>${coords[2]?.toFixed(4)}</td>`;
+                    kpTbody.appendChild(tr);
+                }
+            }
+
+            const atomsTbody = document.querySelector('#atomsTable tbody');
+            atomsTbody.innerHTML = '';
+            if (data.atoms) {
+                data.atoms.forEach(at => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${at.element}</td><td>${at.frac[0]?.toFixed(4)}</td><td>${at.frac[1]?.toFixed(4)}</td><td>${at.frac[2]?.toFixed(4)}</td><td>${at.cart[0]?.toFixed(4)}</td><td>${at.cart[1]?.toFixed(4)}</td><td>${at.cart[2]?.toFixed(4)}</td>`;
+                    atomsTbody.appendChild(tr);
+                });
+            }
+
+            plotBrillouinZone(data);
+        }
+
+        function plotBrillouinZone(data) {
+            if (!data.reciprocal_matrix || !data.kpoints) {
+                Plotly.newPlot('bzPlot', [], { title: 'No BZ data' }, { responsive: true });
+                return;
+            }
+
+            const b1 = data.reciprocal_matrix[0];
+            const b2 = data.reciprocal_matrix[1];
+            const b3 = data.reciprocal_matrix[2];
+
+            const traces = [];
+
+            const axisColors = ['#dc3545', '#28a745', '#007bff'];
+            const axisLabels = ['b₁', 'b₂', 'b₃'];
+            [b1, b2, b3].forEach((vec, i) => {
+                traces.push({
+                    x: [0, vec[0]],
+                    y: [0, vec[1]],
+                    z: [0, vec[2]],
+                    type: 'scatter3d',
+                    mode: 'lines+text',
+                    line: { color: axisColors[i], width: 4 },
+                    text: ['', axisLabels[i]],
+                    textposition: 'top center',
+                    name: axisLabels[i],
+                    showlegend: false,
+                });
+            });
+
+            const kpLabels = [];
+            const kpX = [], kpY = [], kpZ = [];
+            for (const [label, frac] of Object.entries(data.kpoints)) {
+                const cart = [
+                    frac[0] * b1[0] + frac[1] * b2[0] + frac[2] * b3[0],
+                    frac[0] * b1[1] + frac[1] * b2[1] + frac[2] * b3[1],
+                    frac[0] * b1[2] + frac[1] * b2[2] + frac[2] * b3[2],
+                ];
+                kpX.push(cart[0]);
+                kpY.push(cart[1]);
+                kpZ.push(cart[2]);
+                kpLabels.push(label);
+            }
+            traces.push({
+                x: kpX,
+                y: kpY,
+                z: kpZ,
+                type: 'scatter3d',
+                mode: 'markers+text',
+                marker: { size: 6, color: '#ffc107' },
+                text: kpLabels,
+                textposition: 'top center',
+                name: 'k-points',
+                showlegend: false,
+            });
+
+            if (data.path) {
+                data.path.forEach(seg => {
+                    const segX = [], segY = [], segZ = [];
+                    seg.forEach(label => {
+                        const frac = data.kpoints[label];
+                        if (!frac) return;
+                        const cart = [
+                            frac[0] * b1[0] + frac[1] * b2[0] + frac[2] * b3[0],
+                            frac[0] * b1[1] + frac[1] * b2[1] + frac[2] * b3[1],
+                            frac[0] * b1[2] + frac[1] * b2[2] + frac[2] * b3[2],
+                        ];
+                        segX.push(cart[0]);
+                        segY.push(cart[1]);
+                        segZ.push(cart[2]);
+                    });
+                    traces.push({
+                        x: segX,
+                        y: segY,
+                        z: segZ,
+                        type: 'scatter3d',
+                        mode: 'lines',
+                        line: { color: '#17a2b8', width: 2 },
+                        showlegend: false,
+                    });
+                });
+            }
+
+            Plotly.newPlot('bzPlot', traces, {
+                margin: { l: 0, r: 0, t: 30, b: 0 },
+                scene: {
+                    xaxis: { title: 'kₓ' },
+                    yaxis: { title: 'kᵧ' },
+                    zaxis: { title: 'k_z' },
+                    aspectmode: 'data',
+                },
+            }, { responsive: true });
+        }
+
+        function copyPath() {
+            if (!currentResult || !currentResult.path) return;
+            const pathStr = currentResult.path.map(seg => seg.join('–')).join(' | ');
+            navigator.clipboard.writeText(pathStr);
+        }
+
+        function copyKpoints() {
+            if (!currentResult || !currentResult.kpoints) return;
+            let txt = 'K_POINTS {crystal_b}\n';
+            const entries = Object.entries(currentResult.kpoints);
+            txt += entries.length + '\n';
+            entries.forEach(([label, coords]) => {
+                txt += `${coords[0].toFixed(6)} ${coords[1].toFixed(6)} ${coords[2].toFixed(6)}  ! ${label}\n`;
+            });
+            navigator.clipboard.writeText(txt);
+        }
+
+        document.getElementById('analyzeBtn').addEventListener('click', analyzeStructure);
+
+        Plotly.newPlot('bzPlot', [], {
+            margin: { l: 0, r: 0, t: 30, b: 0 },
+            scene: { xaxis: { title: 'kₓ' }, yaxis: { title: 'kᵧ' }, zaxis: { title: 'k_z' } },
+        }, { responsive: true });
+    </script>
+</body>
+</html>
