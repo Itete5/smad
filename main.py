@@ -120,6 +120,14 @@ async def seekpath_page(request: Request):
     )
 
 
+@app.get("/phonons", response_class=HTMLResponse)
+async def phonons_page(request: Request):
+    return templates.TemplateResponse(
+        "phonons.html",
+        {"request": request}
+    )
+
+
 # -------------------------
 # Raman / Vibrations API (placeholder stubs)
 # -------------------------
@@ -286,6 +294,97 @@ async def seekpath_analyze(payload: SeekPathRequest):
         }
     except Exception as e:
         return JSONResponse({"error": f"Symmetry analysis failed: {e}"}, status_code=500)
+
+
+class PhononDataRequest(BaseModel):
+    """Phonon dispersion data in PhononVis JSON-like format or parsed from structure."""
+    json_data: dict | None = None
+    example: str | None = None
+
+
+@app.post("/api/phonons/load")
+async def phonons_load(payload: PhononDataRequest):
+    """
+    Load phonon dispersion data.
+    Accepts PhononVis JSON format or returns example data.
+    """
+    import numpy as np
+
+    if payload.json_data:
+        return payload.json_data
+
+    examples = {
+        "Si": {
+            "name": "Silicon (diamond)",
+            "natoms": 2,
+            "lattice": [[0, 2.715, 2.715], [2.715, 0, 2.715], [2.715, 2.715, 0]],
+            "atom_types": ["Si", "Si"],
+            "atom_numbers": [14, 14],
+            "atom_pos_car": [[0, 0, 0], [1.3575, 1.3575, 1.3575]],
+            "atom_pos_red": [[0, 0, 0], [0.25, 0.25, 0.25]],
+            "highsym_qpts": [[0, "Γ"], [20, "X"], [30, "W"], [40, "L"], [60, "Γ"], [80, "K"]],
+            "qpoints": [
+                [0, 0, 0], [0.025, 0, 0.025], [0.05, 0, 0.05], [0.075, 0, 0.075], [0.1, 0, 0.1],
+                [0.125, 0, 0.125], [0.15, 0, 0.15], [0.175, 0, 0.175], [0.2, 0, 0.2], [0.225, 0, 0.225],
+                [0.25, 0, 0.25], [0.275, 0, 0.275], [0.3, 0, 0.3], [0.325, 0, 0.325], [0.35, 0, 0.35],
+                [0.375, 0, 0.375], [0.4, 0, 0.4], [0.425, 0, 0.425], [0.45, 0, 0.45], [0.475, 0, 0.475],
+                [0.5, 0, 0.5],
+            ],
+            "distances": list(np.linspace(0, 1, 21)),
+            "eigenvalues": [
+                [0, 50, 100, 140, 170, 190, 200, 205, 200, 190, 170, 140, 100, 60, 30, 10, 5, 10, 30, 60, 100],
+                [0, 50, 100, 140, 170, 190, 200, 205, 200, 190, 170, 140, 100, 60, 30, 10, 5, 10, 30, 60, 100],
+                [0, 80, 150, 200, 240, 270, 290, 300, 300, 295, 280, 260, 230, 190, 140, 90, 50, 30, 40, 70, 120],
+                [480, 490, 500, 505, 510, 512, 515, 516, 515, 512, 508, 502, 495, 487, 480, 475, 472, 475, 480, 490, 500],
+                [480, 490, 500, 505, 510, 512, 515, 516, 515, 512, 508, 502, 495, 487, 480, 475, 472, 475, 480, 490, 500],
+                [500, 505, 510, 512, 515, 516, 518, 519, 520, 520, 519, 517, 514, 510, 505, 500, 498, 500, 505, 512, 520],
+            ],
+        },
+        "Graphene": {
+            "name": "Graphene (2D)",
+            "natoms": 2,
+            "lattice": [[2.46, 0, 0], [-1.23, 2.13, 0], [0, 0, 15]],
+            "atom_types": ["C", "C"],
+            "atom_numbers": [6, 6],
+            "atom_pos_car": [[0, 0, 0], [1.23, 0.71, 0]],
+            "atom_pos_red": [[0, 0, 0], [0.333, 0.667, 0]],
+            "highsym_qpts": [[0, "Γ"], [30, "M"], [50, "K"], [80, "Γ"]],
+            "qpoints": [[0, 0, 0], [0.167, 0, 0], [0.333, 0, 0], [0.5, 0, 0]],
+            "distances": list(np.linspace(0, 1, 30)),
+            "eigenvalues": [
+                list(np.linspace(0, 900, 30)),
+                list(np.linspace(0, 900, 30)),
+                list(np.linspace(0, 600, 30)),
+                list(np.linspace(1200, 1580, 30)),
+                list(np.linspace(1200, 1580, 30)),
+                list(np.linspace(800, 1200, 30)),
+            ],
+        },
+        "GaAs": {
+            "name": "GaAs (zinc blende)",
+            "natoms": 2,
+            "lattice": [[0, 2.83, 2.83], [2.83, 0, 2.83], [2.83, 2.83, 0]],
+            "atom_types": ["Ga", "As"],
+            "atom_numbers": [31, 33],
+            "atom_pos_car": [[0, 0, 0], [1.415, 1.415, 1.415]],
+            "atom_pos_red": [[0, 0, 0], [0.25, 0.25, 0.25]],
+            "highsym_qpts": [[0, "Γ"], [25, "X"], [40, "W"], [55, "L"], [80, "Γ"]],
+            "distances": list(np.linspace(0, 1, 25)),
+            "eigenvalues": [
+                list(np.linspace(0, 80, 25)),
+                list(np.linspace(0, 80, 25)),
+                list(np.linspace(0, 70, 25)),
+                list(np.linspace(200, 270, 25)),
+                list(np.linspace(200, 270, 25)),
+                list(np.linspace(250, 290, 25)),
+            ],
+        },
+    }
+
+    example_key = payload.example or "Si"
+    if example_key not in examples:
+        example_key = "Si"
+    return examples[example_key]
 
 
 @app.get("/api/materials")
