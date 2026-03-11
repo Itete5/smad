@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raman Simulator · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        .raman-sidebar { background: var(--bs-dark); color: #fff; min-height: calc(100vh - 56px); }
+        .raman-sidebar h3 { font-size: 0.85rem; text-transform: uppercase; color: #adb5bd; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .raman-sidebar label { font-size: 0.8rem; color: #ced4da; }
+        .raman-sidebar .form-control, .raman-sidebar .form-select { background: #343a40; border-color: #495057; color: #fff; font-size: 0.85rem; }
+        .raman-sidebar .form-control:focus, .raman-sidebar .form-select:focus { background: #3d444b; border-color: #0d6efd; color: #fff; }
+        .vector-row { display: flex; gap: 0.25rem; }
+        .vector-row input { flex: 1; }
+        .nav-sub { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .nav-sub a { color: #adb5bd; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+        .nav-sub a:hover, .nav-sub a.active { background: #495057; color: #fff; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsRaman">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsRaman">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <aside class="col-lg-3 col-xl-2 raman-sidebar p-3">
+                <h2 class="h5 mb-1">Raman Simulator</h2>
+                <p class="small text-muted mb-2">Simulate Raman spectra from vibrational tensors. Data via <a href="https://ramandb.oulu.fi/" target="_blank" class="text-info">CRD</a>.</p>
+
+                <div class="nav-sub">
+                    <a href="/raman" class="active">Spectrum</a>
+                    <a href="/vibrations">Vibrations</a>
+                </div>
+
+                <h3>Material Selection</h3>
+                <div class="mb-2">
+                    <label for="mpid" class="form-label">Materials Project ID</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="mpid" class="form-control" value="390" placeholder="e.g. 390">
+                        <button id="loadBtn" class="btn btn-outline-light btn-sm" type="button">Load</button>
+                    </div>
+                    <div class="mt-1"><a id="crdLink" href="https://ramandb.oulu.fi/ramandb/materials/row/mp-390" target="_blank" class="small text-info">View on CRD</a></div>
+                </div>
+
+                <h3>Spectrum Parameters</h3>
+                <div class="mb-2">
+                    <label for="avgmode" class="form-label">Average Mode</label>
+                    <select id="avgmode" class="form-select form-select-sm">
+                        <option value="xx_par">⟨α²ₓₓ⟩, ∥</option>
+                        <option value="xy_perp">⟨α²ₓᵧ⟩, ⊥</option>
+                        <option value="xx_plus_xy">⟨α²ₓₓ⟩ + ⟨α²ₓᵧ⟩</option>
+                        <option value="xy_symm">⟨α²ₓᵧ⟩ (symm)</option>
+                        <option value="xy_anti">⟨α²ₓᵧ⟩ (anti)</option>
+                        <option value="xx_yy">⟨αₓₓαᵧᵧ⟩</option>
+                        <option value="fixed">Fixed configuration</option>
+                    </select>
+                </div>
+
+                <div id="fixedParams" class="d-none mb-2">
+                    <label class="form-label">P_in (x, y, z)</label>
+                    <div class="vector-row mb-1">
+                        <input type="number" id="pin_x" class="form-control form-control-sm" value="1" step="0.1">
+                        <input type="number" id="pin_y" class="form-control form-control-sm" value="0" step="0.1">
+                        <input type="number" id="pin_z" class="form-control form-control-sm" value="0" step="0.1">
+                    </div>
+                    <label class="form-label">P_out (x, y, z)</label>
+                    <div class="vector-row">
+                        <input type="number" id="pout_x" class="form-control form-control-sm" value="0" step="0.1">
+                        <input type="number" id="pout_y" class="form-control form-control-sm" value="1" step="0.1">
+                        <input type="number" id="pout_z" class="form-control form-control-sm" value="0" step="0.1">
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label for="stokesmode" class="form-label">Branch</label>
+                    <select id="stokesmode" class="form-select form-select-sm">
+                        <option value="Stokes">Stokes</option>
+                        <option value="anti-Stokes">anti-Stokes</option>
+                        <option value="full">full</option>
+                    </select>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input type="checkbox" id="normalize" class="form-check-input" checked>
+                    <label for="normalize" class="form-check-label small">Normalize Intensity</label>
+                </div>
+
+                <h3>Physical Settings</h3>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label for="temperature" class="form-label">Temp (K)</label>
+                        <input type="number" id="temperature" class="form-control form-control-sm" value="300">
+                    </div>
+                    <div class="col-6">
+                        <label for="sigma" class="form-label">Broadening (cm⁻¹)</label>
+                        <input type="number" id="sigma" class="form-control form-control-sm" value="4" step="0.1">
+                    </div>
+                    <div class="col-6">
+                        <label for="llaser" class="form-label">Laser λ (nm)</label>
+                        <input type="number" id="llaser" class="form-control form-control-sm" value="532">
+                    </div>
+                    <div class="col-6">
+                        <label for="irayleigh" class="form-label">I(Rayleigh)</label>
+                        <input type="number" id="irayleigh" class="form-control form-control-sm" value="0" step="0.001">
+                    </div>
+                </div>
+
+                <h3>Wavenumber Range</h3>
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <label for="wnmin" class="form-label">Start</label>
+                        <input type="number" id="wnmin" class="form-control form-control-sm" value="0">
+                    </div>
+                    <div class="col-4">
+                        <label for="wnmax" class="form-label">End</label>
+                        <input type="number" id="wnmax" class="form-control form-control-sm" value="2000">
+                    </div>
+                    <div class="col-4">
+                        <label for="wnstep" class="form-label">Step</label>
+                        <input type="number" id="wnstep" class="form-control form-control-sm" value="1" step="0.1">
+                    </div>
+                </div>
+
+                <button id="simulateBtn" class="btn btn-primary w-100 mb-2">Simulate</button>
+                <button id="downloadBtn" class="btn btn-outline-light w-100 btn-sm">Download Data (.txt)</button>
+            </aside>
+
+            <main class="col-lg-9 col-xl-10 p-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="ramanPlot" style="height: 520px;"></div>
+                    </div>
+                </div>
+                <div id="statusMsg" class="mt-2 small text-muted"></div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const avgmodeSelect = document.getElementById('avgmode');
+        const fixedParams = document.getElementById('fixedParams');
+        avgmodeSelect.addEventListener('change', () => {
+            fixedParams.classList.toggle('d-none', avgmodeSelect.value !== 'fixed');
+        });
+
+        document.getElementById('mpid').addEventListener('input', e => {
+            const id = e.target.value.trim();
+            document.getElementById('crdLink').href = `https://ramandb.oulu.fi/ramandb/materials/row/mp-${id}`;
+        });
+
+        let currentData = null;
+
+        async function simulateRaman() {
+            const statusMsg = document.getElementById('statusMsg');
+            statusMsg.textContent = 'Simulating...';
+
+            const params = {
+                mpid: document.getElementById('mpid').value.trim(),
+                avgmode: document.getElementById('avgmode').value,
+                stokesmode: document.getElementById('stokesmode').value,
+                normalize: document.getElementById('normalize').checked,
+                temperature: parseFloat(document.getElementById('temperature').value),
+                sigma: parseFloat(document.getElementById('sigma').value),
+                llaser: parseFloat(document.getElementById('llaser').value),
+                irayleigh: parseFloat(document.getElementById('irayleigh').value),
+                wnmin: parseFloat(document.getElementById('wnmin').value),
+                wnmax: parseFloat(document.getElementById('wnmax').value),
+                wnstep: parseFloat(document.getElementById('wnstep').value),
+            };
+            if (params.avgmode === 'fixed') {
+                params.pin = [parseFloat(document.getElementById('pin_x').value), parseFloat(document.getElementById('pin_y').value), parseFloat(document.getElementById('pin_z').value)];
+                params.pout = [parseFloat(document.getElementById('pout_x').value), parseFloat(document.getElementById('pout_y').value), parseFloat(document.getElementById('pout_z').value)];
+            }
+
+            try {
+                const resp = await fetch('/api/raman/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    statusMsg.textContent = 'Error: ' + data.error;
+                    return;
+                }
+                currentData = data;
+                Plotly.newPlot('ramanPlot', [{
+                    x: data.wavenumber,
+                    y: data.intensity,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { color: '#0d6efd' }
+                }], {
+                    title: `Raman Spectrum (mp-${params.mpid})`,
+                    xaxis: { title: 'Wavenumber (cm⁻¹)' },
+                    yaxis: { title: params.normalize ? 'Intensity (norm.)' : 'Intensity' },
+                    margin: { t: 50 }
+                }, { responsive: true });
+                statusMsg.textContent = '';
+            } catch (err) {
+                statusMsg.textContent = 'Request failed: ' + err;
+            }
+        }
+
+        function downloadData() {
+            if (!currentData) return;
+            let txt = '# Wavenumber (cm-1)\tIntensity\n';
+            for (let i = 0; i < currentData.wavenumber.length; i++) {
+                txt += currentData.wavenumber[i].toFixed(4) + '\t' + currentData.intensity[i].toFixed(6) + '\n';
+            }
+            const blob = new Blob([txt], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'raman_spectrum.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('loadBtn').addEventListener('click', simulateRaman);
+        document.getElementById('simulateBtn').addEventListener('click', simulateRaman);
+        document.getElementById('downloadBtn').addEventListener('click', downloadData);
+
+        Plotly.newPlot('ramanPlot', [], {
+            title: 'Raman Spectrum',
+            xaxis: { title: 'Wavenumber (cm⁻¹)' },
+            yaxis: { title: 'Intensity' },
+            margin: { t: 50 }
+        }, { responsive: true });
+    </script>
+</body>
+</html>

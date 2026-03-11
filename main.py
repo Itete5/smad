@@ -95,6 +95,101 @@ async def montecarlo_page(request: Request):
         {"request": request}
     )
 
+
+@app.get("/raman", response_class=HTMLResponse)
+async def raman_page(request: Request):
+    return templates.TemplateResponse(
+        "raman.html",
+        {"request": request}
+    )
+
+
+@app.get("/vibrations", response_class=HTMLResponse)
+async def vibrations_page(request: Request):
+    return templates.TemplateResponse(
+        "vibrations.html",
+        {"request": request}
+    )
+
+
+# -------------------------
+# Raman / Vibrations API (placeholder stubs)
+# -------------------------
+class RamanSimulateRequest(BaseModel):
+    mpid: str
+    avgmode: str = "xx_par"
+    stokesmode: str = "Stokes"
+    normalize: bool = True
+    temperature: float = 300
+    sigma: float = 4
+    llaser: float = 532
+    irayleigh: float = 0
+    wnmin: float = 0
+    wnmax: float = 2000
+    wnstep: float = 1
+    pin: List[float] | None = None
+    pout: List[float] | None = None
+
+
+@app.post("/api/raman/simulate")
+async def raman_simulate(payload: RamanSimulateRequest):
+    """
+    Placeholder Raman simulation endpoint.
+    In production, connect to CRD API or local phonon/Raman database.
+    Returns example Gaussian peaks for demonstration.
+    """
+    import numpy as np
+    wn = np.arange(payload.wnmin, payload.wnmax, payload.wnstep)
+    peaks = [200, 400, 520, 800, 1100]
+    intensities_raw = [0.6, 1.0, 0.8, 0.3, 0.5]
+    spectrum = np.zeros_like(wn, dtype=float)
+    for pk, inten in zip(peaks, intensities_raw):
+        spectrum += inten * np.exp(-((wn - pk) ** 2) / (2 * payload.sigma ** 2))
+    if payload.normalize and spectrum.max() > 0:
+        spectrum = spectrum / spectrum.max()
+    return {
+        "wavenumber": wn.tolist(),
+        "intensity": spectrum.tolist(),
+        "mpid": payload.mpid,
+    }
+
+
+class VibrationsLoadRequest(BaseModel):
+    mpid: str
+
+
+@app.post("/api/vibrations/load")
+async def vibrations_load(payload: VibrationsLoadRequest):
+    """
+    Placeholder vibrations/phonon loading endpoint.
+    In production, fetch from CRD, Materials Project, or local phonon DB.
+    Returns example structure and dummy dispersion for demonstration.
+    """
+    return {
+        "name": f"Example mp-{payload.mpid}",
+        "lattice": {"a": 5.43, "b": 5.43, "c": 5.43},
+        "atoms": [
+            {"element": "Si", "x": 0.0, "y": 0.0, "z": 0.0, "cart_x": 0.0, "cart_y": 0.0, "cart_z": 0.0},
+            {"element": "Si", "x": 0.25, "y": 0.25, "z": 0.25, "cart_x": 1.36, "cart_y": 1.36, "cart_z": 1.36},
+        ],
+        "modes": [
+            {"frequency": 0.0},
+            {"frequency": 120.5},
+            {"frequency": 250.3},
+            {"frequency": 520.0},
+        ],
+        "dispersion": {
+            "distances": [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+            "bands": [
+                [0, 50, 100, 120, 100, 50],
+                [100, 150, 200, 220, 200, 150],
+                [300, 350, 400, 420, 400, 350],
+                [500, 510, 520, 525, 520, 510],
+            ],
+        },
+    }
+
+
 @app.get("/api/materials")
 def list_materials():
     with SessionLocal() as db:

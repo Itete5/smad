@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibration Visualizer · SMAD</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://unpkg.com/3dmol/build/3Dmol-min.js"></script>
+    <style>
+        .vib-sidebar { background: var(--bs-dark); color: #fff; min-height: calc(100vh - 56px); }
+        .vib-sidebar h3 { font-size: 0.85rem; text-transform: uppercase; color: #adb5bd; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .vib-sidebar label { font-size: 0.8rem; color: #ced4da; }
+        .vib-sidebar .form-control, .vib-sidebar .form-select { background: #343a40; border-color: #495057; color: #fff; font-size: 0.85rem; }
+        .vib-sidebar .form-control:focus, .vib-sidebar .form-select:focus { background: #3d444b; border-color: #0d6efd; color: #fff; }
+        .nav-sub { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .nav-sub a { color: #adb5bd; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+        .nav-sub a:hover, .nav-sub a.active { background: #495057; color: #fff; }
+        #viewer3d { width: 100%; height: 450px; position: relative; background: #1a1a2e; border-radius: 8px; }
+        .lattice-table, .atoms-table { font-size: 0.75rem; }
+        .lattice-table td, .atoms-table td { padding: 2px 4px; }
+        .mode-list { max-height: 200px; overflow-y: auto; font-size: 0.8rem; }
+        .mode-list table { width: 100%; }
+        .mode-list tr { cursor: pointer; }
+        .mode-list tr:hover { background: #495057; }
+        .mode-list tr.active { background: #0d6efd; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">SMAD</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsVib">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarsVib">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <aside class="col-lg-3 col-xl-2 vib-sidebar p-3">
+                <h2 class="h5 mb-1">Vibration Visualizer</h2>
+                <p class="small text-muted mb-2">Visualize phonon modes. Data via <a href="https://ramandb.oulu.fi/" target="_blank" class="text-info">CRD</a> / <a href="https://henriquemiranda.github.io/phononwebsite/" target="_blank" class="text-info">Phonon Website</a>.</p>
+
+                <div class="nav-sub">
+                    <a href="/raman">Raman</a>
+                    <a href="/vibrations" class="active">Vibrations</a>
+                </div>
+
+                <h3>Material</h3>
+                <div class="mb-2">
+                    <label for="mpid" class="form-label">Materials Project ID</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="mpid" class="form-control" value="66" placeholder="e.g. 66">
+                        <button id="loadBtn" class="btn btn-outline-light btn-sm" type="button">Load</button>
+                    </div>
+                </div>
+
+                <h3>Lattice (Å)</h3>
+                <table class="lattice-table text-light mb-2" id="latticeTable">
+                    <tbody>
+                        <tr><td>a</td><td id="lat_a">—</td></tr>
+                        <tr><td>b</td><td id="lat_b">—</td></tr>
+                        <tr><td>c</td><td id="lat_c">—</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Atoms (frac.)</h3>
+                <div class="atoms-table text-light mb-2" style="max-height:100px;overflow-y:auto;">
+                    <table id="atomsTable"><tbody></tbody></table>
+                </div>
+
+                <h3>Repetitions</h3>
+                <div class="input-group input-group-sm mb-2">
+                    <input type="number" id="nx" class="form-control" value="2" min="1">
+                    <input type="number" id="ny" class="form-control" value="2" min="1">
+                    <input type="number" id="nz" class="form-control" value="2" min="1">
+                    <button id="updateRepBtn" class="btn btn-outline-light btn-sm" type="button">Update</button>
+                </div>
+
+                <h3>Camera</h3>
+                <div class="btn-group btn-group-sm mb-2">
+                    <button id="camX" class="btn btn-outline-light" type="button">X</button>
+                    <button id="camY" class="btn btn-outline-light" type="button">Y</button>
+                    <button id="camZ" class="btn btn-outline-light" type="button">Z</button>
+                </div>
+
+                <h3>Amplitude</h3>
+                <input type="range" id="amplitude" class="form-range mb-2" min="0" max="2" step="0.1" value="1">
+
+                <h3>Speed</h3>
+                <div class="d-flex gap-2 mb-2">
+                    <input type="range" id="speed" class="form-range" min="0.1" max="3" step="0.1" value="1">
+                    <button id="playPauseBtn" class="btn btn-outline-light btn-sm" type="button">Pause</button>
+                </div>
+
+                <h3>Vibrational Modes</h3>
+                <div class="mode-list" id="modeList">
+                    <table><thead><tr><th>#</th><th>Freq (cm⁻¹)</th></tr></thead><tbody></tbody></table>
+                </div>
+            </aside>
+
+            <main class="col-lg-9 col-xl-10 p-4">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">3D Structure</div>
+                            <div class="card-body p-0">
+                                <div id="viewer3d"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">Phonon Dispersion / DOS</div>
+                            <div class="card-body">
+                                <div id="phononPlot" style="height:450px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="statusMsg" class="mt-2 small text-muted"></div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let viewer = null;
+        let animationId = null;
+        let playing = true;
+        let phononData = null;
+        let selectedMode = 0;
+        let phase = 0;
+        let amplitude = 1;
+        let speed = 1;
+
+        function initViewer() {
+            const el = document.getElementById('viewer3d');
+            viewer = $3Dmol.createViewer(el, { backgroundColor: '#1a1a2e' });
+        }
+
+        async function loadMaterial() {
+            const mpid = document.getElementById('mpid').value.trim();
+            document.getElementById('statusMsg').textContent = 'Loading mp-' + mpid + '...';
+
+            try {
+                const resp = await fetch('/api/vibrations/load', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mpid })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    document.getElementById('statusMsg').textContent = 'Error: ' + data.error;
+                    return;
+                }
+                phononData = data;
+                updateLatticeTable(data.lattice);
+                updateAtomsTable(data.atoms);
+                updateModeList(data.modes);
+                renderStructure();
+                plotPhonons(data);
+                document.getElementById('statusMsg').textContent = 'Loaded ' + (data.name || 'mp-' + mpid);
+            } catch (err) {
+                document.getElementById('statusMsg').textContent = 'Failed: ' + err;
+            }
+        }
+
+        function updateLatticeTable(lattice) {
+            if (!lattice) return;
+            document.getElementById('lat_a').textContent = lattice.a?.toFixed(4) || '—';
+            document.getElementById('lat_b').textContent = lattice.b?.toFixed(4) || '—';
+            document.getElementById('lat_c').textContent = lattice.c?.toFixed(4) || '—';
+        }
+
+        function updateAtomsTable(atoms) {
+            const tbody = document.querySelector('#atomsTable tbody');
+            tbody.innerHTML = '';
+            if (!atoms) return;
+            atoms.forEach((at, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${at.element}</td><td>${at.x?.toFixed(3)}</td><td>${at.y?.toFixed(3)}</td><td>${at.z?.toFixed(3)}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateModeList(modes) {
+            const tbody = document.querySelector('#modeList tbody');
+            tbody.innerHTML = '';
+            if (!modes) return;
+            modes.forEach((m, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${i + 1}</td><td>${m.frequency?.toFixed(2)}</td>`;
+                tr.addEventListener('click', () => selectMode(i));
+                if (i === selectedMode) tr.classList.add('active');
+                tbody.appendChild(tr);
+            });
+        }
+
+        function selectMode(idx) {
+            selectedMode = idx;
+            document.querySelectorAll('#modeList tr').forEach((tr, i) => tr.classList.toggle('active', i === idx));
+        }
+
+        function renderStructure() {
+            if (!viewer || !phononData) return;
+            viewer.removeAllModels();
+            const xyz = generateXYZ(phononData);
+            viewer.addModel(xyz, 'xyz');
+            viewer.setStyle({}, { sphere: { radius: 0.4 }, stick: { radius: 0.1 } });
+            viewer.zoomTo();
+            viewer.render();
+        }
+
+        function generateXYZ(data) {
+            if (!data.atoms) return '';
+            let lines = [data.atoms.length.toString(), data.name || 'structure'];
+            data.atoms.forEach(at => {
+                lines.push(`${at.element} ${at.cart_x?.toFixed(6) || 0} ${at.cart_y?.toFixed(6) || 0} ${at.cart_z?.toFixed(6) || 0}`);
+            });
+            return lines.join('\n');
+        }
+
+        function plotPhonons(data) {
+            if (!data.dispersion) {
+                Plotly.newPlot('phononPlot', [], { title: 'No dispersion data' }, { responsive: true });
+                return;
+            }
+            const traces = data.dispersion.bands.map((band, i) => ({
+                x: data.dispersion.distances,
+                y: band,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Band ' + (i + 1),
+                line: { width: 1 }
+            }));
+            Plotly.newPlot('phononPlot', traces, {
+                title: 'Phonon Dispersion',
+                xaxis: { title: 'k-path' },
+                yaxis: { title: 'Frequency (cm⁻¹)' },
+                showlegend: false,
+                margin: { t: 40 }
+            }, { responsive: true });
+        }
+
+        document.getElementById('loadBtn').addEventListener('click', loadMaterial);
+        document.getElementById('playPauseBtn').addEventListener('click', () => {
+            playing = !playing;
+            document.getElementById('playPauseBtn').textContent = playing ? 'Pause' : 'Play';
+        });
+        document.getElementById('amplitude').addEventListener('input', e => amplitude = parseFloat(e.target.value));
+        document.getElementById('speed').addEventListener('input', e => speed = parseFloat(e.target.value));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initViewer();
+            Plotly.newPlot('phononPlot', [], { title: 'Load a material to see phonon dispersion' }, { responsive: true });
+        });
+    </script>
+</body>
+</html>
