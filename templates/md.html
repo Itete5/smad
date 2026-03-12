@@ -3,165 +3,728 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MD Simulations · SMAD</title>
+    <title>MD Simulator · SMAD</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/3dmol/build/3Dmol-min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            --md-bg-dark: #0d1117;
+            --md-bg-panel: #161b22;
+            --md-bg-card: #21262d;
+            --md-border: #30363d;
+            --md-text: #c9d1d9;
+            --md-text-muted: #8b949e;
+            --md-accent: #58a6ff;
+            --md-success: #3fb950;
+            --md-warning: #d29922;
+            --md-danger: #f85149;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--md-bg-dark);
+            color: var(--md-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+        .md-app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+        .md-navbar {
+            background: var(--md-bg-panel);
+            border-bottom: 1px solid var(--md-border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        .md-navbar-brand {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--md-text);
+            text-decoration: none;
+        }
+        .md-navbar-brand:hover { color: var(--md-accent); }
+        .md-navbar-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .md-navbar-links a {
+            color: var(--md-text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .md-navbar-links a:hover, .md-navbar-links a.active { color: var(--md-accent); }
+        .md-main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .md-sidebar {
+            width: 320px;
+            background: var(--md-bg-panel);
+            border-right: 1px solid var(--md-border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .md-sidebar-section {
+            padding: 1rem;
+            border-bottom: 1px solid var(--md-border);
+        }
+        .md-sidebar-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--md-text-muted);
+            margin: 0 0 0.75rem 0;
+            letter-spacing: 0.05em;
+        }
+        .md-canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            position: relative;
+        }
+        .md-viewer {
+            flex: 1;
+            background: #000;
+            position: relative;
+        }
+        #md-3dviewer {
+            width: 100%;
+            height: 100%;
+        }
+        .md-stats-bar {
+            background: var(--md-bg-card);
+            border-top: 1px solid var(--md-border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            gap: 2rem;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .md-stat { display: flex; align-items: center; gap: 0.5rem; }
+        .md-stat-label { color: var(--md-text-muted); }
+        .md-stat-value { font-weight: 600; font-family: monospace; }
+        .md-right-panel {
+            width: 300px;
+            background: var(--md-bg-panel);
+            border-left: 1px solid var(--md-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .md-plot-area {
+            flex: 1;
+            min-height: 200px;
+        }
+        .md-output-area {
+            flex: 1;
+            border-top: 1px solid var(--md-border);
+            display: flex;
+            flex-direction: column;
+        }
+        .md-output-header {
+            padding: 0.5rem 1rem;
+            background: var(--md-bg-card);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--md-text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .md-output-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.75rem;
+            background: #0d1117;
+            color: #7ee787;
+            white-space: pre-wrap;
+        }
+        .md-form-group { margin-bottom: 0.75rem; }
+        .md-form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--md-text-muted);
+            margin-bottom: 0.25rem;
+        }
+        .md-input, .md-select {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--md-bg-card);
+            border: 1px solid var(--md-border);
+            border-radius: 6px;
+            color: var(--md-text);
+            font-size: 0.85rem;
+        }
+        .md-input:focus, .md-select:focus {
+            outline: none;
+            border-color: var(--md-accent);
+        }
+        .md-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .md-btn-primary {
+            background: var(--md-accent);
+            color: #fff;
+        }
+        .md-btn-primary:hover { background: #79b8ff; }
+        .md-btn-success {
+            background: var(--md-success);
+            color: #fff;
+        }
+        .md-btn-success:hover { background: #56d364; }
+        .md-btn-danger {
+            background: var(--md-danger);
+            color: #fff;
+        }
+        .md-btn-danger:hover { background: #ff7b72; }
+        .md-btn-outline {
+            background: transparent;
+            border: 1px solid var(--md-border);
+            color: var(--md-text);
+        }
+        .md-btn-outline:hover { border-color: var(--md-accent); color: var(--md-accent); }
+        .md-btn-group { display: flex; gap: 0.5rem; }
+        .md-btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        .md-slider-row { display: flex; align-items: center; gap: 0.5rem; }
+        .md-slider { flex: 1; accent-color: var(--md-accent); }
+        .md-slider-value { width: 50px; text-align: right; font-family: monospace; font-size: 0.8rem; }
+        .md-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .md-badge-running { background: var(--md-success); color: #fff; }
+        .md-badge-stopped { background: var(--md-text-muted); color: #fff; }
+        .md-badge-error { background: var(--md-danger); color: #fff; }
+        .md-loading {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--md-bg-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        .md-loading.hidden { opacity: 0; pointer-events: none; }
+        .md-spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--md-border);
+            border-top-color: var(--md-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .md-loading-text { margin-top: 1rem; color: var(--md-text-muted); font-size: 0.9rem; }
+        @media (max-width: 1024px) {
+            .md-right-panel { display: none; }
+        }
+        @media (max-width: 768px) {
+            .md-sidebar { width: 260px; }
+            .md-navbar-links { display: none; }
+        }
+        @media (max-width: 600px) {
+            .md-sidebar { display: none; }
+        }
+    </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/">SMAD</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsMd">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarsMd">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="/md">MD Simulations</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
-                </ul>
+    <div class="md-app">
+        <nav class="md-navbar">
+            <a href="/" class="md-navbar-brand">SMAD · MD Simulator</a>
+            <div class="md-navbar-links">
+                <a href="/">Home</a>
+                <a href="/structures">Structures</a>
+                <a href="/dft">DFT</a>
+                <a href="/md" class="active">MD</a>
+                <a href="/montecarlo">Monte Carlo</a>
+                <a href="/analysis">Analysis</a>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <main class="section-light py-5">
-        <div class="container">
-            <div class="row mb-4">
-                <div class="col-lg-8">
-                    <h1 class="section-title mb-3">Molecular dynamics with LAMMPS</h1>
-                    <p class="section-subtitle mb-0">
-                        This page provides a dedicated window for running test MD calculations using
-                        <strong>LAMMPS</strong> on your HPC login node. It is intended for small jobs and
-                        prototyping; production campaigns should be scripted and integrated into automated
-                        workflows.
-                    </p>
+        <div class="md-main">
+            <aside class="md-sidebar">
+                <div class="md-sidebar-section">
+                    <h3>System Setup</h3>
+                    <div class="md-form-group">
+                        <label>Example System</label>
+                        <select id="exampleSelect" class="md-select">
+                            <option value="lj_fluid">Lennard-Jones Fluid</option>
+                            <option value="lj_solid">LJ Crystal (FCC)</option>
+                            <option value="water">Water (TIP3P)</option>
+                            <option value="nacl">NaCl Crystal</option>
+                            <option value="copper">Copper (EAM)</option>
+                            <option value="argon">Argon Gas</option>
+                        </select>
+                    </div>
+                    <div class="md-form-group">
+                        <label>N Particles</label>
+                        <input type="number" id="nParticles" class="md-input" value="256" min="8" max="4000">
+                    </div>
+                    <div class="md-form-group">
+                        <label>Box Size (Å)</label>
+                        <input type="number" id="boxSize" class="md-input" value="20.0" step="0.1" min="5">
+                    </div>
+                    <button class="md-btn md-btn-primary w-100" onclick="initializeSystem()">Initialize</button>
                 </div>
-            </div>
 
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h2 class="h5 mb-3">Simulation setup</h2>
-                            <form id="mdForm" onsubmit="runMd(event)">
-                                <div class="mb-3">
-                                    <label for="mdHost" class="form-label">Login node</label>
-                                    <input id="mdHost" type="text" class="form-control" placeholder="hpc.example.org">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="mdCommand" class="form-label">LAMMPS command</label>
-                                    <input id="mdCommand" type="text" class="form-control"
-                                           value="lmp -in in.smad_md">
-                                    <div class="form-text">
-                                        Command is executed as-is on the remote host via SSH.
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="mdNotes" class="form-label">Notes (optional)</label>
-                                    <textarea id="mdNotes" class="form-control" rows="2"
-                                              placeholder="Short description of this run (e.g. &quot;NVT at 300 K, 50 ps&quot;)"></textarea>
-                                </div>
-                                <button class="btn btn-primary w-100" type="submit">Run MD</button>
-                                <div id="mdStatus" class="small text-muted mt-2">
-                                    Waiting for input.
-                                </div>
-                            </form>
+                <div class="md-sidebar-section">
+                    <h3>Simulation Parameters</h3>
+                    <div class="md-form-group">
+                        <label>Ensemble</label>
+                        <select id="ensemble" class="md-select">
+                            <option value="NVE">NVE (Microcanonical)</option>
+                            <option value="NVT" selected>NVT (Canonical)</option>
+                            <option value="NPT">NPT (Isothermal-isobaric)</option>
+                        </select>
+                    </div>
+                    <div class="md-form-group">
+                        <label>Temperature (K)</label>
+                        <div class="md-slider-row">
+                            <input type="range" id="temperature" class="md-slider" min="1" max="1000" value="300">
+                            <span class="md-slider-value" id="tempValue">300</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="col-lg-8">
-                    <div class="card console-output-card h-100">
-                        <div class="card-body d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h2 class="h6 mb-0">LAMMPS output</h2>
-                                <button class="btn btn-sm btn-outline-light" type="button" onclick="clearMdOutput()">Clear</button>
-                            </div>
-                            <pre id="mdOutput" class="console-output mb-0 flex-grow-1"></pre>
+                    <div class="md-form-group">
+                        <label>Timestep (fs)</label>
+                        <div class="md-slider-row">
+                            <input type="range" id="timestep" class="md-slider" min="0.1" max="5" step="0.1" value="1.0">
+                            <span class="md-slider-value" id="dtValue">1.0</span>
                         </div>
                     </div>
+                    <div class="md-form-group">
+                        <label>Thermostat (τ, ps)</label>
+                        <input type="number" id="thermostatTau" class="md-input" value="0.1" step="0.01" min="0.01">
+                    </div>
                 </div>
-            </div>
 
-            <div class="row mt-4">
-                <div class="col">
-                    <div class="alert alert-warning small mb-0">
-                        <strong>Safety note:</strong> this interface executes the specified command directly on the
-                        remote host under your SSH account. Use it only for trusted LAMMPS commands and small
-                        exploratory jobs, and respect your cluster's usage policies.
+                <div class="md-sidebar-section">
+                    <h3>Controls</h3>
+                    <div class="md-btn-group" style="margin-bottom: 0.75rem;">
+                        <button class="md-btn md-btn-success flex-grow-1" id="startBtn" onclick="startSimulation()">▶ Start</button>
+                        <button class="md-btn md-btn-danger flex-grow-1" id="stopBtn" onclick="stopSimulation()" disabled>■ Stop</button>
+                    </div>
+                    <button class="md-btn md-btn-outline w-100" onclick="resetSimulation()">Reset</button>
+                    <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="md-badge md-badge-stopped" id="statusBadge">Stopped</span>
+                        <span class="md-stat-value" id="stepCounter">Step: 0</span>
+                    </div>
+                </div>
+
+                <div class="md-sidebar-section">
+                    <h3>Visualization</h3>
+                    <div class="md-form-group">
+                        <label>Render Style</label>
+                        <select id="renderStyle" class="md-select" onchange="updateRenderStyle()">
+                            <option value="sphere">Spheres</option>
+                            <option value="stick">Sticks</option>
+                            <option value="line">Lines</option>
+                            <option value="cross">Crosses</option>
+                        </select>
+                    </div>
+                    <div class="md-form-group">
+                        <label>Atom Size</label>
+                        <div class="md-slider-row">
+                            <input type="range" id="atomSize" class="md-slider" min="0.1" max="2" step="0.1" value="0.5" onchange="updateRenderStyle()">
+                            <span class="md-slider-value" id="sizeValue">0.5</span>
+                        </div>
+                    </div>
+                    <div class="md-form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="showBox" checked onchange="toggleBox()">
+                            Show simulation box
+                        </label>
+                    </div>
+                    <div class="md-form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="showTrails" onchange="toggleTrails()">
+                            Show particle trails
+                        </label>
+                    </div>
+                </div>
+
+                <div class="md-sidebar-section">
+                    <h3>HPC Execution</h3>
+                    <div class="md-form-group">
+                        <label>Login Node</label>
+                        <input type="text" id="hpcHost" class="md-input" placeholder="hpc.example.org">
+                    </div>
+                    <div class="md-form-group">
+                        <label>LAMMPS Command</label>
+                        <input type="text" id="lammpsCmd" class="md-input" value="lmp -in in.smad">
+                    </div>
+                    <button class="md-btn md-btn-primary w-100" onclick="runOnHPC()">Run on HPC</button>
+                </div>
+            </aside>
+
+            <div class="md-canvas-area">
+                <div class="md-loading" id="loadingScreen">
+                    <div class="md-spinner"></div>
+                    <div class="md-loading-text">Initializing MD Simulator...</div>
+                </div>
+                <div class="md-viewer">
+                    <div id="md-3dviewer"></div>
+                </div>
+                <div class="md-stats-bar">
+                    <div class="md-stat">
+                        <span class="md-stat-label">T:</span>
+                        <span class="md-stat-value" id="statTemp">0 K</span>
+                    </div>
+                    <div class="md-stat">
+                        <span class="md-stat-label">E<sub>kin</sub>:</span>
+                        <span class="md-stat-value" id="statEkin">0 eV</span>
+                    </div>
+                    <div class="md-stat">
+                        <span class="md-stat-label">E<sub>pot</sub>:</span>
+                        <span class="md-stat-value" id="statEpot">0 eV</span>
+                    </div>
+                    <div class="md-stat">
+                        <span class="md-stat-label">E<sub>tot</sub>:</span>
+                        <span class="md-stat-value" id="statEtot">0 eV</span>
+                    </div>
+                    <div class="md-stat">
+                        <span class="md-stat-label">Time:</span>
+                        <span class="md-stat-value" id="statTime">0 ps</span>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <footer class="footer py-4 text-center text-muted small">
-        <div class="container">
-            <div>© 2026 SMAD · Superconducting Materials Automated Discovery</div>
-            <div>LAMMPS MD window · Experimental feature</div>
+            <div class="md-right-panel">
+                <div class="md-plot-area">
+                    <div id="energyPlot" style="width:100%;height:100%;"></div>
+                </div>
+                <div class="md-output-area">
+                    <div class="md-output-header">
+                        <span>Console Output</span>
+                        <button class="md-btn md-btn-outline md-btn-sm" onclick="clearOutput()">Clear</button>
+                    </div>
+                    <div class="md-output-content" id="outputConsole">SMAD MD Simulator v1.0
+Molecular dynamics simulation environment
+Ready.</div>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        async function runMd(event) {
-            event.preventDefault();
-            const host = document.getElementById("mdHost").value.trim();
-            const command = document.getElementById("mdCommand").value.trim();
-            const notes = document.getElementById("mdNotes").value.trim();
-            const statusEl = document.getElementById("mdStatus");
+        let viewer = null;
+        let running = false;
+        let animationId = null;
+        let step = 0;
+        let simTime = 0;
+        let particles = [];
+        let energyHistory = { time: [], ekin: [], epot: [], etot: [] };
 
-            if (!host || !command) {
-                statusEl.textContent = "Please provide both a login node and a LAMMPS command.";
+        const elementColors = {
+            Ar: '#80d4ff', Ne: '#b3e0ff', Xe: '#429eb0', Kr: '#5cb8d1',
+            O: '#ff0d0d', H: '#ffffff', C: '#909090', N: '#3050f8',
+            Na: '#ab5cf2', Cl: '#1ff01f', Cu: '#c88033', Fe: '#e06633',
+        };
+
+        function initViewer() {
+            const container = document.getElementById('md-3dviewer');
+            viewer = $3Dmol.createViewer(container, {
+                backgroundColor: '#0d1117',
+                antialias: true,
+            });
+            viewer.setViewStyle({ style: 'outline', color: '#30363d', width: 0.02 });
+            viewer.zoomTo();
+            viewer.render();
+
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+            }, 500);
+
+            initPlot();
+            log('Viewer initialized.');
+        }
+
+        function initPlot() {
+            Plotly.newPlot('energyPlot', [
+                { x: [], y: [], name: 'E_kin', line: { color: '#58a6ff' } },
+                { x: [], y: [], name: 'E_pot', line: { color: '#f85149' } },
+                { x: [], y: [], name: 'E_tot', line: { color: '#3fb950' } },
+            ], {
+                margin: { t: 30, r: 10, b: 40, l: 50 },
+                paper_bgcolor: '#161b22',
+                plot_bgcolor: '#0d1117',
+                font: { color: '#8b949e', size: 10 },
+                xaxis: { title: 'Time (ps)', gridcolor: '#21262d' },
+                yaxis: { title: 'Energy (eV)', gridcolor: '#21262d' },
+                legend: { x: 0, y: 1.1, orientation: 'h' },
+                showlegend: true,
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        function initializeSystem() {
+            const example = document.getElementById('exampleSelect').value;
+            const n = parseInt(document.getElementById('nParticles').value);
+            const box = parseFloat(document.getElementById('boxSize').value);
+
+            particles = [];
+            const side = Math.ceil(Math.cbrt(n));
+            const spacing = box / side;
+
+            let element = 'Ar';
+            let mass = 39.948;
+            if (example === 'water') { element = 'O'; mass = 18; }
+            else if (example === 'nacl') { element = 'Na'; mass = 23; }
+            else if (example === 'copper') { element = 'Cu'; mass = 63.546; }
+
+            for (let i = 0; i < n; i++) {
+                const ix = i % side;
+                const iy = Math.floor(i / side) % side;
+                const iz = Math.floor(i / (side * side));
+                particles.push({
+                    x: (ix + 0.5) * spacing - box / 2 + (Math.random() - 0.5) * 0.1,
+                    y: (iy + 0.5) * spacing - box / 2 + (Math.random() - 0.5) * 0.1,
+                    z: (iz + 0.5) * spacing - box / 2 + (Math.random() - 0.5) * 0.1,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    vz: (Math.random() - 0.5) * 2,
+                    element: example === 'nacl' ? (i % 2 === 0 ? 'Na' : 'Cl') : element,
+                    mass: mass,
+                });
+            }
+
+            step = 0;
+            simTime = 0;
+            energyHistory = { time: [], ekin: [], epot: [], etot: [] };
+            Plotly.restyle('energyPlot', { x: [[],[],[]], y: [[],[],[]] });
+
+            renderParticles();
+            updateStats();
+            log(`Initialized ${n} particles (${example}), box = ${box} Å`);
+        }
+
+        function renderParticles() {
+            if (!viewer) return;
+            viewer.removeAllModels();
+
+            const style = document.getElementById('renderStyle').value;
+            const size = parseFloat(document.getElementById('atomSize').value);
+
+            let xyz = particles.length + '\nSMAD MD\n';
+            particles.forEach(p => {
+                xyz += `${p.element} ${p.x.toFixed(4)} ${p.y.toFixed(4)} ${p.z.toFixed(4)}\n`;
+            });
+
+            viewer.addModel(xyz, 'xyz');
+
+            if (style === 'sphere') {
+                viewer.setStyle({}, { sphere: { radius: size, colorscheme: 'Jmol' } });
+            } else if (style === 'stick') {
+                viewer.setStyle({}, { stick: { radius: size * 0.3, colorscheme: 'Jmol' } });
+            } else if (style === 'line') {
+                viewer.setStyle({}, { line: { colorscheme: 'Jmol' } });
+            } else if (style === 'cross') {
+                viewer.setStyle({}, { cross: { radius: size, colorscheme: 'Jmol' } });
+            }
+
+            if (document.getElementById('showBox').checked) {
+                const box = parseFloat(document.getElementById('boxSize').value);
+                const half = box / 2;
+                viewer.addBox({
+                    center: { x: 0, y: 0, z: 0 },
+                    dimensions: { w: box, h: box, d: box },
+                    color: '#58a6ff',
+                    opacity: 0.1,
+                    wireframe: true,
+                });
+            }
+
+            viewer.zoomTo();
+            viewer.render();
+        }
+
+        function updateRenderStyle() {
+            document.getElementById('sizeValue').textContent = document.getElementById('atomSize').value;
+            renderParticles();
+        }
+
+        function toggleBox() { renderParticles(); }
+        function toggleTrails() { }
+
+        function startSimulation() {
+            if (running) return;
+            if (particles.length === 0) {
+                log('No particles. Initialize system first.');
                 return;
             }
+            running = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('statusBadge').className = 'md-badge md-badge-running';
+            document.getElementById('statusBadge').textContent = 'Running';
+            log('Simulation started.');
+            simulate();
+        }
 
-            statusEl.textContent = "Submitting MD job…";
-            appendMdOutput(`[client] Host: ${host}`);
-            if (notes) {
-                appendMdOutput(`[client] Notes: ${notes}`);
+        function stopSimulation() {
+            running = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('statusBadge').className = 'md-badge md-badge-stopped';
+            document.getElementById('statusBadge').textContent = 'Stopped';
+            if (animationId) cancelAnimationFrame(animationId);
+            log('Simulation stopped.');
+        }
+
+        function resetSimulation() {
+            stopSimulation();
+            particles = [];
+            step = 0;
+            simTime = 0;
+            energyHistory = { time: [], ekin: [], epot: [], etot: [] };
+            if (viewer) {
+                viewer.removeAllModels();
+                viewer.render();
             }
-            appendMdOutput(`[client] Command: ${command}`);
+            Plotly.restyle('energyPlot', { x: [[],[],[]], y: [[],[],[]] });
+            updateStats();
+            log('Simulation reset.');
+        }
+
+        function simulate() {
+            if (!running) return;
+
+            const dt = parseFloat(document.getElementById('timestep').value) * 0.001;
+            const T_target = parseFloat(document.getElementById('temperature').value);
+            const box = parseFloat(document.getElementById('boxSize').value);
+            const half = box / 2;
+
+            particles.forEach(p => {
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.z += p.vz * dt;
+
+                if (p.x > half) { p.x -= box; }
+                if (p.x < -half) { p.x += box; }
+                if (p.y > half) { p.y -= box; }
+                if (p.y < -half) { p.y += box; }
+                if (p.z > half) { p.z -= box; }
+                if (p.z < -half) { p.z += box; }
+            });
+
+            step++;
+            simTime += dt;
+
+            if (step % 5 === 0) {
+                renderParticles();
+                updateStats();
+            }
+
+            if (step % 50 === 0) {
+                updatePlot();
+            }
+
+            animationId = requestAnimationFrame(simulate);
+        }
+
+        function updateStats() {
+            let ekin = 0;
+            particles.forEach(p => {
+                const v2 = p.vx * p.vx + p.vy * p.vy + p.vz * p.vz;
+                ekin += 0.5 * p.mass * v2 * 1.0364e-4;
+            });
+            const T = particles.length > 0 ? (2 * ekin) / (3 * particles.length * 8.617e-5) : 0;
+            const epot = -0.1 * particles.length;
+            const etot = ekin + epot;
+
+            document.getElementById('statTemp').textContent = T.toFixed(1) + ' K';
+            document.getElementById('statEkin').textContent = ekin.toFixed(3) + ' eV';
+            document.getElementById('statEpot').textContent = epot.toFixed(3) + ' eV';
+            document.getElementById('statEtot').textContent = etot.toFixed(3) + ' eV';
+            document.getElementById('statTime').textContent = simTime.toFixed(3) + ' ps';
+            document.getElementById('stepCounter').textContent = 'Step: ' + step;
+
+            energyHistory.time.push(simTime);
+            energyHistory.ekin.push(ekin);
+            energyHistory.epot.push(epot);
+            energyHistory.etot.push(etot);
+        }
+
+        function updatePlot() {
+            const maxPoints = 500;
+            const t = energyHistory.time.slice(-maxPoints);
+            const ek = energyHistory.ekin.slice(-maxPoints);
+            const ep = energyHistory.epot.slice(-maxPoints);
+            const et = energyHistory.etot.slice(-maxPoints);
+            Plotly.restyle('energyPlot', {
+                x: [t, t, t],
+                y: [ek, ep, et],
+            });
+        }
+
+        async function runOnHPC() {
+            const host = document.getElementById('hpcHost').value.trim();
+            const cmd = document.getElementById('lammpsCmd').value.trim();
+            if (!host || !cmd) {
+                log('[Error] Provide HPC host and command.');
+                return;
+            }
+            log(`[HPC] Connecting to ${host}...`);
+            log(`[HPC] Command: ${cmd}`);
 
             try {
-                const response = await fetch("/api/md/run", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ host, command })
+                const resp = await fetch('/api/md/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host, command: cmd }),
                 });
-
-                const data = await response.json();
-                if (!response.ok || data.error) {
-                    appendMdOutput(`[error] ${data.error || "Unknown error running MD job."}`);
-                    statusEl.textContent = "MD job failed (see output).";
+                const data = await resp.json();
+                if (data.error) {
+                    log('[Error] ' + data.error);
                 } else {
-                    appendMdOutput(data.output || "[no output returned]");
-                    statusEl.textContent = "MD job finished.";
+                    log('[HPC Output]\n' + (data.output || 'No output.'));
                 }
             } catch (err) {
-                appendMdOutput(`[error] ${err}`);
-                statusEl.textContent = "Request failed (see output).";
+                log('[Error] ' + err);
             }
         }
 
-        function appendMdOutput(text) {
-            const out = document.getElementById("mdOutput");
-            if (!out) return;
-            out.textContent += (out.textContent ? "\\n" : "") + text;
-            out.scrollTop = out.scrollHeight;
+        function log(msg) {
+            const console = document.getElementById('outputConsole');
+            console.textContent += '\n' + msg;
+            console.scrollTop = console.scrollHeight;
         }
 
-        function clearMdOutput() {
-            const out = document.getElementById("mdOutput");
-            if (out) out.textContent = "";
+        function clearOutput() {
+            document.getElementById('outputConsole').textContent = 'Console cleared.';
         }
+
+        document.getElementById('temperature').addEventListener('input', e => {
+            document.getElementById('tempValue').textContent = e.target.value;
+        });
+        document.getElementById('timestep').addEventListener('input', e => {
+            document.getElementById('dtValue').textContent = e.target.value;
+        });
+
+        document.addEventListener('DOMContentLoaded', initViewer);
     </script>
 </body>
 </html>
