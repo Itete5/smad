@@ -71,15 +71,6 @@ async def analysis_page(request: Request):
     )
 
 
-@app.get("/console", response_class=HTMLResponse)
-async def console_page(request: Request):
-    token = generate_token()
-    return templates.TemplateResponse(
-        "console.html",
-        {"request": request, "ws_path": WS_PATH, "token": token}
-    )
-
-
 @app.get("/dft", response_class=HTMLResponse)
 async def dft_page(request: Request):
     return templates.TemplateResponse(

@@ -6,6 +6,19 @@
     <title>DFT · SMAD</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .console-output {
+            background: #1a1a2e;
+            color: #7ee787;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8rem;
+            padding: 1rem;
+            border-radius: 6px;
+            height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
@@ -18,7 +31,6 @@
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
                     <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
                     <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
                     <li class="nav-item"><a class="nav-link active" href="/dft">DFT</a></li>
                     <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
@@ -34,19 +46,114 @@
         <div class="container">
             <div class="row mb-4">
                 <div class="col-lg-9">
-                    <h1 class="section-title mb-2">Density functional theory</h1>
+                    <h1 class="section-title mb-2">Density Functional Theory</h1>
                     <p class="section-subtitle mb-0">
-                        Configure and launch DFT calculations (e.g. Quantum ESPRESSO, VASP, ABINIT) for electronic structure,
-                        total energy, and properties of superconducting candidates. Link structures from the Structures page
-                        and inspect results in Analysis.
+                        Configure and launch DFT calculations (Quantum ESPRESSO, VASP, ABINIT) for electronic structure,
+                        total energy, and properties of superconducting candidates.
                     </p>
                 </div>
             </div>
+
             <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">DFT Code Configuration</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">DFT Code</label>
+                                <select id="dftCode" class="form-select">
+                                    <option value="qe">Quantum ESPRESSO</option>
+                                    <option value="vasp">VASP</option>
+                                    <option value="abinit">ABINIT</option>
+                                    <option value="siesta">SIESTA</option>
+                                    <option value="wien2k">WIEN2k</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Calculation Type</label>
+                                <select id="calcType" class="form-select">
+                                    <option value="scf">SCF (self-consistent)</option>
+                                    <option value="relax">Structural relaxation</option>
+                                    <option value="vc-relax">Variable-cell relaxation</option>
+                                    <option value="bands">Band structure</option>
+                                    <option value="dos">Density of states</option>
+                                    <option value="phonon">Phonons (DFPT)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">XC Functional</label>
+                                <select id="xcFunc" class="form-select">
+                                    <option value="pbe">PBE</option>
+                                    <option value="pbesol">PBEsol</option>
+                                    <option value="lda">LDA</option>
+                                    <option value="hse">HSE06</option>
+                                    <option value="scan">SCAN</option>
+                                </select>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label">Ecutwfc (Ry)</label>
+                                    <input type="number" id="ecutwfc" class="form-control" value="60">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Ecutrho (Ry)</label>
+                                    <input type="number" id="ecutrho" class="form-control" value="480">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label">k-mesh</label>
+                                <div class="input-group">
+                                    <input type="number" id="kx" class="form-control" value="6" min="1">
+                                    <input type="number" id="ky" class="form-control" value="6" min="1">
+                                    <input type="number" id="kz" class="form-control" value="6" min="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">HPC Execution</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Login Node</label>
+                                <input type="text" id="loginNode" class="form-control" placeholder="hpc.example.org">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Command</label>
+                                <input type="text" id="dftCommand" class="form-control" value="pw.x -in scf.in > scf.out">
+                                <div class="form-text">Command executed via SSH on the remote host.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Working Directory</label>
+                                <input type="text" id="workDir" class="form-control" placeholder="/home/user/dft_calc">
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="runDFT()">Run DFT Calculation</button>
+                            <div id="dftStatus" class="small text-muted mt-2">Ready.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Output</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="clearOutput()">Clear</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="console-output" id="dftOutput">SMAD DFT Interface
+Ready to submit calculations.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-2">
                 <div class="col-md-6 col-lg-3">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">Input / structure</h5>
+                            <h5 class="card-title">Input / Structure</h5>
                             <p class="card-text small">Select a structure from your database or paste CIF/POSCAR. Set k-mesh, cutoff, functional.</p>
                         </div>
                     </div>
@@ -54,16 +161,16 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">Code / backend</h5>
-                            <p class="card-text small">Choose code (QE, VASP, …), pseudopotentials, and HPC queue. Submit via Cluster Console or API.</p>
+                            <h5 class="card-title">Pseudopotentials</h5>
+                            <p class="card-text small">Choose pseudopotential library (SSSP, PSLibrary, GBRV) for accurate calculations.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">Run & monitor</h5>
-                            <p class="card-text small">Launch jobs, track status, and stream logs. Results feed into Band gap, DOS, and Charge density in Analysis.</p>
+                            <h5 class="card-title">Run & Monitor</h5>
+                            <p class="card-text small">Launch jobs, track status, stream logs. Results feed into Analysis tools.</p>
                         </div>
                     </div>
                 </div>
@@ -71,22 +178,67 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title">Post-process</h5>
-                            <p class="card-text small">Band structure, DOS, charge density, and convergence checks. Export for publications.</p>
+                            <p class="card-text small">Band structure, DOS, charge density, convergence checks. Export for publications.</p>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="alert alert-info mt-4 mb-0">
-                <strong>DFT tab.</strong> This page is a placeholder for DFT workflow configuration and job submission.
-                Extend the FastAPI backend with routes for your chosen code (e.g. QE input generation, job launch, result parsing)
-                and wire them here.
             </div>
         </div>
     </main>
 
     <footer class="footer py-4 text-center text-muted small">
-        <div class="container">© 2026 SMAD · DFT</div>
+        <div class="container">© 2026 SMAD · Density Functional Theory</div>
     </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function runDFT() {
+            const host = document.getElementById('loginNode').value.trim();
+            const command = document.getElementById('dftCommand').value.trim();
+            const workDir = document.getElementById('workDir').value.trim();
+            const statusEl = document.getElementById('dftStatus');
+            const outputEl = document.getElementById('dftOutput');
+
+            if (!host || !command) {
+                statusEl.textContent = 'Please provide login node and command.';
+                return;
+            }
+
+            statusEl.textContent = 'Submitting DFT job...';
+            appendOutput(`[${new Date().toLocaleTimeString()}] Connecting to ${host}...`);
+            appendOutput(`Command: ${command}`);
+            if (workDir) appendOutput(`Working dir: ${workDir}`);
+
+            try {
+                const fullCommand = workDir ? `cd ${workDir} && ${command}` : command;
+                const resp = await fetch('/api/md/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host, command: fullCommand }),
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    appendOutput('[Error] ' + data.error);
+                    statusEl.textContent = 'Job failed.';
+                } else {
+                    appendOutput('[Output]\n' + (data.output || 'No output.'));
+                    statusEl.textContent = 'Job completed.';
+                }
+            } catch (err) {
+                appendOutput('[Error] ' + err);
+                statusEl.textContent = 'Request failed.';
+            }
+        }
+
+        function appendOutput(text) {
+            const el = document.getElementById('dftOutput');
+            el.textContent += '\n' + text;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('dftOutput').textContent = 'Console cleared.';
+        }
+    </script>
 </body>
 </html>

@@ -6,6 +6,19 @@
     <title>Monte Carlo · SMAD</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .console-output {
+            background: #1a1a2e;
+            color: #7ee787;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8rem;
+            padding: 1rem;
+            border-radius: 6px;
+            height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
@@ -18,7 +31,6 @@
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
                     <li class="nav-item"><a class="nav-link" href="/#materials-db">Materials DB</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/console">Cluster Console</a></li>
                     <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
                     <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
                     <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
@@ -34,7 +46,7 @@
         <div class="container">
             <div class="row mb-4">
                 <div class="col-lg-9">
-                    <h1 class="section-title mb-2">Monte Carlo</h1>
+                    <h1 class="section-title mb-2">Monte Carlo Simulations</h1>
                     <p class="section-subtitle mb-0">
                         Configure and run Monte Carlo simulations: MCMC, kinetic Monte Carlo (kMC), Parallel Tempering,
                         and Grand Canonical Monte Carlo (GCMC) for sampling, kinetics, and phase behavior.
@@ -42,92 +54,189 @@
                 </div>
             </div>
 
-            <ul class="nav nav-tabs mb-3" id="mcTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="mcmc-tab" data-bs-toggle="tab" data-bs-target="#mcmc" type="button" role="tab">MCMC</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="kmc-tab" data-bs-toggle="tab" data-bs-target="#kmc" type="button" role="tab">kMC</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="pt-tab" data-bs-toggle="tab" data-bs-target="#pt" type="button" role="tab">Parallel Tempering</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="gcmc-tab" data-bs-toggle="tab" data-bs-target="#gcmc" type="button" role="tab">GCMC</button>
-                </li>
-            </ul>
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <ul class="nav nav-tabs mb-3" id="mcTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="mcmc-tab" data-bs-toggle="tab" data-bs-target="#mcmc" type="button" role="tab">MCMC</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="kmc-tab" data-bs-toggle="tab" data-bs-target="#kmc" type="button" role="tab">kMC</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pt-tab" data-bs-toggle="tab" data-bs-target="#pt" type="button" role="tab">Parallel Tempering</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="gcmc-tab" data-bs-toggle="tab" data-bs-target="#gcmc" type="button" role="tab">GCMC</button>
+                        </li>
+                    </ul>
 
-            <div class="tab-content" id="mcTabsContent">
-                <div class="tab-pane fade show active" id="mcmc" role="tabpanel" aria-labelledby="mcmc-tab">
-                    <div class="card">
-                        <div class="card-body">
-                            <h2 class="h5 mb-3">Markov chain Monte Carlo (MCMC)</h2>
-                            <p class="mb-2">
-                                Sample from posterior distributions (e.g. parameter fitting, uncertainty quantification).
-                                Configure proposal distribution, chain length, burn-in, and convergence diagnostics.
-                            </p>
-                            <ul class="small text-muted mb-0">
-                                <li>Metropolis–Hastings, Gibbs sampling, or Hamiltonian MC</li>
-                                <li>Link to likelihood from DFT or experiments</li>
-                                <li>Output: chains, autocorrelation, credible intervals</li>
-                            </ul>
+                    <div class="tab-content" id="mcTabsContent">
+                        <div class="tab-pane fade show active" id="mcmc" role="tabpanel">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Markov Chain Monte Carlo (MCMC)</h2>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Algorithm</label>
+                                            <select class="form-select">
+                                                <option>Metropolis–Hastings</option>
+                                                <option>Gibbs Sampling</option>
+                                                <option>Hamiltonian MC</option>
+                                                <option>Slice Sampling</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Chain Length</label>
+                                            <input type="number" class="form-control" value="100000">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Burn-in Steps</label>
+                                            <input type="number" class="form-control" value="10000">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Thinning</label>
+                                            <input type="number" class="form-control" value="10">
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mt-3 mb-0">
+                                        Sample from posterior distributions for parameter fitting and uncertainty quantification.
+                                        Output: chains, autocorrelation, credible intervals.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="kmc" role="tabpanel" aria-labelledby="kmc-tab">
-                    <div class="card">
-                        <div class="card-body">
-                            <h2 class="h5 mb-3">Kinetic Monte Carlo (kMC)</h2>
-                            <p class="mb-2">
-                                Simulate rare events and long-time dynamics (e.g. diffusion, surface kinetics, defect evolution).
-                                Define events, rates, and lattice or off-lattice model.
-                            </p>
-                            <ul class="small text-muted mb-0">
-                                <li>Event lists and rate constants (from barriers or models)</li>
-                                <li>Residence-time algorithm or BKL</li>
-                                <li>Output: trajectories, mean first-passage times, statistics</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="pt" role="tabpanel" aria-labelledby="pt-tab">
-                    <div class="card">
-                        <div class="card-body">
-                            <h2 class="h5 mb-3">Parallel Tempering (replica exchange)</h2>
-                            <p class="mb-2">
-                                Run replicas at different temperatures and swap configurations to improve sampling
-                                and escape local minima. Useful for phase transitions and rugged landscapes.
-                            </p>
-                            <ul class="small text-muted mb-0">
-                                <li>Temperature schedule and swap scheme</li>
-                                <li>Compatible with MCMC or molecular dynamics</li>
-                                <li>Output: acceptance ratios, free-energy estimates</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="gcmc" role="tabpanel" aria-labelledby="gcmc-tab">
-                    <div class="card">
-                        <div class="card-body">
-                            <h2 class="h5 mb-3">Grand Canonical Monte Carlo (GCMC)</h2>
-                            <p class="mb-2">
-                                Sample at fixed chemical potential (and T, V) for adsorption, insertion, and
-                                open-system equilibria. Insertion/deletion and displacement moves.
-                            </p>
-                            <ul class="small text-muted mb-0">
-                                <li>Chemical potential, box size, interaction model</li>
-                                <li>Widom or histogram methods for μ</li>
-                                <li>Output: adsorption isotherms, density, fluctuations</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="alert alert-info mt-4 mb-0">
-                <strong>Monte Carlo tab.</strong> This page is a placeholder for MCMC, kMC, Parallel Tempering, and GCMC
-                workflow configuration. Add backend routes and job launchers for your preferred codes, then wire inputs and
-                outputs here.
+                        <div class="tab-pane fade" id="kmc" role="tabpanel">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Kinetic Monte Carlo (kMC)</h2>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Algorithm</label>
+                                            <select class="form-select">
+                                                <option>Residence-time (BKL)</option>
+                                                <option>First-reaction method</option>
+                                                <option>Rejection-free kMC</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Simulation Time</label>
+                                            <input type="text" class="form-control" value="1e-6 s">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Temperature (K)</label>
+                                            <input type="number" class="form-control" value="300">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Lattice Type</label>
+                                            <select class="form-select">
+                                                <option>FCC</option>
+                                                <option>BCC</option>
+                                                <option>Simple Cubic</option>
+                                                <option>Off-lattice</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mt-3 mb-0">
+                                        Simulate rare events and long-time dynamics: diffusion, surface kinetics, defect evolution.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="pt" role="tabpanel">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Parallel Tempering (Replica Exchange)</h2>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">N Replicas</label>
+                                            <input type="number" class="form-control" value="16">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">T_min (K)</label>
+                                            <input type="number" class="form-control" value="100">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">T_max (K)</label>
+                                            <input type="number" class="form-control" value="1000">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Swap Frequency</label>
+                                            <input type="number" class="form-control" value="100">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Steps per Replica</label>
+                                            <input type="number" class="form-control" value="50000">
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mt-3 mb-0">
+                                        Run replicas at different temperatures with configuration swaps to escape local minima.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="gcmc" role="tabpanel">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="h5 mb-3">Grand Canonical Monte Carlo (GCMC)</h2>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Chemical Potential μ (eV)</label>
+                                            <input type="number" class="form-control" value="-0.5" step="0.01">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Temperature (K)</label>
+                                            <input type="number" class="form-control" value="300">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">MC Cycles</label>
+                                            <input type="number" class="form-control" value="100000">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Insertion Probability</label>
+                                            <input type="number" class="form-control" value="0.3" step="0.05">
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mt-3 mb-0">
+                                        Sample at fixed μ, T, V for adsorption, insertion, and open-system equilibria.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card mb-3">
+                        <div class="card-header">HPC Execution</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Login Node</label>
+                                <input type="text" id="mcHost" class="form-control" placeholder="hpc.example.org">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Command</label>
+                                <input type="text" id="mcCommand" class="form-control" value="python run_mc.py">
+                                <div class="form-text">Command executed via SSH.</div>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="runMC()">Run Monte Carlo</button>
+                            <div id="mcStatus" class="small text-muted mt-2">Ready.</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Output</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="clearOutput()">Clear</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="console-output" id="mcOutput">SMAD Monte Carlo Interface
+Ready to submit simulations.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -135,6 +244,52 @@
     <footer class="footer py-4 text-center text-muted small">
         <div class="container">© 2026 SMAD · Monte Carlo (MCMC, kMC, Parallel Tempering, GCMC)</div>
     </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function runMC() {
+            const host = document.getElementById('mcHost').value.trim();
+            const command = document.getElementById('mcCommand').value.trim();
+            const statusEl = document.getElementById('mcStatus');
+
+            if (!host || !command) {
+                statusEl.textContent = 'Please provide login node and command.';
+                return;
+            }
+
+            statusEl.textContent = 'Submitting MC job...';
+            appendOutput(`[${new Date().toLocaleTimeString()}] Connecting to ${host}...`);
+            appendOutput(`Command: ${command}`);
+
+            try {
+                const resp = await fetch('/api/md/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host, command }),
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    appendOutput('[Error] ' + data.error);
+                    statusEl.textContent = 'Job failed.';
+                } else {
+                    appendOutput('[Output]\n' + (data.output || 'No output.'));
+                    statusEl.textContent = 'Job completed.';
+                }
+            } catch (err) {
+                appendOutput('[Error] ' + err);
+                statusEl.textContent = 'Request failed.';
+            }
+        }
+
+        function appendOutput(text) {
+            const el = document.getElementById('mcOutput');
+            el.textContent += '\n' + text;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('mcOutput').textContent = 'Console cleared.';
+        }
+    </script>
 </body>
 </html>
