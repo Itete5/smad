@@ -3,403 +3,1024 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Structures · SMAD</title>
+    <title>Structure Builder · SMAD</title>
+    <meta name="description" content="Build, edit, and visualize crystal structures for DFT calculations. Inspired by BURAI for Quantum ESPRESSO.">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/3dmol/build/3Dmol-min.js"></script>
+    <style>
+        :root {
+            --sb-dark: #1a1d21;
+            --sb-panel: #22262c;
+            --sb-card: #2a2f36;
+            --sb-border: #3a3f47;
+            --sb-text: #e1e4e8;
+            --sb-muted: #8b929a;
+            --sb-accent: #58a6ff;
+            --sb-success: #3fb950;
+            --sb-warning: #d29922;
+            --sb-danger: #f85149;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--sb-dark); color: var(--sb-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+        .sb-app { display: flex; flex-direction: column; height: 100vh; }
+
+        .sb-navbar {
+            background: var(--sb-panel);
+            border-bottom: 1px solid var(--sb-border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .sb-navbar-brand { font-weight: 700; font-size: 1.1rem; color: var(--sb-text); text-decoration: none; }
+        .sb-navbar-brand:hover { color: var(--sb-accent); }
+        .sb-navbar-links { display: flex; gap: 1rem; }
+        .sb-navbar-links a { color: var(--sb-muted); text-decoration: none; font-size: 0.85rem; }
+        .sb-navbar-links a:hover, .sb-navbar-links a.active { color: var(--sb-accent); }
+
+        .sb-main { display: flex; flex: 1; overflow: hidden; }
+
+        .sb-sidebar {
+            width: 340px;
+            background: var(--sb-panel);
+            border-right: 1px solid var(--sb-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .sb-sidebar-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--sb-border);
+        }
+        .sb-sidebar-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 0.6rem 0.5rem;
+            color: var(--sb-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .sb-sidebar-tab:hover { color: var(--sb-text); }
+        .sb-sidebar-tab.active { color: var(--sb-accent); border-bottom-color: var(--sb-accent); }
+
+        .sb-sidebar-content { flex: 1; overflow-y: auto; }
+        .sb-sidebar-section { display: none; padding: 1rem; }
+        .sb-sidebar-section.active { display: block; }
+
+        .sb-section-title { font-size: 0.7rem; text-transform: uppercase; color: var(--sb-muted); margin-bottom: 0.75rem; letter-spacing: 0.03em; }
+        .sb-group { margin-bottom: 1rem; }
+        .sb-label { display: block; font-size: 0.75rem; color: var(--sb-muted); margin-bottom: 0.3rem; }
+        .sb-input, .sb-select {
+            width: 100%;
+            background: var(--sb-card);
+            border: 1px solid var(--sb-border);
+            color: var(--sb-text);
+            padding: 0.45rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .sb-input:focus, .sb-select:focus { outline: none; border-color: var(--sb-accent); }
+        .sb-input::placeholder { color: var(--sb-muted); }
+        .sb-row { display: flex; gap: 0.5rem; }
+        .sb-row > * { flex: 1; }
+
+        .sb-btn {
+            background: var(--sb-card);
+            border: 1px solid var(--sb-border);
+            color: var(--sb-text);
+            padding: 0.45rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .sb-btn:hover { border-color: var(--sb-accent); color: var(--sb-accent); }
+        .sb-btn-primary { background: var(--sb-accent); border-color: var(--sb-accent); color: #fff; }
+        .sb-btn-primary:hover { background: #4393e6; color: #fff; }
+        .sb-btn-success { background: var(--sb-success); border-color: var(--sb-success); color: #fff; }
+        .sb-btn-danger { background: var(--sb-danger); border-color: var(--sb-danger); color: #fff; }
+        .sb-btn-sm { padding: 0.3rem 0.5rem; font-size: 0.7rem; }
+        .sb-btn-group { display: flex; gap: 0.5rem; }
+        .sb-btn-full { width: 100%; }
+
+        .sb-crystal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        .sb-crystal-btn {
+            background: var(--sb-card);
+            border: 1px solid var(--sb-border);
+            padding: 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+        .sb-crystal-btn:hover { border-color: var(--sb-accent); }
+        .sb-crystal-btn.selected { border-color: var(--sb-accent); background: rgba(88,166,255,0.1); }
+        .sb-crystal-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .sb-crystal-name { font-size: 0.7rem; color: var(--sb-muted); }
+
+        .sb-atom-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--sb-border);
+            border-radius: 4px;
+            background: var(--sb-card);
+        }
+        .sb-atom-row {
+            display: flex;
+            align-items: center;
+            padding: 0.4rem 0.6rem;
+            border-bottom: 1px solid var(--sb-border);
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .sb-atom-row:last-child { border-bottom: none; }
+        .sb-atom-el { font-weight: 600; width: 30px; }
+        .sb-atom-pos { flex: 1; font-family: monospace; font-size: 0.75rem; color: var(--sb-muted); }
+        .sb-atom-del { color: var(--sb-danger); cursor: pointer; padding: 2px 6px; }
+        .sb-atom-del:hover { background: rgba(248,81,73,0.2); border-radius: 3px; }
+
+        .sb-center { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .sb-viewer-container { flex: 1; background: #000; position: relative; }
+        #structure-viewer { width: 100%; height: 100%; }
+        .sb-viewer-controls {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        .sb-viewer-btn {
+            background: rgba(34,38,44,0.9);
+            border: 1px solid var(--sb-border);
+            color: var(--sb-text);
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .sb-viewer-btn:hover { background: var(--sb-panel); border-color: var(--sb-accent); }
+
+        .sb-info-bar {
+            background: var(--sb-panel);
+            border-top: 1px solid var(--sb-border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            gap: 2rem;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .sb-info-item { display: flex; gap: 0.5rem; }
+        .sb-info-label { color: var(--sb-muted); }
+        .sb-info-value { font-weight: 500; font-family: monospace; }
+
+        .sb-right-panel {
+            width: 320px;
+            background: var(--sb-panel);
+            border-left: 1px solid var(--sb-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .sb-right-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--sb-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sb-right-header h3 { font-size: 0.85rem; margin: 0; }
+        .sb-right-tabs { display: flex; border-bottom: 1px solid var(--sb-border); }
+        .sb-right-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 0.5rem;
+            color: var(--sb-muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .sb-right-tab:hover { color: var(--sb-text); }
+        .sb-right-tab.active { color: var(--sb-accent); border-bottom-color: var(--sb-accent); }
+        .sb-right-content { flex: 1; overflow-y: auto; padding: 1rem; }
+        .sb-right-section { display: none; }
+        .sb-right-section.active { display: block; }
+
+        .sb-info-table { width: 100%; font-size: 0.8rem; }
+        .sb-info-table td { padding: 0.35rem 0; border-bottom: 1px solid var(--sb-border); }
+        .sb-info-table td:first-child { color: var(--sb-muted); width: 45%; }
+
+        .sb-lattice-matrix {
+            font-family: monospace;
+            font-size: 0.75rem;
+            background: var(--sb-dark);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        .sb-lattice-row { display: flex; justify-content: space-between; margin-bottom: 0.25rem; }
+
+        .sb-export-section { margin-top: 1rem; }
+        .sb-export-btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+        .sb-template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .sb-template-card {
+            background: var(--sb-card);
+            border: 1px solid var(--sb-border);
+            padding: 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .sb-template-card:hover { border-color: var(--sb-accent); transform: translateY(-1px); }
+        .sb-template-name { font-size: 0.8rem; font-weight: 500; margin-bottom: 0.25rem; }
+        .sb-template-formula { font-size: 0.7rem; color: var(--sb-accent); }
+
+        .sb-textarea {
+            width: 100%;
+            background: var(--sb-card);
+            border: 1px solid var(--sb-border);
+            color: var(--sb-text);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            resize: vertical;
+        }
+        .sb-textarea:focus { outline: none; border-color: var(--sb-accent); }
+
+        .sb-divider {
+            height: 1px;
+            background: var(--sb-border);
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 1200px) { .sb-right-panel { width: 280px; } }
+        @media (max-width: 992px) { .sb-right-panel { display: none; } }
+        @media (max-width: 768px) { .sb-sidebar { width: 280px; } }
+        @media (max-width: 600px) { .sb-sidebar { display: none; } }
+    </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/">SMAD</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsStructures">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarsStructures">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/databases">Materials DB</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="/structures">Structures</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
-                </ul>
+    <div class="sb-app">
+        <nav class="sb-navbar">
+            <a href="/" class="sb-navbar-brand">SMAD · Structure Builder</a>
+            <div class="sb-navbar-links">
+                <a href="/">Home</a>
+                <a href="/databases">Materials DB</a>
+                <a href="/structures" class="active">Structures</a>
+                <a href="/dft">DFT</a>
+                <a href="/md">MD</a>
+                <a href="/montecarlo">Monte Carlo</a>
+                <a href="/analysis">Analysis</a>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <main class="section-light py-5">
-        <div class="container">
-            <div class="row mb-4">
-                <div class="col-lg-9">
-                    <h1 class="section-title mb-2">Structure Limits & Builder</h1>
-                    <p class="section-subtitle mb-0">
-                        One environment to create, transform, and analyze crystal structures: unit cells, supercells, and slabs.
-                        Paste a CIF or POSCAR to generate symmetry, lattice parameters, and interatomic distance reports.
-                    </p>
+        <div class="sb-main">
+            <aside class="sb-sidebar">
+                <div class="sb-sidebar-tabs">
+                    <button class="sb-sidebar-tab active" data-tab="build">Build</button>
+                    <button class="sb-sidebar-tab" data-tab="import">Import</button>
+                    <button class="sb-sidebar-tab" data-tab="transform">Transform</button>
                 </div>
-            </div>
 
-            <ul class="nav nav-tabs mb-3" id="structuresTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="builder-tab" data-bs-toggle="tab" data-bs-target="#builder" type="button" role="tab">
-                        Structure Builder
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="formula-tab" data-bs-toggle="tab" data-bs-target="#formula" type="button" role="tab">
-                        Empirical Formula & Units
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content" id="structuresTabsContent">
-                <!-- Builder -->
-                <div class="tab-pane fade show active" id="builder" role="tabpanel" aria-labelledby="builder-tab">
-                    <div class="row g-4">
-                        <div class="col-lg-5">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h2 class="h5 mb-3">Inputs</h2>
-
-                                    <div class="mb-3">
-                                        <label for="structFormat" class="form-label">Input format</label>
-                                        <select id="structFormat" class="form-select">
-                                            <option value="auto" selected>Auto-detect (CIF / POSCAR)</option>
-                                            <option value="cif">CIF</option>
-                                            <option value="poscar">POSCAR</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="structText" class="form-label">Structure content</label>
-                                        <textarea id="structText" class="form-control" rows="10"
-                                                  placeholder="Paste CIF or POSCAR here..."></textarea>
-                                        <div class="form-text">
-                                            This powers: unit cell parameters, space-group identification, Wyckoff symbols,
-                                            interatomic distances, and transformations (supercell/slab).
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">Supercell (a×b×c)</label>
-                                        <div class="row g-2">
-                                            <div class="col"><input id="scA" type="number" class="form-control" value="1" min="1"></div>
-                                            <div class="col"><input id="scB" type="number" class="form-control" value="1" min="1"></div>
-                                            <div class="col"><input id="scC" type="number" class="form-control" value="1" min="1"></div>
-                                        </div>
-                                        <div class="form-text">Set to 1×1×1 to keep the original unit cell.</div>
-                                    </div>
-
-                                    <div class="border rounded p-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <label class="form-label mb-0">Slab (optional)</label>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="slabEnable">
-                                                <label class="form-check-label small" for="slabEnable">Enable</label>
-                                            </div>
-                                        </div>
-                                        <div class="row g-2 mb-2">
-                                            <div class="col"><input id="mH" type="number" class="form-control" value="0"></div>
-                                            <div class="col"><input id="mK" type="number" class="form-control" value="0"></div>
-                                            <div class="col"><input id="mL" type="number" class="form-control" value="1"></div>
-                                        </div>
-                                        <div class="row g-2">
-                                            <div class="col">
-                                                <label class="form-label small mb-1" for="minSlab">Min slab (Å)</label>
-                                                <input id="minSlab" type="number" class="form-control" value="10" min="1" step="0.5">
-                                            </div>
-                                            <div class="col">
-                                                <label class="form-label small mb-1" for="minVac">Min vacuum (Å)</label>
-                                                <input id="minVac" type="number" class="form-control" value="15" min="1" step="0.5">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <button class="btn btn-primary w-100" type="button" onclick="analyzeStructure()">
-                                        Generate & analyze
-                                    </button>
-                                    <div id="structStatus" class="small text-muted mt-2">Waiting for input.</div>
-                                </div>
+                <div class="sb-sidebar-content">
+                    <div class="sb-sidebar-section active" id="tab-build">
+                        <div class="sb-section-title">Crystal System</div>
+                        <div class="sb-crystal-grid" id="crystalSystemGrid">
+                            <div class="sb-crystal-btn selected" data-system="cubic" onclick="selectCrystalSystem('cubic')">
+                                <div class="sb-crystal-icon">⬜</div>
+                                <div class="sb-crystal-name">Cubic</div>
+                            </div>
+                            <div class="sb-crystal-btn" data-system="hexagonal" onclick="selectCrystalSystem('hexagonal')">
+                                <div class="sb-crystal-icon">⬡</div>
+                                <div class="sb-crystal-name">Hexagonal</div>
+                            </div>
+                            <div class="sb-crystal-btn" data-system="tetragonal" onclick="selectCrystalSystem('tetragonal')">
+                                <div class="sb-crystal-icon">▯</div>
+                                <div class="sb-crystal-name">Tetragonal</div>
+                            </div>
+                            <div class="sb-crystal-btn" data-system="orthorhombic" onclick="selectCrystalSystem('orthorhombic')">
+                                <div class="sb-crystal-icon">▭</div>
+                                <div class="sb-crystal-name">Orthorhombic</div>
+                            </div>
+                            <div class="sb-crystal-btn" data-system="monoclinic" onclick="selectCrystalSystem('monoclinic')">
+                                <div class="sb-crystal-icon">▱</div>
+                                <div class="sb-crystal-name">Monoclinic</div>
+                            </div>
+                            <div class="sb-crystal-btn" data-system="triclinic" onclick="selectCrystalSystem('triclinic')">
+                                <div class="sb-crystal-icon">◇</div>
+                                <div class="sb-crystal-name">Triclinic</div>
                             </div>
                         </div>
 
-                        <div class="col-lg-7">
-                            <div class="card mb-4">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h2 class="h5 mb-0">Summary</h2>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <button class="btn btn-outline-secondary" type="button" onclick="downloadExport('cif')">Download CIF</button>
-                                            <button class="btn btn-outline-secondary" type="button" onclick="downloadExport('poscar')">Download POSCAR</button>
-                                        </div>
-                                    </div>
-                                    <div class="text-muted small mt-2" id="summaryHint">
-                                        Submit a structure to see lattice constants, crystal system inference, space group, and composition.
-                                    </div>
-                                    <div class="row g-3 mt-1" id="structSummary"></div>
-                                </div>
-                            </div>
+                        <div class="sb-divider"></div>
+                        <div class="sb-section-title">Lattice Parameters</div>
 
-                            <div class="card">
-                                <div class="card-body">
-                                    <h2 class="h5 mb-3">Interatomic distances</h2>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm align-middle" id="distTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>Pair</th>
-                                                    <th>Distance (Å)</th>
-                                                    <th>Scaled</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr><td colspan="3" class="text-muted">No distances computed yet.</td></tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="small text-muted">
-                                        Scaled distance uses \(V^{1/3}\) as a reference length for quick comparisons across cells.
-                                    </div>
-                                </div>
+                        <div class="sb-group">
+                            <label class="sb-label">a, b, c (Å)</label>
+                            <div class="sb-row">
+                                <input type="number" class="sb-input" id="lattA" value="4.0" step="0.01">
+                                <input type="number" class="sb-input" id="lattB" value="4.0" step="0.01">
+                                <input type="number" class="sb-input" id="lattC" value="4.0" step="0.01">
                             </div>
+                        </div>
+
+                        <div class="sb-group">
+                            <label class="sb-label">α, β, γ (°)</label>
+                            <div class="sb-row">
+                                <input type="number" class="sb-input" id="lattAlpha" value="90" step="0.1">
+                                <input type="number" class="sb-input" id="lattBeta" value="90" step="0.1">
+                                <input type="number" class="sb-input" id="lattGamma" value="90" step="0.1">
+                            </div>
+                        </div>
+
+                        <div class="sb-group">
+                            <label class="sb-label">Space Group</label>
+                            <select class="sb-select" id="spaceGroup">
+                                <option value="1">P1 (1)</option>
+                                <option value="2">P-1 (2)</option>
+                                <option value="225" selected>Fm-3m (225)</option>
+                                <option value="227">Fd-3m (227)</option>
+                                <option value="221">Pm-3m (221)</option>
+                                <option value="229">Im-3m (229)</option>
+                                <option value="194">P6₃/mmc (194)</option>
+                                <option value="166">R-3m (166)</option>
+                                <option value="139">I4/mmm (139)</option>
+                                <option value="62">Pnma (62)</option>
+                                <option value="14">P2₁/c (14)</option>
+                            </select>
+                        </div>
+
+                        <div class="sb-divider"></div>
+                        <div class="sb-section-title">Atoms</div>
+
+                        <div class="sb-group">
+                            <div class="sb-row" style="margin-bottom:0.5rem;">
+                                <input type="text" class="sb-input" id="newAtomEl" placeholder="Element" style="width:60px;">
+                                <input type="number" class="sb-input" id="newAtomX" placeholder="x" step="0.001">
+                                <input type="number" class="sb-input" id="newAtomY" placeholder="y" step="0.001">
+                                <input type="number" class="sb-input" id="newAtomZ" placeholder="z" step="0.001">
+                            </div>
+                            <button class="sb-btn sb-btn-full" onclick="addAtom()">+ Add Atom</button>
+                        </div>
+
+                        <div class="sb-atom-list" id="atomList">
+                            <div class="sb-atom-row">
+                                <span class="sb-atom-el">Cu</span>
+                                <span class="sb-atom-pos">0.000, 0.000, 0.000</span>
+                                <span class="sb-atom-del" onclick="removeAtom(0)">×</span>
+                            </div>
+                        </div>
+
+                        <div class="sb-divider"></div>
+                        <button class="sb-btn sb-btn-primary sb-btn-full" onclick="buildStructure()">Build Structure</button>
+                    </div>
+
+                    <div class="sb-sidebar-section" id="tab-import">
+                        <div class="sb-section-title">Quick Templates</div>
+                        <div class="sb-template-grid">
+                            <div class="sb-template-card" onclick="loadTemplate('fcc_cu')">
+                                <div class="sb-template-name">FCC Copper</div>
+                                <div class="sb-template-formula">Cu (Fm-3m)</div>
+                            </div>
+                            <div class="sb-template-card" onclick="loadTemplate('bcc_fe')">
+                                <div class="sb-template-name">BCC Iron</div>
+                                <div class="sb-template-formula">Fe (Im-3m)</div>
+                            </div>
+                            <div class="sb-template-card" onclick="loadTemplate('nacl')">
+                                <div class="sb-template-name">Rock Salt</div>
+                                <div class="sb-template-formula">NaCl (Fm-3m)</div>
+                            </div>
+                            <div class="sb-template-card" onclick="loadTemplate('diamond')">
+                                <div class="sb-template-name">Diamond</div>
+                                <div class="sb-template-formula">C (Fd-3m)</div>
+                            </div>
+                            <div class="sb-template-card" onclick="loadTemplate('perovskite')">
+                                <div class="sb-template-name">Perovskite</div>
+                                <div class="sb-template-formula">SrTiO₃ (Pm-3m)</div>
+                            </div>
+                            <div class="sb-template-card" onclick="loadTemplate('graphite')">
+                                <div class="sb-template-name">Graphite</div>
+                                <div class="sb-template-formula">C (P6₃/mmc)</div>
+                            </div>
+                        </div>
+
+                        <div class="sb-divider"></div>
+                        <div class="sb-section-title">Import from File</div>
+
+                        <div class="sb-group">
+                            <label class="sb-label">Format</label>
+                            <select class="sb-select" id="importFormat">
+                                <option value="auto">Auto-detect</option>
+                                <option value="cif">CIF</option>
+                                <option value="poscar">POSCAR / CONTCAR</option>
+                                <option value="xyz">XYZ</option>
+                                <option value="qe">Quantum ESPRESSO Input</option>
+                            </select>
+                        </div>
+
+                        <div class="sb-group">
+                            <label class="sb-label">Paste Structure Data</label>
+                            <textarea class="sb-textarea" id="importText" rows="12" placeholder="Paste CIF, POSCAR, XYZ, or QE input here..."></textarea>
+                        </div>
+
+                        <button class="sb-btn sb-btn-primary sb-btn-full" onclick="importStructure()">Import Structure</button>
+                    </div>
+
+                    <div class="sb-sidebar-section" id="tab-transform">
+                        <div class="sb-section-title">Supercell</div>
+                        <div class="sb-group">
+                            <label class="sb-label">Repetitions (a × b × c)</label>
+                            <div class="sb-row">
+                                <input type="number" class="sb-input" id="scA" value="1" min="1" max="10">
+                                <input type="number" class="sb-input" id="scB" value="1" min="1" max="10">
+                                <input type="number" class="sb-input" id="scC" value="1" min="1" max="10">
+                            </div>
+                        </div>
+                        <button class="sb-btn sb-btn-full" onclick="makeSupercell()">Generate Supercell</button>
+
+                        <div class="sb-divider"></div>
+                        <div class="sb-section-title">Surface Slab</div>
+
+                        <div class="sb-group">
+                            <label class="sb-label">Miller Indices (h k l)</label>
+                            <div class="sb-row">
+                                <input type="number" class="sb-input" id="millerH" value="1">
+                                <input type="number" class="sb-input" id="millerK" value="0">
+                                <input type="number" class="sb-input" id="millerL" value="0">
+                            </div>
+                        </div>
+
+                        <div class="sb-group">
+                            <label class="sb-label">Slab Thickness (layers)</label>
+                            <input type="number" class="sb-input" id="slabLayers" value="4" min="1">
+                        </div>
+
+                        <div class="sb-group">
+                            <label class="sb-label">Vacuum (Å)</label>
+                            <input type="number" class="sb-input" id="slabVacuum" value="15" min="0" step="0.5">
+                        </div>
+
+                        <button class="sb-btn sb-btn-full" onclick="makeSlab()">Generate Slab</button>
+
+                        <div class="sb-divider"></div>
+                        <div class="sb-section-title">Conventional / Primitive</div>
+                        <div class="sb-btn-group">
+                            <button class="sb-btn" style="flex:1;" onclick="toPrimitive()">To Primitive</button>
+                            <button class="sb-btn" style="flex:1;" onclick="toConventional()">To Conventional</button>
                         </div>
                     </div>
                 </div>
+            </aside>
 
-                <!-- Formula -->
-                <div class="tab-pane fade" id="formula" role="tabpanel" aria-labelledby="formula-tab">
-                    <div class="row g-4">
-                        <div class="col-lg-5">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h2 class="h5 mb-3">Empirical formula</h2>
-                                    <div class="mb-3">
-                                        <label for="empFormula" class="form-label">Empirical formula</label>
-                                        <input id="empFormula" type="text" class="form-control" placeholder="e.g. YBa2Cu3O7">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="formulaUnits" class="form-label">Formula units (Z)</label>
-                                        <input id="formulaUnits" type="number" class="form-control" value="1" min="1">
-                                        <div class="form-text">
-                                            Used to compute total composition for a chosen number of formula units.
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary w-100" type="button" onclick="analyzeFormula()">
-                                        Analyze formula
-                                    </button>
-                                    <div id="formulaStatus" class="small text-muted mt-2">Waiting for input.</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-7">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h2 class="h5 mb-3">Results</h2>
-                                    <div id="formulaResults" class="text-muted small">
-                                        Enter a formula to compute reduced formula, elements, and total composition for Z units.
-                                        Space-group generation and unit cell parameters require structural information (use the Builder tab).
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <main class="sb-center">
+                <div class="sb-viewer-container">
+                    <div id="structure-viewer"></div>
+                    <div class="sb-viewer-controls">
+                        <button class="sb-viewer-btn" onclick="setViewStyle('sphere')">Spheres</button>
+                        <button class="sb-viewer-btn" onclick="setViewStyle('stick')">Sticks</button>
+                        <button class="sb-viewer-btn" onclick="toggleBox()">Box</button>
+                        <button class="sb-viewer-btn" onclick="resetView()">Reset</button>
                     </div>
                 </div>
-            </div>
-        </div>
-    </main>
+                <div class="sb-info-bar">
+                    <div class="sb-info-item">
+                        <span class="sb-info-label">Formula:</span>
+                        <span class="sb-info-value" id="infoFormula">Cu</span>
+                    </div>
+                    <div class="sb-info-item">
+                        <span class="sb-info-label">Space Group:</span>
+                        <span class="sb-info-value" id="infoSpaceGroup">Fm-3m (225)</span>
+                    </div>
+                    <div class="sb-info-item">
+                        <span class="sb-info-label">Atoms:</span>
+                        <span class="sb-info-value" id="infoAtoms">1</span>
+                    </div>
+                    <div class="sb-info-item">
+                        <span class="sb-info-label">Volume:</span>
+                        <span class="sb-info-value" id="infoVolume">64.0 Å³</span>
+                    </div>
+                </div>
+            </main>
 
-    <footer class="footer py-4 text-center text-muted small">
-        <div class="container">
-            <div>© 2026 SMAD · Superconducting Materials Automated Discovery</div>
-            <div>Structure Builder · Unit cell, supercell, slab, symmetry & distances</div>
-        </div>
-    </footer>
+            <aside class="sb-right-panel">
+                <div class="sb-right-header">
+                    <h3>Structure Info</h3>
+                </div>
+                <div class="sb-right-tabs">
+                    <button class="sb-right-tab active" data-rtab="lattice">Lattice</button>
+                    <button class="sb-right-tab" data-rtab="atoms">Atoms</button>
+                    <button class="sb-right-tab" data-rtab="export">Export</button>
+                </div>
+                <div class="sb-right-content">
+                    <div class="sb-right-section active" id="rtab-lattice">
+                        <table class="sb-info-table">
+                            <tr><td>Crystal System</td><td id="detailSystem">Cubic</td></tr>
+                            <tr><td>Space Group</td><td id="detailSG">Fm-3m (225)</td></tr>
+                            <tr><td>a</td><td id="detailA">4.000 Å</td></tr>
+                            <tr><td>b</td><td id="detailB">4.000 Å</td></tr>
+                            <tr><td>c</td><td id="detailC">4.000 Å</td></tr>
+                            <tr><td>α</td><td id="detailAlpha">90.00°</td></tr>
+                            <tr><td>β</td><td id="detailBeta">90.00°</td></tr>
+                            <tr><td>γ</td><td id="detailGamma">90.00°</td></tr>
+                            <tr><td>Volume</td><td id="detailVol">64.00 Å³</td></tr>
+                        </table>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+                        <div class="sb-section-title" style="margin-top:1rem;">Lattice Vectors</div>
+                        <div class="sb-lattice-matrix" id="latticeVectors">
+                            <div class="sb-lattice-row"><span>a:</span><span>4.000, 0.000, 0.000</span></div>
+                            <div class="sb-lattice-row"><span>b:</span><span>0.000, 4.000, 0.000</span></div>
+                            <div class="sb-lattice-row"><span>c:</span><span>0.000, 0.000, 4.000</span></div>
+                        </div>
+                    </div>
+
+                    <div class="sb-right-section" id="rtab-atoms">
+                        <table class="sb-info-table" id="atomsTable">
+                            <tr><th>Element</th><th>x</th><th>y</th><th>z</th></tr>
+                        </table>
+                    </div>
+
+                    <div class="sb-right-section" id="rtab-export">
+                        <div class="sb-section-title">Export Format</div>
+                        <div class="sb-export-btns">
+                            <button class="sb-btn" onclick="exportStructure('cif')">CIF</button>
+                            <button class="sb-btn" onclick="exportStructure('poscar')">POSCAR</button>
+                            <button class="sb-btn" onclick="exportStructure('xyz')">XYZ</button>
+                            <button class="sb-btn" onclick="exportStructure('qe')">QE Input</button>
+                        </div>
+
+                        <div class="sb-divider"></div>
+                        <div class="sb-section-title">Export Preview</div>
+                        <textarea class="sb-textarea" id="exportPreview" rows="15" readonly></textarea>
+                        <button class="sb-btn sb-btn-primary sb-btn-full" style="margin-top:0.5rem;" onclick="downloadExport()">Download</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
     <script>
-        let lastExports = { cif: null, poscar: null };
+        let viewer = null;
+        let currentStructure = {
+            system: 'cubic',
+            a: 4.0, b: 4.0, c: 4.0,
+            alpha: 90, beta: 90, gamma: 90,
+            spaceGroup: 225,
+            atoms: [{ el: 'Cu', x: 0, y: 0, z: 0 }]
+        };
+        let showBox = true;
+        let currentStyle = 'sphere';
 
-        function setStatus(id, text) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = text;
+        const templates = {
+            fcc_cu: { system: 'cubic', a: 3.615, b: 3.615, c: 3.615, alpha: 90, beta: 90, gamma: 90, spaceGroup: 225,
+                atoms: [{ el: 'Cu', x: 0, y: 0, z: 0 }] },
+            bcc_fe: { system: 'cubic', a: 2.87, b: 2.87, c: 2.87, alpha: 90, beta: 90, gamma: 90, spaceGroup: 229,
+                atoms: [{ el: 'Fe', x: 0, y: 0, z: 0 }] },
+            nacl: { system: 'cubic', a: 5.64, b: 5.64, c: 5.64, alpha: 90, beta: 90, gamma: 90, spaceGroup: 225,
+                atoms: [{ el: 'Na', x: 0, y: 0, z: 0 }, { el: 'Cl', x: 0.5, y: 0.5, z: 0.5 }] },
+            diamond: { system: 'cubic', a: 3.567, b: 3.567, c: 3.567, alpha: 90, beta: 90, gamma: 90, spaceGroup: 227,
+                atoms: [{ el: 'C', x: 0, y: 0, z: 0 }, { el: 'C', x: 0.25, y: 0.25, z: 0.25 }] },
+            perovskite: { system: 'cubic', a: 3.905, b: 3.905, c: 3.905, alpha: 90, beta: 90, gamma: 90, spaceGroup: 221,
+                atoms: [{ el: 'Sr', x: 0, y: 0, z: 0 }, { el: 'Ti', x: 0.5, y: 0.5, z: 0.5 }, { el: 'O', x: 0.5, y: 0.5, z: 0 }, { el: 'O', x: 0.5, y: 0, z: 0.5 }, { el: 'O', x: 0, y: 0.5, z: 0.5 }] },
+            graphite: { system: 'hexagonal', a: 2.464, b: 2.464, c: 6.711, alpha: 90, beta: 90, gamma: 120, spaceGroup: 194,
+                atoms: [{ el: 'C', x: 0, y: 0, z: 0 }, { el: 'C', x: 0.333, y: 0.667, z: 0 }, { el: 'C', x: 0, y: 0, z: 0.5 }, { el: 'C', x: 0.667, y: 0.333, z: 0.5 }] },
+        };
+
+        const elementColors = {
+            H: '#ffffff', C: '#909090', N: '#3050f8', O: '#ff0d0d', F: '#90e050', S: '#ffff30',
+            Si: '#f0c8a0', Fe: '#e06633', Cu: '#c88033', Zn: '#7d80b0', Na: '#ab5cf2', Cl: '#1ff01f',
+            Ca: '#3dff00', Ti: '#bfc2c7', Sr: '#00ff00', Ba: '#00c900', Al: '#bfa6a6', Ni: '#50d050',
+            Au: '#ffd123', Ag: '#c0c0c0', Pt: '#d0d0e0', Pb: '#575961', Mn: '#9c7ac7', Co: '#f090a0',
+        };
+
+        const spaceGroupNames = {
+            1: 'P1', 2: 'P-1', 14: 'P2₁/c', 62: 'Pnma', 139: 'I4/mmm', 166: 'R-3m',
+            194: 'P6₃/mmc', 221: 'Pm-3m', 225: 'Fm-3m', 227: 'Fd-3m', 229: 'Im-3m'
+        };
+
+        function initViewer() {
+            viewer = $3Dmol.createViewer('structure-viewer', {
+                backgroundColor: '#0d1117',
+                antialias: true,
+            });
+            buildStructure();
         }
 
-        function kv(label, value) {
-            const safe = (value === null || value === undefined || value === "") ? "—" : value;
-            return `
-                <div class="col-md-6 col-lg-4">
-                    <div class="border rounded p-2 bg-white">
-                        <div class="text-muted small">${label}</div>
-                        <div class="fw-semibold">${safe}</div>
-                    </div>
-                </div>
-            `;
-        }
+        function selectCrystalSystem(system) {
+            document.querySelectorAll('.sb-crystal-btn').forEach(b => b.classList.remove('selected'));
+            document.querySelector(`[data-system="${system}"]`).classList.add('selected');
+            currentStructure.system = system;
 
-        async function analyzeStructure() {
-            const text = document.getElementById("structText").value;
-            const fmt = document.getElementById("structFormat").value;
-            const scA = parseInt(document.getElementById("scA").value || "1", 10);
-            const scB = parseInt(document.getElementById("scB").value || "1", 10);
-            const scC = parseInt(document.getElementById("scC").value || "1", 10);
-            const slabEnable = document.getElementById("slabEnable").checked;
-
-            if (!text || !text.trim()) {
-                setStatus("structStatus", "Please paste a CIF or POSCAR first.");
-                return;
-            }
-
-            const payload = {
-                text,
-                fmt,
-                supercell: [scA, scB, scC]
+            const constraints = {
+                cubic: { b: 'a', c: 'a', alpha: 90, beta: 90, gamma: 90 },
+                hexagonal: { b: 'a', alpha: 90, beta: 90, gamma: 120 },
+                tetragonal: { b: 'a', alpha: 90, beta: 90, gamma: 90 },
+                orthorhombic: { alpha: 90, beta: 90, gamma: 90 },
+                monoclinic: { alpha: 90, gamma: 90 },
+                triclinic: {}
             };
 
-            if (slabEnable) {
-                const mH = parseInt(document.getElementById("mH").value || "0", 10);
-                const mK = parseInt(document.getElementById("mK").value || "0", 10);
-                const mL = parseInt(document.getElementById("mL").value || "1", 10);
-                const minSlab = parseFloat(document.getElementById("minSlab").value || "10");
-                const minVac = parseFloat(document.getElementById("minVac").value || "15");
-                payload.slab = { miller: [mH, mK, mL], min_slab: minSlab, min_vacuum: minVac };
-            }
+            const c = constraints[system];
+            if (c.alpha !== undefined) document.getElementById('lattAlpha').value = c.alpha;
+            if (c.beta !== undefined) document.getElementById('lattBeta').value = c.beta;
+            if (c.gamma !== undefined) document.getElementById('lattGamma').value = c.gamma;
+            if (c.b === 'a') document.getElementById('lattB').value = document.getElementById('lattA').value;
+            if (c.c === 'a') document.getElementById('lattC').value = document.getElementById('lattA').value;
+        }
 
-            setStatus("structStatus", "Generating and analyzing…");
-            document.getElementById("summaryHint").classList.add("d-none");
-            document.getElementById("structSummary").innerHTML = "";
-            document.querySelector("#distTable tbody").innerHTML =
-                "<tr><td colspan='3' class='text-muted'>Working…</td></tr>";
+        function loadTemplate(name) {
+            const t = templates[name];
+            if (!t) return;
 
-            try {
-                const res = await fetch("/api/structures/parse", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
+            currentStructure = JSON.parse(JSON.stringify(t));
+            document.getElementById('lattA').value = t.a;
+            document.getElementById('lattB').value = t.b;
+            document.getElementById('lattC').value = t.c;
+            document.getElementById('lattAlpha').value = t.alpha;
+            document.getElementById('lattBeta').value = t.beta;
+            document.getElementById('lattGamma').value = t.gamma;
+
+            selectCrystalSystem(t.system);
+            updateAtomList();
+            buildStructure();
+
+            document.querySelectorAll('.sb-sidebar-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sb-sidebar-section').forEach(s => s.classList.remove('active'));
+            document.querySelector('[data-tab="build"]').classList.add('active');
+            document.getElementById('tab-build').classList.add('active');
+        }
+
+        function updateAtomList() {
+            const list = document.getElementById('atomList');
+            list.innerHTML = currentStructure.atoms.map((a, i) => `
+                <div class="sb-atom-row">
+                    <span class="sb-atom-el">${a.el}</span>
+                    <span class="sb-atom-pos">${a.x.toFixed(3)}, ${a.y.toFixed(3)}, ${a.z.toFixed(3)}</span>
+                    <span class="sb-atom-del" onclick="removeAtom(${i})">×</span>
+                </div>
+            `).join('');
+        }
+
+        function addAtom() {
+            const el = document.getElementById('newAtomEl').value.trim();
+            const x = parseFloat(document.getElementById('newAtomX').value) || 0;
+            const y = parseFloat(document.getElementById('newAtomY').value) || 0;
+            const z = parseFloat(document.getElementById('newAtomZ').value) || 0;
+
+            if (!el) { alert('Please enter an element symbol'); return; }
+
+            currentStructure.atoms.push({ el, x, y, z });
+            updateAtomList();
+            document.getElementById('newAtomEl').value = '';
+            document.getElementById('newAtomX').value = '';
+            document.getElementById('newAtomY').value = '';
+            document.getElementById('newAtomZ').value = '';
+        }
+
+        function removeAtom(idx) {
+            currentStructure.atoms.splice(idx, 1);
+            updateAtomList();
+        }
+
+        function buildStructure() {
+            currentStructure.a = parseFloat(document.getElementById('lattA').value);
+            currentStructure.b = parseFloat(document.getElementById('lattB').value);
+            currentStructure.c = parseFloat(document.getElementById('lattC').value);
+            currentStructure.alpha = parseFloat(document.getElementById('lattAlpha').value);
+            currentStructure.beta = parseFloat(document.getElementById('lattBeta').value);
+            currentStructure.gamma = parseFloat(document.getElementById('lattGamma').value);
+            currentStructure.spaceGroup = parseInt(document.getElementById('spaceGroup').value);
+
+            visualizeStructure();
+            updateInfoPanels();
+        }
+
+        function getLatticeVectors(a, b, c, alpha, beta, gamma) {
+            const ar = alpha * Math.PI / 180;
+            const br = beta * Math.PI / 180;
+            const gr = gamma * Math.PI / 180;
+
+            const v1 = [a, 0, 0];
+            const v2 = [b * Math.cos(gr), b * Math.sin(gr), 0];
+            const cx = c * Math.cos(br);
+            const cy = c * (Math.cos(ar) - Math.cos(br) * Math.cos(gr)) / Math.sin(gr);
+            const cz = Math.sqrt(c * c - cx * cx - cy * cy);
+            const v3 = [cx, cy, cz];
+
+            return [v1, v2, v3];
+        }
+
+        function fractToCart(frac, lattVec) {
+            return [
+                frac[0] * lattVec[0][0] + frac[1] * lattVec[1][0] + frac[2] * lattVec[2][0],
+                frac[0] * lattVec[0][1] + frac[1] * lattVec[1][1] + frac[2] * lattVec[2][1],
+                frac[0] * lattVec[0][2] + frac[1] * lattVec[1][2] + frac[2] * lattVec[2][2]
+            ];
+        }
+
+        function visualizeStructure() {
+            viewer.removeAllModels();
+            viewer.removeAllShapes();
+
+            const { a, b, c, alpha, beta, gamma, atoms } = currentStructure;
+            const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
+
+            const model = viewer.addModel();
+            atoms.forEach(atom => {
+                const cart = fractToCart([atom.x, atom.y, atom.z], lattVec);
+                model.addAtom({
+                    elem: atom.el,
+                    x: cart[0],
+                    y: cart[1],
+                    z: cart[2],
                 });
-                const data = await res.json();
-                if (!res.ok || data.error) {
-                    setStatus("structStatus", data.error || "Failed to analyze structure.");
-                    document.querySelector("#distTable tbody").innerHTML =
-                        `<tr><td colspan='3' class='text-danger'>${data.error || "Error"}</td></tr>`;
-                    return;
-                }
+            });
 
-                lastExports = data.exports || { cif: null, poscar: null };
-                const s = data.summary;
+            applyStyle();
 
-                const spg = s.space_group && (s.space_group.symbol || s.space_group.number)
-                    ? `${s.space_group.symbol || "?"} (#${s.space_group.number || "?"})`
-                    : "—";
+            if (showBox) drawBox(lattVec);
 
-                const latt = s.lattice || {};
-                const summaryHtml = [
-                    kv("Reduced formula", s.reduced_formula),
-                    kv("Formula", s.formula),
-                    kv("Elements", (s.elements || []).join(", ")),
-                    kv("Sites", s.num_sites),
-                    kv("Space group", spg),
-                    kv("a (Å)", latt.a?.toFixed?.(4) ?? latt.a),
-                    kv("b (Å)", latt.b?.toFixed?.(4) ?? latt.b),
-                    kv("c (Å)", latt.c?.toFixed?.(4) ?? latt.c),
-                    kv("α (°)", latt.alpha?.toFixed?.(3) ?? latt.alpha),
-                    kv("β (°)", latt.beta?.toFixed?.(3) ?? latt.beta),
-                    kv("γ (°)", latt.gamma?.toFixed?.(3) ?? latt.gamma),
-                    kv("Volume (Å³)", latt.volume?.toFixed?.(3) ?? latt.volume),
-                ].join("");
+            viewer.zoomTo();
+            viewer.render();
+        }
 
-                document.getElementById("structSummary").innerHTML = summaryHtml;
-
-                const pairs = data.distance_pairs || [];
-                if (!pairs.length) {
-                    document.querySelector("#distTable tbody").innerHTML =
-                        "<tr><td colspan='3' class='text-muted'>No neighbor pairs found for the current settings.</td></tr>";
-                } else {
-                    document.querySelector("#distTable tbody").innerHTML = pairs.map(p => {
-                        const pair = `${p.species_i}–${p.species_j}`;
-                        const dist = (typeof p.distance === "number") ? p.distance.toFixed(4) : p.distance;
-                        const scaled = (typeof p.scaled_distance === "number") ? p.scaled_distance.toFixed(4) : "—";
-                        return `<tr><td>${pair}</td><td>${dist}</td><td>${scaled}</td></tr>`;
-                    }).join("");
-                }
-
-                setStatus("structStatus", "Done.");
-            } catch (e) {
-                setStatus("structStatus", "Request failed: " + e);
-                document.querySelector("#distTable tbody").innerHTML =
-                    `<tr><td colspan='3' class='text-danger'>${e}</td></tr>`;
+        function applyStyle() {
+            if (currentStyle === 'sphere') {
+                viewer.setStyle({}, { sphere: { radius: 0.4, colorscheme: 'Jmol' } });
+            } else {
+                viewer.setStyle({}, { stick: { radius: 0.15, colorscheme: 'Jmol' }, sphere: { radius: 0.25, colorscheme: 'Jmol' } });
             }
         }
 
-        function downloadExport(kind) {
-            const content = lastExports?.[kind];
-            if (!content) {
-                alert(`No ${kind.toUpperCase()} available yet. Analyze a structure first.`);
-                return;
+        function setViewStyle(style) {
+            currentStyle = style;
+            applyStyle();
+            viewer.render();
+        }
+
+        function drawBox(lattVec) {
+            const corners = [
+                [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1],
+                [1, 1, 0], [1, 0, 1], [0, 1, 1], [1, 1, 1]
+            ].map(f => fractToCart(f, lattVec));
+
+            const edges = [
+                [0, 1], [0, 2], [0, 3], [1, 4], [1, 5], [2, 4], [2, 6], [3, 5], [3, 6], [4, 7], [5, 7], [6, 7]
+            ];
+
+            edges.forEach(([i, j]) => {
+                viewer.addCylinder({
+                    start: { x: corners[i][0], y: corners[i][1], z: corners[i][2] },
+                    end: { x: corners[j][0], y: corners[j][1], z: corners[j][2] },
+                    radius: 0.02,
+                    color: '#58a6ff',
+                    fromCap: true,
+                    toCap: true
+                });
+            });
+        }
+
+        function toggleBox() {
+            showBox = !showBox;
+            visualizeStructure();
+        }
+
+        function resetView() {
+            viewer.zoomTo();
+            viewer.render();
+        }
+
+        function updateInfoPanels() {
+            const { a, b, c, alpha, beta, gamma, spaceGroup, system, atoms } = currentStructure;
+            const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
+
+            const formula = {};
+            atoms.forEach(at => { formula[at.el] = (formula[at.el] || 0) + 1; });
+            const formulaStr = Object.entries(formula).map(([el, n]) => n > 1 ? `${el}${n}` : el).join('');
+
+            const vol = a * b * c * Math.sqrt(1 - Math.cos(alpha*Math.PI/180)**2 - Math.cos(beta*Math.PI/180)**2 - Math.cos(gamma*Math.PI/180)**2 + 2*Math.cos(alpha*Math.PI/180)*Math.cos(beta*Math.PI/180)*Math.cos(gamma*Math.PI/180));
+
+            document.getElementById('infoFormula').textContent = formulaStr;
+            document.getElementById('infoSpaceGroup').textContent = `${spaceGroupNames[spaceGroup] || spaceGroup} (${spaceGroup})`;
+            document.getElementById('infoAtoms').textContent = atoms.length;
+            document.getElementById('infoVolume').textContent = vol.toFixed(2) + ' Å³';
+
+            document.getElementById('detailSystem').textContent = system.charAt(0).toUpperCase() + system.slice(1);
+            document.getElementById('detailSG').textContent = `${spaceGroupNames[spaceGroup] || spaceGroup} (${spaceGroup})`;
+            document.getElementById('detailA').textContent = a.toFixed(3) + ' Å';
+            document.getElementById('detailB').textContent = b.toFixed(3) + ' Å';
+            document.getElementById('detailC').textContent = c.toFixed(3) + ' Å';
+            document.getElementById('detailAlpha').textContent = alpha.toFixed(2) + '°';
+            document.getElementById('detailBeta').textContent = beta.toFixed(2) + '°';
+            document.getElementById('detailGamma').textContent = gamma.toFixed(2) + '°';
+            document.getElementById('detailVol').textContent = vol.toFixed(2) + ' Å³';
+
+            document.getElementById('latticeVectors').innerHTML = `
+                <div class="sb-lattice-row"><span>a:</span><span>${lattVec[0].map(v=>v.toFixed(4)).join(', ')}</span></div>
+                <div class="sb-lattice-row"><span>b:</span><span>${lattVec[1].map(v=>v.toFixed(4)).join(', ')}</span></div>
+                <div class="sb-lattice-row"><span>c:</span><span>${lattVec[2].map(v=>v.toFixed(4)).join(', ')}</span></div>
+            `;
+
+            const atomsTable = document.getElementById('atomsTable');
+            atomsTable.innerHTML = '<tr><th>El</th><th>x</th><th>y</th><th>z</th></tr>' +
+                atoms.map(a => `<tr><td>${a.el}</td><td>${a.x.toFixed(4)}</td><td>${a.y.toFixed(4)}</td><td>${a.z.toFixed(4)}</td></tr>`).join('');
+        }
+
+        function exportStructure(format) {
+            const { a, b, c, alpha, beta, gamma, atoms } = currentStructure;
+            let output = '';
+
+            if (format === 'cif') {
+                output = `data_SMAD_structure
+_cell_length_a    ${a.toFixed(4)}
+_cell_length_b    ${b.toFixed(4)}
+_cell_length_c    ${c.toFixed(4)}
+_cell_angle_alpha ${alpha.toFixed(2)}
+_cell_angle_beta  ${beta.toFixed(2)}
+_cell_angle_gamma ${gamma.toFixed(2)}
+_symmetry_space_group_name_H-M 'P 1'
+_symmetry_Int_Tables_number 1
+
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+${atoms.map((at, i) => `${at.el}${i+1} ${at.el} ${at.x.toFixed(6)} ${at.y.toFixed(6)} ${at.z.toFixed(6)}`).join('\n')}`;
+            } else if (format === 'poscar') {
+                const elements = [...new Set(atoms.map(a => a.el))];
+                const counts = elements.map(el => atoms.filter(a => a.el === el).length);
+                const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
+
+                output = `SMAD Structure
+1.0
+${lattVec.map(v => '  ' + v.map(x => x.toFixed(10).padStart(16)).join('')).join('\n')}
+${elements.join(' ')}
+${counts.join(' ')}
+Direct
+${atoms.map(at => `  ${at.x.toFixed(10).padStart(16)}${at.y.toFixed(10).padStart(16)}${at.z.toFixed(10).padStart(16)}`).join('\n')}`;
+            } else if (format === 'xyz') {
+                const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
+                output = `${atoms.length}
+SMAD Structure
+${atoms.map(at => {
+    const cart = fractToCart([at.x, at.y, at.z], lattVec);
+    return `${at.el}  ${cart[0].toFixed(6)}  ${cart[1].toFixed(6)}  ${cart[2].toFixed(6)}`;
+}).join('\n')}`;
+            } else if (format === 'qe') {
+                const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
+                const elements = [...new Set(atoms.map(a => a.el))];
+
+                output = `&CONTROL
+  calculation = 'scf'
+  prefix = 'smad'
+  outdir = './tmp'
+  pseudo_dir = './pseudo'
+/
+
+&SYSTEM
+  ibrav = 0
+  nat = ${atoms.length}
+  ntyp = ${elements.length}
+  ecutwfc = 50.0
+  ecutrho = 400.0
+/
+
+&ELECTRONS
+  conv_thr = 1.0d-8
+/
+
+ATOMIC_SPECIES
+${elements.map(el => `${el}  1.0  ${el}.UPF`).join('\n')}
+
+CELL_PARAMETERS angstrom
+${lattVec.map(v => v.map(x => x.toFixed(10).padStart(14)).join('')).join('\n')}
+
+ATOMIC_POSITIONS crystal
+${atoms.map(at => `${at.el.padEnd(4)} ${at.x.toFixed(10)} ${at.y.toFixed(10)} ${at.z.toFixed(10)}`).join('\n')}
+
+K_POINTS automatic
+4 4 4 0 0 0`;
             }
-            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+
+            document.getElementById('exportPreview').value = output;
+            document.querySelectorAll('.sb-right-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sb-right-section').forEach(s => s.classList.remove('active'));
+            document.querySelector('[data-rtab="export"]').classList.add('active');
+            document.getElementById('rtab-export').classList.add('active');
+        }
+
+        function downloadExport() {
+            const content = document.getElementById('exportPreview').value;
+            if (!content) return;
+
+            const blob = new Blob([content], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
+            const a = document.createElement('a');
             a.href = url;
-            a.download = kind === "cif" ? "smad_structure.cif" : "POSCAR";
-            document.body.appendChild(a);
+            a.download = 'structure.txt';
             a.click();
-            a.remove();
             URL.revokeObjectURL(url);
         }
 
-        async function analyzeFormula() {
-            const formula = document.getElementById("empFormula").value.trim();
-            const z = parseInt(document.getElementById("formulaUnits").value || "1", 10);
-            if (!formula) {
-                setStatus("formulaStatus", "Please enter a formula.");
-                return;
-            }
+        function importStructure() {
+            const text = document.getElementById('importText').value.trim();
+            if (!text) { alert('Please paste structure data'); return; }
+            alert('Structure import will parse the data and load it into the builder. (Backend parsing required for full implementation)');
+        }
 
-            setStatus("formulaStatus", "Analyzing…");
-            const out = document.getElementById("formulaResults");
-            out.classList.remove("text-muted");
-            out.innerHTML = "";
+        function makeSupercell() {
+            const scA = parseInt(document.getElementById('scA').value) || 1;
+            const scB = parseInt(document.getElementById('scB').value) || 1;
+            const scC = parseInt(document.getElementById('scC').value) || 1;
 
-            try {
-                const res = await fetch("/api/structures/empirical", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ formula, formula_units: z })
-                });
-                const data = await res.json();
-                if (!res.ok || data.error) {
-                    setStatus("formulaStatus", data.error || "Failed to analyze formula.");
-                    out.innerHTML = `<div class="text-danger small">${data.error || "Error"}</div>`;
-                    return;
+            const newAtoms = [];
+            currentStructure.atoms.forEach(atom => {
+                for (let i = 0; i < scA; i++) {
+                    for (let j = 0; j < scB; j++) {
+                        for (let k = 0; k < scC; k++) {
+                            newAtoms.push({
+                                el: atom.el,
+                                x: (atom.x + i) / scA,
+                                y: (atom.y + j) / scB,
+                                z: (atom.z + k) / scC
+                            });
+                        }
+                    }
                 }
+            });
 
-                out.innerHTML = `
-                    <div class="row g-3">
-                        ${kv("Reduced formula", data.reduced_formula)}
-                        ${kv("Formula", data.formula)}
-                        ${kv("Elements", (data.elements || []).join(", "))}
-                        ${kv("Atoms (reduced)", data.num_atoms_reduced)}
-                        ${kv("Z (formula units)", data.formula_units)}
-                        ${kv("Formula (Z×)", data.formula_z)}
-                        ${kv("Weight", data.weight?.toFixed?.(4) ?? data.weight)}
-                        ${kv("Weight (Z×)", data.weight_z?.toFixed?.(4) ?? data.weight_z)}
-                    </div>
-                    <div class="small text-muted mt-3">
-                        Next step: use the Builder tab to generate unit cell parameters, space group, Wyckoff symbols,
-                        and interatomic distance constraints from a CIF/POSCAR.
-                    </div>
-                `;
-                setStatus("formulaStatus", "Done.");
-            } catch (e) {
-                setStatus("formulaStatus", "Request failed: " + e);
-                out.innerHTML = `<div class="text-danger small">${e}</div>`;
-            }
+            currentStructure.atoms = newAtoms;
+            currentStructure.a *= scA;
+            currentStructure.b *= scB;
+            currentStructure.c *= scC;
+
+            document.getElementById('lattA').value = currentStructure.a;
+            document.getElementById('lattB').value = currentStructure.b;
+            document.getElementById('lattC').value = currentStructure.c;
+
+            updateAtomList();
+            visualizeStructure();
+            updateInfoPanels();
+        }
+
+        function makeSlab() {
+            alert('Slab generation requires backend support with pymatgen for proper surface construction.');
+        }
+
+        function toPrimitive() {
+            alert('Primitive cell conversion requires backend support with spglib/pymatgen.');
+        }
+
+        function toConventional() {
+            alert('Conventional cell conversion requires backend support with spglib/pymatgen.');
+        }
+
+        document.querySelectorAll('.sb-sidebar-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.sb-sidebar-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.sb-sidebar-section').forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.sb-right-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.sb-right-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.sb-right-section').forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`rtab-${tab.dataset.rtab}`).classList.add('active');
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', initViewer);
+
+        const importedData = sessionStorage.getItem('importStructure');
+        if (importedData) {
+            sessionStorage.removeItem('importStructure');
         }
     </script>
 </body>
 </html>
-
