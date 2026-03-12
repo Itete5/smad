@@ -250,6 +250,40 @@
         @media (max-width: 600px) {
             .md-sidebar { display: none; }
         }
+        .md-tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 0.75rem;
+            background: var(--md-bg-dark);
+            border-radius: 6px;
+            padding: 2px;
+        }
+        .md-tab {
+            flex: 1;
+            padding: 0.4rem 0.5rem;
+            background: transparent;
+            border: none;
+            color: var(--md-text-muted);
+            font-size: 0.7rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+        .md-tab:hover { color: var(--md-text); }
+        .md-tab.active {
+            background: var(--md-accent);
+            color: #fff;
+        }
+        .md-tab-content { display: none; }
+        .md-tab-content.active { display: block; }
+        .md-potential-info {
+            font-size: 0.75rem;
+            color: var(--md-text-muted);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--md-bg-dark);
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -290,6 +324,107 @@
                         <input type="number" id="boxSize" class="md-input" value="20.0" step="0.1" min="5">
                     </div>
                     <button class="md-btn md-btn-primary w-100" onclick="initializeSystem()">Initialize</button>
+                </div>
+
+                <div class="md-sidebar-section">
+                    <h3>Potentials</h3>
+                    <div class="md-tabs">
+                        <button class="md-tab active" onclick="showPotentialTab('ff')">Force Fields</button>
+                        <button class="md-tab" onclick="showPotentialTab('reaxff')">ReaxFF</button>
+                        <button class="md-tab" onclick="showPotentialTab('ml')">ML Potentials</button>
+                    </div>
+                    
+                    <div id="tab-ff" class="md-tab-content active">
+                        <div class="md-form-group">
+                            <label>Force Field</label>
+                            <select id="forceField" class="md-select">
+                                <option value="lj">Lennard-Jones</option>
+                                <option value="eam">EAM (metals)</option>
+                                <option value="tersoff">Tersoff (Si, C, ...)</option>
+                                <option value="tip3p">TIP3P (water)</option>
+                                <option value="tip4p">TIP4P (water)</option>
+                                <option value="spce">SPC/E (water)</option>
+                                <option value="opls">OPLS-AA</option>
+                                <option value="amber">AMBER</option>
+                                <option value="charmm">CHARMM</option>
+                                <option value="uff">UFF (universal)</option>
+                            </select>
+                        </div>
+                        <div class="md-form-group">
+                            <label>Cutoff (Å)</label>
+                            <input type="number" id="ffCutoff" class="md-input" value="12.0" step="0.5">
+                        </div>
+                        <div class="md-potential-info">
+                            Classical pairwise and many-body potentials for standard MD simulations.
+                        </div>
+                    </div>
+                    
+                    <div id="tab-reaxff" class="md-tab-content">
+                        <div class="md-form-group">
+                            <label>ReaxFF Parameter Set</label>
+                            <select id="reaxffParams" class="md-select">
+                                <option value="cho">C/H/O (combustion)</option>
+                                <option value="chon">C/H/O/N (energetic)</option>
+                                <option value="sio">Si/O (silica)</option>
+                                <option value="alo">Al/O (alumina)</option>
+                                <option value="feo">Fe/O/H (corrosion)</option>
+                                <option value="zno">Zn/O (ZnO)</option>
+                                <option value="nico">Ni/C/O/H (catalysis)</option>
+                                <option value="water">Water (bulk/interface)</option>
+                                <option value="lipf6">Li/P/F (batteries)</option>
+                                <option value="custom">Custom ffield file</option>
+                            </select>
+                        </div>
+                        <div class="md-form-group">
+                            <label>Charge Method</label>
+                            <select id="reaxffCharge" class="md-select">
+                                <option value="qeq">QEq (charge equilibration)</option>
+                                <option value="acks2">ACKS2</option>
+                            </select>
+                        </div>
+                        <div class="md-form-group">
+                            <label>Bond Order Cutoff (Å)</label>
+                            <input type="number" id="reaxffBOCutoff" class="md-input" value="0.3" step="0.01">
+                        </div>
+                        <div class="md-potential-info">
+                            Reactive force field for bond breaking/formation, redox, combustion, and interfaces.
+                        </div>
+                    </div>
+                    
+                    <div id="tab-ml" class="md-tab-content">
+                        <div class="md-form-group">
+                            <label>ML Potential Type</label>
+                            <select id="mlPotential" class="md-select">
+                                <option value="nequip">NequIP (E(3)-equivariant)</option>
+                                <option value="mace">MACE</option>
+                                <option value="allegro">Allegro</option>
+                                <option value="schnet">SchNet</option>
+                                <option value="painn">PaiNN</option>
+                                <option value="nep">NEP (GPUMD)</option>
+                                <option value="gap">GAP (SOAP)</option>
+                                <option value="ace">ACE</option>
+                                <option value="snap">SNAP</option>
+                                <option value="dp">DeepMD-kit</option>
+                                <option value="ani">ANI (TorchANI)</option>
+                                <option value="m3gnet">M3GNet</option>
+                                <option value="chgnet">CHGNet</option>
+                            </select>
+                        </div>
+                        <div class="md-form-group">
+                            <label>Model File</label>
+                            <input type="text" id="mlModelPath" class="md-input" placeholder="path/to/model.pt">
+                        </div>
+                        <div class="md-form-group">
+                            <label>Device</label>
+                            <select id="mlDevice" class="md-select">
+                                <option value="cuda">CUDA (GPU)</option>
+                                <option value="cpu">CPU</option>
+                            </select>
+                        </div>
+                        <div class="md-potential-info">
+                            Machine learning interatomic potentials trained on DFT data for near-DFT accuracy at FF cost.
+                        </div>
+                    </div>
                 </div>
 
                 <div class="md-sidebar-section">
@@ -444,6 +579,14 @@ Ready.</div>
             O: '#ff0d0d', H: '#ffffff', C: '#909090', N: '#3050f8',
             Na: '#ab5cf2', Cl: '#1ff01f', Cu: '#c88033', Fe: '#e06633',
         };
+
+        function showPotentialTab(tabId) {
+            document.querySelectorAll('.md-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.md-tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            log('Switched to ' + (tabId === 'ff' ? 'Force Fields' : tabId === 'reaxff' ? 'ReaxFF' : 'ML Potentials'));
+        }
 
         function initViewer() {
             const container = document.getElementById('md-3dviewer');
