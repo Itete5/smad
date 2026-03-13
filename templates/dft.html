@@ -21,6 +21,17 @@
             --dft-warning: #d29922;
             --dft-danger: #f85149;
         }
+        body.theme-light {
+            --dft-bg-dark: #f0f2f5;
+            --dft-bg-panel: #ffffff;
+            --dft-bg-card: #ffffff;
+            --dft-border: #e1e4e8;
+            --dft-text: #1a1d21;
+            --dft-text-muted: #57606a;
+            --dft-accent: #0969da;
+        }
+        .theme-toggle { background: var(--dft-bg-card); border: 1px solid var(--dft-border); color: var(--dft-text); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+        .theme-toggle:hover { border-color: var(--dft-accent); }
         * { box-sizing: border-box; }
         body {
             margin: 0;
@@ -248,6 +259,7 @@
                 <a href="/md">MD</a>
                 <a href="/montecarlo">Monte Carlo</a>
                 <a href="/analysis">Analysis</a>
+                <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">🌙 Dark</button>
             </div>
         </nav>
 
@@ -627,7 +639,26 @@ Ready.</div>
         document.getElementById('xcFunc').addEventListener('change', updateDftStats);
         document.getElementById('calcType').addEventListener('change', updateDftStats);
 
-        document.addEventListener('DOMContentLoaded', initDftViewer);
+        function toggleTheme() {
+            document.body.classList.toggle('theme-light');
+            const isLight = document.body.classList.contains('theme-light');
+            localStorage.setItem('smad-theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeToggle').textContent = isLight ? '☀ Light' : '🌙 Dark';
+        }
+        function applySavedTheme() {
+            const saved = localStorage.getItem('smad-theme');
+            if (saved === 'light') {
+                document.body.classList.add('theme-light');
+                document.getElementById('themeToggle').textContent = '☀ Light';
+            } else {
+                document.body.classList.remove('theme-light');
+                document.getElementById('themeToggle').textContent = '🌙 Dark';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            applySavedTheme();
+            initDftViewer();
+        });
     </script>
 </body>
 </html>

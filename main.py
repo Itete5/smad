@@ -1,5 +1,7 @@
 import asyncio
+import json
 import paramiko
+from pathlib import Path
 from typing import Literal, List
 
 from fastapi import FastAPI, WebSocket, Request
@@ -475,6 +477,20 @@ async def optimade_search(payload: OptimadeQueryRequest):
         return JSONResponse({"error": f"Request failed: {str(e)}"}, status_code=502)
     except Exception as e:
         return JSONResponse({"error": f"Query failed: {str(e)}"}, status_code=500)
+
+
+@app.get("/api/superconductors/tracker")
+def get_superconductor_tracker():
+    """Return the superconductor tracker data (materials with Tc, year, type, publication links)."""
+    data_path = Path(__file__).parent / "data" / "superconductors.json"
+    try:
+        with open(data_path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+    except FileNotFoundError:
+        return {"last_updated": "", "materials": []}
+    except json.JSONDecodeError:
+        return {"last_updated": "", "materials": []}
 
 
 @app.get("/api/materials")

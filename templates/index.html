@@ -124,6 +124,53 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Superconductor Tracker -->
+            <div class="row mt-5 pt-4 border-top">
+                <div class="col-12">
+                    <h3 class="h4 mb-2">Superconductor Tracker</h3>
+                    <p class="text-muted small mb-3">
+                        Notable superconducting materials with links to publications. Updated as new discoveries are added.
+                    </p>
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                        <span class="badge bg-secondary" id="trackerLastUpdated">Loading…</span>
+                        <select class="form-select form-select-sm w-auto" id="trackerTypeFilter">
+                            <option value="">All types</option>
+                            <option value="Hydride">Hydride</option>
+                            <option value="Cuprate">Cuprate</option>
+                            <option value="Iron-based">Iron-based</option>
+                            <option value="Conventional">Conventional</option>
+                            <option value="A15">A15</option>
+                            <option value="Kagome">Kagome</option>
+                            <option value="Nickelate">Nickelate</option>
+                        </select>
+                        <label class="small text-muted mb-0 d-flex align-items-center gap-1">
+                            T<sub>c</sub> min <input type="number" id="trackerTcMin" class="form-control form-control-sm" style="width:4rem;" placeholder="0" min="0">
+                        </label>
+                        <label class="small text-muted mb-0 d-flex align-items-center gap-1">
+                            T<sub>c</sub> max <input type="number" id="trackerTcMax" class="form-control form-control-sm" style="width:4rem;" placeholder="300" min="0">
+                        </label>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTracker()">Refresh</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="trackerTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Material</th>
+                                    <th>T<sub>c</sub> (K)</th>
+                                    <th>Year</th>
+                                    <th>Type</th>
+                                    <th class="d-none d-md-table-cell">Pressure (GPa)</th>
+                                    <th>Publication</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trackerBody">
+                                <tr><td colspan="6" class="text-muted text-center">Loading tracker…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -316,8 +363,62 @@
 
         document.getElementById("searchBox")?.addEventListener("input", filterMaterials);
 
+        // -----------------------------
+        // Superconductor Tracker
+        // -----------------------------
+        let trackerData = { last_updated: "", materials: [] };
+
+        async function loadTracker() {
+            const body = document.getElementById("trackerBody");
+            const badge = document.getElementById("trackerLastUpdated");
+            if (!body) return;
+            body.innerHTML = "<tr><td colspan='6' class='text-muted text-center'>Loading…</td></tr>";
+            try {
+                const res = await fetch("/api/superconductors/tracker");
+                const data = await res.json();
+                trackerData = data;
+                if (data.last_updated) badge.textContent = "Last updated: " + data.last_updated;
+                else badge.textContent = "Live";
+                renderTrackerTable();
+            } catch (err) {
+                body.innerHTML = "<tr><td colspan='6' class='text-danger text-center'>Failed to load tracker.</td></tr>";
+            }
+        }
+
+        function renderTrackerTable() {
+            const body = document.getElementById("trackerBody");
+            const typeFilter = document.getElementById("trackerTypeFilter")?.value || "";
+            const tcMin = parseInt(document.getElementById("trackerTcMin")?.value, 10) || 0;
+            const tcMax = parseInt(document.getElementById("trackerTcMax")?.value, 10) || 999;
+            const list = (trackerData.materials || []).filter(m => {
+                if (typeFilter && m.type !== typeFilter) return false;
+                const tc = m.tc_k ?? 0;
+                if (tc < tcMin || tc > tcMax) return false;
+                return true;
+            });
+            if (list.length === 0) {
+                body.innerHTML = "<tr><td colspan='6' class='text-muted text-center'>No entries match filters.</td></tr>";
+                return;
+            }
+            body.innerHTML = list.map(m => `
+                <tr>
+                    <td><strong>${m.formula || "—"}</strong></td>
+                    <td>${m.tc_k != null ? m.tc_k : "—"}</td>
+                    <td>${m.year != null ? m.year : "—"}</td>
+                    <td><span class="badge bg-primary">${m.type || "—"}</span></td>
+                    <td class="d-none d-md-table-cell">${m.pressure_gpa != null ? m.pressure_gpa : "—"}</td>
+                    <td>${m.publication ? `<a href="${m.publication}" target="_blank" rel="noopener" class="small">Paper</a>` : "—"}</td>
+                </tr>
+            `).join("");
+        }
+
+        document.getElementById("trackerTypeFilter")?.addEventListener("change", renderTrackerTable);
+        document.getElementById("trackerTcMin")?.addEventListener("input", renderTrackerTable);
+        document.getElementById("trackerTcMax")?.addEventListener("input", renderTrackerTable);
+
         document.addEventListener("DOMContentLoaded", () => {
             loadMaterials();
+            loadTracker();
         });
     </script>
 </body>

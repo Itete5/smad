@@ -8,6 +8,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body.theme-light .navbar { background: #fff !important; border-bottom: 1px solid #e1e4e8; }
+        body.theme-light .navbar .navbar-brand, body.theme-light .navbar .nav-link { color: #1a1d21 !important; }
+        body.theme-light .navbar .nav-link:hover { color: #0969da !important; }
+        body.theme-light .section-light { background: #f6f8fa; color: #1a1d21; }
+        body.theme-light .card { background: #fff; border-color: #e1e4e8; color: #1a1d21; }
+        body:not(.theme-light) .section-light { background: #1a1d21; color: #e1e4e8; }
+        body:not(.theme-light) .section-light .card { background: #22262c; border-color: #3a3f47; color: #e1e4e8; }
+        body:not(.theme-light) .section-light .text-muted { color: #8b949e !important; }
+        .theme-toggle { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; margin-left: 0.5rem; }
+        body.theme-light .theme-toggle { background: #f0f2f5; border-color: #e1e4e8; color: #1a1d21; }
+        .theme-toggle:hover { opacity: 0.9; }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
@@ -26,6 +39,7 @@
                     <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
                     <li class="nav-item"><a class="nav-link active" href="/analysis">Analysis</a></li>
                     <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item"><button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">🌙 Dark</button></li>
                 </ul>
             </div>
         </div>
@@ -390,7 +404,24 @@
             }
         }
 
+        function toggleTheme() {
+            document.body.classList.toggle("theme-light");
+            var isLight = document.body.classList.contains("theme-light");
+            localStorage.setItem("smad-theme", isLight ? "light" : "dark");
+            document.getElementById("themeToggle").textContent = isLight ? "☀ Light" : "🌙 Dark";
+        }
+        function applySavedTheme() {
+            var saved = localStorage.getItem("smad-theme");
+            if (saved === "light") {
+                document.body.classList.add("theme-light");
+                document.getElementById("themeToggle").textContent = "☀ Light";
+            } else {
+                document.body.classList.remove("theme-light");
+                document.getElementById("themeToggle").textContent = "🌙 Dark";
+            }
+        }
         document.addEventListener("DOMContentLoaded", function() {
+            applySavedTheme();
             loadPhaseDiagram();
             loadBandGaps();
         });

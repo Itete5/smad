@@ -21,6 +21,17 @@
             --md-warning: #d29922;
             --md-danger: #f85149;
         }
+        body.theme-light {
+            --md-bg-dark: #f0f2f5;
+            --md-bg-panel: #ffffff;
+            --md-bg-card: #ffffff;
+            --md-border: #e1e4e8;
+            --md-text: #1a1d21;
+            --md-text-muted: #57606a;
+            --md-accent: #0969da;
+        }
+        .theme-toggle { background: var(--md-bg-card); border: 1px solid var(--md-border); color: var(--md-text); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+        .theme-toggle:hover { border-color: var(--md-accent); }
         * { box-sizing: border-box; }
         body {
             margin: 0;
@@ -299,6 +310,7 @@
                 <a href="/md" class="active">MD</a>
                 <a href="/montecarlo">Monte Carlo</a>
                 <a href="/analysis">Analysis</a>
+                <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">🌙 Dark</button>
             </div>
         </nav>
 
@@ -869,7 +881,26 @@ Ready.</div>
             document.getElementById('dtValue').textContent = e.target.value;
         });
 
-        document.addEventListener('DOMContentLoaded', initViewer);
+        function toggleTheme() {
+            document.body.classList.toggle('theme-light');
+            const isLight = document.body.classList.contains('theme-light');
+            localStorage.setItem('smad-theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeToggle').textContent = isLight ? '☀ Light' : '🌙 Dark';
+        }
+        function applySavedTheme() {
+            const saved = localStorage.getItem('smad-theme');
+            if (saved === 'light') {
+                document.body.classList.add('theme-light');
+                document.getElementById('themeToggle').textContent = '☀ Light';
+            } else {
+                document.body.classList.remove('theme-light');
+                document.getElementById('themeToggle').textContent = '🌙 Dark';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            applySavedTheme();
+            initViewer();
+        });
     </script>
 </body>
 </html>

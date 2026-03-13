@@ -1,0 +1,155 @@
+{
+  "last_updated": "2025-03-01",
+  "materials": [
+    {
+      "formula": "LaH₁₀",
+      "tc_k": 250,
+      "year": 2019,
+      "type": "Hydride",
+      "pressure_gpa": 170,
+      "publication": "https://doi.org/10.1038/s41586-019-1201-8",
+      "title": "Room-temperature superconductivity in a carbonaceous sulfur hydride",
+      "notes": "High-Tc hydride (theory/experiment)"
+    },
+    {
+      "formula": "H₃S",
+      "tc_k": 203,
+      "year": 2015,
+      "type": "Hydride",
+      "pressure_gpa": 155,
+      "publication": "https://doi.org/10.1038/nature14964",
+      "title": "Conventional superconductivity at 203 K at high pressures",
+      "notes": "Sulfur hydride"
+    },
+    {
+      "formula": "CaH₆",
+      "tc_k": 215,
+      "year": 2019,
+      "type": "Hydride",
+      "pressure_gpa": 172,
+      "publication": "https://doi.org/10.1103/PhysRevLett.123.097001",
+      "title": "Superconductivity at 215 K in calcium hydride at high pressures",
+      "notes": ""
+    },
+    {
+      "formula": "YBa₂Cu₃O₇",
+      "tc_k": 93,
+      "year": 1987,
+      "type": "Cuprate",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1103/PhysRevLett.58.908",
+      "title": "Superconductivity at 93 K in a new mixed-phase Y-Ba-Cu-O compound",
+      "notes": "YBCO, high-Tc cuprate"
+    },
+    {
+      "formula": "Bi₂Sr₂Ca₂Cu₃O₁₀",
+      "tc_k": 110,
+      "year": 1988,
+      "type": "Cuprate",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1016/0921-4534(88)90934-6",
+      "title": "Bi-Sr-Ca-Cu-O high-Tc superconductor",
+      "notes": "BSCCO 2223"
+    },
+    {
+      "formula": "HgBa₂Ca₂Cu₃O₈",
+      "tc_k": 135,
+      "year": 1993,
+      "type": "Cuprate",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1038/362056a0",
+      "title": "Superconductivity above 130 K in the Hg–Ba–Ca–Cu–O system",
+      "notes": "Hg-1223, record ambient-pressure Tc"
+    },
+    {
+      "formula": "MgB₂",
+      "tc_k": 39,
+      "year": 2001,
+      "type": "Conventional",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1038/35055039",
+      "title": "Superconductivity at 39 K in magnesium diboride",
+      "notes": "Two-gap s-wave"
+    },
+    {
+      "formula": "Nb₃Sn",
+      "tc_k": 18,
+      "year": 1954,
+      "type": "A15",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1103/PhysRev.95.1435",
+      "title": "Superconductivity of Nb₃Sn",
+      "notes": "A15, applications"
+    },
+    {
+      "formula": "NbTi",
+      "tc_k": 9.5,
+      "year": 1962,
+      "type": "Conventional",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1016/0022-3697(62)90161-0",
+      "title": "Superconducting Nb-Ti alloys",
+      "notes": "Widely used in magnets"
+    },
+    {
+      "formula": "LaFeAsO₁₋ₓFₓ",
+      "tc_k": 26,
+      "year": 2008,
+      "type": "Iron-based",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1143/JPSJ.77.083704",
+      "title": "Iron-based layered superconductor LaO₁₋ₓFₓFeAs",
+      "notes": "1111 pnictide"
+    },
+    {
+      "formula": "FeSe",
+      "tc_k": 8,
+      "year": 2008,
+      "type": "Iron-based",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1103/PhysRevLett.101.057003",
+      "title": "Superconductivity in FeSe",
+      "notes": "Iron chalcogenide"
+    },
+    {
+      "formula": "Nb₃Ge",
+      "tc_k": 23,
+      "year": 1973,
+      "type": "A15",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1103/PhysRevLett.30.230",
+      "title": "Superconductivity at 23 K in Nb₃Ge",
+      "notes": "A15"
+    },
+    {
+      "formula": "Ba₀.₆K₀.₄Fe₂As₂",
+      "tc_k": 38,
+      "year": 2008,
+      "type": "Iron-based",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1038/nature07308",
+      "title": "Superconductivity in iron-based 122 compounds",
+      "notes": "122 pnictide"
+    },
+    {
+      "formula": "CsV₃Sb₅",
+      "tc_k": 2.5,
+      "year": 2020,
+      "type": "Kagome",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1038/s41567-020-1022-4",
+      "title": "Unconventional superconductivity in kagome metal CsV₃Sb₅",
+      "notes": "Kagome, topological"
+    },
+    {
+      "formula": "NdNiO₂ (thin film)",
+      "tc_k": 9,
+      "year": 2019,
+      "type": "Nickelate",
+      "pressure_gpa": 0,
+      "publication": "https://doi.org/10.1038/s41586-019-1493-8",
+      "title": "Superconductivity in infinite-layer nickelate NdNiO₂",
+      "notes": "Infinite-layer nickelate"
+    }
+  ]
+}
