@@ -7,6 +7,7 @@
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -151,6 +152,10 @@
                             T<sub>c</sub> max <input type="number" id="trackerTcMax" class="form-control form-control-sm" style="width:4rem;" placeholder="300" min="0">
                         </label>
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTracker()">Refresh</button>
+                    </div>
+                    <div class="mb-4">
+                        <h6 class="text-muted small mb-2">Critical temperature T<sub>c</sub> vs Year</h6>
+                        <div id="trackerChart" style="height:280px;width:100%;"></div>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle" id="trackerTable">
@@ -380,6 +385,7 @@
                 if (data.last_updated) badge.textContent = "Last updated: " + data.last_updated;
                 else badge.textContent = "Live";
                 renderTrackerTable();
+                renderTrackerChart();
             } catch (err) {
                 body.innerHTML = "<tr><td colspan='6' class='text-danger text-center'>Failed to load tracker.</td></tr>";
             }
@@ -410,11 +416,52 @@
                     <td>${m.publication ? `<a href="${m.publication}" target="_blank" rel="noopener" class="small">Paper</a>` : "—"}</td>
                 </tr>
             `).join("");
+            renderTrackerChart();
         }
 
-        document.getElementById("trackerTypeFilter")?.addEventListener("change", renderTrackerTable);
-        document.getElementById("trackerTcMin")?.addEventListener("input", renderTrackerTable);
-        document.getElementById("trackerTcMax")?.addEventListener("input", renderTrackerTable);
+        function renderTrackerChart() {
+            const typeFilter = document.getElementById("trackerTypeFilter")?.value || "";
+            const tcMin = parseInt(document.getElementById("trackerTcMin")?.value, 10) || 0;
+            const tcMax = parseInt(document.getElementById("trackerTcMax")?.value, 10) || 999;
+            const list = (trackerData.materials || []).filter(m => {
+                if (typeFilter && m.type !== typeFilter) return false;
+                const tc = m.tc_k ?? 0;
+                if (tc < tcMin || tc > tcMax) return false;
+                return true;
+            }).filter(m => m.year != null && m.tc_k != null);
+            const el = document.getElementById("trackerChart");
+            if (!el || typeof Plotly === "undefined") return;
+            if (list.length === 0) {
+                Plotly.react(el, [], { xaxis: { title: "Year" }, yaxis: { title: "T<sub>c</sub> (K)" } }, { responsive: true });
+                return;
+            }
+            const types = [...new Set(list.map(m => m.type || "Other"))];
+            const colors = ["#0969da", "#cf222e", "#1a7f37", "#9a6700", "#8250df", "#c43c1b", "#0550ae"];
+            const traces = types.map((type, i) => {
+                const pts = list.filter(m => (m.type || "Other") === type);
+                return {
+                    x: pts.map(m => m.year),
+                    y: pts.map(m => m.tc_k),
+                    text: pts.map(m => m.formula + " (" + m.tc_k + " K)"),
+                    mode: "markers",
+                    type: "scatter",
+                    name: type,
+                    marker: { size: 10, color: colors[i % colors.length], line: { width: 1, color: "#fff" } }
+                };
+            });
+            Plotly.react(el, traces, {
+                margin: { t: 24, r: 24, b: 40, l: 50 },
+                xaxis: { title: "Year", dtick: 5, gridcolor: "rgba(0,0,0,0.08)" },
+                yaxis: { title: "T<sub>c</sub> (K)", gridcolor: "rgba(0,0,0,0.08)" },
+                showlegend: true,
+                legend: { x: 1, y: 1, xanchor: "right" },
+                hovermode: "closest"
+            }, { responsive: true });
+        }
+
+        document.getElementById("trackerTypeFilter")?.addEventListener("change", () => { renderTrackerTable(); });
+        document.getElementById("trackerTcMin")?.addEventListener("input", () => { renderTrackerTable(); });
+        document.getElementById("trackerTcMax")?.addEventListener("input", () => { renderTrackerTable(); });
 
         document.addEventListener("DOMContentLoaded", () => {
             loadMaterials();
