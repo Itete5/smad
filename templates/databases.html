@@ -129,30 +129,72 @@
             background: var(--smad-dark);
             border-radius: 6px;
             padding: 0.75rem;
-            margin-bottom: 1rem;
-            overflow-x: auto;
+            margin-bottom: 0.5rem;
+            overflow: visible;
+            position: relative;
         }
+        .periodic-table-container.compact {
+            max-height: 280px;
+            overflow: auto;
+        }
+        .periodic-table-container.compact .periodic-table {
+            grid-template-columns: repeat(18, 20px);
+            gap: 1px;
+        }
+        .periodic-table-container.compact .pt-element {
+            width: 20px;
+            height: 20px;
+            font-size: 0.55rem;
+        }
+        .pt-expand-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 0.5rem;
+            padding: 0.35rem 0.5rem;
+            background: var(--smad-card);
+            border: 1px solid var(--smad-border);
+            border-radius: 4px;
+            color: var(--smad-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .pt-expand-btn:hover { border-color: var(--smad-accent); color: var(--smad-accent); }
         .periodic-table {
             display: grid;
-            grid-template-columns: repeat(18, 28px);
-            gap: 2px;
-            min-width: 520px;
+            grid-template-columns: repeat(18, 20px);
+            gap: 1px;
+            width: fit-content;
+            min-width: 378px;
         }
         .pt-element {
-            width: 28px;
-            height: 28px;
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            min-height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             font-weight: 600;
-            border-radius: 3px;
+            border-radius: 2px;
             cursor: pointer;
             transition: all 0.1s;
             border: 1px solid transparent;
+            box-sizing: border-box;
         }
-        .pt-element:hover { transform: scale(1.15); z-index: 10; }
+        .pt-element:hover { transform: scale(1.2); z-index: 10; }
         .pt-element.selected { border-color: var(--smad-accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.4); }
+        .periodic-table-container.expanded .periodic-table {
+            grid-template-columns: repeat(18, 28px);
+            gap: 2px;
+        }
+        .periodic-table-container.expanded .pt-element {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            min-height: 28px;
+            font-size: 0.65rem;
+        }
         .pt-element.alkali { background: #ff6b6b; color: #fff; }
         .pt-element.alkaline { background: #ffa94d; color: #000; }
         .pt-element.transition { background: #74c0fc; color: #000; }
@@ -164,7 +206,44 @@
         .pt-element.lanthanide { background: #f783ac; color: #000; }
         .pt-element.actinide { background: #da77f2; color: #fff; }
         .pt-element.unknown { background: #868e96; color: #fff; }
-        .pt-spacer { visibility: hidden; }
+        .pt-spacer { visibility: hidden; pointer-events: none; }
+        .pt-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .pt-modal-overlay.show { display: flex; }
+        .pt-modal {
+            background: var(--smad-panel);
+            border: 1px solid var(--smad-border);
+            border-radius: 8px;
+            padding: 1rem;
+            max-width: 96vw;
+            max-height: 96vh;
+            overflow: auto;
+        }
+        .pt-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .pt-modal-header h3 { margin: 0; font-size: 0.9rem; }
+        .pt-modal-close {
+            background: var(--smad-card);
+            border: 1px solid var(--smad-border);
+            color: var(--smad-text);
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .pt-modal-close:hover { border-color: var(--smad-accent); }
 
         .selected-elements {
             display: flex;
@@ -344,12 +423,12 @@
             <a href="/" class="top-nav-brand">SMAD · Materials Explorer</a>
             <div class="top-nav-links">
                 <a href="/">Home</a>
+                <a href="/databases" class="active">Materials DB</a>
                 <a href="/structures">Structures</a>
                 <a href="/dft">DFT</a>
                 <a href="/md">MD</a>
                 <a href="/montecarlo">Monte Carlo</a>
                 <a href="/analysis">Analysis</a>
-                <a href="/databases" class="active">Materials DB</a>
             </div>
         </nav>
 
@@ -377,7 +456,8 @@
                     <div class="filter-section active" id="tab-elements">
                         <div class="filter-group">
                             <label class="filter-label">Select Elements (click to toggle)</label>
-                            <div class="periodic-table-container">
+                            <button type="button" class="pt-expand-btn" id="ptExpandBtn" onclick="togglePtExpand()">▼ Expand periodic table</button>
+                            <div class="periodic-table-container compact" id="ptContainer">
                                 <div class="periodic-table" id="periodicTable"></div>
                             </div>
                             <div class="selected-elements" id="selectedElements">
@@ -532,6 +612,16 @@
         </div>
     </div>
 
+    <div class="pt-modal-overlay" id="ptModalOverlay">
+        <div class="pt-modal">
+            <div class="pt-modal-header">
+                <h3>Periodic table — click to select elements</h3>
+                <button type="button" class="pt-modal-close" onclick="closePtExpand()">Close</button>
+            </div>
+            <div class="periodic-table-container expanded" id="ptModalBody"></div>
+        </div>
+    </div>
+
     <script>
         const elements = [
             { sym: 'H', num: 1, row: 1, col: 1, cat: 'nonmetal' },
@@ -680,10 +770,7 @@
             });
 
             table.innerHTML = grid.map(cell => {
-                if (!cell.el) {
-                    if (cell.row === 8) return '';
-                    return '<div class="pt-element pt-spacer"></div>';
-                }
+                if (!cell.el) return '<div class="pt-element pt-spacer"></div>';
                 return `<div class="pt-element ${cell.el.cat}" data-sym="${cell.el.sym}" title="${cell.el.sym}">${cell.el.sym}</div>`;
             }).join('');
 
@@ -691,6 +778,36 @@
                 el.addEventListener('click', () => toggleElement(el.dataset.sym, el));
             });
         }
+
+        function togglePtExpand() {
+            const overlay = document.getElementById('ptModalOverlay');
+            const table = document.getElementById('periodicTable');
+            const container = document.getElementById('ptContainer');
+            const modalBody = document.getElementById('ptModalBody');
+            const btn = document.getElementById('ptExpandBtn');
+            if (overlay.classList.contains('show')) {
+                closePtExpand();
+                return;
+            }
+            overlay.classList.add('show');
+            modalBody.appendChild(table);
+            btn.textContent = '▲ Table expanded (close below)';
+        }
+
+        function closePtExpand() {
+            const overlay = document.getElementById('ptModalOverlay');
+            const table = document.getElementById('periodicTable');
+            const container = document.getElementById('ptContainer');
+            const modalBody = document.getElementById('ptModalBody');
+            const btn = document.getElementById('ptExpandBtn');
+            overlay.classList.remove('show');
+            container.appendChild(table);
+            btn.textContent = '▼ Expand periodic table';
+        }
+
+        document.getElementById('ptModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closePtExpand();
+        });
 
         function toggleElement(sym, el) {
             if (selectedElements.has(sym)) {
