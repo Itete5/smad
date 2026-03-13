@@ -3,211 +3,592 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DFT · SMAD</title>
+    <title>DFT Simulator · SMAD</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/3dmol/build/3Dmol-min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
-        .console-output {
-            background: #1a1a2e;
-            color: #7ee787;
-            font-family: 'SF Mono', Monaco, monospace;
-            font-size: 0.8rem;
-            padding: 1rem;
-            border-radius: 6px;
-            height: 250px;
+        :root {
+            --dft-bg-dark: #0d1117;
+            --dft-bg-panel: #161b22;
+            --dft-bg-card: #21262d;
+            --dft-border: #30363d;
+            --dft-text: #c9d1d9;
+            --dft-text-muted: #8b949e;
+            --dft-accent: #58a6ff;
+            --dft-success: #3fb950;
+            --dft-warning: #d29922;
+            --dft-danger: #f85149;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--dft-bg-dark);
+            color: var(--dft-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+        .dft-app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+        .dft-navbar {
+            background: var(--dft-bg-panel);
+            border-bottom: 1px solid var(--dft-border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        .dft-navbar-brand {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--dft-text);
+            text-decoration: none;
+        }
+        .dft-navbar-brand:hover { color: var(--dft-accent); }
+        .dft-navbar-links { display: flex; gap: 1rem; align-items: center; }
+        .dft-navbar-links a {
+            color: var(--dft-text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .dft-navbar-links a:hover, .dft-navbar-links a.active { color: var(--dft-accent); }
+
+        .dft-main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .dft-sidebar {
+            width: 320px;
+            background: var(--dft-bg-panel);
+            border-right: 1px solid var(--dft-border);
+            display: flex;
+            flex-direction: column;
             overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .dft-sidebar-section {
+            padding: 1rem;
+            border-bottom: 1px solid var(--dft-border);
+        }
+        .dft-sidebar-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--dft-text-muted);
+            margin: 0 0 0.75rem 0;
+            letter-spacing: 0.05em;
+        }
+        .dft-form-group { margin-bottom: 0.75rem; }
+        .dft-form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--dft-text-muted);
+            margin-bottom: 0.25rem;
+        }
+        .dft-input, .dft-select {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--dft-bg-card);
+            border: 1px solid var(--dft-border);
+            border-radius: 6px;
+            color: var(--dft-text);
+            font-size: 0.85rem;
+        }
+        .dft-input:focus, .dft-select:focus {
+            outline: none;
+            border-color: var(--dft-accent);
+        }
+        .dft-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .dft-btn-primary { background: var(--dft-accent); color: #fff; }
+        .dft-btn-primary:hover { background: #79b8ff; }
+        .dft-btn-success { background: var(--dft-success); color: #fff; }
+        .dft-btn-outline {
+            background: transparent;
+            border: 1px solid var(--dft-border);
+            color: var(--dft-text);
+        }
+        .dft-btn-outline:hover { border-color: var(--dft-accent); color: var(--dft-accent); }
+        .dft-btn-group { display: flex; gap: 0.5rem; }
+        .dft-btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        .dft-slider-row { display: flex; align-items: center; gap: 0.5rem; }
+        .dft-slider { flex: 1; accent-color: var(--dft-accent); }
+        .dft-slider-value { width: 50px; text-align: right; font-family: monospace; font-size: 0.8rem; }
+        .dft-row { display: flex; gap: 0.5rem; }
+        .dft-row > * { flex: 1; }
+
+        .dft-canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            position: relative;
+        }
+        .dft-viewer {
+            flex: 1;
+            background: #000;
+            position: relative;
+        }
+        #dft-3dviewer { width: 100%; height: 100%; }
+        .dft-viewer-controls {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        .dft-viewer-btn {
+            background: rgba(22, 27, 34, 0.9);
+            border: 1px solid var(--dft-border);
+            color: var(--dft-text);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .dft-viewer-btn:hover { border-color: var(--dft-accent); }
+
+        .dft-stats-bar {
+            background: var(--dft-bg-card);
+            border-top: 1px solid var(--dft-border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            gap: 2rem;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .dft-stat { display: flex; align-items: center; gap: 0.5rem; }
+        .dft-stat-label { color: var(--dft-text-muted); }
+        .dft-stat-value { font-weight: 600; font-family: monospace; }
+
+        .dft-right-panel {
+            width: 300px;
+            background: var(--dft-bg-panel);
+            border-left: 1px solid var(--dft-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .dft-plot-area {
+            flex: 1;
+            min-height: 180px;
+            background: var(--dft-bg-dark);
+        }
+        .dft-output-area {
+            flex: 1;
+            border-top: 1px solid var(--dft-border);
+            display: flex;
+            flex-direction: column;
+        }
+        .dft-output-header {
+            padding: 0.5rem 1rem;
+            background: var(--dft-bg-card);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--dft-text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dft-output-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.75rem;
+            background: #0d1117;
+            color: #7ee787;
             white-space: pre-wrap;
         }
+        .dft-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .dft-badge-ready { background: var(--dft-text-muted); color: #fff; }
+        .dft-badge-running { background: var(--dft-success); color: #fff; }
+        .dft-badge-error { background: var(--dft-danger); color: #fff; }
+        .dft-info-text {
+            font-size: 0.75rem;
+            color: var(--dft-text-muted);
+            margin-top: 0.35rem;
+        }
+        @media (max-width: 1024px) { .dft-right-panel { display: none; } }
+        @media (max-width: 768px) { .dft-sidebar { width: 260px; } .dft-navbar-links { display: none; } }
+        @media (max-width: 600px) { .dft-sidebar { display: none; } }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/">SMAD</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsDft">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarsDft">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/databases">Materials DB</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="/dft">DFT</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
-                </ul>
+    <div class="dft-app">
+        <nav class="dft-navbar">
+            <a href="/" class="dft-navbar-brand">SMAD · DFT Simulator</a>
+            <div class="dft-navbar-links">
+                <a href="/">Home</a>
+                <a href="/databases">Materials DB</a>
+                <a href="/structures">Structures</a>
+                <a href="/dft" class="active">DFT</a>
+                <a href="/md">MD</a>
+                <a href="/montecarlo">Monte Carlo</a>
+                <a href="/analysis">Analysis</a>
+            </div>
+        </nav>
+
+        <div class="dft-main">
+            <aside class="dft-sidebar">
+                <div class="dft-sidebar-section">
+                    <h3>Code & Calculation</h3>
+                    <div class="dft-form-group">
+                        <label>DFT Code</label>
+                        <select id="dftCode" class="dft-select">
+                            <option value="qe">Quantum ESPRESSO</option>
+                            <option value="vasp">VASP</option>
+                            <option value="abinit">ABINIT</option>
+                            <option value="siesta">SIESTA</option>
+                            <option value="wien2k">WIEN2k</option>
+                        </select>
+                    </div>
+                    <div class="dft-form-group">
+                        <label>Calculation Type</label>
+                        <select id="calcType" class="dft-select">
+                            <option value="scf">SCF (self-consistent)</option>
+                            <option value="relax">Structural relaxation</option>
+                            <option value="vc-relax">Variable-cell relaxation</option>
+                            <option value="bands">Band structure</option>
+                            <option value="dos">Density of states</option>
+                            <option value="phonon">Phonons (DFPT)</option>
+                            <option value="nscf">NSCF (bands/DOS)</option>
+                        </select>
+                    </div>
+                    <div class="dft-form-group">
+                        <label>XC Functional</label>
+                        <select id="xcFunc" class="dft-select">
+                            <option value="pbe">PBE</option>
+                            <option value="pbesol">PBEsol</option>
+                            <option value="lda">LDA</option>
+                            <option value="hse">HSE06</option>
+                            <option value="scan">SCAN</option>
+                            <option value="vdw">vdW-DF</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="dft-sidebar-section">
+                    <h3>Electronic Structure</h3>
+                    <div class="dft-form-group">
+                        <label>Ecutwfc (Ry)</label>
+                        <div class="dft-slider-row">
+                            <input type="range" id="ecutwfc" class="dft-slider" min="20" max="150" value="60" oninput="document.getElementById('ecutwfcVal').textContent=this.value">
+                            <span class="dft-slider-value" id="ecutwfcVal">60</span>
+                        </div>
+                    </div>
+                    <div class="dft-form-group">
+                        <label>Ecutrho (Ry)</label>
+                        <div class="dft-slider-row">
+                            <input type="range" id="ecutrho" class="dft-slider" min="100" max="1200" value="480" step="20" oninput="document.getElementById('ecutrhoVal').textContent=this.value">
+                            <span class="dft-slider-value" id="ecutrhoVal">480</span>
+                        </div>
+                    </div>
+                    <div class="dft-form-group">
+                        <label>k-mesh (Monkhorst-Pack)</label>
+                        <div class="dft-row">
+                            <input type="number" id="kx" class="dft-input" value="6" min="1" max="24">
+                            <input type="number" id="ky" class="dft-input" value="6" min="1" max="24">
+                            <input type="number" id="kz" class="dft-input" value="6" min="1" max="24">
+                        </div>
+                        <div class="dft-info-text">Gamma-centered grid for SCF</div>
+                    </div>
+                    <div class="dft-form-group">
+                        <label>Mixing beta</label>
+                        <input type="number" id="mixingBeta" class="dft-input" value="0.7" step="0.05" min="0.1" max="1">
+                    </div>
+                </div>
+
+                <div class="dft-sidebar-section">
+                    <h3>Structure & Pseudopotentials</h3>
+                    <div class="dft-form-group">
+                        <label>Structure Source</label>
+                        <select id="structSource" class="dft-select">
+                            <option value="builtin">Built-in (Cu FCC)</option>
+                            <option value="paste">Paste CIF/POSCAR</option>
+                            <option value="db">From Materials DB</option>
+                        </select>
+                    </div>
+                    <div class="dft-form-group" id="pasteStructGroup" style="display:none;">
+                        <label>Structure Data</label>
+                        <textarea id="structPaste" class="dft-input" rows="4" placeholder="Paste CIF or POSCAR..."></textarea>
+                    </div>
+                    <div class="dft-form-group">
+                        <label>Pseudopotential Library</label>
+                        <select id="pseudoLib" class="dft-select">
+                            <option value="sssp">SSSP (efficiency)</option>
+                            <option value="pslibrary">PSLibrary (QE)</option>
+                            <option value="gbrv">GBRV</option>
+                            <option value="paw">PAW (VASP)</option>
+                        </select>
+                    </div>
+                    <button class="dft-btn dft-btn-outline w-100" onclick="loadStructureIntoViewer()">Load / Refresh Structure</button>
+                </div>
+
+                <div class="dft-sidebar-section">
+                    <h3>Controls</h3>
+                    <div class="dft-btn-group" style="margin-bottom: 0.5rem;">
+                        <button class="dft-btn dft-btn-primary flex-grow-1" onclick="generateInput()">Generate Input</button>
+                    </div>
+                    <div class="dft-form-group">
+                        <span class="dft-badge dft-badge-ready" id="dftStatusBadge">Ready</span>
+                    </div>
+                </div>
+
+                <div class="dft-sidebar-section">
+                    <h3>HPC Execution</h3>
+                    <div class="dft-form-group">
+                        <label>Login Node</label>
+                        <input type="text" id="loginNode" class="dft-input" placeholder="hpc.example.org">
+                    </div>
+                    <div class="dft-form-group">
+                        <label>Command</label>
+                        <input type="text" id="dftCommand" class="dft-input" value="pw.x -in scf.in > scf.out">
+                    </div>
+                    <div class="dft-form-group">
+                        <label>Working Directory</label>
+                        <input type="text" id="workDir" class="dft-input" placeholder="/path/to/run">
+                    </div>
+                    <button class="dft-btn dft-btn-success w-100" onclick="runDFT()">Run DFT Calculation</button>
+                </div>
+            </aside>
+
+            <div class="dft-canvas-area">
+                <div class="dft-viewer">
+                    <div id="dft-3dviewer"></div>
+                    <div class="dft-viewer-controls">
+                        <button class="dft-viewer-btn" onclick="setDftViewStyle('sphere')">Spheres</button>
+                        <button class="dft-viewer-btn" onclick="setDftViewStyle('stick')">Sticks</button>
+                        <button class="dft-viewer-btn" onclick="toggleDftBox()">Box</button>
+                        <button class="dft-viewer-btn" onclick="dftZoomTo()">Reset View</button>
+                    </div>
+                </div>
+                <div class="dft-stats-bar">
+                    <div class="dft-stat">
+                        <span class="dft-stat-label">Formula:</span>
+                        <span class="dft-stat-value" id="statFormula">Cu</span>
+                    </div>
+                    <div class="dft-stat">
+                        <span class="dft-stat-label">Ecutwfc:</span>
+                        <span class="dft-stat-value" id="statEcut">60 Ry</span>
+                    </div>
+                    <div class="dft-stat">
+                        <span class="dft-stat-label">k-mesh:</span>
+                        <span class="dft-stat-value" id="statKmesh">6×6×6</span>
+                    </div>
+                    <div class="dft-stat">
+                        <span class="dft-stat-label">XC:</span>
+                        <span class="dft-stat-value" id="statXc">PBE</span>
+                    </div>
+                    <div class="dft-stat">
+                        <span class="dft-stat-label">Calc:</span>
+                        <span class="dft-stat-value" id="statCalc">SCF</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dft-right-panel">
+                <div class="dft-plot-area" id="dftPlotDiv">
+                    <div style="padding:0.5rem;font-size:0.75rem;color:var(--dft-text-muted);">Convergence / Band plot</div>
+                </div>
+                <div class="dft-output-area">
+                    <div class="dft-output-header">
+                        <span>Console Output</span>
+                        <button class="dft-btn dft-btn-outline dft-btn-sm" onclick="clearDftOutput()">Clear</button>
+                    </div>
+                    <div class="dft-output-content" id="dftOutput">SMAD DFT Simulator
+Configure code, structure, and run on HPC.
+Ready.</div>
+                </div>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <main class="section-light py-5">
-        <div class="container">
-            <div class="row mb-4">
-                <div class="col-lg-9">
-                    <h1 class="section-title mb-2">Density Functional Theory</h1>
-                    <p class="section-subtitle mb-0">
-                        Configure and launch DFT calculations (Quantum ESPRESSO, VASP, ABINIT) for electronic structure,
-                        total energy, and properties of superconducting candidates.
-                    </p>
-                </div>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-header">DFT Code Configuration</div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label">DFT Code</label>
-                                <select id="dftCode" class="form-select">
-                                    <option value="qe">Quantum ESPRESSO</option>
-                                    <option value="vasp">VASP</option>
-                                    <option value="abinit">ABINIT</option>
-                                    <option value="siesta">SIESTA</option>
-                                    <option value="wien2k">WIEN2k</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Calculation Type</label>
-                                <select id="calcType" class="form-select">
-                                    <option value="scf">SCF (self-consistent)</option>
-                                    <option value="relax">Structural relaxation</option>
-                                    <option value="vc-relax">Variable-cell relaxation</option>
-                                    <option value="bands">Band structure</option>
-                                    <option value="dos">Density of states</option>
-                                    <option value="phonon">Phonons (DFPT)</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">XC Functional</label>
-                                <select id="xcFunc" class="form-select">
-                                    <option value="pbe">PBE</option>
-                                    <option value="pbesol">PBEsol</option>
-                                    <option value="lda">LDA</option>
-                                    <option value="hse">HSE06</option>
-                                    <option value="scan">SCAN</option>
-                                </select>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <label class="form-label">Ecutwfc (Ry)</label>
-                                    <input type="number" id="ecutwfc" class="form-control" value="60">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Ecutrho (Ry)</label>
-                                    <input type="number" id="ecutrho" class="form-control" value="480">
-                                </div>
-                            </div>
-                            <div class="mt-3">
-                                <label class="form-label">k-mesh</label>
-                                <div class="input-group">
-                                    <input type="number" id="kx" class="form-control" value="6" min="1">
-                                    <input type="number" id="ky" class="form-control" value="6" min="1">
-                                    <input type="number" id="kz" class="form-control" value="6" min="1">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-header">HPC Execution</div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label">Login Node</label>
-                                <input type="text" id="loginNode" class="form-control" placeholder="hpc.example.org">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Command</label>
-                                <input type="text" id="dftCommand" class="form-control" value="pw.x -in scf.in > scf.out">
-                                <div class="form-text">Command executed via SSH on the remote host.</div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Working Directory</label>
-                                <input type="text" id="workDir" class="form-control" placeholder="/home/user/dft_calc">
-                            </div>
-                            <button class="btn btn-primary w-100" onclick="runDFT()">Run DFT Calculation</button>
-                            <div id="dftStatus" class="small text-muted mt-2">Ready.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span>Output</span>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="clearOutput()">Clear</button>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="console-output" id="dftOutput">SMAD DFT Interface
-Ready to submit calculations.</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row g-4 mt-2">
-                <div class="col-md-6 col-lg-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Input / Structure</h5>
-                            <p class="card-text small">Select a structure from your database or paste CIF/POSCAR. Set k-mesh, cutoff, functional.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Pseudopotentials</h5>
-                            <p class="card-text small">Choose pseudopotential library (SSSP, PSLibrary, GBRV) for accurate calculations.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Run & Monitor</h5>
-                            <p class="card-text small">Launch jobs, track status, stream logs. Results feed into Analysis tools.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Post-process</h5>
-                            <p class="card-text small">Band structure, DOS, charge density, convergence checks. Export for publications.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer class="footer py-4 text-center text-muted small">
-        <div class="container">© 2026 SMAD · Density Functional Theory</div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let dftViewer = null;
+        let dftShowBox = true;
+        let dftViewStyle = 'sphere';
+        let dftCurrentFormula = 'Cu';
+
+        function initDftViewer() {
+            const container = document.getElementById('dft-3dviewer');
+            dftViewer = $3Dmol.createViewer(container, {
+                backgroundColor: '#0d1117',
+                antialias: true,
+            });
+            dftViewer.setViewStyle({ style: 'outline', color: '#30363d', width: 0.02 });
+            loadStructureIntoViewer();
+            updateDftStats();
+            initDftPlot();
+        }
+
+        function loadStructureIntoViewer() {
+            if (!dftViewer) return;
+            dftViewer.removeAllModels();
+            dftViewer.removeAllShapes();
+
+            const source = document.getElementById('structSource').value;
+            if (source === 'paste') {
+                const text = document.getElementById('structPaste').value.trim();
+                if (text) {
+                    appendDftOutput('Parsing pasted structure...');
+                    try {
+                        const mol = $3Dmol.getModelFromText(text);
+                        if (mol) {
+                            dftViewer.addModel(mol);
+                            dftViewer.setStyle({}, { sphere: { radius: 0.4, colorscheme: 'Jmol' } });
+                            dftCurrentFormula = 'Custom';
+                        }
+                    } catch (e) {
+                        appendDftOutput('Parse failed, using default Cu.');
+                    }
+                }
+            }
+
+            if (!dftViewer.getModel()) {
+                const model = dftViewer.addModel();
+                model.addAtom({ elem: 'Cu', x: 0, y: 0, z: 0 });
+                dftViewer.setStyle({}, { sphere: { radius: 0.5, colorscheme: 'Jmol' } });
+                dftCurrentFormula = 'Cu';
+            }
+
+            if (dftShowBox) {
+                const s = 3.6;
+                const edges = [
+                    [[0,0,0],[s,0,0]], [[0,0,0],[0,s,0]], [[0,0,0],[0,0,s]],
+                    [[s,s,s],[0,s,s]], [[s,s,s],[s,0,s]], [[s,s,s],[s,s,0]],
+                    [[s,0,0],[s,s,0]], [[s,0,0],[s,0,s]], [[0,s,0],[s,s,0]], [[0,s,0],[0,s,s]], [[0,0,s],[s,0,s]], [[0,0,s],[0,s,s]]
+                ];
+                edges.forEach(([a,b]) => {
+                    dftViewer.addCylinder({ start: {x:a[0],y:a[1],z:a[2]}, end: {x:b[0],y:b[1],z:b[2]}, radius: 0.03, color: '#58a6ff', fromCap: true, toCap: true });
+                });
+            }
+            dftViewer.zoomTo();
+            dftViewer.render();
+            updateDftStats();
+        }
+
+        function setDftViewStyle(style) {
+            dftViewStyle = style;
+            if (!dftViewer) return;
+            if (style === 'sphere') {
+                dftViewer.setStyle({}, { sphere: { radius: 0.4, colorscheme: 'Jmol' } });
+            } else {
+                dftViewer.setStyle({}, { stick: { radius: 0.15, colorscheme: 'Jmol' }, sphere: { radius: 0.25, colorscheme: 'Jmol' } });
+            }
+            dftViewer.render();
+        }
+
+        function toggleDftBox() {
+            dftShowBox = !dftShowBox;
+            loadStructureIntoViewer();
+        }
+
+        function dftZoomTo() {
+            if (dftViewer) { dftViewer.zoomTo(); dftViewer.render(); }
+        }
+
+        function updateDftStats() {
+            const ecut = document.getElementById('ecutwfc').value;
+            const kx = document.getElementById('kx').value;
+            const ky = document.getElementById('ky').value;
+            const kz = document.getElementById('kz').value;
+            const xc = document.getElementById('xcFunc');
+            const calc = document.getElementById('calcType');
+
+            document.getElementById('statFormula').textContent = dftCurrentFormula;
+            document.getElementById('statEcut').textContent = ecut + ' Ry';
+            document.getElementById('statKmesh').textContent = kx + '×' + ky + '×' + kz;
+            document.getElementById('statXc').textContent = xc.options[xc.selectedIndex].text;
+            document.getElementById('statCalc').textContent = calc.options[calc.selectedIndex].text;
+        }
+
+        function generateInput() {
+            const code = document.getElementById('dftCode').value;
+            const calc = document.getElementById('calcType').value;
+            const xc = document.getElementById('xcFunc').value;
+            const ecutwfc = document.getElementById('ecutwfc').value;
+            const ecutrho = document.getElementById('ecutrho').value;
+            const kx = document.getElementById('kx').value;
+            const ky = document.getElementById('ky').value;
+            const kz = document.getElementById('kz').value;
+
+            appendDftOutput('[Generate] Input parameters collected.');
+            appendDftOutput(`  Code: ${code}, Calc: ${calc}, XC: ${xc}`);
+            appendDftOutput(`  Ecutwfc=${ecutwfc} Ry, Ecutrho=${ecutrho} Ry, k-mesh ${kx}×${ky}×${kz}`);
+            document.getElementById('dftStatusBadge').textContent = 'Input ready';
+            document.getElementById('dftStatusBadge').className = 'dft-badge dft-badge-ready';
+        }
+
+        function initDftPlot() {
+            const el = document.getElementById('dftPlotDiv');
+            if (!el || typeof Plotly === 'undefined') return;
+            const trace = {
+                x: [1,2,3,4,5,6,7,8],
+                y: [0.5, 0.2, 0.08, 0.03, 0.01, 0.005, 0.002, 0.001],
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#58a6ff', width: 2 },
+                marker: { size: 6 },
+            };
+            Plotly.newPlot(el, [trace], {
+                margin: { t: 20, r: 20, b: 30, l: 40 },
+                paper_bgcolor: '#0d1117',
+                plot_bgcolor: '#161b22',
+                font: { color: '#8b949e', size: 10 },
+                xaxis: { title: 'SCF step', gridcolor: '#30363d' },
+                yaxis: { title: 'Conv (Ry)', type: 'log', gridcolor: '#30363d' },
+                showlegend: false,
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        function appendDftOutput(text) {
+            const el = document.getElementById('dftOutput');
+            el.textContent += '\n' + text;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function clearDftOutput() {
+            document.getElementById('dftOutput').textContent = 'Console cleared.\nReady.';
+        }
+
         async function runDFT() {
             const host = document.getElementById('loginNode').value.trim();
             const command = document.getElementById('dftCommand').value.trim();
             const workDir = document.getElementById('workDir').value.trim();
-            const statusEl = document.getElementById('dftStatus');
-            const outputEl = document.getElementById('dftOutput');
+            const badge = document.getElementById('dftStatusBadge');
 
             if (!host || !command) {
-                statusEl.textContent = 'Please provide login node and command.';
+                appendDftOutput('[Error] Provide login node and command.');
                 return;
             }
 
-            statusEl.textContent = 'Submitting DFT job...';
-            appendOutput(`[${new Date().toLocaleTimeString()}] Connecting to ${host}...`);
-            appendOutput(`Command: ${command}`);
-            if (workDir) appendOutput(`Working dir: ${workDir}`);
+            badge.textContent = 'Running';
+            badge.className = 'dft-badge dft-badge-running';
+            appendDftOutput(`[${new Date().toLocaleTimeString()}] Connecting to ${host}...`);
+            appendDftOutput(`Command: ${command}`);
+            if (workDir) appendDftOutput(`Working dir: ${workDir}`);
 
             try {
                 const fullCommand = workDir ? `cd ${workDir} && ${command}` : command;
@@ -218,27 +599,34 @@ Ready to submit calculations.</div>
                 });
                 const data = await resp.json();
                 if (data.error) {
-                    appendOutput('[Error] ' + data.error);
-                    statusEl.textContent = 'Job failed.';
+                    appendDftOutput('[Error] ' + data.error);
+                    badge.textContent = 'Error';
+                    badge.className = 'dft-badge dft-badge-error';
                 } else {
-                    appendOutput('[Output]\n' + (data.output || 'No output.'));
-                    statusEl.textContent = 'Job completed.';
+                    appendDftOutput('[Output]\n' + (data.output || 'No output.'));
+                    badge.textContent = 'Ready';
+                    badge.className = 'dft-badge dft-badge-ready';
                 }
             } catch (err) {
-                appendOutput('[Error] ' + err);
-                statusEl.textContent = 'Request failed.';
+                appendDftOutput('[Error] ' + err);
+                badge.textContent = 'Error';
+                badge.className = 'dft-badge dft-badge-error';
             }
         }
 
-        function appendOutput(text) {
-            const el = document.getElementById('dftOutput');
-            el.textContent += '\n' + text;
-            el.scrollTop = el.scrollHeight;
-        }
+        document.getElementById('structSource').addEventListener('change', function() {
+            document.getElementById('pasteStructGroup').style.display = this.value === 'paste' ? 'block' : 'none';
+        });
 
-        function clearOutput() {
-            document.getElementById('dftOutput').textContent = 'Console cleared.';
-        }
+        document.getElementById('ecutwfc').addEventListener('input', updateDftStats);
+        document.getElementById('ecutrho').addEventListener('input', updateDftStats);
+        document.getElementById('kx').addEventListener('input', updateDftStats);
+        document.getElementById('ky').addEventListener('input', updateDftStats);
+        document.getElementById('kz').addEventListener('input', updateDftStats);
+        document.getElementById('xcFunc').addEventListener('change', updateDftStats);
+        document.getElementById('calcType').addEventListener('change', updateDftStats);
+
+        document.addEventListener('DOMContentLoaded', initDftViewer);
     </script>
 </body>
 </html>
