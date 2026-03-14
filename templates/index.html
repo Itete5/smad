@@ -154,8 +154,8 @@
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTracker()">Refresh</button>
                     </div>
                     <div class="mb-4">
-                        <h6 class="text-muted small mb-2">Critical temperature T<sub>c</sub> vs Year</h6>
-                        <div id="trackerChart" style="height:280px;width:100%;"></div>
+                        <h6 class="text-muted small mb-2">Superconductivity T<sub>c</sub> frontier and family evolution</h6>
+                        <div id="trackerChart" style="height:320px;width:100%;"></div>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle" id="trackerTable">
@@ -419,6 +419,18 @@
             renderTrackerChart();
         }
 
+        const familyMarkers = {
+            "Element": "circle",
+            "A15": "square",
+            "Alloy": "diamond",
+            "Cuprate": "triangle-up",
+            "Iron-based": "triangle-down",
+            "Hydride": "star",
+            "Conventional": "hexagon",
+            "Kagome": "pentagon",
+            "Nickelate": "cross"
+        };
+
         function renderTrackerChart() {
             const typeFilter = document.getElementById("trackerTypeFilter")?.value || "";
             const tcMin = parseInt(document.getElementById("trackerTcMin")?.value, 10) || 0;
@@ -436,26 +448,61 @@
                 return;
             }
             const types = [...new Set(list.map(m => m.type || "Other"))];
-            const colors = ["#0969da", "#cf222e", "#1a7f37", "#9a6700", "#8250df", "#c43c1b", "#0550ae"];
-            const traces = types.map((type, i) => {
-                const pts = list.filter(m => (m.type || "Other") === type);
-                return {
+            const colors = ["#0969da", "#cf222e", "#1a7f37", "#9a6700", "#8250df", "#c43c1b", "#0550ae", "#bf8700"];
+            const traces = [];
+            types.forEach((family, i) => {
+                const pts = list.filter(m => (m.type || "Other") === family);
+                traces.push({
                     x: pts.map(m => m.year),
                     y: pts.map(m => m.tc_k),
-                    text: pts.map(m => m.formula + " (" + m.tc_k + " K)"),
+                    text: pts.map(m => (m.formula || "") + " (" + m.tc_k + " K)"),
                     mode: "markers",
                     type: "scatter",
-                    name: type,
-                    marker: { size: 10, color: colors[i % colors.length], line: { width: 1, color: "#fff" } }
-                };
+                    name: family,
+                    marker: {
+                        size: 12,
+                        symbol: familyMarkers[family] || "circle",
+                        color: colors[i % colors.length],
+                        line: { width: 1, color: "#fff" }
+                    }
+                });
             });
+            const sorted = [...list].sort((a, b) => a.year - b.year);
+            let recordTc = 0;
+            const frontierX = [];
+            const frontierY = [];
+            sorted.forEach(m => {
+                recordTc = Math.max(recordTc, m.tc_k);
+                frontierX.push(m.year);
+                frontierY.push(recordTc);
+            });
+            traces.push({
+                x: frontierX,
+                y: frontierY,
+                mode: "lines",
+                type: "scatter",
+                name: "Record T<sub>c</sub> frontier",
+                line: { dash: "dash", width: 2, color: "#333" }
+            });
+            const annotations = list.map(m => ({
+                x: m.year,
+                y: m.tc_k,
+                text: m.formula || "",
+                showarrow: false,
+                xanchor: "left",
+                xshift: 6,
+                yshift: 0,
+                font: { size: 9 }
+            }));
             Plotly.react(el, traces, {
-                margin: { t: 24, r: 24, b: 40, l: 50 },
+                margin: { t: 32, r: 24, b: 48, l: 52 },
                 xaxis: { title: "Year", dtick: 5, gridcolor: "rgba(0,0,0,0.08)" },
-                yaxis: { title: "T<sub>c</sub> (K)", gridcolor: "rgba(0,0,0,0.08)" },
+                yaxis: { title: "Critical Temperature T<sub>c</sub> (K)", gridcolor: "rgba(0,0,0,0.08)" },
+                title: { text: "Superconductivity T<sub>c</sub> Frontier and Family Evolution", font: { size: 14 } },
                 showlegend: true,
                 legend: { x: 1, y: 1, xanchor: "right" },
-                hovermode: "closest"
+                hovermode: "closest",
+                annotations: annotations
             }, { responsive: true });
         }
 
