@@ -35,12 +35,22 @@ WS_PATH = generate_daily_ws_path()
 # -------------------------
 # Routes
 # -------------------------
+def _load_superconductors_data():
+    data_path = Path(__file__).parent / "data" / "superconductors.json"
+    try:
+        with open(data_path, encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"last_updated": "", "materials": []}
+
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     token = generate_token()
+    superconductors_data = _load_superconductors_data()
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "ws_path": WS_PATH, "token": token}
+        {"request": request, "ws_path": WS_PATH, "token": token, "superconductors_data": superconductors_data}
     )
 
 @app.get("/about", response_class=HTMLResponse)
