@@ -419,16 +419,31 @@
             renderTrackerChart();
         }
 
+        const familyColors = {
+            "Element": "#1f77b4",
+            "A15": "#2ca02c",
+            "Alloy": "#17becf",
+            "Cuprate": "#d62728",
+            "Iron-based": "#ff7f0e",
+            "Heavy-fermion": "#8c564b",
+            "Hydride": "#9467bd",
+            "Organic": "#e377c2",
+            "Conventional": "#7f7f7f",
+            "Kagome": "#bcbd22",
+            "Nickelate": "#aec7e8"
+        };
         const familyMarkers = {
             "Element": "circle",
             "A15": "square",
             "Alloy": "diamond",
             "Cuprate": "triangle-up",
             "Iron-based": "triangle-down",
+            "Heavy-fermion": "cross",
             "Hydride": "star",
+            "Organic": "x",
             "Conventional": "hexagon",
             "Kagome": "pentagon",
-            "Nickelate": "cross"
+            "Nickelate": "circle-open"
         };
 
         function renderTrackerChart() {
@@ -444,33 +459,29 @@
             const el = document.getElementById("trackerChart");
             if (!el || typeof Plotly === "undefined") return;
             if (list.length === 0) {
-                Plotly.react(el, [], { xaxis: { title: "Year" }, yaxis: { title: "T<sub>c</sub> (K)" } }, { responsive: true });
+                Plotly.react(el, [], { xaxis: { title: "Discovery Year" }, yaxis: { title: "T<sub>c</sub> (K)" } }, { responsive: true });
                 return;
             }
             const types = [...new Set(list.map(m => m.type || "Other"))];
-            const colors = ["#0969da", "#cf222e", "#1a7f37", "#9a6700", "#8250df", "#c43c1b", "#0550ae", "#bf8700"];
             const traces = [];
+            const fallbackColors = ["#1f77b4", "#2ca02c", "#17becf", "#d62728", "#ff7f0e", "#9467bd", "#8c564b", "#7f7f7f"];
             types.forEach((family, i) => {
                 const pts = list.filter(m => (m.type || "Other") === family);
+                const color = familyColors[family] || fallbackColors[i % fallbackColors.length];
+                const sortedPts = [...pts].sort((a, b) => a.year - b.year);
                 traces.push({
-                    x: pts.map(m => m.year),
-                    y: pts.map(m => m.tc_k),
-                    text: pts.map(m => (m.formula || "") + " (" + m.tc_k + " K)"),
-                    mode: "markers",
+                    x: sortedPts.map(m => m.year),
+                    y: sortedPts.map(m => m.tc_k),
+                    mode: "lines",
                     type: "scatter",
-                    name: family,
-                    marker: {
-                        size: 12,
-                        symbol: familyMarkers[family] || "circle",
-                        color: colors[i % colors.length],
-                        line: { width: 1, color: "#fff" }
-                    }
+                    name: family + " (track)",
+                    line: { dash: "dash", width: 1, color: color, opacity: 0.4 },
+                    showlegend: false
                 });
             });
             const sorted = [...list].sort((a, b) => a.year - b.year);
             let recordTc = 0;
-            const frontierX = [];
-            const frontierY = [];
+            const frontierX = [], frontierY = [];
             sorted.forEach(m => {
                 recordTc = Math.max(recordTc, m.tc_k);
                 frontierX.push(m.year);
@@ -481,8 +492,27 @@
                 y: frontierY,
                 mode: "lines",
                 type: "scatter",
-                name: "Record T<sub>c</sub> frontier",
-                line: { dash: "dash", width: 2, color: "#333" }
+                name: "Global T<sub>c</sub> frontier",
+                line: { dash: "dot", width: 3, color: "#333" }
+            });
+            types.forEach((family) => {
+                const pts = list.filter(m => (m.type || "Other") === family);
+                const color = familyColors[family] || "#333";
+                traces.push({
+                    x: pts.map(m => m.year),
+                    y: pts.map(m => m.tc_k),
+                    text: pts.map(m => (m.formula || "") + " (" + m.tc_k + " K)"),
+                    mode: "markers",
+                    type: "scatter",
+                    name: family,
+                    marker: {
+                        size: 10,
+                        symbol: familyMarkers[family] || "circle",
+                        color: color,
+                        opacity: 0.7,
+                        line: { width: 1, color: "#fff" }
+                    }
+                });
             });
             const annotations = list.map(m => ({
                 x: m.year,
@@ -495,12 +525,12 @@
                 font: { size: 9 }
             }));
             Plotly.react(el, traces, {
-                margin: { t: 32, r: 24, b: 48, l: 52 },
-                xaxis: { title: "Year", dtick: 5, gridcolor: "rgba(0,0,0,0.08)" },
+                margin: { t: 36, r: 24, b: 48, l: 52 },
+                xaxis: { title: "Discovery Year", dtick: 5, gridcolor: "rgba(0,0,0,0.08)" },
                 yaxis: { title: "Critical Temperature T<sub>c</sub> (K)", gridcolor: "rgba(0,0,0,0.08)" },
-                title: { text: "Superconductivity T<sub>c</sub> Frontier and Family Evolution", font: { size: 14 } },
+                title: { text: "Superconductivity Discovery Map", font: { size: 14 } },
                 showlegend: true,
-                legend: { x: 1, y: 1, xanchor: "right" },
+                legend: { x: 1.02, y: 1, xanchor: "left", yanchor: "top" },
                 hovermode: "closest",
                 annotations: annotations
             }, { responsive: true });
