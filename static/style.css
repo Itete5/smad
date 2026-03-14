@@ -25,6 +25,10 @@
     backdrop-filter: blur(4px);
 }
 
+#tc-frontier {
+    scroll-margin-top: 5rem;
+}
+
 .section-light {
     background-color: #f7f7fa;
 }

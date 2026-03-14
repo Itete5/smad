@@ -20,6 +20,7 @@
             <div class="collapse navbar-collapse" id="navbarsExample">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link active" href="#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tc-frontier">T<sub>c</sub> frontier</a></li>
                     <li class="nav-item"><a class="nav-link" href="/databases">Materials DB</a></li>
                     <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
                     <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
@@ -127,7 +128,7 @@
             </div>
 
             <!-- Tc frontier diagram -->
-            <div class="row mt-5 pt-4 border-top">
+            <div id="tc-frontier" class="row mt-5 pt-4 border-top">
                 <div class="col-12">
                     <h3 class="h4 mb-2">T<sub>c</sub> frontier diagram</h3>
                     <p class="text-muted small mb-3">
@@ -154,7 +155,7 @@
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTracker()">Refresh</button>
                     </div>
                     <div class="mb-4">
-                        <h6 class="text-muted small mb-2">Superconductivity T<sub>c</sub> frontier and family evolution</h6>
+                        <h6 class="text-muted small mb-2">Superconductivity T<sub>c</sub> frontier diagram</h6>
                         <div id="trackerChart" style="height:320px;width:100%;"></div>
                     </div>
                     <div class="table-responsive">
@@ -372,6 +373,14 @@
         // Tc frontier diagram
         // -----------------------------
         let trackerData = { last_updated: "", materials: [] };
+        const TRACKER_FALLBACK = [
+            { formula: "Hg", year: 1911, tc_k: 4.2, type: "Element" },
+            { formula: "Nb₃Sn", year: 1954, tc_k: 18, type: "A15" },
+            { formula: "YBa₂Cu₃O₇", year: 1987, tc_k: 93, type: "Cuprate" },
+            { formula: "HgBa₂Ca₂Cu₃O₈", year: 1993, tc_k: 135, type: "Cuprate" },
+            { formula: "H₃S", year: 2015, tc_k: 203, type: "Hydride" },
+            { formula: "LaH₁₀", year: 2019, tc_k: 250, type: "Hydride" }
+        ];
 
         async function loadTracker() {
             const body = document.getElementById("trackerBody");
@@ -381,13 +390,16 @@
             try {
                 const res = await fetch("/api/superconductors/tracker");
                 const data = await res.json();
-                trackerData = data;
+                trackerData = data && data.materials && Array.isArray(data.materials) ? data : { last_updated: data?.last_updated || "", materials: [] };
+                if (trackerData.materials.length === 0) trackerData.materials = TRACKER_FALLBACK;
                 if (data.last_updated) badge.textContent = "Last updated: " + data.last_updated;
                 else badge.textContent = "Live";
                 renderTrackerTable();
                 renderTrackerChart();
             } catch (err) {
-                body.innerHTML = "<tr><td colspan='6' class='text-danger text-center'>Failed to load tracker.</td></tr>";
+                trackerData.materials = TRACKER_FALLBACK;
+                body.innerHTML = "<tr><td colspan='6' class='text-warning text-center'>Using sample data (API unavailable).</td></tr>";
+                renderTrackerChart();
             }
         }
 
@@ -450,9 +462,10 @@
             const typeFilter = document.getElementById("trackerTypeFilter")?.value || "";
             const tcMin = parseInt(document.getElementById("trackerTcMin")?.value, 10) || 0;
             const tcMax = parseInt(document.getElementById("trackerTcMax")?.value, 10) || 999;
-            const list = (trackerData.materials || []).filter(m => {
+            const rawMaterials = (trackerData.materials && trackerData.materials.length) ? trackerData.materials : TRACKER_FALLBACK;
+            const list = rawMaterials.filter(m => {
                 if (typeFilter && m.type !== typeFilter) return false;
-                const tc = m.tc_k ?? 0;
+                const tc = Number(m.tc_k) || 0;
                 if (tc < tcMin || tc > tcMax) return false;
                 return true;
             }).filter(m => m.year != null && m.tc_k != null);
@@ -468,10 +481,10 @@
             types.forEach((family, i) => {
                 const pts = list.filter(m => (m.type || "Other") === family);
                 const color = familyColors[family] || fallbackColors[i % fallbackColors.length];
-                const sortedPts = [...pts].sort((a, b) => a.year - b.year);
+                const sortedPts = [...pts].sort((a, b) => Number(a.year) - Number(b.year));
                 traces.push({
-                    x: sortedPts.map(m => m.year),
-                    y: sortedPts.map(m => m.tc_k),
+                    x: sortedPts.map(m => Number(m.year)),
+                    y: sortedPts.map(m => Number(m.tc_k)),
                     mode: "lines",
                     type: "scatter",
                     name: family + " (track)",
@@ -479,12 +492,13 @@
                     showlegend: false
                 });
             });
-            const sorted = [...list].sort((a, b) => a.year - b.year);
+            const sorted = [...list].sort((a, b) => Number(a.year) - Number(b.year));
             let recordTc = 0;
             const frontierX = [], frontierY = [];
             sorted.forEach(m => {
-                recordTc = Math.max(recordTc, m.tc_k);
-                frontierX.push(m.year);
+                const tc = Number(m.tc_k);
+                recordTc = Math.max(recordTc, tc);
+                frontierX.push(Number(m.year));
                 frontierY.push(recordTc);
             });
             traces.push({
@@ -499,8 +513,8 @@
                 const pts = list.filter(m => (m.type || "Other") === family);
                 const color = familyColors[family] || "#333";
                 traces.push({
-                    x: pts.map(m => m.year),
-                    y: pts.map(m => m.tc_k),
+                    x: pts.map(m => Number(m.year)),
+                    y: pts.map(m => Number(m.tc_k)),
                     text: pts.map(m => (m.formula || "") + " (" + m.tc_k + " K)"),
                     mode: "markers",
                     type: "scatter",
@@ -515,8 +529,8 @@
                 });
             });
             const annotations = list.map(m => ({
-                x: m.year,
-                y: m.tc_k,
+                x: Number(m.year),
+                y: Number(m.tc_k),
                 text: m.formula || "",
                 showarrow: false,
                 xanchor: "left",
