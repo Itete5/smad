@@ -318,6 +318,55 @@
 
                 <div class="sb-sidebar-content">
                     <div class="sb-sidebar-section active" id="tab-build">
+                        <div class="sb-section-title">Preset structure (quick build)</div>
+                        <div class="sb-group">
+                            <label class="sb-label">Structure</label>
+                            <select class="sb-select" id="presetStruct">
+                                <option value="fcc">FCC</option>
+                                <option value="bcc">BCC</option>
+                                <option value="sc">Simple cubic</option>
+                                <option value="hcp">HCP</option>
+                                <option value="diamond">Diamond</option>
+                                <option value="nacl">NaCl (rocksalt)</option>
+                                <option value="zincblende">Zinc blende</option>
+                                <option value="perovskite">Perovskite ABO₃</option>
+                            </select>
+                        </div>
+                        <div class="sb-group">
+                            <label class="sb-label">Mode</label>
+                            <div class="sb-btn-group" style="flex-wrap:wrap;">
+                                <button type="button" class="sb-btn sb-btn-sm preset-mode active" data-mode="unitcell">Unit cell</button>
+                                <button type="button" class="sb-btn sb-btn-sm preset-mode" data-mode="super">Supercell</button>
+                                <button type="button" class="sb-btn sb-btn-sm preset-mode" data-mode="slab">Slab</button>
+                            </div>
+                        </div>
+                        <div class="sb-group" id="presetSupercellOpts">
+                            <label class="sb-label">Repetitions n<sub>x</sub> × n<sub>y</sub> × n<sub>z</sub></label>
+                            <div class="sb-row">
+                                <input type="number" class="sb-input" id="presetNx" value="2" min="1" max="6">
+                                <input type="number" class="sb-input" id="presetNy" value="2" min="1" max="6">
+                                <input type="number" class="sb-input" id="presetNz" value="2" min="1" max="6">
+                            </div>
+                        </div>
+                        <div class="sb-group" id="presetSlabOpts" style="display:none;">
+                            <label class="sb-label">Surface (Miller)</label>
+                            <select class="sb-select" id="presetSurf">
+                                <option value="100">(1 0 0)</option>
+                                <option value="110">(1 1 0)</option>
+                                <option value="111">(1 1 1)</option>
+                                <option value="211">(2 1 1)</option>
+                            </select>
+                            <label class="sb-label" style="margin-top:0.5rem;">Layers</label>
+                            <input type="number" class="sb-input" id="presetLayers" value="4" min="2" max="8">
+                        </div>
+                        <div class="sb-group">
+                            <label class="sb-label">Element roles (Set A / B / O)</label>
+                            <div id="presetRoleA" class="sb-row" style="align-items:center;gap:0.5rem;"><span class="sb-label" style="width:1.2rem;">A</span><select class="sb-select" id="presetElA" style="flex:1;"> </select></div>
+                            <div id="presetRoleB" class="sb-row" style="align-items:center;gap:0.5rem;margin-top:0.35rem;"><span class="sb-label" style="width:1.2rem;">B</span><select class="sb-select" id="presetElB" style="flex:1;"> </select></div>
+                            <div id="presetRoleO" class="sb-row" style="align-items:center;gap:0.5rem;margin-top:0.35rem;"><span class="sb-label" style="width:1.2rem;">O</span><select class="sb-select" id="presetElO" style="flex:1;"> </select></div>
+                        </div>
+                        <button class="sb-btn sb-btn-primary sb-btn-full" onclick="buildFromPreset()">Build from preset</button>
+                        <div class="sb-divider"></div>
                         <div class="sb-section-title">Crystal System</div>
                         <div class="sb-crystal-grid" id="crystalSystemGrid">
                             <div class="sb-crystal-btn selected" data-system="cubic" onclick="selectCrystalSystem('cubic')">
@@ -630,6 +679,202 @@
             1: 'P1', 2: 'P-1', 14: 'P2₁/c', 62: 'Pnma', 139: 'I4/mmm', 166: 'R-3m',
             194: 'P6₃/mmc', 221: 'Pm-3m', 225: 'Fm-3m', 227: 'Fd-3m', 229: 'Im-3m'
         };
+
+        // ── Preset crystal structures (Crystal Structure Builder) ─────────────────
+        const PRESET_STRUCTURES = {
+            fcc: { name: 'FCC', lattice: 'cubic', sg: 'Fm3m', a: 3.52,
+                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0, role: 'A' }, { x: 0.5, y: 0, z: 0.5, role: 'A' }, { x: 0, y: 0.5, z: 0.5, role: 'A' }], roles: ['A'] },
+            bcc: { name: 'BCC', lattice: 'cubic', sg: 'Im3m', a: 2.87,
+                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0.5, role: 'A' }], roles: ['A'] },
+            sc: { name: 'Simple cubic', lattice: 'cubic', sg: 'Pm3m', a: 3.0,
+                sites: [{ x: 0, y: 0, z: 0, role: 'A' }], roles: ['A'] },
+            hcp: { name: 'HCP', lattice: 'hexagonal', sg: 'P63/mmc', a: 2.51, c: 4.07,
+                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 1/3, y: 2/3, z: 0.5, role: 'A' }], roles: ['A'] },
+            diamond: { name: 'Diamond', lattice: 'cubic', sg: 'Fd3m', a: 5.43,
+                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0, role: 'A' }, { x: 0.5, y: 0, z: 0.5, role: 'A' }, { x: 0, y: 0.5, z: 0.5, role: 'A' },
+                    { x: 0.25, y: 0.25, z: 0.25, role: 'A' }, { x: 0.75, y: 0.75, z: 0.25, role: 'A' }, { x: 0.75, y: 0.25, z: 0.75, role: 'A' }, { x: 0.25, y: 0.75, z: 0.75, role: 'A' }], roles: ['A'] },
+            nacl: { name: 'NaCl', lattice: 'cubic', sg: 'Fm3m', a: 5.64,
+                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0, role: 'A' }, { x: 0.5, y: 0, z: 0.5, role: 'A' }, { x: 0, y: 0.5, z: 0.5, role: 'A' },
+                    { x: 0.5, y: 0, z: 0, role: 'B' }, { x: 0, y: 0.5, z: 0, role: 'B' }, { x: 0, y: 0, z: 0.5, role: 'B' }, { x: 0.5, y: 0.5, z: 0.5, role: 'B' }], roles: ['A', 'B'] },
+            zincblende: { name: 'Zinc blende', lattice: 'cubic', sg: 'F43m', a: 5.41,
+                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0, role: 'A' }, { x: 0.5, y: 0, z: 0.5, role: 'A' }, { x: 0, y: 0.5, z: 0.5, role: 'A' },
+                    { x: 0.25, y: 0.25, z: 0.25, role: 'B' }, { x: 0.75, y: 0.75, z: 0.25, role: 'B' }, { x: 0.75, y: 0.25, z: 0.75, role: 'B' }, { x: 0.25, y: 0.75, z: 0.75, role: 'B' }], roles: ['A', 'B'] },
+            perovskite: { name: 'Perovskite', lattice: 'cubic', sg: 'Pm3m', a: 3.91,
+                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0.5, role: 'B' },
+                    { x: 0.5, y: 0.5, z: 0, role: 'O' }, { x: 0.5, y: 0, z: 0.5, role: 'O' }, { x: 0, y: 0.5, z: 0.5, role: 'O' }], roles: ['A', 'B', 'O'] }
+        };
+        const PRESET_ELEMENTS = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Fr', 'Ra', 'Ac'];
+        let presetElAssign = { A: 'Ni', B: 'Cl', O: 'O' };
+
+        function getPresetLattVecs(sp) {
+            const a = sp.a, c = sp.c || sp.a;
+            if (sp.lattice === 'hexagonal') {
+                return [[a, 0, 0], [-a/2, a*Math.sqrt(3)/2, 0], [0, 0, c]];
+            }
+            return [[a, 0, 0], [0, a, 0], [0, 0, a]];
+        }
+
+        function buildPresetUCAtoms(sp, sc) {
+            const [nx, ny, nz] = sc;
+            const latt = getPresetLattVecs(sp);
+            const atoms = [];
+            const seen = new Set();
+            for (let ix = 0; ix < nx; ix++)
+                for (let iy = 0; iy < ny; iy++)
+                    for (let iz = 0; iz < nz; iz++) {
+                        sp.sites.forEach(site => {
+                            const fx = site.x + ix, fy = site.y + iy, fz = site.z + iz;
+                            if (fx > nx - 1e-6 || fy > ny - 1e-6 || fz > nz - 1e-6) return;
+                            const key = `${fx.toFixed(4)},${fy.toFixed(4)},${fz.toFixed(4)},${site.role}`;
+                            if (seen.has(key)) return;
+                            seen.add(key);
+                            const cx = fx*latt[0][0] + fy*latt[1][0] + fz*latt[2][0];
+                            const cy = fx*latt[0][1] + fy*latt[1][1] + fz*latt[2][1];
+                            const cz = fx*latt[0][2] + fy*latt[1][2] + fz*latt[2][2];
+                            atoms.push({ x: cx, y: cy, z: cz, role: site.role, fx, fy, fz });
+                        });
+                    }
+            const ucV = [
+                [nx*latt[0][0], nx*latt[0][1], nx*latt[0][2]],
+                [ny*latt[1][0], ny*latt[1][1], ny*latt[1][2]],
+                [nz*latt[2][0], nz*latt[2][1], nz*latt[2][2]]
+            ];
+            return { atoms, ucV };
+        }
+
+        function buildPresetSlabAtoms(sp, layers, surfStr) {
+            const latt = getPresetLattVecs(sp);
+            const h = parseInt(surfStr[0]) || 1, k = parseInt(surfStr[1]) || 0, l = parseInt(surfStr[2]) || 0;
+            const hnorm = Math.sqrt(h*h + k*k + l*l);
+            const atoms = [];
+            const seen = new Set();
+            const range = Math.max(layers, 4);
+            for (let ix = -range; ix <= range; ix++)
+                for (let iy = -range; iy <= range; iy++)
+                    for (let iz = -range; iz <= range; iz++) {
+                        sp.sites.forEach(site => {
+                            const fx = site.x + ix, fy = site.y + iy, fz = site.z + iz;
+                            const proj = fx*h + fy*k + fz*l;
+                            if (proj < -0.5 || proj > layers + 0.5) return;
+                            const cx = fx*latt[0][0] + fy*latt[1][0] + fz*latt[2][0];
+                            const cy = fx*latt[0][1] + fy*latt[1][1] + fz*latt[2][1];
+                            const cz = fx*latt[0][2] + fy*latt[1][2] + fz*latt[2][2];
+                            const key = `${cx.toFixed(3)},${cy.toFixed(3)},${cz.toFixed(3)},${site.role}`;
+                            if (seen.has(key)) return;
+                            seen.add(key);
+                            atoms.push({ x: cx, y: cy, z: cz, role: site.role });
+                        });
+                    }
+            const d = sp.a / hnorm;
+            const ucV = [[3*latt[0][0], 0, 0], [0, 3*(latt[1][1] || latt[0][0]), 0], [0, 0, layers*d]];
+            return { atoms, ucV };
+        }
+
+        function inv3x3(m) {
+            const [[a, b, c], [d, e, f], [g, h, i]] = m;
+            const det = a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g);
+            if (Math.abs(det) < 1e-12) return null;
+            const inv = 1 / det;
+            return [
+                [(e*i - f*h)*inv, (c*h - b*i)*inv, (b*f - c*e)*inv],
+                [(f*g - d*i)*inv, (a*i - c*g)*inv, (c*d - a*f)*inv],
+                [(d*h - e*g)*inv, (b*g - a*h)*inv, (a*e - b*d)*inv]
+            ];
+        }
+
+        function cartToFract(cart, invLatt) {
+            return [
+                cart[0]*invLatt[0][0] + cart[1]*invLatt[0][1] + cart[2]*invLatt[0][2],
+                cart[0]*invLatt[1][0] + cart[1]*invLatt[1][1] + cart[2]*invLatt[1][2],
+                cart[0]*invLatt[2][0] + cart[1]*invLatt[2][1] + cart[2]*invLatt[2][2]
+            ];
+        }
+
+        function vecLen(v) { return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]); }
+        function vecAngle(v1, v2) {
+            const d = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+            return Math.acos(Math.max(-1, Math.min(1, d / (vecLen(v1)*vecLen(v2))))) * 180 / Math.PI;
+        }
+
+        function buildFromPreset() {
+            const key = document.getElementById('presetStruct').value;
+            const sp = PRESET_STRUCTURES[key];
+            if (!sp) return;
+            const mode = document.querySelector('.preset-mode.active')?.dataset?.mode || 'unitcell';
+            const elA = document.getElementById('presetElA').value || 'Ni';
+            const elB = document.getElementById('presetElB').value || 'Cl';
+            const elO = document.getElementById('presetElO').value || 'O';
+            presetElAssign = { A: elA, B: elB, O: elO };
+            let result;
+            if (mode === 'slab') {
+                const layers = Math.max(2, Math.min(8, parseInt(document.getElementById('presetLayers').value) || 4));
+                const surf = document.getElementById('presetSurf').value;
+                result = buildPresetSlabAtoms(sp, layers, surf);
+            } else {
+                const nx = Math.max(1, Math.min(6, parseInt(document.getElementById('presetNx').value) || 2));
+                const ny = Math.max(1, Math.min(6, parseInt(document.getElementById('presetNy').value) || 2));
+                const nz = Math.max(1, Math.min(6, parseInt(document.getElementById('presetNz').value) || 2));
+                result = mode === 'super' ? buildPresetUCAtoms(sp, [nx, ny, nz]) : buildPresetUCAtoms(sp, [1, 1, 1]);
+            }
+            const ucV = result.ucV;
+            const invLatt = inv3x3(ucV);
+            if (!invLatt) return;
+            const atoms = result.atoms.map(a => {
+                const f = cartToFract([a.x, a.y, a.z], invLatt);
+                const el = presetElAssign[a.role] || (a.role === 'A' ? elA : a.role === 'B' ? elB : elO);
+                return { el, x: f[0], y: f[1], z: f[2] };
+            });
+            const v0 = ucV[0], v1 = ucV[1], v2 = ucV[2];
+            const a = vecLen(v0), b = vecLen(v1), c = vecLen(v2);
+            const alpha = vecAngle(v1, v2), beta = vecAngle(v0, v2), gamma = vecAngle(v0, v1);
+            currentStructure = {
+                system: sp.lattice === 'hexagonal' ? 'hexagonal' : 'cubic',
+                a, b, c, alpha, beta, gamma,
+                spaceGroup: 221,
+                atoms
+            };
+            document.getElementById('lattA').value = a.toFixed(4);
+            document.getElementById('lattB').value = b.toFixed(4);
+            document.getElementById('lattC').value = c.toFixed(4);
+            document.getElementById('lattAlpha').value = alpha.toFixed(2);
+            document.getElementById('lattBeta').value = beta.toFixed(2);
+            document.getElementById('lattGamma').value = gamma.toFixed(2);
+            selectCrystalSystem(currentStructure.system);
+            updateAtomList();
+            visualizeStructure();
+            updateInfoPanels();
+        }
+
+        function initPresetUI() {
+            const selA = document.getElementById('presetElA');
+            const selB = document.getElementById('presetElB');
+            const selO = document.getElementById('presetElO');
+            PRESET_ELEMENTS.forEach(sym => {
+                selA.appendChild(new Option(sym, sym));
+                selB.appendChild(new Option(sym, sym));
+                selO.appendChild(new Option(sym, sym));
+            });
+            selA.value = presetElAssign.A;
+            selB.value = presetElAssign.B;
+            selO.value = presetElAssign.O;
+            document.querySelectorAll('.preset-mode').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.preset-mode').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const mode = this.dataset.mode;
+                    document.getElementById('presetSupercellOpts').style.display = mode === 'super' ? 'block' : 'none';
+                    document.getElementById('presetSlabOpts').style.display = mode === 'slab' ? 'block' : 'none';
+                });
+            });
+            document.getElementById('presetStruct').addEventListener('change', function() {
+                const sp = PRESET_STRUCTURES[this.value];
+                document.getElementById('presetRoleB').style.display = sp.roles.includes('B') ? 'flex' : 'none';
+                document.getElementById('presetRoleO').style.display = sp.roles.includes('O') ? 'flex' : 'none';
+            });
+            const sp0 = PRESET_STRUCTURES[document.getElementById('presetStruct').value];
+            document.getElementById('presetRoleB').style.display = sp0.roles.includes('B') ? 'flex' : 'none';
+            document.getElementById('presetRoleO').style.display = sp0.roles.includes('O') ? 'flex' : 'none';
+        }
 
         function initViewer() {
             viewer = $3Dmol.createViewer('structure-viewer', {
@@ -1046,6 +1291,7 @@ K_POINTS automatic
         }
         document.addEventListener('DOMContentLoaded', () => {
             applySavedTheme();
+            initPresetUI();
             initViewer();
         });
 
