@@ -1,1304 +1,544 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Structure Builder · SMAD</title>
-    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-    <meta name="description" content="Build, edit, and visualize crystal structures for DFT calculations. Inspired by BURAI for Quantum ESPRESSO.">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/3dmol/build/3Dmol-min.js"></script>
-    <style>
-        :root {
-            --sb-dark: #1a1d21;
-            --sb-panel: #22262c;
-            --sb-card: #2a2f36;
-            --sb-border: #3a3f47;
-            --sb-text: #e1e4e8;
-            --sb-muted: #8b929a;
-            --sb-accent: #58a6ff;
-            --sb-success: #3fb950;
-            --sb-warning: #d29922;
-            --sb-danger: #f85149;
-        }
-        body.theme-light {
-            --sb-dark: #f0f2f5;
-            --sb-panel: #ffffff;
-            --sb-card: #ffffff;
-            --sb-border: #e1e4e8;
-            --sb-text: #1a1d21;
-            --sb-muted: #57606a;
-            --sb-accent: #0969da;
-        }
-        .theme-toggle { background: var(--sb-card); border: 1px solid var(--sb-border); color: var(--sb-text); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
-        .theme-toggle:hover { border-color: var(--sb-accent); }
-        * { box-sizing: border-box; }
-        body { margin: 0; background: var(--sb-dark); color: var(--sb-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-
-        .sb-app { display: flex; flex-direction: column; height: 100vh; }
-
-        .sb-navbar {
-            background: var(--sb-panel);
-            border-bottom: 1px solid var(--sb-border);
-            padding: 0.5rem 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-        .sb-navbar-brand { font-weight: 700; font-size: 1.1rem; color: var(--sb-text); text-decoration: none; }
-        .sb-navbar-brand:hover { color: var(--sb-accent); }
-        .sb-navbar-links { display: flex; gap: 1rem; }
-        .sb-navbar-links a { color: var(--sb-muted); text-decoration: none; font-size: 0.85rem; }
-        .sb-navbar-links a:hover, .sb-navbar-links a.active { color: var(--sb-accent); }
-
-        .sb-main { display: flex; flex: 1; overflow: hidden; }
-
-        .sb-sidebar {
-            width: 340px;
-            background: var(--sb-panel);
-            border-right: 1px solid var(--sb-border);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        .sb-sidebar-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--sb-border);
-        }
-        .sb-sidebar-tab {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 0.6rem 0.5rem;
-            color: var(--sb-muted);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-        }
-        .sb-sidebar-tab:hover { color: var(--sb-text); }
-        .sb-sidebar-tab.active { color: var(--sb-accent); border-bottom-color: var(--sb-accent); }
-
-        .sb-sidebar-content { flex: 1; overflow-y: auto; }
-        .sb-sidebar-section { display: none; padding: 1rem; }
-        .sb-sidebar-section.active { display: block; }
-
-        .sb-section-title { font-size: 0.7rem; text-transform: uppercase; color: var(--sb-muted); margin-bottom: 0.75rem; letter-spacing: 0.03em; }
-        .sb-group { margin-bottom: 1rem; }
-        .sb-label { display: block; font-size: 0.75rem; color: var(--sb-muted); margin-bottom: 0.3rem; }
-        .sb-input, .sb-select {
-            width: 100%;
-            background: var(--sb-card);
-            border: 1px solid var(--sb-border);
-            color: var(--sb-text);
-            padding: 0.45rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        .sb-input:focus, .sb-select:focus { outline: none; border-color: var(--sb-accent); }
-        .sb-input::placeholder { color: var(--sb-muted); }
-        .sb-row { display: flex; gap: 0.5rem; }
-        .sb-row > * { flex: 1; }
-
-        .sb-btn {
-            background: var(--sb-card);
-            border: 1px solid var(--sb-border);
-            color: var(--sb-text);
-            padding: 0.45rem 0.75rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .sb-btn:hover { border-color: var(--sb-accent); color: var(--sb-accent); }
-        .sb-btn-primary { background: var(--sb-accent); border-color: var(--sb-accent); color: #fff; }
-        .sb-btn-primary:hover { background: #4393e6; color: #fff; }
-        .sb-btn-success { background: var(--sb-success); border-color: var(--sb-success); color: #fff; }
-        .sb-btn-danger { background: var(--sb-danger); border-color: var(--sb-danger); color: #fff; }
-        .sb-btn-sm { padding: 0.3rem 0.5rem; font-size: 0.7rem; }
-        .sb-btn-group { display: flex; gap: 0.5rem; }
-        .sb-btn-full { width: 100%; }
-
-        .sb-crystal-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-        }
-        .sb-crystal-btn {
-            background: var(--sb-card);
-            border: 1px solid var(--sb-border);
-            padding: 0.6rem;
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.15s;
-        }
-        .sb-crystal-btn:hover { border-color: var(--sb-accent); }
-        .sb-crystal-btn.selected { border-color: var(--sb-accent); background: rgba(88,166,255,0.1); }
-        .sb-crystal-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
-        .sb-crystal-name { font-size: 0.7rem; color: var(--sb-muted); }
-
-        .sb-atom-list {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid var(--sb-border);
-            border-radius: 4px;
-            background: var(--sb-card);
-        }
-        .sb-atom-row {
-            display: flex;
-            align-items: center;
-            padding: 0.4rem 0.6rem;
-            border-bottom: 1px solid var(--sb-border);
-            gap: 0.5rem;
-            font-size: 0.8rem;
-        }
-        .sb-atom-row:last-child { border-bottom: none; }
-        .sb-atom-el { font-weight: 600; width: 30px; }
-        .sb-atom-pos { flex: 1; font-family: monospace; font-size: 0.75rem; color: var(--sb-muted); }
-        .sb-atom-del { color: var(--sb-danger); cursor: pointer; padding: 2px 6px; }
-        .sb-atom-del:hover { background: rgba(248,81,73,0.2); border-radius: 3px; }
-
-        .sb-center { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .sb-viewer-container { flex: 1; background: #000; position: relative; }
-        #structure-viewer { width: 100%; height: 100%; }
-        .sb-viewer-controls {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            display: flex;
-            gap: 0.5rem;
-            z-index: 10;
-        }
-        .sb-viewer-btn {
-            background: rgba(34,38,44,0.9);
-            border: 1px solid var(--sb-border);
-            color: var(--sb-text);
-            padding: 0.4rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-        .sb-viewer-btn:hover { background: var(--sb-panel); border-color: var(--sb-accent); }
-
-        .sb-info-bar {
-            background: var(--sb-panel);
-            border-top: 1px solid var(--sb-border);
-            padding: 0.5rem 1rem;
-            display: flex;
-            gap: 2rem;
-            font-size: 0.8rem;
-            flex-shrink: 0;
-        }
-        .sb-info-item { display: flex; gap: 0.5rem; }
-        .sb-info-label { color: var(--sb-muted); }
-        .sb-info-value { font-weight: 500; font-family: monospace; }
-
-        .sb-right-panel {
-            width: 320px;
-            background: var(--sb-panel);
-            border-left: 1px solid var(--sb-border);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        .sb-right-header {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--sb-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .sb-right-header h3 { font-size: 0.85rem; margin: 0; }
-        .sb-right-tabs { display: flex; border-bottom: 1px solid var(--sb-border); }
-        .sb-right-tab {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 0.5rem;
-            color: var(--sb-muted);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-        }
-        .sb-right-tab:hover { color: var(--sb-text); }
-        .sb-right-tab.active { color: var(--sb-accent); border-bottom-color: var(--sb-accent); }
-        .sb-right-content { flex: 1; overflow-y: auto; padding: 1rem; }
-        .sb-right-section { display: none; }
-        .sb-right-section.active { display: block; }
-
-        .sb-info-table { width: 100%; font-size: 0.8rem; }
-        .sb-info-table td { padding: 0.35rem 0; border-bottom: 1px solid var(--sb-border); }
-        .sb-info-table td:first-child { color: var(--sb-muted); width: 45%; }
-
-        .sb-lattice-matrix {
-            font-family: monospace;
-            font-size: 0.75rem;
-            background: var(--sb-dark);
-            padding: 0.75rem;
-            border-radius: 4px;
-            margin-top: 0.5rem;
-        }
-        .sb-lattice-row { display: flex; justify-content: space-between; margin-bottom: 0.25rem; }
-
-        .sb-export-section { margin-top: 1rem; }
-        .sb-export-btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-
-        .sb-template-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .sb-template-card {
-            background: var(--sb-card);
-            border: 1px solid var(--sb-border);
-            padding: 0.75rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .sb-template-card:hover { border-color: var(--sb-accent); transform: translateY(-1px); }
-        .sb-template-name { font-size: 0.8rem; font-weight: 500; margin-bottom: 0.25rem; }
-        .sb-template-formula { font-size: 0.7rem; color: var(--sb-accent); }
-
-        .sb-textarea {
-            width: 100%;
-            background: var(--sb-card);
-            border: 1px solid var(--sb-border);
-            color: var(--sb-text);
-            padding: 0.5rem;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.75rem;
-            resize: vertical;
-        }
-        .sb-textarea:focus { outline: none; border-color: var(--sb-accent); }
-
-        .sb-divider {
-            height: 1px;
-            background: var(--sb-border);
-            margin: 1rem 0;
-        }
-
-        @media (max-width: 1200px) { .sb-right-panel { width: 280px; } }
-        @media (max-width: 992px) { .sb-right-panel { display: none; } }
-        @media (max-width: 768px) { .sb-sidebar { width: 280px; } }
-        @media (max-width: 600px) { .sb-sidebar { display: none; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crystal Structure Builder · SMAD</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#06080f;color:#c0c8e0;min-height:100vh}
+.smad-nav{background:#0d1117;border-bottom:1px solid rgba(255,255,255,0.1);padding:6px 12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;flex-shrink:0}
+.smad-nav a{color:#8b949e;text-decoration:none;font-size:13px}
+.smad-nav a:hover,.smad-nav a.active{color:#58a6ff}
+.smad-nav .brand{font-weight:700;color:#e6edf3;margin-right:8px}
+#app{background:#0a0c14;display:flex;flex-direction:column;flex:1;min-height:0}
+#toolbar{background:#10131f;border-bottom:0.5px solid rgba(255,255,255,0.1);padding:7px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tb-label{font-size:11px;color:#6070a0;white-space:nowrap}
+select.tb-sel{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:6px;padding:4px 7px;font-size:12px;cursor:pointer}
+input.tb-num{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:6px;padding:4px 6px;font-size:12px;width:44px;text-align:center;font-family:monospace}
+.tb-btn{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+.tb-btn:hover{background:rgba(255,255,255,0.13)}
+.tb-btn.active{background:rgba(90,140,255,0.22);border-color:rgba(90,140,255,0.5);color:#adc8ff}
+.sep{width:0.5px;height:22px;background:rgba(255,255,255,0.1);margin:0 2px;flex-shrink:0}
+#main-area{display:flex;flex:1;min-height:0}
+#canvas-wrap{flex:1;position:relative;min-height:500px}
+#mol-canvas{display:block;width:100%;height:100%;cursor:grab}
+#mol-canvas:active{cursor:grabbing}
+#side-panel{width:210px;background:#10131f;border-left:0.5px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;overflow:hidden}
+#info-box{padding:10px 12px;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0;font-family:monospace}
+.info-title{font-size:13px;font-weight:500;color:#e0e8ff;margin-bottom:6px;font-family:system-ui,sans-serif}
+.info-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.info-lbl{color:#5060a0}.info-val{color:#a0b0d0}
+#pt-panel{flex:1;overflow-y:auto;padding:7px}
+.pt-title{font-size:11px;color:#5060a0;margin-bottom:5px;font-weight:500}
+#pt-grid{display:grid;grid-template-columns:repeat(18,1fr);gap:1.5px}
+.el-cell{aspect-ratio:1;border-radius:2px;font-size:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:500;transition:transform 0.1s;line-height:1;font-family:monospace}
+.el-cell:hover{transform:scale(1.5);z-index:10;position:relative}
+.el-cell.selected{outline:1.5px solid #fff;outline-offset:0;z-index:20;position:relative}
+.ec-alkali{background:#c04050}.ec-alkaline{background:#a05020}.ec-transition{background:#305878}
+.ec-post{background:#406080}.ec-metalloid{background:#1e6644}.ec-nonmetal{background:#1e5050}
+.ec-halogen{background:#604455}.ec-noble{background:#383858}.ec-lanthanide{background:#504830}.ec-actinide{background:#4a4428}
+#charge-scale{position:absolute;bottom:8px;left:8px;background:rgba(8,10,22,0.9);border:0.5px solid rgba(255,255,255,0.14);border-radius:7px;padding:7px 9px;display:none}
+#bond-scale{position:absolute;bottom:8px;right:8px;background:rgba(8,10,22,0.9);border:0.5px solid rgba(255,255,255,0.14);border-radius:7px;padding:7px 9px;display:none}
+.sc-title{font-size:10px;color:#8090b8;margin-bottom:3px;font-family:monospace}
+.sc-bar{display:block;border-radius:2px;margin-bottom:2px}
+.sc-labels{display:flex;justify-content:space-between;font-size:10px;color:#6070a0;font-family:monospace}
+#legend-bar{display:flex;flex-wrap:wrap;gap:5px;padding:5px 10px;background:#10131f;border-top:0.5px solid rgba(255,255,255,0.08);font-size:10px}
+.leg-item{display:flex;align-items:center;gap:3px;color:#5060a0}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.wrap{display:flex;flex-direction:column;min-height:100vh}
+</style>
 </head>
 <body>
-    <div class="sb-app">
-        <nav class="sb-navbar">
-            <a href="/" class="sb-navbar-brand">SMAD · Structure Builder</a>
-            <div class="sb-navbar-links">
-                <a href="/">Home</a>
-                <a href="/databases">Materials DB</a>
-                <a href="/structures" class="active">Structures</a>
-                <a href="/dft">DFT</a>
-                <a href="/md">MD</a>
-                <a href="/montecarlo">Monte Carlo</a>
-                <a href="/analysis">Analysis</a>
-                <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">🌙 Dark</button>
-            </div>
-        </nav>
+<nav class="smad-nav">
+  <a href="/" class="brand">SMAD</a>
+  <a href="/">Home</a>
+  <a href="/databases">Materials DB</a>
+  <a href="/structures" class="active">Structures</a>
+  <a href="/dft">DFT</a>
+  <a href="/md">MD Simulations</a>
+  <a href="/montecarlo">Monte Carlo</a>
+  <a href="/analysis">Analysis</a>
+  <a href="/about">About</a>
+</nav>
+<div class="wrap">
+<div id="app">
+<div id="toolbar">
+  <span class="tb-label">Structure:</span>
+  <select class="tb-sel" id="sel-struct" onchange="onStructChange()">
+    <option value="fcc">FCC</option>
+    <option value="bcc">BCC</option>
+    <option value="sc">Simple cubic</option>
+    <option value="hcp">HCP</option>
+    <option value="diamond">Diamond</option>
+    <option value="nacl">NaCl (rocksalt)</option>
+    <option value="zincblende">Zinc blende</option>
+    <option value="perovskite">Perovskite ABO3</option>
+  </select>
+  <div class="sep"></div>
+  <span class="tb-label">Mode:</span>
+  <button class="tb-btn active" id="btn-uc" onclick="setMode('unitcell')">Unit cell</button>
+  <button class="tb-btn" id="btn-ss" onclick="setMode('super')">Supercell</button>
+  <button class="tb-btn" id="btn-slab" onclick="setMode('slab')">Slab</button>
+  <div class="sep"></div>
+  <span class="tb-label">nx</span><input class="tb-num" id="inp-nx" type="number" value="2" min="1" max="6" onchange="rebuild()">
+  <span class="tb-label">ny</span><input class="tb-num" id="inp-ny" type="number" value="2" min="1" max="6" onchange="rebuild()">
+  <span class="tb-label">nz</span><input class="tb-num" id="inp-nz" type="number" value="2" min="1" max="6" onchange="rebuild()">
+  <div class="sep"></div>
+  <span class="tb-label">Surface:</span>
+  <select class="tb-sel" id="sel-surf" onchange="rebuild()">
+    <option value="100">(1 0 0)</option>
+    <option value="110">(1 1 0)</option>
+    <option value="111">(1 1 1)</option>
+    <option value="211">(2 1 1)</option>
+  </select>
+  <span class="tb-label">Layers:</span>
+  <input class="tb-num" id="inp-layers" type="number" value="4" min="2" max="8" onchange="rebuild()">
+  <div class="sep"></div>
+  <span class="tb-label">Charge:</span>
+  <select class="tb-sel" id="sel-charge-pal" onchange="render()">
+    <option value="blue">Blue</option>
+    <option value="red">Red</option>
+    <option value="green">Green</option>
+    <option value="purple">Purple</option>
+  </select>
+  <span class="tb-label">Bond:</span>
+  <select class="tb-sel" id="sel-bond-pal" onchange="render()">
+    <option value="orange">Orange</option>
+    <option value="teal">Teal</option>
+    <option value="pink">Pink</option>
+    <option value="gold">Gold</option>
+  </select>
+  <div class="sep"></div>
+  <button class="tb-btn active" id="btn-spin" onclick="toggleSpin()">&#8635; Spin</button>
+  <button class="tb-btn active" id="btn-bonds-tog" onclick="toggleBonds()">Bonds</button>
+  <button class="tb-btn active" id="btn-labels-tog" onclick="toggleLabels()">Labels</button>
+  <button class="tb-btn active" id="btn-charges-tog" onclick="toggleCharges()">&#963; charges</button>
+  <button class="tb-btn active" id="btn-blens-tog" onclick="toggleBondLens()">Bond &#8491;</button>
+  <button class="tb-btn active" id="btn-ucbox" onclick="toggleUCBox()">UC box</button>
+</div>
 
-        <div class="sb-main">
-            <aside class="sb-sidebar">
-                <div class="sb-sidebar-tabs">
-                    <button class="sb-sidebar-tab active" data-tab="build">Build</button>
-                    <button class="sb-sidebar-tab" data-tab="import">Import</button>
-                    <button class="sb-sidebar-tab" data-tab="transform">Transform</button>
-                </div>
+<div id="main-area">
+<div id="canvas-wrap">
+  <canvas id="mol-canvas"></canvas>
+  <div id="charge-scale">
+    <div class="sc-title">&#963; charge</div>
+    <canvas class="sc-bar" id="sc-charge" width="120" height="10"></canvas>
+    <div class="sc-labels"><span id="sc-cmin"></span><span id="sc-cmax"></span></div>
+  </div>
+  <div id="bond-scale">
+    <div class="sc-title">bond length</div>
+    <canvas class="sc-bar" id="sc-bond" width="120" height="10"></canvas>
+    <div class="sc-labels"><span id="sc-bmin"></span><span id="sc-bmax"></span></div>
+  </div>
+</div>
 
-                <div class="sb-sidebar-content">
-                    <div class="sb-sidebar-section active" id="tab-build">
-                        <div class="sb-section-title">Preset structure (quick build)</div>
-                        <div class="sb-group">
-                            <label class="sb-label">Structure</label>
-                            <select class="sb-select" id="presetStruct">
-                                <option value="fcc">FCC</option>
-                                <option value="bcc">BCC</option>
-                                <option value="sc">Simple cubic</option>
-                                <option value="hcp">HCP</option>
-                                <option value="diamond">Diamond</option>
-                                <option value="nacl">NaCl (rocksalt)</option>
-                                <option value="zincblende">Zinc blende</option>
-                                <option value="perovskite">Perovskite ABO₃</option>
-                            </select>
-                        </div>
-                        <div class="sb-group">
-                            <label class="sb-label">Mode</label>
-                            <div class="sb-btn-group" style="flex-wrap:wrap;">
-                                <button type="button" class="sb-btn sb-btn-sm preset-mode active" data-mode="unitcell">Unit cell</button>
-                                <button type="button" class="sb-btn sb-btn-sm preset-mode" data-mode="super">Supercell</button>
-                                <button type="button" class="sb-btn sb-btn-sm preset-mode" data-mode="slab">Slab</button>
-                            </div>
-                        </div>
-                        <div class="sb-group" id="presetSupercellOpts">
-                            <label class="sb-label">Repetitions n<sub>x</sub> × n<sub>y</sub> × n<sub>z</sub></label>
-                            <div class="sb-row">
-                                <input type="number" class="sb-input" id="presetNx" value="2" min="1" max="6">
-                                <input type="number" class="sb-input" id="presetNy" value="2" min="1" max="6">
-                                <input type="number" class="sb-input" id="presetNz" value="2" min="1" max="6">
-                            </div>
-                        </div>
-                        <div class="sb-group" id="presetSlabOpts" style="display:none;">
-                            <label class="sb-label">Surface (Miller)</label>
-                            <select class="sb-select" id="presetSurf">
-                                <option value="100">(1 0 0)</option>
-                                <option value="110">(1 1 0)</option>
-                                <option value="111">(1 1 1)</option>
-                                <option value="211">(2 1 1)</option>
-                            </select>
-                            <label class="sb-label" style="margin-top:0.5rem;">Layers</label>
-                            <input type="number" class="sb-input" id="presetLayers" value="4" min="2" max="8">
-                        </div>
-                        <div class="sb-group">
-                            <label class="sb-label">Element roles (Set A / B / O)</label>
-                            <div id="presetRoleA" class="sb-row" style="align-items:center;gap:0.5rem;"><span class="sb-label" style="width:1.2rem;">A</span><select class="sb-select" id="presetElA" style="flex:1;"> </select></div>
-                            <div id="presetRoleB" class="sb-row" style="align-items:center;gap:0.5rem;margin-top:0.35rem;"><span class="sb-label" style="width:1.2rem;">B</span><select class="sb-select" id="presetElB" style="flex:1;"> </select></div>
-                            <div id="presetRoleO" class="sb-row" style="align-items:center;gap:0.5rem;margin-top:0.35rem;"><span class="sb-label" style="width:1.2rem;">O</span><select class="sb-select" id="presetElO" style="flex:1;"> </select></div>
-                        </div>
-                        <button class="sb-btn sb-btn-primary sb-btn-full" onclick="buildFromPreset()">Build from preset</button>
-                        <div class="sb-divider"></div>
-                        <div class="sb-section-title">Crystal System</div>
-                        <div class="sb-crystal-grid" id="crystalSystemGrid">
-                            <div class="sb-crystal-btn selected" data-system="cubic" onclick="selectCrystalSystem('cubic')">
-                                <div class="sb-crystal-icon">⬜</div>
-                                <div class="sb-crystal-name">Cubic</div>
-                            </div>
-                            <div class="sb-crystal-btn" data-system="hexagonal" onclick="selectCrystalSystem('hexagonal')">
-                                <div class="sb-crystal-icon">⬡</div>
-                                <div class="sb-crystal-name">Hexagonal</div>
-                            </div>
-                            <div class="sb-crystal-btn" data-system="tetragonal" onclick="selectCrystalSystem('tetragonal')">
-                                <div class="sb-crystal-icon">▯</div>
-                                <div class="sb-crystal-name">Tetragonal</div>
-                            </div>
-                            <div class="sb-crystal-btn" data-system="orthorhombic" onclick="selectCrystalSystem('orthorhombic')">
-                                <div class="sb-crystal-icon">▭</div>
-                                <div class="sb-crystal-name">Orthorhombic</div>
-                            </div>
-                            <div class="sb-crystal-btn" data-system="monoclinic" onclick="selectCrystalSystem('monoclinic')">
-                                <div class="sb-crystal-icon">▱</div>
-                                <div class="sb-crystal-name">Monoclinic</div>
-                            </div>
-                            <div class="sb-crystal-btn" data-system="triclinic" onclick="selectCrystalSystem('triclinic')">
-                                <div class="sb-crystal-icon">◇</div>
-                                <div class="sb-crystal-name">Triclinic</div>
-                            </div>
-                        </div>
-
-                        <div class="sb-divider"></div>
-                        <div class="sb-section-title">Lattice Parameters</div>
-
-                        <div class="sb-group">
-                            <label class="sb-label">a, b, c (Å)</label>
-                            <div class="sb-row">
-                                <input type="number" class="sb-input" id="lattA" value="4.0" step="0.01">
-                                <input type="number" class="sb-input" id="lattB" value="4.0" step="0.01">
-                                <input type="number" class="sb-input" id="lattC" value="4.0" step="0.01">
-                            </div>
-                        </div>
-
-                        <div class="sb-group">
-                            <label class="sb-label">α, β, γ (°)</label>
-                            <div class="sb-row">
-                                <input type="number" class="sb-input" id="lattAlpha" value="90" step="0.1">
-                                <input type="number" class="sb-input" id="lattBeta" value="90" step="0.1">
-                                <input type="number" class="sb-input" id="lattGamma" value="90" step="0.1">
-                            </div>
-                        </div>
-
-                        <div class="sb-group">
-                            <label class="sb-label">Space Group</label>
-                            <select class="sb-select" id="spaceGroup">
-                                <option value="1">P1 (1)</option>
-                                <option value="2">P-1 (2)</option>
-                                <option value="225" selected>Fm-3m (225)</option>
-                                <option value="227">Fd-3m (227)</option>
-                                <option value="221">Pm-3m (221)</option>
-                                <option value="229">Im-3m (229)</option>
-                                <option value="194">P6₃/mmc (194)</option>
-                                <option value="166">R-3m (166)</option>
-                                <option value="139">I4/mmm (139)</option>
-                                <option value="62">Pnma (62)</option>
-                                <option value="14">P2₁/c (14)</option>
-                            </select>
-                        </div>
-
-                        <div class="sb-divider"></div>
-                        <div class="sb-section-title">Atoms</div>
-
-                        <div class="sb-group">
-                            <div class="sb-row" style="margin-bottom:0.5rem;">
-                                <input type="text" class="sb-input" id="newAtomEl" placeholder="Element" style="width:60px;">
-                                <input type="number" class="sb-input" id="newAtomX" placeholder="x" step="0.001">
-                                <input type="number" class="sb-input" id="newAtomY" placeholder="y" step="0.001">
-                                <input type="number" class="sb-input" id="newAtomZ" placeholder="z" step="0.001">
-                            </div>
-                            <button class="sb-btn sb-btn-full" onclick="addAtom()">+ Add Atom</button>
-                        </div>
-
-                        <div class="sb-atom-list" id="atomList">
-                            <div class="sb-atom-row">
-                                <span class="sb-atom-el">Cu</span>
-                                <span class="sb-atom-pos">0.000, 0.000, 0.000</span>
-                                <span class="sb-atom-del" onclick="removeAtom(0)">×</span>
-                            </div>
-                        </div>
-
-                        <div class="sb-divider"></div>
-                        <button class="sb-btn sb-btn-primary sb-btn-full" onclick="buildStructure()">Build Structure</button>
-                    </div>
-
-                    <div class="sb-sidebar-section" id="tab-import">
-                        <div class="sb-section-title">Quick Templates</div>
-                        <div class="sb-template-grid">
-                            <div class="sb-template-card" onclick="loadTemplate('fcc_cu')">
-                                <div class="sb-template-name">FCC Copper</div>
-                                <div class="sb-template-formula">Cu (Fm-3m)</div>
-                            </div>
-                            <div class="sb-template-card" onclick="loadTemplate('bcc_fe')">
-                                <div class="sb-template-name">BCC Iron</div>
-                                <div class="sb-template-formula">Fe (Im-3m)</div>
-                            </div>
-                            <div class="sb-template-card" onclick="loadTemplate('nacl')">
-                                <div class="sb-template-name">Rock Salt</div>
-                                <div class="sb-template-formula">NaCl (Fm-3m)</div>
-                            </div>
-                            <div class="sb-template-card" onclick="loadTemplate('diamond')">
-                                <div class="sb-template-name">Diamond</div>
-                                <div class="sb-template-formula">C (Fd-3m)</div>
-                            </div>
-                            <div class="sb-template-card" onclick="loadTemplate('perovskite')">
-                                <div class="sb-template-name">Perovskite</div>
-                                <div class="sb-template-formula">SrTiO₃ (Pm-3m)</div>
-                            </div>
-                            <div class="sb-template-card" onclick="loadTemplate('graphite')">
-                                <div class="sb-template-name">Graphite</div>
-                                <div class="sb-template-formula">C (P6₃/mmc)</div>
-                            </div>
-                        </div>
-
-                        <div class="sb-divider"></div>
-                        <div class="sb-section-title">Import from File</div>
-
-                        <div class="sb-group">
-                            <label class="sb-label">Format</label>
-                            <select class="sb-select" id="importFormat">
-                                <option value="auto">Auto-detect</option>
-                                <option value="cif">CIF</option>
-                                <option value="poscar">POSCAR / CONTCAR</option>
-                                <option value="xyz">XYZ</option>
-                                <option value="qe">Quantum ESPRESSO Input</option>
-                            </select>
-                        </div>
-
-                        <div class="sb-group">
-                            <label class="sb-label">Paste Structure Data</label>
-                            <textarea class="sb-textarea" id="importText" rows="12" placeholder="Paste CIF, POSCAR, XYZ, or QE input here..."></textarea>
-                        </div>
-
-                        <button class="sb-btn sb-btn-primary sb-btn-full" onclick="importStructure()">Import Structure</button>
-                    </div>
-
-                    <div class="sb-sidebar-section" id="tab-transform">
-                        <div class="sb-section-title">Supercell</div>
-                        <div class="sb-group">
-                            <label class="sb-label">Repetitions (a × b × c)</label>
-                            <div class="sb-row">
-                                <input type="number" class="sb-input" id="scA" value="1" min="1" max="10">
-                                <input type="number" class="sb-input" id="scB" value="1" min="1" max="10">
-                                <input type="number" class="sb-input" id="scC" value="1" min="1" max="10">
-                            </div>
-                        </div>
-                        <button class="sb-btn sb-btn-full" onclick="makeSupercell()">Generate Supercell</button>
-
-                        <div class="sb-divider"></div>
-                        <div class="sb-section-title">Surface Slab</div>
-
-                        <div class="sb-group">
-                            <label class="sb-label">Miller Indices (h k l)</label>
-                            <div class="sb-row">
-                                <input type="number" class="sb-input" id="millerH" value="1">
-                                <input type="number" class="sb-input" id="millerK" value="0">
-                                <input type="number" class="sb-input" id="millerL" value="0">
-                            </div>
-                        </div>
-
-                        <div class="sb-group">
-                            <label class="sb-label">Slab Thickness (layers)</label>
-                            <input type="number" class="sb-input" id="slabLayers" value="4" min="1">
-                        </div>
-
-                        <div class="sb-group">
-                            <label class="sb-label">Vacuum (Å)</label>
-                            <input type="number" class="sb-input" id="slabVacuum" value="15" min="0" step="0.5">
-                        </div>
-
-                        <button class="sb-btn sb-btn-full" onclick="makeSlab()">Generate Slab</button>
-
-                        <div class="sb-divider"></div>
-                        <div class="sb-section-title">Conventional / Primitive</div>
-                        <div class="sb-btn-group">
-                            <button class="sb-btn" style="flex:1;" onclick="toPrimitive()">To Primitive</button>
-                            <button class="sb-btn" style="flex:1;" onclick="toConventional()">To Conventional</button>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-
-            <main class="sb-center">
-                <div class="sb-viewer-container">
-                    <div id="structure-viewer"></div>
-                    <div class="sb-viewer-controls">
-                        <button class="sb-viewer-btn" onclick="setViewStyle('sphere')">Spheres</button>
-                        <button class="sb-viewer-btn" onclick="setViewStyle('stick')">Sticks</button>
-                        <button class="sb-viewer-btn" onclick="toggleBox()">Box</button>
-                        <button class="sb-viewer-btn" onclick="resetView()">Reset</button>
-                    </div>
-                </div>
-                <div class="sb-info-bar">
-                    <div class="sb-info-item">
-                        <span class="sb-info-label">Formula:</span>
-                        <span class="sb-info-value" id="infoFormula">Cu</span>
-                    </div>
-                    <div class="sb-info-item">
-                        <span class="sb-info-label">Space Group:</span>
-                        <span class="sb-info-value" id="infoSpaceGroup">Fm-3m (225)</span>
-                    </div>
-                    <div class="sb-info-item">
-                        <span class="sb-info-label">Atoms:</span>
-                        <span class="sb-info-value" id="infoAtoms">1</span>
-                    </div>
-                    <div class="sb-info-item">
-                        <span class="sb-info-label">Volume:</span>
-                        <span class="sb-info-value" id="infoVolume">64.0 Å³</span>
-                    </div>
-                </div>
-            </main>
-
-            <aside class="sb-right-panel">
-                <div class="sb-right-header">
-                    <h3>Structure Info</h3>
-                </div>
-                <div class="sb-right-tabs">
-                    <button class="sb-right-tab active" data-rtab="lattice">Lattice</button>
-                    <button class="sb-right-tab" data-rtab="atoms">Atoms</button>
-                    <button class="sb-right-tab" data-rtab="export">Export</button>
-                </div>
-                <div class="sb-right-content">
-                    <div class="sb-right-section active" id="rtab-lattice">
-                        <table class="sb-info-table">
-                            <tr><td>Crystal System</td><td id="detailSystem">Cubic</td></tr>
-                            <tr><td>Space Group</td><td id="detailSG">Fm-3m (225)</td></tr>
-                            <tr><td>a</td><td id="detailA">4.000 Å</td></tr>
-                            <tr><td>b</td><td id="detailB">4.000 Å</td></tr>
-                            <tr><td>c</td><td id="detailC">4.000 Å</td></tr>
-                            <tr><td>α</td><td id="detailAlpha">90.00°</td></tr>
-                            <tr><td>β</td><td id="detailBeta">90.00°</td></tr>
-                            <tr><td>γ</td><td id="detailGamma">90.00°</td></tr>
-                            <tr><td>Volume</td><td id="detailVol">64.00 Å³</td></tr>
-                        </table>
-
-                        <div class="sb-section-title" style="margin-top:1rem;">Lattice Vectors</div>
-                        <div class="sb-lattice-matrix" id="latticeVectors">
-                            <div class="sb-lattice-row"><span>a:</span><span>4.000, 0.000, 0.000</span></div>
-                            <div class="sb-lattice-row"><span>b:</span><span>0.000, 4.000, 0.000</span></div>
-                            <div class="sb-lattice-row"><span>c:</span><span>0.000, 0.000, 4.000</span></div>
-                        </div>
-                    </div>
-
-                    <div class="sb-right-section" id="rtab-atoms">
-                        <table class="sb-info-table" id="atomsTable">
-                            <tr><th>Element</th><th>x</th><th>y</th><th>z</th></tr>
-                        </table>
-                    </div>
-
-                    <div class="sb-right-section" id="rtab-export">
-                        <div class="sb-section-title">Export Format</div>
-                        <div class="sb-export-btns">
-                            <button class="sb-btn" onclick="exportStructure('cif')">CIF</button>
-                            <button class="sb-btn" onclick="exportStructure('poscar')">POSCAR</button>
-                            <button class="sb-btn" onclick="exportStructure('xyz')">XYZ</button>
-                            <button class="sb-btn" onclick="exportStructure('qe')">QE Input</button>
-                        </div>
-
-                        <div class="sb-divider"></div>
-                        <div class="sb-section-title">Export Preview</div>
-                        <textarea class="sb-textarea" id="exportPreview" rows="15" readonly></textarea>
-                        <button class="sb-btn sb-btn-primary sb-btn-full" style="margin-top:0.5rem;" onclick="downloadExport()">Download</button>
-                    </div>
-                </div>
-            </aside>
-        </div>
+<div id="side-panel">
+  <div id="info-box">
+    <div class="info-title" id="info-name">FCC — Unit cell</div>
+    <div class="info-row"><span class="info-lbl">Lattice</span><span class="info-val" id="info-latt">cubic</span></div>
+    <div class="info-row"><span class="info-lbl">a (&#8491;)</span><span class="info-val" id="info-a">3.52</span></div>
+    <div class="info-row"><span class="info-lbl">Space group</span><span class="info-val" id="info-sg">Fm3m</span></div>
+    <div class="info-row"><span class="info-lbl">Atoms</span><span class="info-val" id="info-atoms">—</span></div>
+    <div class="info-row"><span class="info-lbl">Element A</span><span class="info-val" id="info-elA">Ni</span></div>
+    <div class="info-row"><span class="info-lbl">Element B/X</span><span class="info-val" id="info-elB">—</span></div>
+    <div class="info-row"><span class="info-lbl">Hovered</span><span class="info-val" id="info-hov">—</span></div>
+    <div class="info-row"><span class="info-lbl">&#963; charge</span><span class="info-val" id="info-hcharge">—</span></div>
+    <div class="info-row"><span class="info-lbl">Bonds</span><span class="info-val" id="info-hbonds">—</span></div>
+    <div class="info-row"><span class="info-lbl">Bond &#8491;</span><span class="info-val" id="info-hblens">—</span></div>
+  </div>
+  <div id="pt-panel">
+    <div class="pt-title">Pick element &rarr; assign role</div>
+    <div style="display:flex;gap:4px;margin-bottom:6px">
+      <button class="tb-btn" id="btn-role-a" onclick="setRole('A')" style="flex:1;font-size:11px">Set A</button>
+      <button class="tb-btn" id="btn-role-b" onclick="setRole('B')" style="flex:1;font-size:11px">Set B</button>
+      <button class="tb-btn" id="btn-role-o" onclick="setRole('O')" style="flex:1;font-size:11px">Set X</button>
     </div>
-
-    <script>
-        let viewer = null;
-        let currentStructure = {
-            system: 'cubic',
-            a: 4.0, b: 4.0, c: 4.0,
-            alpha: 90, beta: 90, gamma: 90,
-            spaceGroup: 225,
-            atoms: [{ el: 'Cu', x: 0, y: 0, z: 0 }]
-        };
-        let showBox = true;
-        let currentStyle = 'sphere';
-
-        const templates = {
-            fcc_cu: { system: 'cubic', a: 3.615, b: 3.615, c: 3.615, alpha: 90, beta: 90, gamma: 90, spaceGroup: 225,
-                atoms: [{ el: 'Cu', x: 0, y: 0, z: 0 }] },
-            bcc_fe: { system: 'cubic', a: 2.87, b: 2.87, c: 2.87, alpha: 90, beta: 90, gamma: 90, spaceGroup: 229,
-                atoms: [{ el: 'Fe', x: 0, y: 0, z: 0 }] },
-            nacl: { system: 'cubic', a: 5.64, b: 5.64, c: 5.64, alpha: 90, beta: 90, gamma: 90, spaceGroup: 225,
-                atoms: [{ el: 'Na', x: 0, y: 0, z: 0 }, { el: 'Cl', x: 0.5, y: 0.5, z: 0.5 }] },
-            diamond: { system: 'cubic', a: 3.567, b: 3.567, c: 3.567, alpha: 90, beta: 90, gamma: 90, spaceGroup: 227,
-                atoms: [{ el: 'C', x: 0, y: 0, z: 0 }, { el: 'C', x: 0.25, y: 0.25, z: 0.25 }] },
-            perovskite: { system: 'cubic', a: 3.905, b: 3.905, c: 3.905, alpha: 90, beta: 90, gamma: 90, spaceGroup: 221,
-                atoms: [{ el: 'Sr', x: 0, y: 0, z: 0 }, { el: 'Ti', x: 0.5, y: 0.5, z: 0.5 }, { el: 'O', x: 0.5, y: 0.5, z: 0 }, { el: 'O', x: 0.5, y: 0, z: 0.5 }, { el: 'O', x: 0, y: 0.5, z: 0.5 }] },
-            graphite: { system: 'hexagonal', a: 2.464, b: 2.464, c: 6.711, alpha: 90, beta: 90, gamma: 120, spaceGroup: 194,
-                atoms: [{ el: 'C', x: 0, y: 0, z: 0 }, { el: 'C', x: 0.333, y: 0.667, z: 0 }, { el: 'C', x: 0, y: 0, z: 0.5 }, { el: 'C', x: 0.667, y: 0.333, z: 0.5 }] },
-        };
-
-        const elementColors = {
-            H: '#ffffff', C: '#909090', N: '#3050f8', O: '#ff0d0d', F: '#90e050', S: '#ffff30',
-            Si: '#f0c8a0', Fe: '#e06633', Cu: '#c88033', Zn: '#7d80b0', Na: '#ab5cf2', Cl: '#1ff01f',
-            Ca: '#3dff00', Ti: '#bfc2c7', Sr: '#00ff00', Ba: '#00c900', Al: '#bfa6a6', Ni: '#50d050',
-            Au: '#ffd123', Ag: '#c0c0c0', Pt: '#d0d0e0', Pb: '#575961', Mn: '#9c7ac7', Co: '#f090a0',
-        };
-
-        const spaceGroupNames = {
-            1: 'P1', 2: 'P-1', 14: 'P2₁/c', 62: 'Pnma', 139: 'I4/mmm', 166: 'R-3m',
-            194: 'P6₃/mmc', 221: 'Pm-3m', 225: 'Fm-3m', 227: 'Fd-3m', 229: 'Im-3m'
-        };
-
-        // ── Preset crystal structures (Crystal Structure Builder) ─────────────────
-        const PRESET_STRUCTURES = {
-            fcc: { name: 'FCC', lattice: 'cubic', sg: 'Fm3m', a: 3.52,
-                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0, role: 'A' }, { x: 0.5, y: 0, z: 0.5, role: 'A' }, { x: 0, y: 0.5, z: 0.5, role: 'A' }], roles: ['A'] },
-            bcc: { name: 'BCC', lattice: 'cubic', sg: 'Im3m', a: 2.87,
-                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0.5, role: 'A' }], roles: ['A'] },
-            sc: { name: 'Simple cubic', lattice: 'cubic', sg: 'Pm3m', a: 3.0,
-                sites: [{ x: 0, y: 0, z: 0, role: 'A' }], roles: ['A'] },
-            hcp: { name: 'HCP', lattice: 'hexagonal', sg: 'P63/mmc', a: 2.51, c: 4.07,
-                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 1/3, y: 2/3, z: 0.5, role: 'A' }], roles: ['A'] },
-            diamond: { name: 'Diamond', lattice: 'cubic', sg: 'Fd3m', a: 5.43,
-                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0, role: 'A' }, { x: 0.5, y: 0, z: 0.5, role: 'A' }, { x: 0, y: 0.5, z: 0.5, role: 'A' },
-                    { x: 0.25, y: 0.25, z: 0.25, role: 'A' }, { x: 0.75, y: 0.75, z: 0.25, role: 'A' }, { x: 0.75, y: 0.25, z: 0.75, role: 'A' }, { x: 0.25, y: 0.75, z: 0.75, role: 'A' }], roles: ['A'] },
-            nacl: { name: 'NaCl', lattice: 'cubic', sg: 'Fm3m', a: 5.64,
-                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0, role: 'A' }, { x: 0.5, y: 0, z: 0.5, role: 'A' }, { x: 0, y: 0.5, z: 0.5, role: 'A' },
-                    { x: 0.5, y: 0, z: 0, role: 'B' }, { x: 0, y: 0.5, z: 0, role: 'B' }, { x: 0, y: 0, z: 0.5, role: 'B' }, { x: 0.5, y: 0.5, z: 0.5, role: 'B' }], roles: ['A', 'B'] },
-            zincblende: { name: 'Zinc blende', lattice: 'cubic', sg: 'F43m', a: 5.41,
-                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0, role: 'A' }, { x: 0.5, y: 0, z: 0.5, role: 'A' }, { x: 0, y: 0.5, z: 0.5, role: 'A' },
-                    { x: 0.25, y: 0.25, z: 0.25, role: 'B' }, { x: 0.75, y: 0.75, z: 0.25, role: 'B' }, { x: 0.75, y: 0.25, z: 0.75, role: 'B' }, { x: 0.25, y: 0.75, z: 0.75, role: 'B' }], roles: ['A', 'B'] },
-            perovskite: { name: 'Perovskite', lattice: 'cubic', sg: 'Pm3m', a: 3.91,
-                sites: [{ x: 0, y: 0, z: 0, role: 'A' }, { x: 0.5, y: 0.5, z: 0.5, role: 'B' },
-                    { x: 0.5, y: 0.5, z: 0, role: 'O' }, { x: 0.5, y: 0, z: 0.5, role: 'O' }, { x: 0, y: 0.5, z: 0.5, role: 'O' }], roles: ['A', 'B', 'O'] }
-        };
-        const PRESET_ELEMENTS = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Fr', 'Ra', 'Ac'];
-        let presetElAssign = { A: 'Ni', B: 'Cl', O: 'O' };
-
-        function getPresetLattVecs(sp) {
-            const a = sp.a, c = sp.c || sp.a;
-            if (sp.lattice === 'hexagonal') {
-                return [[a, 0, 0], [-a/2, a*Math.sqrt(3)/2, 0], [0, 0, c]];
-            }
-            return [[a, 0, 0], [0, a, 0], [0, 0, a]];
-        }
-
-        function buildPresetUCAtoms(sp, sc) {
-            const [nx, ny, nz] = sc;
-            const latt = getPresetLattVecs(sp);
-            const atoms = [];
-            const seen = new Set();
-            for (let ix = 0; ix < nx; ix++)
-                for (let iy = 0; iy < ny; iy++)
-                    for (let iz = 0; iz < nz; iz++) {
-                        sp.sites.forEach(site => {
-                            const fx = site.x + ix, fy = site.y + iy, fz = site.z + iz;
-                            if (fx > nx - 1e-6 || fy > ny - 1e-6 || fz > nz - 1e-6) return;
-                            const key = `${fx.toFixed(4)},${fy.toFixed(4)},${fz.toFixed(4)},${site.role}`;
-                            if (seen.has(key)) return;
-                            seen.add(key);
-                            const cx = fx*latt[0][0] + fy*latt[1][0] + fz*latt[2][0];
-                            const cy = fx*latt[0][1] + fy*latt[1][1] + fz*latt[2][1];
-                            const cz = fx*latt[0][2] + fy*latt[1][2] + fz*latt[2][2];
-                            atoms.push({ x: cx, y: cy, z: cz, role: site.role, fx, fy, fz });
-                        });
-                    }
-            const ucV = [
-                [nx*latt[0][0], nx*latt[0][1], nx*latt[0][2]],
-                [ny*latt[1][0], ny*latt[1][1], ny*latt[1][2]],
-                [nz*latt[2][0], nz*latt[2][1], nz*latt[2][2]]
-            ];
-            return { atoms, ucV };
-        }
-
-        function buildPresetSlabAtoms(sp, layers, surfStr) {
-            const latt = getPresetLattVecs(sp);
-            const h = parseInt(surfStr[0]) || 1, k = parseInt(surfStr[1]) || 0, l = parseInt(surfStr[2]) || 0;
-            const hnorm = Math.sqrt(h*h + k*k + l*l);
-            const atoms = [];
-            const seen = new Set();
-            const range = Math.max(layers, 4);
-            for (let ix = -range; ix <= range; ix++)
-                for (let iy = -range; iy <= range; iy++)
-                    for (let iz = -range; iz <= range; iz++) {
-                        sp.sites.forEach(site => {
-                            const fx = site.x + ix, fy = site.y + iy, fz = site.z + iz;
-                            const proj = fx*h + fy*k + fz*l;
-                            if (proj < -0.5 || proj > layers + 0.5) return;
-                            const cx = fx*latt[0][0] + fy*latt[1][0] + fz*latt[2][0];
-                            const cy = fx*latt[0][1] + fy*latt[1][1] + fz*latt[2][1];
-                            const cz = fx*latt[0][2] + fy*latt[1][2] + fz*latt[2][2];
-                            const key = `${cx.toFixed(3)},${cy.toFixed(3)},${cz.toFixed(3)},${site.role}`;
-                            if (seen.has(key)) return;
-                            seen.add(key);
-                            atoms.push({ x: cx, y: cy, z: cz, role: site.role });
-                        });
-                    }
-            const d = sp.a / hnorm;
-            const ucV = [[3*latt[0][0], 0, 0], [0, 3*(latt[1][1] || latt[0][0]), 0], [0, 0, layers*d]];
-            return { atoms, ucV };
-        }
-
-        function inv3x3(m) {
-            const [[a, b, c], [d, e, f], [g, h, i]] = m;
-            const det = a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g);
-            if (Math.abs(det) < 1e-12) return null;
-            const inv = 1 / det;
-            return [
-                [(e*i - f*h)*inv, (c*h - b*i)*inv, (b*f - c*e)*inv],
-                [(f*g - d*i)*inv, (a*i - c*g)*inv, (c*d - a*f)*inv],
-                [(d*h - e*g)*inv, (b*g - a*h)*inv, (a*e - b*d)*inv]
-            ];
-        }
-
-        function cartToFract(cart, invLatt) {
-            return [
-                cart[0]*invLatt[0][0] + cart[1]*invLatt[0][1] + cart[2]*invLatt[0][2],
-                cart[0]*invLatt[1][0] + cart[1]*invLatt[1][1] + cart[2]*invLatt[1][2],
-                cart[0]*invLatt[2][0] + cart[1]*invLatt[2][1] + cart[2]*invLatt[2][2]
-            ];
-        }
-
-        function vecLen(v) { return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]); }
-        function vecAngle(v1, v2) {
-            const d = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
-            return Math.acos(Math.max(-1, Math.min(1, d / (vecLen(v1)*vecLen(v2))))) * 180 / Math.PI;
-        }
-
-        function buildFromPreset() {
-            const key = document.getElementById('presetStruct').value;
-            const sp = PRESET_STRUCTURES[key];
-            if (!sp) return;
-            const mode = document.querySelector('.preset-mode.active')?.dataset?.mode || 'unitcell';
-            const elA = document.getElementById('presetElA').value || 'Ni';
-            const elB = document.getElementById('presetElB').value || 'Cl';
-            const elO = document.getElementById('presetElO').value || 'O';
-            presetElAssign = { A: elA, B: elB, O: elO };
-            let result;
-            if (mode === 'slab') {
-                const layers = Math.max(2, Math.min(8, parseInt(document.getElementById('presetLayers').value) || 4));
-                const surf = document.getElementById('presetSurf').value;
-                result = buildPresetSlabAtoms(sp, layers, surf);
-            } else {
-                const nx = Math.max(1, Math.min(6, parseInt(document.getElementById('presetNx').value) || 2));
-                const ny = Math.max(1, Math.min(6, parseInt(document.getElementById('presetNy').value) || 2));
-                const nz = Math.max(1, Math.min(6, parseInt(document.getElementById('presetNz').value) || 2));
-                result = mode === 'super' ? buildPresetUCAtoms(sp, [nx, ny, nz]) : buildPresetUCAtoms(sp, [1, 1, 1]);
-            }
-            const ucV = result.ucV;
-            const invLatt = inv3x3(ucV);
-            if (!invLatt) return;
-            const atoms = result.atoms.map(a => {
-                const f = cartToFract([a.x, a.y, a.z], invLatt);
-                const el = presetElAssign[a.role] || (a.role === 'A' ? elA : a.role === 'B' ? elB : elO);
-                return { el, x: f[0], y: f[1], z: f[2] };
-            });
-            const v0 = ucV[0], v1 = ucV[1], v2 = ucV[2];
-            const a = vecLen(v0), b = vecLen(v1), c = vecLen(v2);
-            const alpha = vecAngle(v1, v2), beta = vecAngle(v0, v2), gamma = vecAngle(v0, v1);
-            currentStructure = {
-                system: sp.lattice === 'hexagonal' ? 'hexagonal' : 'cubic',
-                a, b, c, alpha, beta, gamma,
-                spaceGroup: 221,
-                atoms
-            };
-            document.getElementById('lattA').value = a.toFixed(4);
-            document.getElementById('lattB').value = b.toFixed(4);
-            document.getElementById('lattC').value = c.toFixed(4);
-            document.getElementById('lattAlpha').value = alpha.toFixed(2);
-            document.getElementById('lattBeta').value = beta.toFixed(2);
-            document.getElementById('lattGamma').value = gamma.toFixed(2);
-            selectCrystalSystem(currentStructure.system);
-            updateAtomList();
-            visualizeStructure();
-            updateInfoPanels();
-        }
-
-        function initPresetUI() {
-            const selA = document.getElementById('presetElA');
-            const selB = document.getElementById('presetElB');
-            const selO = document.getElementById('presetElO');
-            PRESET_ELEMENTS.forEach(sym => {
-                selA.appendChild(new Option(sym, sym));
-                selB.appendChild(new Option(sym, sym));
-                selO.appendChild(new Option(sym, sym));
-            });
-            selA.value = presetElAssign.A;
-            selB.value = presetElAssign.B;
-            selO.value = presetElAssign.O;
-            document.querySelectorAll('.preset-mode').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.preset-mode').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    const mode = this.dataset.mode;
-                    document.getElementById('presetSupercellOpts').style.display = mode === 'super' ? 'block' : 'none';
-                    document.getElementById('presetSlabOpts').style.display = mode === 'slab' ? 'block' : 'none';
-                });
-            });
-            document.getElementById('presetStruct').addEventListener('change', function() {
-                const sp = PRESET_STRUCTURES[this.value];
-                document.getElementById('presetRoleB').style.display = sp.roles.includes('B') ? 'flex' : 'none';
-                document.getElementById('presetRoleO').style.display = sp.roles.includes('O') ? 'flex' : 'none';
-            });
-            const sp0 = PRESET_STRUCTURES[document.getElementById('presetStruct').value];
-            document.getElementById('presetRoleB').style.display = sp0.roles.includes('B') ? 'flex' : 'none';
-            document.getElementById('presetRoleO').style.display = sp0.roles.includes('O') ? 'flex' : 'none';
-        }
-
-        function initViewer() {
-            viewer = $3Dmol.createViewer('structure-viewer', {
-                backgroundColor: '#0d1117',
-                antialias: true,
-            });
-            buildStructure();
-        }
-
-        function selectCrystalSystem(system) {
-            document.querySelectorAll('.sb-crystal-btn').forEach(b => b.classList.remove('selected'));
-            document.querySelector(`[data-system="${system}"]`).classList.add('selected');
-            currentStructure.system = system;
-
-            const constraints = {
-                cubic: { b: 'a', c: 'a', alpha: 90, beta: 90, gamma: 90 },
-                hexagonal: { b: 'a', alpha: 90, beta: 90, gamma: 120 },
-                tetragonal: { b: 'a', alpha: 90, beta: 90, gamma: 90 },
-                orthorhombic: { alpha: 90, beta: 90, gamma: 90 },
-                monoclinic: { alpha: 90, gamma: 90 },
-                triclinic: {}
-            };
-
-            const c = constraints[system];
-            if (c.alpha !== undefined) document.getElementById('lattAlpha').value = c.alpha;
-            if (c.beta !== undefined) document.getElementById('lattBeta').value = c.beta;
-            if (c.gamma !== undefined) document.getElementById('lattGamma').value = c.gamma;
-            if (c.b === 'a') document.getElementById('lattB').value = document.getElementById('lattA').value;
-            if (c.c === 'a') document.getElementById('lattC').value = document.getElementById('lattA').value;
-        }
-
-        function loadTemplate(name) {
-            const t = templates[name];
-            if (!t) return;
-
-            currentStructure = JSON.parse(JSON.stringify(t));
-            document.getElementById('lattA').value = t.a;
-            document.getElementById('lattB').value = t.b;
-            document.getElementById('lattC').value = t.c;
-            document.getElementById('lattAlpha').value = t.alpha;
-            document.getElementById('lattBeta').value = t.beta;
-            document.getElementById('lattGamma').value = t.gamma;
-
-            selectCrystalSystem(t.system);
-            updateAtomList();
-            buildStructure();
-
-            document.querySelectorAll('.sb-sidebar-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.sb-sidebar-section').forEach(s => s.classList.remove('active'));
-            document.querySelector('[data-tab="build"]').classList.add('active');
-            document.getElementById('tab-build').classList.add('active');
-        }
-
-        function updateAtomList() {
-            const list = document.getElementById('atomList');
-            list.innerHTML = currentStructure.atoms.map((a, i) => `
-                <div class="sb-atom-row">
-                    <span class="sb-atom-el">${a.el}</span>
-                    <span class="sb-atom-pos">${a.x.toFixed(3)}, ${a.y.toFixed(3)}, ${a.z.toFixed(3)}</span>
-                    <span class="sb-atom-del" onclick="removeAtom(${i})">×</span>
-                </div>
-            `).join('');
-        }
-
-        function addAtom() {
-            const el = document.getElementById('newAtomEl').value.trim();
-            const x = parseFloat(document.getElementById('newAtomX').value) || 0;
-            const y = parseFloat(document.getElementById('newAtomY').value) || 0;
-            const z = parseFloat(document.getElementById('newAtomZ').value) || 0;
-
-            if (!el) { alert('Please enter an element symbol'); return; }
-
-            currentStructure.atoms.push({ el, x, y, z });
-            updateAtomList();
-            document.getElementById('newAtomEl').value = '';
-            document.getElementById('newAtomX').value = '';
-            document.getElementById('newAtomY').value = '';
-            document.getElementById('newAtomZ').value = '';
-        }
-
-        function removeAtom(idx) {
-            currentStructure.atoms.splice(idx, 1);
-            updateAtomList();
-        }
-
-        function buildStructure() {
-            currentStructure.a = parseFloat(document.getElementById('lattA').value);
-            currentStructure.b = parseFloat(document.getElementById('lattB').value);
-            currentStructure.c = parseFloat(document.getElementById('lattC').value);
-            currentStructure.alpha = parseFloat(document.getElementById('lattAlpha').value);
-            currentStructure.beta = parseFloat(document.getElementById('lattBeta').value);
-            currentStructure.gamma = parseFloat(document.getElementById('lattGamma').value);
-            currentStructure.spaceGroup = parseInt(document.getElementById('spaceGroup').value);
-
-            visualizeStructure();
-            updateInfoPanels();
-        }
-
-        function getLatticeVectors(a, b, c, alpha, beta, gamma) {
-            const ar = alpha * Math.PI / 180;
-            const br = beta * Math.PI / 180;
-            const gr = gamma * Math.PI / 180;
-
-            const v1 = [a, 0, 0];
-            const v2 = [b * Math.cos(gr), b * Math.sin(gr), 0];
-            const cx = c * Math.cos(br);
-            const cy = c * (Math.cos(ar) - Math.cos(br) * Math.cos(gr)) / Math.sin(gr);
-            const cz = Math.sqrt(c * c - cx * cx - cy * cy);
-            const v3 = [cx, cy, cz];
-
-            return [v1, v2, v3];
-        }
-
-        function fractToCart(frac, lattVec) {
-            return [
-                frac[0] * lattVec[0][0] + frac[1] * lattVec[1][0] + frac[2] * lattVec[2][0],
-                frac[0] * lattVec[0][1] + frac[1] * lattVec[1][1] + frac[2] * lattVec[2][1],
-                frac[0] * lattVec[0][2] + frac[1] * lattVec[1][2] + frac[2] * lattVec[2][2]
-            ];
-        }
-
-        function visualizeStructure() {
-            viewer.removeAllModels();
-            viewer.removeAllShapes();
-
-            const { a, b, c, alpha, beta, gamma, atoms } = currentStructure;
-            const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
-
-            const model = viewer.addModel();
-            atoms.forEach(atom => {
-                const cart = fractToCart([atom.x, atom.y, atom.z], lattVec);
-                model.addAtom({
-                    elem: atom.el,
-                    x: cart[0],
-                    y: cart[1],
-                    z: cart[2],
-                });
-            });
-
-            applyStyle();
-
-            if (showBox) drawBox(lattVec);
-
-            viewer.zoomTo();
-            viewer.render();
-        }
-
-        function applyStyle() {
-            if (currentStyle === 'sphere') {
-                viewer.setStyle({}, { sphere: { radius: 0.4, colorscheme: 'Jmol' } });
-            } else {
-                viewer.setStyle({}, { stick: { radius: 0.15, colorscheme: 'Jmol' }, sphere: { radius: 0.25, colorscheme: 'Jmol' } });
-            }
-        }
-
-        function setViewStyle(style) {
-            currentStyle = style;
-            applyStyle();
-            viewer.render();
-        }
-
-        function drawBox(lattVec) {
-            const corners = [
-                [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1],
-                [1, 1, 0], [1, 0, 1], [0, 1, 1], [1, 1, 1]
-            ].map(f => fractToCart(f, lattVec));
-
-            const edges = [
-                [0, 1], [0, 2], [0, 3], [1, 4], [1, 5], [2, 4], [2, 6], [3, 5], [3, 6], [4, 7], [5, 7], [6, 7]
-            ];
-
-            edges.forEach(([i, j]) => {
-                viewer.addCylinder({
-                    start: { x: corners[i][0], y: corners[i][1], z: corners[i][2] },
-                    end: { x: corners[j][0], y: corners[j][1], z: corners[j][2] },
-                    radius: 0.02,
-                    color: '#58a6ff',
-                    fromCap: true,
-                    toCap: true
-                });
-            });
-        }
-
-        function toggleBox() {
-            showBox = !showBox;
-            visualizeStructure();
-        }
-
-        function resetView() {
-            viewer.zoomTo();
-            viewer.render();
-        }
-
-        function updateInfoPanels() {
-            const { a, b, c, alpha, beta, gamma, spaceGroup, system, atoms } = currentStructure;
-            const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
-
-            const formula = {};
-            atoms.forEach(at => { formula[at.el] = (formula[at.el] || 0) + 1; });
-            const formulaStr = Object.entries(formula).map(([el, n]) => n > 1 ? `${el}${n}` : el).join('');
-
-            const vol = a * b * c * Math.sqrt(1 - Math.cos(alpha*Math.PI/180)**2 - Math.cos(beta*Math.PI/180)**2 - Math.cos(gamma*Math.PI/180)**2 + 2*Math.cos(alpha*Math.PI/180)*Math.cos(beta*Math.PI/180)*Math.cos(gamma*Math.PI/180));
-
-            document.getElementById('infoFormula').textContent = formulaStr;
-            document.getElementById('infoSpaceGroup').textContent = `${spaceGroupNames[spaceGroup] || spaceGroup} (${spaceGroup})`;
-            document.getElementById('infoAtoms').textContent = atoms.length;
-            document.getElementById('infoVolume').textContent = vol.toFixed(2) + ' Å³';
-
-            document.getElementById('detailSystem').textContent = system.charAt(0).toUpperCase() + system.slice(1);
-            document.getElementById('detailSG').textContent = `${spaceGroupNames[spaceGroup] || spaceGroup} (${spaceGroup})`;
-            document.getElementById('detailA').textContent = a.toFixed(3) + ' Å';
-            document.getElementById('detailB').textContent = b.toFixed(3) + ' Å';
-            document.getElementById('detailC').textContent = c.toFixed(3) + ' Å';
-            document.getElementById('detailAlpha').textContent = alpha.toFixed(2) + '°';
-            document.getElementById('detailBeta').textContent = beta.toFixed(2) + '°';
-            document.getElementById('detailGamma').textContent = gamma.toFixed(2) + '°';
-            document.getElementById('detailVol').textContent = vol.toFixed(2) + ' Å³';
-
-            document.getElementById('latticeVectors').innerHTML = `
-                <div class="sb-lattice-row"><span>a:</span><span>${lattVec[0].map(v=>v.toFixed(4)).join(', ')}</span></div>
-                <div class="sb-lattice-row"><span>b:</span><span>${lattVec[1].map(v=>v.toFixed(4)).join(', ')}</span></div>
-                <div class="sb-lattice-row"><span>c:</span><span>${lattVec[2].map(v=>v.toFixed(4)).join(', ')}</span></div>
-            `;
-
-            const atomsTable = document.getElementById('atomsTable');
-            atomsTable.innerHTML = '<tr><th>El</th><th>x</th><th>y</th><th>z</th></tr>' +
-                atoms.map(a => `<tr><td>${a.el}</td><td>${a.x.toFixed(4)}</td><td>${a.y.toFixed(4)}</td><td>${a.z.toFixed(4)}</td></tr>`).join('');
-        }
-
-        function exportStructure(format) {
-            const { a, b, c, alpha, beta, gamma, atoms } = currentStructure;
-            let output = '';
-
-            if (format === 'cif') {
-                output = `data_SMAD_structure
-_cell_length_a    ${a.toFixed(4)}
-_cell_length_b    ${b.toFixed(4)}
-_cell_length_c    ${c.toFixed(4)}
-_cell_angle_alpha ${alpha.toFixed(2)}
-_cell_angle_beta  ${beta.toFixed(2)}
-_cell_angle_gamma ${gamma.toFixed(2)}
-_symmetry_space_group_name_H-M 'P 1'
-_symmetry_Int_Tables_number 1
-
-loop_
-_atom_site_label
-_atom_site_type_symbol
-_atom_site_fract_x
-_atom_site_fract_y
-_atom_site_fract_z
-${atoms.map((at, i) => `${at.el}${i+1} ${at.el} ${at.x.toFixed(6)} ${at.y.toFixed(6)} ${at.z.toFixed(6)}`).join('\n')}`;
-            } else if (format === 'poscar') {
-                const elements = [...new Set(atoms.map(a => a.el))];
-                const counts = elements.map(el => atoms.filter(a => a.el === el).length);
-                const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
-
-                output = `SMAD Structure
-1.0
-${lattVec.map(v => '  ' + v.map(x => x.toFixed(10).padStart(16)).join('')).join('\n')}
-${elements.join(' ')}
-${counts.join(' ')}
-Direct
-${atoms.map(at => `  ${at.x.toFixed(10).padStart(16)}${at.y.toFixed(10).padStart(16)}${at.z.toFixed(10).padStart(16)}`).join('\n')}`;
-            } else if (format === 'xyz') {
-                const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
-                output = `${atoms.length}
-SMAD Structure
-${atoms.map(at => {
-    const cart = fractToCart([at.x, at.y, at.z], lattVec);
-    return `${at.el}  ${cart[0].toFixed(6)}  ${cart[1].toFixed(6)}  ${cart[2].toFixed(6)}`;
-}).join('\n')}`;
-            } else if (format === 'qe') {
-                const lattVec = getLatticeVectors(a, b, c, alpha, beta, gamma);
-                const elements = [...new Set(atoms.map(a => a.el))];
-
-                output = `&CONTROL
-  calculation = 'scf'
-  prefix = 'smad'
-  outdir = './tmp'
-  pseudo_dir = './pseudo'
-/
-
-&SYSTEM
-  ibrav = 0
-  nat = ${atoms.length}
-  ntyp = ${elements.length}
-  ecutwfc = 50.0
-  ecutrho = 400.0
-/
-
-&ELECTRONS
-  conv_thr = 1.0d-8
-/
-
-ATOMIC_SPECIES
-${elements.map(el => `${el}  1.0  ${el}.UPF`).join('\n')}
-
-CELL_PARAMETERS angstrom
-${lattVec.map(v => v.map(x => x.toFixed(10).padStart(14)).join('')).join('\n')}
-
-ATOMIC_POSITIONS crystal
-${atoms.map(at => `${at.el.padEnd(4)} ${at.x.toFixed(10)} ${at.y.toFixed(10)} ${at.z.toFixed(10)}`).join('\n')}
-
-K_POINTS automatic
-4 4 4 0 0 0`;
-            }
-
-            document.getElementById('exportPreview').value = output;
-            document.querySelectorAll('.sb-right-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.sb-right-section').forEach(s => s.classList.remove('active'));
-            document.querySelector('[data-rtab="export"]').classList.add('active');
-            document.getElementById('rtab-export').classList.add('active');
-        }
-
-        function downloadExport() {
-            const content = document.getElementById('exportPreview').value;
-            if (!content) return;
-
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'structure.txt';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importStructure() {
-            const text = document.getElementById('importText').value.trim();
-            if (!text) { alert('Please paste structure data'); return; }
-            alert('Structure import will parse the data and load it into the builder. (Backend parsing required for full implementation)');
-        }
-
-        function makeSupercell() {
-            const scA = parseInt(document.getElementById('scA').value) || 1;
-            const scB = parseInt(document.getElementById('scB').value) || 1;
-            const scC = parseInt(document.getElementById('scC').value) || 1;
-
-            const newAtoms = [];
-            currentStructure.atoms.forEach(atom => {
-                for (let i = 0; i < scA; i++) {
-                    for (let j = 0; j < scB; j++) {
-                        for (let k = 0; k < scC; k++) {
-                            newAtoms.push({
-                                el: atom.el,
-                                x: (atom.x + i) / scA,
-                                y: (atom.y + j) / scB,
-                                z: (atom.z + k) / scC
-                            });
-                        }
-                    }
-                }
-            });
-
-            currentStructure.atoms = newAtoms;
-            currentStructure.a *= scA;
-            currentStructure.b *= scB;
-            currentStructure.c *= scC;
-
-            document.getElementById('lattA').value = currentStructure.a;
-            document.getElementById('lattB').value = currentStructure.b;
-            document.getElementById('lattC').value = currentStructure.c;
-
-            updateAtomList();
-            visualizeStructure();
-            updateInfoPanels();
-        }
-
-        function makeSlab() {
-            alert('Slab generation requires backend support with pymatgen for proper surface construction.');
-        }
-
-        function toPrimitive() {
-            alert('Primitive cell conversion requires backend support with spglib/pymatgen.');
-        }
-
-        function toConventional() {
-            alert('Conventional cell conversion requires backend support with spglib/pymatgen.');
-        }
-
-        document.querySelectorAll('.sb-sidebar-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.sb-sidebar-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.sb-sidebar-section').forEach(s => s.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-            });
-        });
-
-        document.querySelectorAll('.sb-right-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.sb-right-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.sb-right-section').forEach(s => s.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(`rtab-${tab.dataset.rtab}`).classList.add('active');
-            });
-        });
-
-        function toggleTheme() {
-            document.body.classList.toggle('theme-light');
-            const isLight = document.body.classList.contains('theme-light');
-            localStorage.setItem('smad-theme', isLight ? 'light' : 'dark');
-            document.getElementById('themeToggle').textContent = isLight ? '☀ Light' : '🌙 Dark';
-        }
-        function applySavedTheme() {
-            const saved = localStorage.getItem('smad-theme');
-            if (saved === 'light') {
-                document.body.classList.add('theme-light');
-                document.getElementById('themeToggle').textContent = '☀ Light';
-            } else {
-                document.body.classList.remove('theme-light');
-                document.getElementById('themeToggle').textContent = '🌙 Dark';
-            }
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            applySavedTheme();
-            initPresetUI();
-            initViewer();
-        });
-
-        const importedData = sessionStorage.getItem('importStructure');
-        if (importedData) {
-            sessionStorage.removeItem('importStructure');
-        }
-    </script>
+    <div id="pt-grid"></div>
+  </div>
+</div>
+</div>
+
+<div id="legend-bar">
+  <span class="leg-item"><span class="leg-dot" style="background:#c04050"></span>Alkali</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#a05020"></span>Alkaline</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#305878"></span>Transition</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#406080"></span>Post-trans</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#1e6644"></span>Metalloid</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#1e5050"></span>Nonmetal</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#604455"></span>Halogen</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#383858"></span>Noble</span>
+</div>
+</div>
+</div>
+
+<script>
+// ── Element data ──────────────────────────────────────────────────────────────
+const ELEMENTS = [
+  {s:'H', n:'Hydrogen',     Z:1,  r:53,  c:'#eeeeee', cat:'nonmetal',   row:1, col:1},
+  {s:'He',n:'Helium',       Z:2,  r:31,  c:'#a090cc', cat:'noble',      row:1, col:18},
+  {s:'Li',n:'Lithium',      Z:3,  r:167, c:'#ff6655', cat:'alkali',     row:2, col:1},
+  {s:'Be',n:'Beryllium',    Z:4,  r:112, c:'#e08040', cat:'alkaline',   row:2, col:2},
+  {s:'B', n:'Boron',        Z:5,  r:87,  c:'#44aa66', cat:'metalloid',  row:2, col:13},
+  {s:'C', n:'Carbon',       Z:6,  r:67,  c:'#888888', cat:'nonmetal',   row:2, col:14},
+  {s:'N', n:'Nitrogen',     Z:7,  r:56,  c:'#4488cc', cat:'nonmetal',   row:2, col:15},
+  {s:'O', n:'Oxygen',       Z:8,  r:48,  c:'#ff4444', cat:'nonmetal',   row:2, col:16},
+  {s:'F', n:'Fluorine',     Z:9,  r:42,  c:'#99cc44', cat:'halogen',    row:2, col:17},
+  {s:'Ne',n:'Neon',         Z:10, r:38,  c:'#8877bb', cat:'noble',      row:2, col:18},
+  {s:'Na',n:'Sodium',       Z:11, r:190, c:'#ff6655', cat:'alkali',     row:3, col:1},
+  {s:'Mg',n:'Magnesium',    Z:12, r:145, c:'#e08040', cat:'alkaline',   row:3, col:2},
+  {s:'Al',n:'Aluminium',    Z:13, r:118, c:'#6688aa', cat:'post',       row:3, col:13},
+  {s:'Si',n:'Silicon',      Z:14, r:111, c:'#44aa66', cat:'metalloid',  row:3, col:14},
+  {s:'P', n:'Phosphorus',   Z:15, r:98,  c:'#ff8844', cat:'nonmetal',   row:3, col:15},
+  {s:'S', n:'Sulfur',       Z:16, r:88,  c:'#ddcc22', cat:'nonmetal',   row:3, col:16},
+  {s:'Cl',n:'Chlorine',     Z:17, r:79,  c:'#99cc44', cat:'halogen',    row:3, col:17},
+  {s:'Ar',n:'Argon',        Z:18, r:71,  c:'#8877bb', cat:'noble',      row:3, col:18},
+  {s:'K', n:'Potassium',    Z:19, r:243, c:'#ff6655', cat:'alkali',     row:4, col:1},
+  {s:'Ca',n:'Calcium',      Z:20, r:194, c:'#e08040', cat:'alkaline',   row:4, col:2},
+  {s:'Sc',n:'Scandium',     Z:21, r:184, c:'#5588aa', cat:'transition', row:4, col:3},
+  {s:'Ti',n:'Titanium',     Z:22, r:176, c:'#5588aa', cat:'transition', row:4, col:4},
+  {s:'V', n:'Vanadium',     Z:23, r:171, c:'#5588aa', cat:'transition', row:4, col:5},
+  {s:'Cr',n:'Chromium',     Z:24, r:166, c:'#5588aa', cat:'transition', row:4, col:6},
+  {s:'Mn',n:'Manganese',    Z:25, r:161, c:'#5588aa', cat:'transition', row:4, col:7},
+  {s:'Fe',n:'Iron',         Z:26, r:156, c:'#cc6644', cat:'transition', row:4, col:8},
+  {s:'Co',n:'Cobalt',       Z:27, r:152, c:'#5588aa', cat:'transition', row:4, col:9},
+  {s:'Ni',n:'Nickel',       Z:28, r:149, c:'#88aacc', cat:'transition', row:4, col:10},
+  {s:'Cu',n:'Copper',       Z:29, r:145, c:'#cc8844', cat:'transition', row:4, col:11},
+  {s:'Zn',n:'Zinc',         Z:30, r:142, c:'#6699aa', cat:'transition', row:4, col:12},
+  {s:'Ga',n:'Gallium',      Z:31, r:136, c:'#6688aa', cat:'post',       row:4, col:13},
+  {s:'Ge',n:'Germanium',    Z:32, r:125, c:'#44aa66', cat:'metalloid',  row:4, col:14},
+  {s:'As',n:'Arsenic',      Z:33, r:114, c:'#44aa66', cat:'metalloid',  row:4, col:15},
+  {s:'Se',n:'Selenium',     Z:34, r:103, c:'#ddcc22', cat:'nonmetal',   row:4, col:16},
+  {s:'Br',n:'Bromine',      Z:35, r:94,  c:'#aa5544', cat:'halogen',    row:4, col:17},
+  {s:'Kr',n:'Krypton',      Z:36, r:88,  c:'#8877bb', cat:'noble',      row:4, col:18},
+  {s:'Rb',n:'Rubidium',     Z:37, r:265, c:'#ff6655', cat:'alkali',     row:5, col:1},
+  {s:'Sr',n:'Strontium',    Z:38, r:219, c:'#e08040', cat:'alkaline',   row:5, col:2},
+  {s:'Y', n:'Yttrium',      Z:39, r:212, c:'#5588aa', cat:'transition', row:5, col:3},
+  {s:'Zr',n:'Zirconium',    Z:40, r:206, c:'#5588aa', cat:'transition', row:5, col:4},
+  {s:'Nb',n:'Niobium',      Z:41, r:198, c:'#5588aa', cat:'transition', row:5, col:5},
+  {s:'Mo',n:'Molybdenum',   Z:42, r:190, c:'#5588aa', cat:'transition', row:5, col:6},
+  {s:'Tc',n:'Technetium',   Z:43, r:183, c:'#5588aa', cat:'transition', row:5, col:7},
+  {s:'Ru',n:'Ruthenium',    Z:44, r:178, c:'#5588aa', cat:'transition', row:5, col:8},
+  {s:'Rh',n:'Rhodium',      Z:45, r:173, c:'#aabbcc', cat:'transition', row:5, col:9},
+  {s:'Pd',n:'Palladium',    Z:46, r:169, c:'#aabbcc', cat:'transition', row:5, col:10},
+  {s:'Ag',n:'Silver',       Z:47, r:165, c:'#d0d0d0', cat:'transition', row:5, col:11},
+  {s:'Cd',n:'Cadmium',      Z:48, r:161, c:'#6699aa', cat:'transition', row:5, col:12},
+  {s:'In',n:'Indium',       Z:49, r:156, c:'#6688aa', cat:'post',       row:5, col:13},
+  {s:'Sn',n:'Tin',          Z:50, r:145, c:'#6688aa', cat:'post',       row:5, col:14},
+  {s:'Sb',n:'Antimony',     Z:51, r:133, c:'#44aa66', cat:'metalloid',  row:5, col:15},
+  {s:'Te',n:'Tellurium',    Z:52, r:123, c:'#44aa66', cat:'metalloid',  row:5, col:16},
+  {s:'I', n:'Iodine',       Z:53, r:115, c:'#8855aa', cat:'halogen',    row:5, col:17},
+  {s:'Xe',n:'Xenon',        Z:54, r:108, c:'#8877bb', cat:'noble',      row:5, col:18},
+  {s:'Cs',n:'Cesium',       Z:55, r:298, c:'#ff6655', cat:'alkali',     row:6, col:1},
+  {s:'Ba',n:'Barium',       Z:56, r:253, c:'#e08040', cat:'alkaline',   row:6, col:2},
+  {s:'La',n:'Lanthanum',    Z:57, r:250, c:'#778855', cat:'lanthanide', row:6, col:3},
+  {s:'Hf',n:'Hafnium',      Z:72, r:208, c:'#5588aa', cat:'transition', row:6, col:4},
+  {s:'Ta',n:'Tantalum',     Z:73, r:200, c:'#5588aa', cat:'transition', row:6, col:5},
+  {s:'W', n:'Tungsten',     Z:74, r:193, c:'#5588aa', cat:'transition', row:6, col:6},
+  {s:'Re',n:'Rhenium',      Z:75, r:188, c:'#5588aa', cat:'transition', row:6, col:7},
+  {s:'Os',n:'Osmium',       Z:76, r:185, c:'#5588aa', cat:'transition', row:6, col:8},
+  {s:'Ir',n:'Iridium',      Z:77, r:180, c:'#aabbcc', cat:'transition', row:6, col:9},
+  {s:'Pt',n:'Platinum',     Z:78, r:177, c:'#d0d0e0', cat:'transition', row:6, col:10},
+  {s:'Au',n:'Gold',         Z:79, r:174, c:'#ffcc44', cat:'transition', row:6, col:11},
+  {s:'Hg',n:'Mercury',      Z:80, r:171, c:'#6699aa', cat:'transition', row:6, col:12},
+  {s:'Tl',n:'Thallium',     Z:81, r:156, c:'#6688aa', cat:'post',       row:6, col:13},
+  {s:'Pb',n:'Lead',         Z:82, r:154, c:'#6688aa', cat:'post',       row:6, col:14},
+  {s:'Bi',n:'Bismuth',      Z:83, r:143, c:'#997766', cat:'post',       row:6, col:15},
+  {s:'Fr',n:'Francium',     Z:87, r:348, c:'#ff6655', cat:'alkali',     row:7, col:1},
+  {s:'Ra',n:'Radium',       Z:88, r:283, c:'#e08040', cat:'alkaline',   row:7, col:2},
+  {s:'Ac',n:'Actinium',     Z:89, r:260, c:'#887744', cat:'actinide',   row:7, col:3},
+];
+const EL_MAP = {};
+ELEMENTS.forEach(e => { EL_MAP[e.s] = e; });
+const CAT_CLASS = {
+  alkali:'ec-alkali', alkaline:'ec-alkaline', transition:'ec-transition',
+  post:'ec-post', metalloid:'ec-metalloid', nonmetal:'ec-nonmetal',
+  halogen:'ec-halogen', noble:'ec-noble', lanthanide:'ec-lanthanide', actinide:'ec-actinide'
+};
+
+// ── Crystal structure definitions ─────────────────────────────────────────────
+const STRUCTURES = {
+  fcc: { name:'FCC', lattice:'cubic', sg:'Fm3m', a:3.52,
+    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'}], roles:['A'] },
+  bcc: { name:'BCC', lattice:'cubic', sg:'Im3m', a:2.87,
+    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:.5,role:'A'}], roles:['A'] },
+  sc: { name:'Simple cubic', lattice:'cubic', sg:'Pm3m', a:3.0,
+    sites:[{x:0,y:0,z:0,role:'A'}], roles:['A'] },
+  hcp: { name:'HCP', lattice:'hexagonal', sg:'P63/mmc', a:2.51, c:4.07,
+    sites:[{x:0,y:0,z:0,role:'A'},{x:1/3,y:2/3,z:.5,role:'A'}], roles:['A'] },
+  diamond: { name:'Diamond', lattice:'cubic', sg:'Fd3m', a:5.43,
+    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},
+      {x:.25,y:.25,z:.25,role:'A'},{x:.75,y:.75,z:.25,role:'A'},{x:.75,y:.25,z:.75,role:'A'},{x:.25,y:.75,z:.75,role:'A'}], roles:['A'] },
+  nacl: { name:'NaCl', lattice:'cubic', sg:'Fm3m', a:5.64,
+    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},
+      {x:.5,y:0,z:0,role:'B'},{x:0,y:.5,z:0,role:'B'},{x:0,y:0,z:.5,role:'B'},{x:.5,y:.5,z:.5,role:'B'}], roles:['A','B'] },
+  zincblende: { name:'Zinc blende', lattice:'cubic', sg:'F43m', a:5.41,
+    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},
+      {x:.25,y:.25,z:.25,role:'B'},{x:.75,y:.75,z:.25,role:'B'},{x:.75,y:.25,z:.75,role:'B'},{x:.25,y:.75,z:.75,role:'B'}], roles:['A','B'] },
+  perovskite: { name:'Perovskite', lattice:'cubic', sg:'Pm3m', a:3.91,
+    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:.5,role:'B'},
+      {x:.5,y:.5,z:0,role:'O'},{x:.5,y:0,z:.5,role:'O'},{x:0,y:.5,z:.5,role:'O'}], roles:['A','B','O'] }
+};
+
+const CHARGE_PALETTES = { blue:{lo:[15,25,80],hi:[160,210,255]}, red:{lo:[60,10,10],hi:[255,160,140]}, green:{lo:[10,40,20],hi:[130,255,160]}, purple:{lo:[30,10,60],hi:[200,150,255]} };
+const BOND_PALETTES = { orange:{lo:[40,20,5],hi:[255,175,60]}, teal:{lo:[5,30,35],hi:[60,220,210]}, pink:{lo:[50,10,30],hi:[255,150,200]}, gold:{lo:[35,28,5],hi:[240,210,80]} };
+function lerp3(lo,hi,t){return lo.map((v,i)=>Math.round(v+(hi[i]-v)*t));}
+function rgb(a){return `rgb(${a[0]},${a[1]},${a[2]})`;}
+function chargePal(){return CHARGE_PALETTES[document.getElementById('sel-charge-pal').value];}
+function bondPal(){return BOND_PALETTES[document.getElementById('sel-bond-pal').value];}
+function chargeToColor(charge,allCharges){const mx=Math.max(...allCharges.map(Math.abs),0.001);const t=Math.max(0,Math.min(1,(charge/mx+1)/2));return rgb(lerp3(chargePal().lo,chargePal().hi,t));}
+function bondLenColor(len,minLen,maxLen){const t=maxLen>minLen?(len-minLen)/(maxLen-minLen):0.5;return rgb(lerp3(bondPal().lo,bondPal().hi,t));}
+
+let elAssign={A:'Ni',B:'Cl',O:'O'}, selectedEl=null, mode='unitcell';
+let showBonds=true, showLabels=true, showCharges=true, showBondLens=true, showUCBox=true, spinning=true;
+let rotX=0.35, rotY=0.45, dragging=false, lastMX=0, lastMY=0, spinRAF=null;
+let currentAtoms=[], currentBonds=[], ucVecs=[[1,0,0],[0,1,0],[0,0,1]], hoveredAtom=null;
+
+const canvas = document.getElementById('mol-canvas');
+const ctx = canvas.getContext('2d');
+
+function buildPT() {
+  const grid = document.getElementById('pt-grid');
+  grid.innerHTML = '';
+  const cells = Array(7*18).fill(null);
+  ELEMENTS.forEach(el => { if (el.row <= 7) cells[(el.row-1)*18 + (el.col-1)] = el; });
+  cells.forEach(el => {
+    const div = document.createElement('div');
+    div.className = 'el-cell ' + (el ? (CAT_CLASS[el.cat]||'ec-transition') : '');
+    if (el) { div.textContent=el.s; div.title=el.n; div.dataset.sym=el.s; div.onclick=()=>selectEl(el.s); }
+    grid.appendChild(div);
+  });
+}
+function selectEl(sym) { selectedEl = sym; document.querySelectorAll('.el-cell').forEach(c => c.classList.remove('selected')); document.querySelectorAll(`[data-sym="${sym}"]`).forEach(c => c.classList.add('selected')); }
+function setRole(role) { if (!selectedEl) return; elAssign[role] = selectedEl; rebuild(); updateInfoPanel(); }
+function getElSym(role) { return elAssign[role] || {A:'Ni',B:'Cl',O:'O'}[role]; }
+function getElColor(role) { const e=EL_MAP[getElSym(role)]; return e ? e.c : '#aaaaaa'; }
+function getElR(role) { const e=EL_MAP[getElSym(role)]; return e ? Math.max(10,(e.r/140)*18) : 14; }
+
+function hexToRgb(hex) { if (hex.startsWith('rgb')) return hex; return `rgb(${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)})`; }
+function blendW(col,t) { const m=hexToRgb(col).match(/\d+/g); const r=+m[0],g=+m[1],b=+m[2]; return `rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`; }
+function darkenC(col,t) { const m=hexToRgb(col).match(/\d+/g); const r=+m[0],g=+m[1],b=+m[2]; return `rgb(${Math.round(r*(1-t))},${Math.round(g*(1-t))},${Math.round(b*(1-t))})`; }
+
+function getLattVecs(sp) {
+  const a=sp.a, c_=sp.c||sp.a;
+  if (sp.lattice === 'hexagonal') return [[a,0,0], [a*Math.cos(2*Math.PI/3), a*Math.sin(2*Math.PI/3)*0.5+a*0.5*Math.sin(Math.PI/3), 0], [0,0,c_]];
+  return [[a,0,0],[0,a,0],[0,0,a]];
+}
+
+function buildUCAtoms(sp, sc) {
+  const [nx,ny,nz] = sc;
+  const latt = getLattVecs(sp);
+  const atoms = [], seen = new Set();
+  for (let ix=0; ix<nx; ix++) for (let iy=0; iy<ny; iy++) for (let iz=0; iz<nz; iz++) {
+    sp.sites.forEach(site => {
+      const fx=site.x+ix, fy=site.y+iy, fz=site.z+iz;
+      if (fx>nx-1e-6 || fy>ny-1e-6 || fz>nz-1e-6) return;
+      const key=`${fx.toFixed(4)},${fy.toFixed(4)},${fz.toFixed(4)},${site.role}`;
+      if (seen.has(key)) return; seen.add(key);
+      atoms.push({ x: fx*latt[0][0]+fy*latt[1][0]+fz*latt[2][0], y: fx*latt[0][1]+fy*latt[1][1]+fz*latt[2][1], z: fx*latt[0][2]+fy*latt[1][2]+fz*latt[2][2], role:site.role, fx, fy, fz, id:atoms.length });
+    });
+  }
+  const ucV = [[nx*latt[0][0],nx*latt[0][1],nx*latt[0][2]],[ny*latt[1][0],ny*latt[1][1],ny*latt[1][2]],[nz*latt[2][0],nz*latt[2][1],nz*latt[2][2]]];
+  return { atoms, ucV };
+}
+
+function buildSlabAtoms(sp, layers, surfStr) {
+  const latt = getLattVecs(sp);
+  const h=parseInt(surfStr[0])||1, k=parseInt(surfStr[1])||0, l=parseInt(surfStr[2])||0;
+  const atoms = [], seen = new Set();
+  const range = Math.max(layers, 4);
+  for (let ix=-range; ix<=range; ix++) for (let iy=-range; iy<=range; iy++) for (let iz=-range; iz<=range; iz++) {
+    sp.sites.forEach(site => {
+      const fx=site.x+ix, fy=site.y+iy, fz=site.z+iz;
+      const proj = fx*h + fy*k + fz*l;
+      if (proj < -0.5 || proj > layers+0.5) return;
+      const cx=fx*latt[0][0]+fy*latt[1][0]+fz*latt[2][0], cy=fx*latt[0][1]+fy*latt[1][1]+fz*latt[2][1], cz=fx*latt[0][2]+fy*latt[1][2]+fz*latt[2][2];
+      const key=`${cx.toFixed(3)},${cy.toFixed(3)},${cz.toFixed(3)},${site.role}`;
+      if (seen.has(key)) return; seen.add(key);
+      atoms.push({ x:cx, y:cy, z:cz, role:site.role, fx, fy, fz, id:atoms.length, layer:Math.round(proj) });
+    });
+  }
+  const d = sp.a / Math.sqrt(h*h+k*k+l*l);
+  const ucV = [[3*latt[0][0],0,0],[0,3*(latt[1][1]||latt[0][0]),0],[0,0,layers*d]];
+  return { atoms, ucV };
+}
+
+function assignCharges(atoms, sp) {
+  const chargeMap = { A:0.417, B:-0.417, O:-0.834 };
+  if (sp.roles.length === 1) atoms.forEach(a => { a.charge = 0; });
+  else atoms.forEach(a => { a.charge = chargeMap[a.role] || 0; });
+}
+
+function computeBonds(atoms, sp) {
+  const cutoff = sp.a * 0.85, bonds = [];
+  const n = Math.min(atoms.length, 300);
+  for (let i=0; i<n; i++) for (let j=i+1; j<n; j++) {
+    const dx=atoms[i].x-atoms[j].x, dy=atoms[i].y-atoms[j].y, dz=atoms[i].z-atoms[j].z;
+    const d = Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if (d < cutoff) bonds.push({ a:i, b:j, len:parseFloat(d.toFixed(4)) });
+  }
+  return bonds;
+}
+
+function rebuild() {
+  const sp = STRUCTURES[document.getElementById('sel-struct').value];
+  const nx = Math.max(1, Math.min(6, parseInt(document.getElementById('inp-nx').value)||2));
+  const ny = Math.max(1, Math.min(6, parseInt(document.getElementById('inp-ny').value)||2));
+  const nz = Math.max(1, Math.min(6, parseInt(document.getElementById('inp-nz').value)||2));
+  const layers = Math.max(2, Math.min(8, parseInt(document.getElementById('inp-layers').value)||4));
+  const surf = document.getElementById('sel-surf').value;
+  let result = mode === 'slab' ? buildSlabAtoms(sp, layers, surf) : buildUCAtoms(sp, mode === 'super' ? [nx,ny,nz] : [1,1,1]);
+  currentAtoms = result.atoms;
+  ucVecs = result.ucV;
+  assignCharges(currentAtoms, sp);
+  currentBonds = computeBonds(currentAtoms, sp);
+  document.getElementById('info-atoms').textContent = currentAtoms.length;
+  render();
+}
+
+function getStrParams() { return STRUCTURES[document.getElementById('sel-struct').value]; }
+function setMode(m) { mode = m; ['btn-uc','btn-ss','btn-slab'].forEach(id => document.getElementById(id).classList.remove('active')); document.getElementById({unitcell:'btn-uc', super:'btn-ss', slab:'btn-slab'}[m]).classList.add('active'); updateInfoPanel(); rebuild(); }
+function onStructChange() { rebuild(); updateInfoPanel(); }
+
+function updateInfoPanel() {
+  const sp = getStrParams();
+  const mstr = {unitcell:'Unit cell', super:'Supercell', slab:'Slab'}[mode];
+  document.getElementById('info-name').textContent = sp.name + ' — ' + mstr;
+  document.getElementById('info-latt').textContent = sp.lattice;
+  document.getElementById('info-a').textContent = sp.a.toFixed(3);
+  document.getElementById('info-sg').textContent = sp.sg;
+  document.getElementById('info-elA').textContent = getElSym('A');
+  document.getElementById('info-elB').textContent = sp.roles.includes('B') ? getElSym('B') + (sp.roles.includes('O') ? '/'+getElSym('O') : '') : '—';
+}
+
+function rotateP(x, y, z) {
+  let cy=Math.cos(rotY), sy=Math.sin(rotY);
+  let x1=cy*x+sy*z, z1=-sy*x+cy*z;
+  let cx=Math.cos(rotX), sx=Math.sin(rotX);
+  let y2=cx*y-sx*z1, z2=sx*y+cx*z1;
+  return { x:x1, y:y2, z:z2 };
+}
+
+function drawSphere(x, y, r, col, pz, hovered) {
+  const bright = 0.55 + 0.45*Math.max(0, pz/4);
+  const grd = ctx.createRadialGradient(x-r*.3, y-r*.3, r*.07, x, y, r*1.1);
+  grd.addColorStop(0, blendW(col, 0.62)); grd.addColorStop(0.35, blendW(col, 0.1 + bright*0.12)); grd.addColorStop(1, darkenC(col, 0.58));
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle=grd; ctx.fill();
+  if (hovered) { ctx.beginPath(); ctx.arc(x,y,r+3,0,Math.PI*2); ctx.strokeStyle='rgba(220,240,255,0.85)'; ctx.lineWidth=2; ctx.stroke(); }
+  ctx.beginPath(); ctx.arc(x-r*.27, y-r*.27, r*.26, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fill();
+}
+
+function drawScaleBars() {
+  if (!currentAtoms.length) return;
+  const allCharges = currentAtoms.map(a => a.charge), allLens = currentBonds.map(b => b.len);
+  const drawBar = (canvId, lo, hi, minLbl, maxLbl, minElId, maxElId) => {
+    const c=document.getElementById(canvId), sc=c.getContext('2d');
+    const grd=sc.createLinearGradient(0,0,c.width,0); grd.addColorStop(0, rgb(lo)); grd.addColorStop(1, rgb(hi));
+    sc.fillStyle=grd; sc.fillRect(0,0,c.width,c.height);
+    document.getElementById(minElId).textContent = minLbl; document.getElementById(maxElId).textContent = maxLbl;
+  };
+  const mx = Math.max(...allCharges.map(Math.abs), 0.001);
+  drawBar('sc-charge', chargePal().lo, chargePal().hi, (-mx).toFixed(2)+'e', '+'+mx.toFixed(2)+'e', 'sc-cmin', 'sc-cmax');
+  document.getElementById('charge-scale').style.display = showCharges ? 'block' : 'none';
+  if (allLens.length > 0) { const bp=bondPal(), minL=Math.min(...allLens), maxL=Math.max(...allLens); drawBar('sc-bond', bp.lo, bp.hi, minL.toFixed(3)+' A', maxL.toFixed(3)+' A', 'sc-bmin', 'sc-bmax'); document.getElementById('bond-scale').style.display = (showBondLens && showBonds) ? 'block' : 'none'; }
+  else document.getElementById('bond-scale').style.display = 'none';
+}
+
+function render() {
+  const W=canvas.offsetWidth||900, H=500;
+  canvas.width=W; canvas.height=H;
+  ctx.fillStyle='#0a0c14'; ctx.fillRect(0,0,W,H);
+  for (let i=0; i<60; i++) { ctx.beginPath(); ctx.arc(Math.sin(i*137.5)*W*.48+W*.5, Math.cos(i*97.3)*220+250, i%3===0?.8:.5, 0, Math.PI*2); ctx.fillStyle=`rgba(200,210,255,${0.06+(i%5)*.022})`; ctx.fill(); }
+  if (!currentAtoms.length) { drawScaleBars(); return; }
+  const xs=currentAtoms.map(a=>a.x), ys=currentAtoms.map(a=>a.y), zs=currentAtoms.map(a=>a.z);
+  const cxc=(Math.max(...xs)+Math.min(...xs))/2, cyc=(Math.max(...ys)+Math.min(...ys))/2, czc=(Math.max(...zs)+Math.min(...zs))/2;
+  const span = Math.max(Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys), Math.max(...zs)-Math.min(...zs), 1);
+  const scale = Math.min(W,H)*0.36 / span;
+  const proj = currentAtoms.map(a => { const p = rotateP(a.x-cxc, a.y-cyc, a.z-czc); return { ...a, px:W/2+p.x*scale, py:H/2-p.y*scale, pz:p.z }; });
+  if (showUCBox) {
+    const c8 = [[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1]];
+    const cp = c8.map(([i,j,k]) => { const wx=i*ucVecs[0][0]+j*ucVecs[1][0]+k*ucVecs[2][0]-cxc, wy=i*ucVecs[0][1]+j*ucVecs[1][1]+k*ucVecs[2][1]-cyc, wz=i*ucVecs[0][2]+j*ucVecs[1][2]+k*ucVecs[2][2]-czc; const p=rotateP(wx,wy,wz); return { px:W/2+p.x*scale, py:H/2-p.y*scale }; });
+    const edges=[[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]];
+    ctx.strokeStyle='rgba(100,160,255,0.32)'; ctx.lineWidth=0.8; ctx.setLineDash([4,4]);
+    edges.forEach(([a,b]) => { ctx.beginPath(); ctx.moveTo(cp[a].px,cp[a].py); ctx.lineTo(cp[b].px,cp[b].py); ctx.stroke(); });
+    ctx.setLineDash([]);
+  }
+  const allCharges = currentAtoms.map(a => a.charge), allLens = currentBonds.map(b => b.len);
+  const minLen=allLens.length?Math.min(...allLens):0, maxLen=allLens.length?Math.max(...allLens):1;
+  proj.sort((a,b) => a.pz-b.pz);
+  if (showBonds) {
+    currentBonds.forEach(bond => {
+      const a=proj[bond.a], b=proj[bond.b]; if (!a||!b) return;
+      const ca = showCharges ? chargeToColor(a.charge,allCharges) : hexToRgb(getElColor(a.role));
+      const cb = showCharges ? chargeToColor(b.charge,allCharges) : hexToRgb(getElColor(b.role));
+      const grd=ctx.createLinearGradient(a.px,a.py,b.px,b.py); grd.addColorStop(0,blendW(ca,.28)); grd.addColorStop(1,blendW(cb,.28));
+      ctx.strokeStyle=grd; ctx.lineWidth=4.5; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(a.px,a.py); ctx.lineTo(b.px,b.py); ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(a.px,a.py); ctx.lineTo(b.px,b.py); ctx.stroke();
+      if (showBondLens) { const mx2=(a.px+b.px)/2, my2=(a.py+b.py)/2; const txt=bond.len.toFixed(3)+' A'; const bc=bondLenColor(bond.len, minLen, maxLen); ctx.font='bold 10px monospace'; ctx.textAlign='center'; const tw=ctx.measureText(txt).width; ctx.fillStyle='rgba(5,8,22,0.82)'; ctx.beginPath(); ctx.roundRect(mx2-tw/2-4,my2-17,tw+8,14,3); ctx.fill(); ctx.fillStyle=bc; ctx.fillText(txt, mx2, my2-6); }
+    });
+  }
+  proj.forEach(a => {
+    let r = getElR(a.role) * (1 + a.pz/span*0.12);
+    const col = showCharges ? chargeToColor(a.charge,allCharges) : hexToRgb(getElColor(a.role));
+    drawSphere(a.px, a.py, r, col, a.pz, hoveredAtom===a.id);
+    if (showLabels && r > 7) { ctx.font=`bold ${Math.max(9,Math.round(r*.68))}px monospace`; ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.shadowColor='rgba(0,0,0,0.95)'; ctx.shadowBlur=4; ctx.fillText(getElSym(a.role), a.px, a.py+r*.28); ctx.shadowBlur=0; }
+    if (showCharges) { const sign = a.charge > 0 ? '+' : ''; const txt = sign + a.charge.toFixed(3) + 'e'; const cc = chargeToColor(a.charge, allCharges); ctx.font='bold 9px monospace'; ctx.textAlign='center'; const tw=ctx.measureText(txt).width; ctx.fillStyle='rgba(5,8,22,0.82)'; ctx.beginPath(); ctx.roundRect(a.px-tw/2-3,a.py+r+1,tw+6,13,3); ctx.fill(); ctx.fillStyle=cc; ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=3; ctx.fillText(txt, a.px, a.py+r+11); ctx.shadowBlur=0; }
+  });
+  if (mode === 'slab') { const surf=document.getElementById('sel-surf').value; ctx.fillStyle='rgba(120,190,255,0.55)'; ctx.font='bold 12px monospace'; ctx.textAlign='left'; ctx.fillText('Surface ('+surf.split('').join(' ')+')', 10, 20); }
+  drawScaleBars();
+}
+
+function findHovered(mx, my) {
+  const W=canvas.offsetWidth||900, H=500;
+  const xs=currentAtoms.map(a=>a.x), ys=currentAtoms.map(a=>a.y), zs=currentAtoms.map(a=>a.z);
+  if (!xs.length) return null;
+  const cxc=(Math.max(...xs)+Math.min(...xs))/2, cyc=(Math.max(...ys)+Math.min(...ys))/2, czc=(Math.max(...zs)+Math.min(...zs))/2;
+  const span=Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys),Math.max(...zs)-Math.min(...zs),1);
+  const scale=Math.min(W,H)*0.36/span;
+  const proj=currentAtoms.map(a=>{const p=rotateP(a.x-cxc,a.y-cyc,a.z-czc);return{...a,px:W/2+p.x*scale,py:H/2-p.y*scale,pz:p.z};});
+  proj.sort((a,b)=>b.pz-a.pz);
+  for (const a of proj) { const r=getElR(a.role)*(1+a.pz/span*0.12); if ((mx-a.px)**2 + (my-a.py)**2 <= r*r) return a; }
+  return null;
+}
+
+function updateHoverInfo(a) {
+  if (!a) { ['info-hov','info-hcharge','info-hbonds','info-hblens'].forEach(id=>document.getElementById(id).textContent='—'); document.getElementById('info-hcharge').style.color=''; document.getElementById('info-hblens').innerHTML='—'; return; }
+  const allCharges=currentAtoms.map(x=>x.charge), allLens=currentBonds.map(b=>b.len);
+  const minL=Math.min(...allLens,0), maxL=Math.max(...allLens,1);
+  document.getElementById('info-hov').textContent = getElSym(a.role)+' ('+a.role+')';
+  const cc=chargeToColor(a.charge,allCharges);
+  document.getElementById('info-hcharge').style.color=cc; document.getElementById('info-hcharge').textContent=(a.charge>0?'+':'')+a.charge.toFixed(3)+' e';
+  const bonds=currentBonds.filter(b=>b.a===a.id||b.b===a.id);
+  document.getElementById('info-hbonds').textContent=bonds.length;
+  document.getElementById('info-hblens').innerHTML=bonds.slice(0,4).map(b=>{const bc=bondLenColor(b.len,minL,maxL);return `<span style="color:${bc};font-weight:500">${b.len.toFixed(3)}</span>`;}).join(' ')||'—';
+}
+
+canvas.addEventListener('mousedown', e=>{dragging=true;lastMX=e.clientX;lastMY=e.clientY;});
+canvas.addEventListener('mousemove', e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(canvas.width/rect.width), my=(e.clientY-rect.top)*(canvas.height/rect.height);
+  if (dragging) { rotY+=(e.clientX-lastMX)*0.012; rotX+=(e.clientY-lastMY)*0.012; lastMX=e.clientX; lastMY=e.clientY; render(); }
+  else { const a=findHovered(mx,my); const nid=a?a.id:null; if (nid!==hoveredAtom) { hoveredAtom=nid; updateHoverInfo(a); render(); } }
+});
+canvas.addEventListener('mouseup', ()=>dragging=false);
+canvas.addEventListener('mouseleave', ()=>{dragging=false;hoveredAtom=null;updateHoverInfo(null);render();});
+canvas.addEventListener('touchstart',e=>{const t=e.touches[0];dragging=true;lastMX=t.clientX;lastMY=t.clientY;e.preventDefault();},{passive:false});
+canvas.addEventListener('touchmove', e=>{const t=e.touches[0];rotY+=(t.clientX-lastMX)*0.012;rotX+=(t.clientY-lastMY)*0.012;lastMX=t.clientX;lastMY=t.clientY;render();e.preventDefault();},{passive:false});
+canvas.addEventListener('touchend', ()=>dragging=false);
+
+function toggleSpin() { spinning=!spinning; document.getElementById('btn-spin').classList.toggle('active',spinning); if(spinning) spinLoop(); }
+function toggleBonds() { showBonds=!showBonds; document.getElementById('btn-bonds-tog').classList.toggle('active',showBonds); render(); }
+function toggleLabels() { showLabels=!showLabels; document.getElementById('btn-labels-tog').classList.toggle('active',showLabels); render(); }
+function toggleCharges() { showCharges=!showCharges; document.getElementById('btn-charges-tog').classList.toggle('active',showCharges); render(); }
+function toggleBondLens() { showBondLens=!showBondLens; document.getElementById('btn-blens-tog').classList.toggle('active',showBondLens); render(); }
+function toggleUCBox() { showUCBox=!showUCBox; document.getElementById('btn-ucbox').classList.toggle('active',showUCBox); render(); }
+function spinLoop() { if (!spinning) return; rotY+=0.01; render(); spinRAF=requestAnimationFrame(spinLoop); }
+
+buildPT();
+rebuild();
+updateInfoPanel();
+spinLoop();
+</script>
 </body>
 </html>
