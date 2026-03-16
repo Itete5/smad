@@ -9,29 +9,32 @@
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
-    /* Tc frontier diagram (dark default) */
-    .tc-frontier-wrap{display:flex;flex-direction:column;min-height:420px;background:#08090f;color:#c0c8e0;border:1px solid rgba(255,255,255,0.08)}
-    #tc-top-bar{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#0e1018;border-bottom:1px solid rgba(255,255,255,0.08);flex-wrap:wrap}
-    #tc-top-bar .tb-label{font-size:11px;color:#5060a0}
-    #tc-top-bar .tb-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;transition:background .12s}
+    /* Tc frontier diagram — improved (dark default) */
+    .tc-frontier-wrap{display:flex;flex-direction:column;min-height:440px;background:#08090f;color:#c0c8e0;border:1px solid rgba(255,255,255,0.08);font-family:system-ui,sans-serif}
+    #tc-top-bar{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#0e1018;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-wrap:wrap}
+    #tc-top-bar .tb-label{font-size:11px;color:#5060a0;white-space:nowrap}
+    #tc-top-bar .tb-btn{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;transition:background .12s}
     #tc-top-bar .tb-btn:hover{background:rgba(255,255,255,0.13)}
     #tc-top-bar .tb-btn.active{background:rgba(90,140,255,0.22);border-color:rgba(90,140,255,0.5);color:#adc8ff}
-    #tc-top-bar .sep{width:1px;height:20px;background:rgba(255,255,255,0.1);margin:0 2px;flex-shrink:0}
-    #tc-panels{display:flex;flex:1;min-height:380px}
-    #tc-left-panel{flex:1;position:relative;min-height:360px}
-    #tc-right-panel{width:260px;border-left:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;background:#0e1018}
-    #tc-main-canvas,#tc-phase-canvas{display:block;width:100%}
-    #tc-tooltip{position:absolute;pointer-events:none;background:rgba(8,10,22,0.97);border:1px solid rgba(120,160,255,0.4);border-radius:8px;padding:10px 13px;font-size:12px;color:#c0d0f0;max-width:260px;display:none;z-index:100;line-height:1.6}
-    #tc-tooltip .tt-name{font-size:14px;font-weight:500;color:#fff;margin-bottom:4px}
-    #tc-tooltip .tt-row{display:flex;gap:8px;font-size:11px;margin-bottom:2px}
-    #tc-tooltip .tt-lbl{color:#5060a0;min-width:70px}
-    #tc-tooltip .tt-link{color:#6096ff;font-size:11px;margin-top:5px;cursor:pointer;text-decoration:underline;pointer-events:all}
-    #tc-phase-title{font-size:11px;color:#5060a0;padding:8px 10px 4px;border-bottom:1px solid rgba(255,255,255,0.06);font-weight:500}
-    #tc-phase-info{padding:7px 10px;font-size:11px;color:#6070a0;border-top:1px solid rgba(255,255,255,0.06);min-height:60px;line-height:1.6}
-    #tc-legend{display:flex;flex-wrap:wrap;gap:5px;padding:6px 10px;background:#0e1018;border-top:1px solid rgba(255,255,255,0.06);font-size:10px}
-    #tc-legend .leg-item{display:flex;align-items:center;gap:4px;cursor:pointer;opacity:.9;padding:2px 5px;border-radius:4px}
-    #tc-legend .leg-item:hover{background:rgba(255,255,255,0.07)}
-    #tc-legend .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+    #tc-top-bar .sep{width:0.5px;height:18px;background:rgba(255,255,255,0.1);margin:0 2px;flex-shrink:0}
+    #tc-panels{display:flex;gap:0;flex:1}
+    #tc-left-panel{flex:1;position:relative;min-height:440px}
+    #tc-right-panel{width:270px;flex-shrink:0;background:#0a0c18;border-left:0.5px solid rgba(255,255,255,0.1);display:flex;flex-direction:column}
+    #tc-main-canvas,#tc-phase-canvas{display:block}
+    #tc-phase-canvas{flex-shrink:0}
+    #tc-tooltip{position:absolute;pointer-events:none;background:rgba(6,8,20,0.97);border:0.5px solid rgba(120,160,255,0.45);border-radius:8px;padding:9px 12px;font-size:11px;color:#c0d0f0;max-width:250px;display:none;z-index:100;line-height:1.65}
+    #tc-tooltip .ttn{font-size:13px;font-weight:500;color:#fff;margin-bottom:3px}
+    #tc-tooltip .ttr{display:flex;gap:8px;font-size:11px;margin-bottom:1px}
+    #tc-tooltip .ttl{color:#5060a0;min-width:65px}
+    #tc-tooltip .ttv{color:#a0c0e0}
+    #tc-tooltip .ttlink{color:#5588ff;font-size:11px;margin-top:5px;cursor:pointer;pointer-events:all;text-decoration:underline}
+    #tc-phase-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
+    #tc-phase-title{font-size:11px;color:#5060a0;padding:7px 10px 5px;border-bottom:0.5px solid rgba(255,255,255,0.07);font-weight:500;flex-shrink:0}
+    #tc-phase-info{padding:8px 10px;font-size:11px;color:#6070a0;line-height:1.6;flex-shrink:0;border-top:0.5px solid rgba(255,255,255,0.06)}
+    #tc-legend{display:flex;flex-wrap:wrap;gap:4px;padding:5px 10px;background:#0e1018;border-top:0.5px solid rgba(255,255,255,0.06);font-size:10px}
+    #tc-legend .leg{display:flex;align-items:center;gap:3px;cursor:pointer;padding:2px 5px;border-radius:3px;color:#6070a0}
+    #tc-legend .leg:hover{background:rgba(255,255,255,0.06)}
+    #tc-legend .lgd{width:8px;height:8px;border-radius:50%;flex-shrink:0}
     /* Light mode */
     body.theme-light .tc-frontier-wrap{background:#f0f2f5;color:#1a1d21;border-color:rgba(0,0,0,0.1)}
     body.theme-light #tc-top-bar{background:#e4e8ec;border-color:rgba(0,0,0,0.08)}
@@ -41,8 +44,8 @@
     body.theme-light #tc-top-bar .tb-btn.active{background:rgba(9,105,218,0.15);border-color:rgba(9,105,218,0.4);color:#0969da}
     body.theme-light #tc-right-panel{background:#e4e8ec;border-color:rgba(0,0,0,0.08)}
     body.theme-light #tc-tooltip{background:rgba(255,255,255,0.98);color:#1a1d21;border-color:rgba(9,105,218,0.3)}
-    body.theme-light #tc-tooltip .tt-name{color:#1a1d21}
-    body.theme-light #tc-tooltip .tt-lbl{color:#57606a}
+    body.theme-light #tc-tooltip .ttn{color:#1a1d21}
+    body.theme-light #tc-tooltip .ttl{color:#57606a}
     body.theme-light #tc-phase-title{color:#57606a;border-color:rgba(0,0,0,0.06)}
     body.theme-light #tc-phase-info{color:#57606a;border-color:rgba(0,0,0,0.06)}
     body.theme-light #tc-legend{background:#e4e8ec;border-color:rgba(0,0,0,0.06)}
@@ -165,58 +168,60 @@
                 </div>
             </div>
 
-            <!-- Tc frontier diagram (canvas-based, dark/light) -->
+            <!-- Tc frontier diagram (improved: live phase preview, pGPa, coolant markers) -->
             <div id="tc-frontier" class="row mt-5 pt-4 border-top">
                 <div class="col-12">
                     <h3 class="h4 mb-2">T<sub>c</sub> frontier diagram</h3>
-                    <p class="text-muted small mb-3">Superconductor T<sub>c</sub> vs year of discovery. Click a point for T–P phase diagram; hover for details and publication link.</p>
-                    <div id="tc-frontier-app" class="tc-frontier-wrap rounded overflow-hidden">
+                    <p class="text-muted small mb-3">Superconductor T<sub>c</sub> vs year of discovery. Hover to preview T–P phase diagram; click a point to lock it. Open publication link from tooltip.</p>
+                    <div class="tc-frontier-wrap rounded overflow-hidden">
                         <div id="tc-top-bar">
                             <span class="tb-label">Scale:</span>
                             <button class="tb-btn active" id="tc-btn-lin" onclick="tcSetScale('linear')">Linear</button>
                             <button class="tb-btn" id="tc-btn-log" onclick="tcSetScale('log')">Log</button>
                             <div class="sep"></div>
                             <span class="tb-label">Show:</span>
-                            <button class="tb-btn active" id="tc-btn-frontier" onclick="tcToggleFrontier()">Frontier line</button>
-                            <button class="tb-btn active" id="tc-btn-coolants" onclick="tcToggleCoolants()">Coolant lines</button>
-                            <button class="tb-btn active" id="tc-btn-labels" onclick="tcToggleLabels()">Labels</button>
+                            <button class="tb-btn active" id="tc-btn-front" onclick="tcToggleFrontier()">Frontier</button>
+                            <button class="tb-btn active" id="tc-btn-cool" onclick="tcToggleCoolants()">Coolants</button>
+                            <button class="tb-btn active" id="tc-btn-lbl" onclick="tcToggleLabels()">Labels</button>
                             <div class="sep"></div>
-                            <span class="tb-label">Filter family:</span>
-                            <button class="tb-btn active" id="tc-flt-all" onclick="tcFilterFamily('all')">All</button>
-                            <button class="tb-btn" id="tc-flt-elem" onclick="tcFilterFamily('elemental')">Elemental</button>
-                            <button class="tb-btn" id="tc-flt-alloy" onclick="tcFilterFamily('alloy')">Alloys</button>
-                            <button class="tb-btn" id="tc-flt-oxide" onclick="tcFilterFamily('cuprate')">Cuprates</button>
-                            <button class="tb-btn" id="tc-flt-iron" onclick="tcFilterFamily('iron')">Iron-based</button>
-                            <button class="tb-btn" id="tc-flt-hydride" onclick="tcFilterFamily('hydride')">Hydrides</button>
-                            <button class="tb-btn" id="tc-flt-other" onclick="tcFilterFamily('other')">Other</button>
+                            <span class="tb-label">Family:</span>
+                            <button class="tb-btn active" id="tc-flt-all" onclick="tcFlt('all')">All</button>
+                            <button class="tb-btn" id="tc-flt-elem" onclick="tcFlt('elemental')">Elemental</button>
+                            <button class="tb-btn" id="tc-flt-alloy" onclick="tcFlt('alloy')">Alloys</button>
+                            <button class="tb-btn" id="tc-flt-cuprate" onclick="tcFlt('cuprate')">Cuprates</button>
+                            <button class="tb-btn" id="tc-flt-iron" onclick="tcFlt('iron')">Iron-based</button>
+                            <button class="tb-btn" id="tc-flt-hydride" onclick="tcFlt('hydride')">Hydrides</button>
+                            <button class="tb-btn" id="tc-flt-other" onclick="tcFlt('other')">Other</button>
                         </div>
                         <div id="tc-panels">
                             <div id="tc-left-panel">
                                 <canvas id="tc-main-canvas"></canvas>
                                 <div id="tc-tooltip">
-                                    <div class="tt-name" id="tc-tt-name"></div>
-                                    <div class="tt-row"><span class="tt-lbl">Formula</span><span class="tt-val" id="tc-tt-formula"></span></div>
-                                    <div class="tt-row"><span class="tt-lbl">Tc (K)</span><span class="tt-val" id="tc-tt-tc"></span></div>
-                                    <div class="tt-row"><span class="tt-lbl">Year</span><span class="tt-val" id="tc-tt-year"></span></div>
-                                    <div class="tt-row"><span class="tt-lbl">Family</span><span class="tt-val" id="tc-tt-family"></span></div>
-                                    <div class="tt-row"><span class="tt-lbl">Pressure</span><span class="tt-val" id="tc-tt-pressure"></span></div>
-                                    <div class="tt-row"><span class="tt-lbl">Structure</span><span class="tt-val" id="tc-tt-struct"></span></div>
-                                    <div class="tt-link" id="tc-tt-link" onclick="tcOpenPub()">Open publication &#8599;</div>
+                                    <div class="ttn" id="tc-tt-name"></div>
+                                    <div class="ttr"><span class="ttl">Formula</span><span class="ttv" id="tc-tt-form"></span></div>
+                                    <div class="ttr"><span class="ttl">Tc (K)</span><span class="ttv" id="tc-tt-tc"></span></div>
+                                    <div class="ttr"><span class="ttl">Year</span><span class="ttv" id="tc-tt-yr"></span></div>
+                                    <div class="ttr"><span class="ttl">Family</span><span class="ttv" id="tc-tt-fam"></span></div>
+                                    <div class="ttr"><span class="ttl">Pressure</span><span class="ttv" id="tc-tt-pres"></span></div>
+                                    <div class="ttr"><span class="ttl">Structure</span><span class="ttv" id="tc-tt-str"></span></div>
+                                    <div class="ttlink" onclick="tcOpenPub()">Open publication &#8599;</div>
                                 </div>
                             </div>
                             <div id="tc-right-panel">
-                                <div id="tc-phase-title">Phase diagram — click a material</div>
-                                <canvas id="tc-phase-canvas" height="300"></canvas>
-                                <div id="tc-phase-info">Click any data point to see its schematic T–P phase diagram.</div>
+                                <div id="tc-phase-wrap">
+                                    <div id="tc-phase-title">T–P Phase diagram — click a point</div>
+                                    <canvas id="tc-phase-canvas"></canvas>
+                                    <div id="tc-phase-info">Hover a point to preview, click to lock the phase diagram.</div>
+                                </div>
                             </div>
                         </div>
                         <div id="tc-legend">
-                            <span class="leg-item" onclick="tcFilterFamily('elemental')"><span class="leg-dot" style="background:#6699ff"></span>Elemental</span>
-                            <span class="leg-item" onclick="tcFilterFamily('alloy')"><span class="leg-dot" style="background:#44ccaa"></span>Alloys / A15</span>
-                            <span class="leg-item" onclick="tcFilterFamily('cuprate')"><span class="leg-dot" style="background:#ff7744"></span>Cuprates</span>
-                            <span class="leg-item" onclick="tcFilterFamily('iron')"><span class="leg-dot" style="background:#dd4466"></span>Iron-based</span>
-                            <span class="leg-item" onclick="tcFilterFamily('hydride')"><span class="leg-dot" style="background:#eecc33"></span>Hydrides</span>
-                            <span class="leg-item" onclick="tcFilterFamily('other')"><span class="leg-dot" style="background:#aa66ee"></span>Other</span>
+                            <span class="leg" onclick="tcFlt('elemental')"><span class="lgd" style="background:#6699ff"></span>Elemental</span>
+                            <span class="leg" onclick="tcFlt('alloy')"><span class="lgd" style="background:#44ccaa"></span>Alloys / A15</span>
+                            <span class="leg" onclick="tcFlt('cuprate')"><span class="lgd" style="background:#ff7744"></span>Cuprates</span>
+                            <span class="leg" onclick="tcFlt('iron')"><span class="lgd" style="background:#dd4466"></span>Iron-based</span>
+                            <span class="leg" onclick="tcFlt('hydride')"><span class="lgd" style="background:#eecc33"></span>Hydrides</span>
+                            <span class="leg" onclick="tcFlt('other')"><span class="lgd" style="background:#aa66ee"></span>Other</span>
                         </div>
                     </div>
                 </div>
@@ -414,110 +419,109 @@
         document.getElementById("searchBox")?.addEventListener("input", filterMaterials);
 
         // -----------------------------
-        // Tc frontier diagram (canvas)
+        // Tc frontier diagram (improved: live phase preview, pGPa, coolant markers in phase)
         // -----------------------------
-        const TCFAMILY_COLORS = { elemental:'#6699ff', alloy:'#44ccaa', cuprate:'#ff7744', iron:'#dd4466', hydride:'#eecc33', other:'#aa66ee' };
-        const TCFAMILY_NAMES = { elemental:'Elemental', alloy:'Alloy / A15', cuprate:'Cuprate', iron:'Iron-based', hydride:'Hydride', other:'Other' };
-        const TCCOOLANTS = [
+        const TC_FC = { elemental:'#6699ff', alloy:'#44ccaa', cuprate:'#ff7744', iron:'#dd4466', hydride:'#eecc33', other:'#aa66ee' };
+        const TC_FN = { elemental:'Elemental', alloy:'Alloy / A15', cuprate:'Cuprate', iron:'Iron-based', hydride:'Hydride', other:'Other' };
+        const TC_COOLANTS = [
             { name:'liq. He', T:4.2, color:'#44aaff', dash:[6,4] },
             { name:'liq. H\u2082', T:20.3, color:'#88ddff', dash:[4,3] },
-            { name:'liq. N\u2082', T:77, color:'#66ffbb', dash:[8,4] },
+            { name:'liq. N\u2082', T:77, color:'#55ffbb', dash:[8,4] },
             { name:'liq. CF\u2084', T:145, color:'#ffcc44', dash:[5,3] }
         ];
-        const TCDATA = [
-            { name:'Mercury', formula:'Hg', tc:4.15, year:1911, family:'elemental', pressure:'Ambient', structure:'Rhombohedral', doi:'https://doi.org/10.1039/tf9110700385', note:'First superconductor (Kamerlingh Onnes)' },
-            { name:'Lead', formula:'Pb', tc:7.2, year:1913, family:'elemental', pressure:'Ambient', structure:'FCC', doi:'https://doi.org/10.1007/BF01428598', note:'' },
-            { name:'Niobium', formula:'Nb', tc:9.25, year:1930, family:'elemental', pressure:'Ambient', structure:'BCC', doi:'https://doi.org/10.1007/BF01328890', note:'Highest Tc elemental at ambient' },
-            { name:'Vanadium', formula:'V', tc:5.4, year:1934, family:'elemental', pressure:'Ambient', structure:'BCC', doi:'https://doi.org/10.1007/BF01341183', note:'' },
-            { name:'Tin', formula:'Sn', tc:3.72, year:1913, family:'elemental', pressure:'Ambient', structure:'BCT', doi:'https://doi.org/10.1007/BF01428598', note:'' },
-            { name:'Aluminum', formula:'Al', tc:1.18, year:1933, family:'elemental', pressure:'Ambient', structure:'FCC', doi:'https://doi.org/10.1007/BF01341183', note:'' },
-            { name:'Sulfur (HP)', formula:'S', tc:17, year:1998, family:'elemental', pressure:'~200 GPa', structure:'Orthorhombic', doi:'https://doi.org/10.1038/35002121', note:'' },
-            { name:'Calcium (HP)', formula:'Ca', tc:29, year:2006, family:'elemental', pressure:'~150 GPa', structure:'Simple cubic', doi:'https://doi.org/10.1126/science.1133558', note:'' },
-            { name:'NbN', formula:'NbN', tc:16, year:1941, family:'alloy', pressure:'Ambient', structure:'Rock salt', doi:'https://doi.org/10.1007/BF01342749', note:'' },
-            { name:'V\u2083Si', formula:'V\u2083Si', tc:17, year:1953, family:'alloy', pressure:'Ambient', structure:'A15', doi:'https://doi.org/10.1103/PhysRevLett.1.17', note:'' },
-            { name:'Nb\u2083Sn', formula:'Nb\u2083Sn', tc:18.3, year:1954, family:'alloy', pressure:'Ambient', structure:'A15', doi:'https://doi.org/10.1103/PhysRevLett.2.380', note:'' },
-            { name:'NbTi', formula:'NbTi', tc:9.8, year:1962, family:'alloy', pressure:'Ambient', structure:'BCC', doi:'https://doi.org/10.1007/BF01341183', note:'' },
-            { name:'Nb\u2083Ge', formula:'Nb\u2083Ge', tc:23.2, year:1973, family:'alloy', pressure:'Ambient', structure:'A15', doi:'https://doi.org/10.1007/BF00628235', note:'' },
-            { name:'MgB\u2082', formula:'MgB\u2082', tc:39, year:2001, family:'alloy', pressure:'Ambient', structure:'AlB\u2082-type', doi:'https://doi.org/10.1038/35065039', note:'' },
-            { name:'La-Ba-Cu-O', formula:'La\u2082\u208bxBaxCuO\u2084', tc:30, year:1986, family:'cuprate', pressure:'Ambient', structure:'K\u2082NiF\u2084-type', doi:'https://doi.org/10.1007/BF01303701', note:'Bednorz & M\u00fcller' },
-            { name:'YBa\u2082Cu\u2083O\u2087', formula:'YBa\u2082Cu\u2083O\u2087', tc:92, year:1987, family:'cuprate', pressure:'Ambient', structure:'Perovskite', doi:'https://doi.org/10.1103/PhysRevLett.58.908', note:'' },
-            { name:'Bi\u2082Sr\u2082Ca\u2082Cu\u2083O\u2081\u2080', formula:'Bi-2223', tc:110, year:1988, family:'cuprate', pressure:'Ambient', structure:'Bi-cuprate', doi:'https://doi.org/10.1007/BF01349263', note:'' },
-            { name:'Tl\u2082Ba\u2082Ca\u2082Cu\u2083O\u2081\u2080', formula:'Tl-2223', tc:125, year:1988, family:'cuprate', pressure:'Ambient', structure:'Tl-cuprate', doi:'https://doi.org/10.1038/332826a0', note:'' },
-            { name:'HgBa\u2082Ca\u2082Cu\u2083O\u2088', formula:'Hg-1223', tc:133, year:1993, family:'cuprate', pressure:'Ambient', structure:'Hg-cuprate', doi:'https://doi.org/10.1038/363056a0', note:'' },
-            { name:'HgBa\u2082Ca\u2082Cu\u2083O\u2088 (HP)', formula:'Hg-1223 (HP)', tc:164, year:1994, family:'cuprate', pressure:'~30 GPa', structure:'Hg-cuprate', doi:'https://doi.org/10.1016/0038-1098(94)90960-1', note:'' },
-            { name:'LaOFeAs (doped)', formula:'LaO\u2081\u208bxFxFeAs', tc:26, year:2008, family:'iron', pressure:'Ambient', structure:'1111', doi:'https://doi.org/10.1021/ja800073m', note:'' },
-            { name:'SmFeAsO', formula:'SmFeAsO\u2081\u208bxFx', tc:55, year:2008, family:'iron', pressure:'Ambient', structure:'1111', doi:'https://doi.org/10.1038/nature07045', note:'' },
-            { name:'(Ba,K)Fe\u2082As\u2082', formula:'Ba\u2080\u2086K\u2080\u2084Fe\u2082As\u2082', tc:38, year:2008, family:'iron', pressure:'Ambient', structure:'122', doi:'https://doi.org/10.1038/nature07223', note:'' },
-            { name:'LiFeAs', formula:'LiFeAs', tc:18, year:2008, family:'iron', pressure:'Ambient', structure:'111', doi:'https://doi.org/10.1016/j.ssc.2008.09.057', note:'' },
-            { name:'FeSe (HP)', formula:'FeSe', tc:37, year:2009, family:'iron', pressure:'~9 GPa', structure:'PbO-type', doi:'https://doi.org/10.1073/pnas.0903648106', note:'' },
-            { name:'H\u2082S / H\u2083S (HP)', formula:'H\u2082S / H\u2083S', tc:203, year:2015, family:'hydride', pressure:'~150 GPa', structure:'Im3\u0305m', doi:'https://doi.org/10.1038/nature14964', note:'' },
-            { name:'LaH\u2081\u2080', formula:'LaH\u2081\u2080', tc:250, year:2019, family:'hydride', pressure:'~170 GPa', structure:'Fm3\u0305m', doi:'https://doi.org/10.1038/s41586-019-1201-8', note:'' },
-            { name:'YH\u2089', formula:'YH\u2089', tc:243, year:2019, family:'hydride', pressure:'~200 GPa', structure:'P6\u2083/mmc', doi:'https://doi.org/10.1103/PhysRevLett.122.027001', note:'' },
-            { name:'CaH\u2086', formula:'CaH\u2086', tc:215, year:2020, family:'hydride', pressure:'~172 GPa', structure:'Im3\u0305m', doi:'https://doi.org/10.1103/PhysRevLett.122.027001', note:'' },
-            { name:'C-S-H (claimed)', formula:'C-S-H', tc:288, year:2020, family:'hydride', pressure:'~267 GPa', structure:'Unknown', doi:'https://doi.org/10.1038/s41586-020-2801-z', note:'' },
-            { name:'Lu-N-H (claimed)', formula:'Lu-N-H', tc:294, year:2023, family:'hydride', pressure:'Ambient (disputed)', structure:'FCC', doi:'https://doi.org/10.1038/s41586-023-05742-0', note:'' },
-            { name:'SrTiO\u2083', formula:'SrTiO\u2083\u208bx', tc:0.3, year:1964, family:'other', pressure:'Ambient', structure:'Perovskite', doi:'https://doi.org/10.1103/PhysRevLett.12.474', note:'' },
-            { name:'UPt\u2083', formula:'UPt\u2083', tc:0.54, year:1984, family:'other', pressure:'Ambient', structure:'Hexagonal', doi:'https://doi.org/10.1103/PhysRevLett.52.679', note:'' },
-            { name:'K\u2083C\u2086\u2080', formula:'K\u2083C\u2086\u2080', tc:18, year:1991, family:'other', pressure:'Ambient', structure:'Fullerene', doi:'https://doi.org/10.1038/350600a0', note:'' },
-            { name:'Sr\u2082RuO\u2084', formula:'Sr\u2082RuO\u2084', tc:1.5, year:1994, family:'other', pressure:'Ambient', structure:'Layered', doi:'https://doi.org/10.1038/372532a0', note:'' },
-            { name:'Cs\u2083C\u2086\u2080', formula:'Cs\u2083C\u2086\u2080', tc:38, year:2008, family:'other', pressure:'~0.7 GPa', structure:'A15 Fullerene', doi:'https://doi.org/10.1038/nature07265', note:'' }
+        const TC_DATA = [
+            { name:'Mercury', formula:'Hg', tc:4.15, year:1911, family:'elemental', pressure:'Ambient', pGPa:0, structure:'Rhombohedral', doi:'https://doi.org/10.1039/tf9110700385', note:'First superconductor (Kamerlingh Onnes)' },
+            { name:'Lead', formula:'Pb', tc:7.2, year:1913, family:'elemental', pressure:'Ambient', pGPa:0, structure:'FCC', doi:'https://doi.org/10.1007/BF01428598', note:'' },
+            { name:'Niobium', formula:'Nb', tc:9.25, year:1930, family:'elemental', pressure:'Ambient', pGPa:0, structure:'BCC', doi:'https://doi.org/10.1007/BF01328890', note:'Highest Tc elemental at ambient' },
+            { name:'Vanadium', formula:'V', tc:5.4, year:1934, family:'elemental', pressure:'Ambient', pGPa:0, structure:'BCC', doi:'https://doi.org/10.1007/BF01341183', note:'' },
+            { name:'Tin', formula:'Sn', tc:3.72, year:1913, family:'elemental', pressure:'Ambient', pGPa:0, structure:'BCT', doi:'https://doi.org/10.1007/BF01428598', note:'' },
+            { name:'Sulfur (HP)', formula:'S', tc:17, year:1998, family:'elemental', pressure:'~200 GPa', pGPa:200, structure:'Orthorhombic (HP)', doi:'https://doi.org/10.1038/35002121', note:'' },
+            { name:'Calcium (HP)', formula:'Ca', tc:29, year:2006, family:'elemental', pressure:'~150 GPa', pGPa:150, structure:'Simple cubic (HP)', doi:'https://doi.org/10.1126/science.1133558', note:'' },
+            { name:'NbN', formula:'NbN', tc:16, year:1941, family:'alloy', pressure:'Ambient', pGPa:0, structure:'Rock salt (B1)', doi:'https://doi.org/10.1007/BF01342749', note:'' },
+            { name:'V\u2083Si', formula:'V\u2083Si', tc:17, year:1953, family:'alloy', pressure:'Ambient', pGPa:0, structure:'A15', doi:'https://doi.org/10.1103/PhysRevLett.1.17', note:'' },
+            { name:'Nb\u2083Sn', formula:'Nb\u2083Sn', tc:18.3, year:1954, family:'alloy', pressure:'Ambient', pGPa:0, structure:'A15', doi:'https://doi.org/10.1103/PhysRevLett.2.380', note:'' },
+            { name:'NbTi', formula:'NbTi', tc:9.8, year:1962, family:'alloy', pressure:'Ambient', pGPa:0, structure:'BCC solid solution', doi:'https://doi.org/10.1007/BF01341183', note:'' },
+            { name:'Nb\u2083Ge', formula:'Nb\u2083Ge', tc:23.2, year:1973, family:'alloy', pressure:'Ambient', pGPa:0, structure:'A15', doi:'https://doi.org/10.1007/BF00628235', note:'' },
+            { name:'MgB\u2082', formula:'MgB\u2082', tc:39, year:2001, family:'alloy', pressure:'Ambient', pGPa:0, structure:'AlB\u2082-type hexagonal', doi:'https://doi.org/10.1038/35065039', note:'' },
+            { name:'LBCO', formula:'La\u2082\u208bxBaxCuO\u2084', tc:30, year:1986, family:'cuprate', pressure:'Ambient', pGPa:0, structure:'K\u2082NiF\u2084-type', doi:'https://doi.org/10.1007/BF01303701', note:'Bednorz & M\u00fcller' },
+            { name:'YBCO', formula:'YBa\u2082Cu\u2083O\u2087', tc:92, year:1987, family:'cuprate', pressure:'Ambient', pGPa:0, structure:'Perovskite', doi:'https://doi.org/10.1103/PhysRevLett.58.908', note:'' },
+            { name:'Bi-2223', formula:'Bi\u2082Sr\u2082Ca\u2082Cu\u2083O\u2081\u2080', tc:110, year:1988, family:'cuprate', pressure:'Ambient', pGPa:0, structure:'Bi-cuprate', doi:'https://doi.org/10.1007/BF01349263', note:'' },
+            { name:'Tl-2223', formula:'Tl\u2082Ba\u2082Ca\u2082Cu\u2083O\u2081\u2080', tc:125, year:1988, family:'cuprate', pressure:'Ambient', pGPa:0, structure:'Tl-cuprate', doi:'https://doi.org/10.1038/332826a0', note:'' },
+            { name:'Hg-1223', formula:'HgBa\u2082Ca\u2082Cu\u2083O\u2088', tc:133, year:1993, family:'cuprate', pressure:'Ambient', pGPa:0, structure:'Hg-cuprate', doi:'https://doi.org/10.1038/363056a0', note:'' },
+            { name:'Hg-1223 (HP)', formula:'HgBa\u2082Ca\u2082Cu\u2083O\u2088 (HP)', tc:164, year:1994, family:'cuprate', pressure:'~30 GPa', pGPa:30, structure:'Hg-cuprate', doi:'https://doi.org/10.1016/0038-1098(94)90960-1', note:'' },
+            { name:'LaOFeAs', formula:'LaO\u2081\u208bxFxFeAs', tc:26, year:2008, family:'iron', pressure:'Ambient', pGPa:0, structure:'1111', doi:'https://doi.org/10.1021/ja800073m', note:'' },
+            { name:'SmFeAsO', formula:'SmFeAsO\u2081\u208bxFx', tc:55, year:2008, family:'iron', pressure:'Ambient', pGPa:0, structure:'1111', doi:'https://doi.org/10.1038/nature07045', note:'' },
+            { name:'(Ba,K)Fe\u2082As\u2082', formula:'(Ba,K)Fe\u2082As\u2082', tc:38, year:2008, family:'iron', pressure:'Ambient', pGPa:0, structure:'122', doi:'https://doi.org/10.1038/nature07223', note:'' },
+            { name:'LiFeAs', formula:'LiFeAs', tc:18, year:2008, family:'iron', pressure:'Ambient', pGPa:0, structure:'111', doi:'https://doi.org/10.1016/j.ssc.2008.09.057', note:'' },
+            { name:'FeSe (HP)', formula:'FeSe', tc:37, year:2009, family:'iron', pressure:'~9 GPa', pGPa:9, structure:'PbO-type', doi:'https://doi.org/10.1073/pnas.0903648106', note:'' },
+            { name:'H\u2083S', formula:'H\u2082S / H\u2083S', tc:203, year:2015, family:'hydride', pressure:'~150 GPa', pGPa:150, structure:'Im3\u0305m', doi:'https://doi.org/10.1038/nature14964', note:'' },
+            { name:'LaH\u2081\u2080', formula:'LaH\u2081\u2080', tc:250, year:2019, family:'hydride', pressure:'~170 GPa', pGPa:170, structure:'Fm3\u0305m', doi:'https://doi.org/10.1038/s41586-019-1201-8', note:'' },
+            { name:'YH\u2089', formula:'YH\u2089', tc:243, year:2019, family:'hydride', pressure:'~200 GPa', pGPa:200, structure:'P6\u2083/mmc', doi:'https://doi.org/10.1103/PhysRevLett.122.027001', note:'' },
+            { name:'CaH\u2086', formula:'CaH\u2086', tc:215, year:2020, family:'hydride', pressure:'~172 GPa', pGPa:172, structure:'Im3\u0305m', doi:'https://doi.org/10.1103/PhysRevLett.122.027001', note:'' },
+            { name:'C-S-H (claimed)', formula:'C-S-H', tc:288, year:2020, family:'hydride', pressure:'~267 GPa', pGPa:267, structure:'Unknown', doi:'https://doi.org/10.1038/s41586-020-2801-z', note:'' },
+            { name:'Lu-N-H (claimed)', formula:'Lu-N-H', tc:294, year:2023, family:'hydride', pressure:'Amb. (disput.)', pGPa:1, structure:'FCC', doi:'https://doi.org/10.1038/s41586-023-05742-0', note:'' },
+            { name:'SrTiO\u2083', formula:'SrTiO\u2083\u208bx', tc:0.3, year:1964, family:'other', pressure:'Ambient', pGPa:0, structure:'Perovskite', doi:'https://doi.org/10.1103/PhysRevLett.12.474', note:'' },
+            { name:'UPt\u2083', formula:'UPt\u2083', tc:0.54, year:1984, family:'other', pressure:'Ambient', pGPa:0, structure:'Hexagonal', doi:'https://doi.org/10.1103/PhysRevLett.52.679', note:'' },
+            { name:'K\u2083C\u2086\u2080', formula:'K\u2083C\u2086\u2080', tc:18, year:1991, family:'other', pressure:'Ambient', pGPa:0, structure:'Fullerene', doi:'https://doi.org/10.1038/350600a0', note:'' },
+            { name:'Sr\u2082RuO\u2084', formula:'Sr\u2082RuO\u2084', tc:1.5, year:1994, family:'other', pressure:'Ambient', pGPa:0, structure:'Layered', doi:'https://doi.org/10.1038/372532a0', note:'' },
+            { name:'Cs\u2083C\u2086\u2080', formula:'Cs\u2083C\u2086\u2080', tc:38, year:2008, family:'other', pressure:'~0.7 GPa', pGPa:0.7, structure:'A15 Fullerene', doi:'https://doi.org/10.1038/nature07265', note:'' }
         ];
-        let tcScale='linear', tcShowFrontier=true, tcShowCoolants=true, tcShowLabels=true, tcActiveFamily='all', tcHovered=null, tcSelected=null, tcPubUrl=null;
-        const tcTooltip=document.getElementById('tc-tooltip'), tcMainCanvas=document.getElementById('tc-main-canvas'), tcPhaseCanvas=document.getElementById('tc-phase-canvas');
+        let tcScale='linear', tcShowFront=true, tcShowCool=true, tcShowLbl=true, tcActiveFam='all', tcHovered=null, tcSelected=null, tcPubUrl=null;
+        const tcMc=document.getElementById('tc-main-canvas'), tcPc=document.getElementById('tc-phase-canvas'), tcTt=document.getElementById('tc-tooltip');
         let tcMCtx, tcPCtx;
-        function tcGetFiltered(){ return tcActiveFamily==='all' ? TCDATA : TCDATA.filter(d=>d.family===tcActiveFamily); }
-        function tcPad(){ return { l:62, r:20, t:28, b:52 }; }
-        function tcTcToY(tc,h,p){ const minTc=0.1, maxTc=320; if(tcScale==='log'){ const lo=Math.log10(minTc), hi=Math.log10(maxTc); return p.t+h-(Math.log10(Math.max(tc,minTc))-lo)/(hi-lo)*h; } return p.t+h-(tc-0)/(maxTc-0)*h; }
-        function tcYearToX(yr,w,p){ const y0=1905, y1=2025; return p.l+(yr-y0)/(y1-y0)*w; }
-        function tcBlend(hex,alpha){ const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16); return 'rgba('+r+','+g+','+b+','+alpha+')'; }
-        function tcTheme(){ const light=document.body.classList.contains('theme-light'); return { bg: light?'#f0f2f5':'#08090f', grid: light?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.05)', tick: light?'rgba(0,0,0,0.4)':'rgba(255,255,255,0.25)', axis: light?'rgba(0,0,0,0.35)':'rgba(255,255,255,0.25)' }; }
+        function tcHexRgba(hex,a){ const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
+        function tcFiltered(){ return tcActiveFam==='all' ? TC_DATA : TC_DATA.filter(d=>d.family===tcActiveFam); }
+        function tcPAD(){ return { l:62, r:22, t:26, b:50 }; }
+        function tcTcY(tc,ch,p){ if(tcScale==='log'){ const lo=Math.log10(0.1), hi=Math.log10(320); return p.t+ch-(Math.log10(Math.max(tc,0.1))-lo)/(hi-lo)*ch; } return p.t+ch-tc/320*ch; }
+        function tcYrX(yr,cw,p){ return p.l+(yr-1905)/120*cw; }
+        function tcTheme(){ const light=document.body.classList.contains('theme-light'); return { bg: light?'#f0f2f5':'#08090f', grid: light?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.05)', tick: light?'rgba(0,0,0,0.4)':'rgba(255,255,255,0.22)', axis: light?'rgba(0,0,0,0.35)':'rgba(255,255,255,0.22)' }; }
         function tcDrawMain(){
-            if(!tcMainCanvas) return;
-            tcMCtx=tcMainCanvas.getContext('2d');
-            const W=tcMainCanvas.offsetWidth||700, H=tcMainCanvas.offsetHeight||500;
-            tcMainCanvas.width=W; tcMainCanvas.height=H;
-            const p=tcPad(), cw=W-p.l-p.r, ch=H-p.t-p.b, th=tcTheme();
+            if(!tcMc) return;
+            tcMCtx=tcMc.getContext('2d');
+            const W=tcMc.offsetWidth||700, H=tcMc.offsetHeight||480;
+            tcMc.width=W; tcMc.height=H;
+            const p=tcPAD(), cw=W-p.l-p.r, ch=H-p.t-p.b, th=tcTheme();
             tcMCtx.fillStyle=th.bg; tcMCtx.fillRect(0,0,W,H);
-            [1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010,2020].forEach(yr=>{ const x=tcYearToX(yr,cw,p); tcMCtx.strokeStyle=th.grid; tcMCtx.lineWidth=0.5; tcMCtx.beginPath(); tcMCtx.moveTo(x,p.t); tcMCtx.lineTo(x,p.t+ch); tcMCtx.stroke(); tcMCtx.fillStyle=th.tick; tcMCtx.font='10px monospace'; tcMCtx.textAlign='center'; tcMCtx.fillText(yr,x,p.t+ch+16); });
-            const tcTicks=tcScale==='log'?[0.3,1,3,10,30,100,300]:[0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320];
-            tcTicks.forEach(tc=>{ const y=tcTcToY(tc,ch,p); if(y<p.t||y>p.t+ch+2) return; tcMCtx.strokeStyle=th.grid; tcMCtx.lineWidth=0.5; tcMCtx.beginPath(); tcMCtx.moveTo(p.l,y); tcMCtx.lineTo(p.l+cw,y); tcMCtx.stroke(); tcMCtx.fillStyle=th.tick; tcMCtx.font='10px monospace'; tcMCtx.textAlign='right'; tcMCtx.fillText(tc,p.l-5,y+3.5); });
-            if(tcShowCoolants){ TCCOOLANTS.forEach(cl=>{ const y=tcTcToY(cl.T,ch,p); if(y<p.t||y>p.t+ch) return; tcMCtx.setLineDash(cl.dash); tcMCtx.strokeStyle=cl.color+'aa'; tcMCtx.lineWidth=1.2; tcMCtx.beginPath(); tcMCtx.moveTo(p.l,y); tcMCtx.lineTo(p.l+cw,y); tcMCtx.stroke(); tcMCtx.setLineDash([]); tcMCtx.fillStyle=cl.color; tcMCtx.font='bold 10px monospace'; tcMCtx.textAlign='left'; tcMCtx.fillText(cl.name+' ('+cl.T+' K)',p.l+5,y-4); }); }
-            if(tcShowFrontier){ const sorted=[...TCDATA].sort((a,b)=>a.year-b.year); let maxTc=0, frontier=[]; sorted.forEach(d=>{ if(d.tc>maxTc){ maxTc=d.tc; frontier.push(d); } }); if(frontier.length>1){ tcMCtx.strokeStyle='rgba(255,200,80,0.55)'; tcMCtx.lineWidth=1.5; tcMCtx.setLineDash([6,3]); tcMCtx.beginPath(); frontier.forEach((d,i)=>{ const x=tcYearToX(d.year,cw,p), y=tcTcToY(d.tc,ch,p); if(i===0) tcMCtx.moveTo(x,y); else tcMCtx.lineTo(x,y); }); tcMCtx.lineTo(tcYearToX(2024,cw,p),tcTcToY(frontier[frontier.length-1].tc,ch,p)); tcMCtx.stroke(); tcMCtx.setLineDash([]); } }
-            const filtered=tcGetFiltered();
-            TCDATA.forEach(d=>{ const x=tcYearToX(d.year,cw,p), y=tcTcToY(d.tc,ch,p); if(y<p.t-5||y>p.t+ch+5) return; const isF=filtered.includes(d), isH=tcHovered===d, isS=tcSelected===d, col=TCFAMILY_COLORS[d.family]||'#888', alpha=isF?1:0.15, r=(isH||isS)?7:5, isHP=d.pressure!=='Ambient'; if(isS){ tcMCtx.beginPath(); tcMCtx.arc(x,y,r+5,0,Math.PI*2); tcMCtx.fillStyle=tcBlend(col,0.15); tcMCtx.fill(); } tcMCtx.beginPath(); tcMCtx.arc(x,y,r,0,Math.PI*2); tcMCtx.fillStyle=tcBlend(col,alpha*(isH||isS?1:0.85)); tcMCtx.fill(); if(isH||isS||isHP){ tcMCtx.strokeStyle=isHP?tcBlend(col,alpha*0.7):col; tcMCtx.lineWidth=isH||isS?1.8:1; if(isHP) tcMCtx.setLineDash([2,2]); tcMCtx.stroke(); tcMCtx.setLineDash([]); } if(tcShowLabels&&isF&&(isH||isS||d.tc>20)){ const lbl=d.formula.length>12?d.name.split(' ')[0]:d.formula; tcMCtx.font='bold 9px system-ui'; tcMCtx.textAlign='left'; const tw=tcMCtx.measureText(lbl).width, lx=x+8, ly=y-3; tcMCtx.fillStyle=document.body.classList.contains('theme-light')?'rgba(240,242,245,0.9)':'rgba(8,9,15,0.75)'; tcMCtx.fillRect(lx-2,ly-9,tw+4,12); tcMCtx.fillStyle=isF?col:'rgba(180,180,180,0.4)'; tcMCtx.fillText(lbl,lx,ly); } });
-            tcMCtx.strokeStyle=th.axis; tcMCtx.lineWidth=1; tcMCtx.beginPath(); tcMCtx.moveTo(p.l,p.t); tcMCtx.lineTo(p.l,p.t+ch); tcMCtx.lineTo(p.l+cw,p.t+ch); tcMCtx.stroke(); tcMCtx.fillStyle=th.tick; tcMCtx.font='11px system-ui'; tcMCtx.textAlign='center'; tcMCtx.fillText('Year of discovery',p.l+cw/2,H-8); tcMCtx.save(); tcMCtx.translate(14,p.t+ch/2); tcMCtx.rotate(-Math.PI/2); tcMCtx.fillText('Tc (K)',0,0); tcMCtx.restore(); tcMCtx.fillStyle='rgba(255,200,80,0.65)'; tcMCtx.font='10px monospace'; tcMCtx.textAlign='right'; tcMCtx.fillText('- - frontier',p.l+cw,p.t+14); tcMCtx.fillStyle=th.tick; tcMCtx.font='9px monospace'; tcMCtx.fillText('\u25cc high pressure',p.l+cw,p.t+26);
+            [1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010,2020].forEach(yr=>{ const x=tcYrX(yr,cw,p); tcMCtx.strokeStyle=th.grid; tcMCtx.lineWidth=0.5; tcMCtx.beginPath(); tcMCtx.moveTo(x,p.t); tcMCtx.lineTo(x,p.t+ch); tcMCtx.stroke(); tcMCtx.fillStyle=th.tick; tcMCtx.font='10px monospace'; tcMCtx.textAlign='center'; tcMCtx.fillText(yr,x,p.t+ch+16); });
+            const tks=tcScale==='log'?[0.3,1,3,10,30,100,300]:[0,40,80,120,160,200,240,280,320];
+            tks.forEach(tc=>{ const y=tcTcY(tc,ch,p); if(y<p.t-2||y>p.t+ch+2) return; tcMCtx.strokeStyle=th.grid; tcMCtx.lineWidth=0.5; tcMCtx.beginPath(); tcMCtx.moveTo(p.l,y); tcMCtx.lineTo(p.l+cw,y); tcMCtx.stroke(); tcMCtx.fillStyle=th.tick; tcMCtx.font='10px monospace'; tcMCtx.textAlign='right'; tcMCtx.fillText(tc,p.l-5,y+3.5); });
+            if(tcShowCool){ TC_COOLANTS.forEach(cl=>{ const y=tcTcY(cl.T,ch,p); if(y<p.t||y>p.t+ch) return; tcMCtx.setLineDash(cl.dash); tcMCtx.strokeStyle=cl.color+'99'; tcMCtx.lineWidth=1.2; tcMCtx.beginPath(); tcMCtx.moveTo(p.l,y); tcMCtx.lineTo(p.l+cw,y); tcMCtx.stroke(); tcMCtx.setLineDash([]); tcMCtx.fillStyle=cl.color; tcMCtx.font='bold 10px monospace'; tcMCtx.textAlign='left'; tcMCtx.fillText(cl.name+' (\u202f'+cl.T+'\u202fK)',p.l+5,y-4); }); }
+            if(tcShowFront){ const srt=[...TC_DATA].sort((a,b)=>a.year-b.year); let maxTc=0, fr=[]; srt.forEach(d=>{ if(d.tc>maxTc){ maxTc=d.tc; fr.push(d); } }); if(fr.length>1){ tcMCtx.strokeStyle='rgba(255,200,60,0.50)'; tcMCtx.lineWidth=1.5; tcMCtx.setLineDash([6,3]); tcMCtx.beginPath(); fr.forEach((d,i)=>{ const x=tcYrX(d.year,cw,p), y=tcTcY(d.tc,ch,p); i===0?tcMCtx.moveTo(x,y):tcMCtx.lineTo(x,y); }); tcMCtx.lineTo(tcYrX(2024,cw,p),tcTcY(fr[fr.length-1].tc,ch,p)); tcMCtx.stroke(); tcMCtx.setLineDash([]); } }
+            const fil=tcFiltered();
+            TC_DATA.forEach(d=>{ const x=tcYrX(d.year,cw,p), y=tcTcY(d.tc,ch,p); if(y<p.t-8||y>p.t+ch+8) return; const isF=fil.includes(d), isH=tcHovered===d, isS=tcSelected===d, col=TC_FC[d.family]||'#888', al=isF?1:0.14, r=(isH||isS)?7:5, isHP=(d.pGPa||0)>1; if(isS){ tcMCtx.beginPath(); tcMCtx.arc(x,y,r+5,0,Math.PI*2); tcMCtx.fillStyle=tcHexRgba(col,0.18); tcMCtx.fill(); } tcMCtx.beginPath(); tcMCtx.arc(x,y,r,0,Math.PI*2); tcMCtx.fillStyle=tcHexRgba(col,al*(isH||isS?1:0.82)); tcMCtx.fill(); if(isH||isS||isHP){ tcMCtx.strokeStyle=tcHexRgba(col,al*0.8); tcMCtx.lineWidth=(isH||isS)?1.8:1; if(isHP) tcMCtx.setLineDash([2,2]); tcMCtx.stroke(); tcMCtx.setLineDash([]); } if(tcShowLbl&&isF&&(isH||isS||d.tc>18)){ const lbl=d.formula.length>12?d.name.split(' ')[0]:d.formula; tcMCtx.font='bold 9px system-ui'; tcMCtx.textAlign='left'; const tw=tcMCtx.measureText(lbl).width; tcMCtx.fillStyle=document.body.classList.contains('theme-light')?'rgba(240,242,245,0.9)':'rgba(6,8,18,0.8)'; tcMCtx.fillRect(x+7,y-11,tw+4,13); tcMCtx.fillStyle=col; tcMCtx.fillText(lbl,x+9,y-1); } });
+            tcMCtx.strokeStyle=th.axis; tcMCtx.lineWidth=1; tcMCtx.beginPath(); tcMCtx.moveTo(p.l,p.t); tcMCtx.lineTo(p.l,p.t+ch); tcMCtx.lineTo(p.l+cw,p.t+ch); tcMCtx.stroke(); tcMCtx.fillStyle=th.tick; tcMCtx.font='11px system-ui'; tcMCtx.textAlign='center'; tcMCtx.fillText('Year of discovery',p.l+cw/2,H-8); tcMCtx.save(); tcMCtx.translate(13,p.t+ch/2); tcMCtx.rotate(-Math.PI/2); tcMCtx.fillText('Tc (K)',0,0); tcMCtx.restore(); tcMCtx.fillStyle='rgba(255,200,60,0.55)'; tcMCtx.font='10px monospace'; tcMCtx.textAlign='right'; tcMCtx.fillText('- - frontier',p.l+cw,p.t+14); tcMCtx.fillStyle=th.tick; tcMCtx.font='9px monospace'; tcMCtx.fillText('\u25cc high-pressure',p.l+cw,p.t+27);
         }
         function tcDrawPhase(d){
-            if(!tcPhaseCanvas) return;
-            tcPCtx=tcPhaseCanvas.getContext('2d');
-            const W=tcPhaseCanvas.offsetWidth||260, H=300; tcPhaseCanvas.width=W; tcPhaseCanvas.height=H;
+            if(!tcPc) return;
+            tcPCtx=tcPc.getContext('2d');
+            const W=tcPc.offsetWidth||270, H=280; tcPc.width=W; tcPc.height=H;
             const th=tcTheme(); tcPCtx.fillStyle=th.bg; tcPCtx.fillRect(0,0,W,H);
-            if(!d){ tcPCtx.fillStyle=th.tick; tcPCtx.font='12px system-ui'; tcPCtx.textAlign='center'; tcPCtx.fillText('Select a material',W/2,H/2); document.getElementById('tc-phase-title').textContent='Phase diagram — click a material'; document.getElementById('tc-phase-info').textContent='Click any data point to see its schematic T–P phase diagram.'; return; }
-            document.getElementById('tc-phase-title').textContent='Phase diagram — '+d.formula;
-            const col=TCFAMILY_COLORS[d.family]||'#888', pad2={ l:44, r:12, t:28, b:38 }, cw=W-pad2.l-pad2.r, ch=H-pad2.t-pad2.b, isHP=d.pressure!=='Ambient', maxP=isHP?300:5, tcVal=d.tc;
-            const domePoints=[]; for(let i=0;i<=80;i++){ const pGPa=i/80*maxP; let tcP; if(isHP){ const pNum=parseFloat(d.pressure)||150, pOpt=pNum*0.70; tcP=tcVal*Math.exp(-0.5*Math.pow((pGPa-pOpt)/(pOpt*0.55),2)); } else tcP=tcVal*(1-Math.pow(pGPa/maxP,1.4)); tcP=Math.max(0,tcP); domePoints.push([pad2.l+i/80*cw, pad2.t+ch-tcP/tcVal*ch]); }
-            tcPCtx.beginPath(); domePoints.forEach(([x,y],i)=>i===0?tcPCtx.moveTo(x,y):tcPCtx.lineTo(x,y)); tcPCtx.lineTo(pad2.l+cw,pad2.t+ch); tcPCtx.lineTo(pad2.l,pad2.t+ch); tcPCtx.closePath(); tcPCtx.fillStyle=tcBlend(col,0.15); tcPCtx.fill(); tcPCtx.strokeStyle=col; tcPCtx.lineWidth=1.5; tcPCtx.beginPath(); domePoints.forEach(([x,y],i)=>i===0?tcPCtx.moveTo(x,y):tcPCtx.lineTo(x,y)); tcPCtx.stroke(); tcPCtx.fillStyle=col+'88'; tcPCtx.font='10px system-ui'; tcPCtx.textAlign='center'; tcPCtx.fillText('SC',pad2.l+cw*0.18,pad2.t+ch*0.80); tcPCtx.fillStyle='rgba(180,180,200,0.45)'; tcPCtx.fillText('Normal',pad2.l+cw*0.70,pad2.t+ch*0.35); tcPCtx.strokeStyle=th.grid; tcPCtx.setLineDash([3,3]); tcPCtx.beginPath(); tcPCtx.moveTo(pad2.l,pad2.t+2); tcPCtx.lineTo(pad2.l+cw,pad2.t+2); tcPCtx.stroke(); tcPCtx.setLineDash([]); tcPCtx.fillStyle=th.tick; tcPCtx.font='9px monospace'; tcPCtx.textAlign='right'; tcPCtx.fillText('Tc='+tcVal+' K',pad2.l-3,pad2.t+6); [0,0.25,0.5,0.75,1].forEach(f=>{ const y=pad2.t+ch-f*ch; tcPCtx.textAlign='right'; tcPCtx.fillText(Math.round(tcVal*f),pad2.l-3,y+3); tcPCtx.strokeStyle=th.grid; tcPCtx.beginPath(); tcPCtx.moveTo(pad2.l,y); tcPCtx.lineTo(pad2.l+cw,y); tcPCtx.stroke(); }); [0,0.25,0.5,0.75,1].forEach(f=>{ tcPCtx.textAlign='center'; tcPCtx.fillText(Math.round(maxP*f),pad2.l+f*cw,pad2.t+ch+12); }); tcPCtx.strokeStyle=th.axis; tcPCtx.lineWidth=0.8; tcPCtx.beginPath(); tcPCtx.moveTo(pad2.l,pad2.t); tcPCtx.lineTo(pad2.l,pad2.t+ch); tcPCtx.lineTo(pad2.l+cw,pad2.t+ch); tcPCtx.stroke(); tcPCtx.fillStyle=th.tick; tcPCtx.font='9px system-ui'; tcPCtx.textAlign='center'; tcPCtx.fillText('P (GPa)',pad2.l+cw/2,H-4); tcPCtx.save(); tcPCtx.translate(10,pad2.t+ch/2); tcPCtx.rotate(-Math.PI/2); tcPCtx.fillText('T (K)',0,0); tcPCtx.restore(); document.getElementById('tc-phase-info').innerHTML='<b style="color:'+col+'">'+d.name+'</b><br><span style="color:#5060a0">Structure: </span>'+d.structure+'<br><span style="color:#5060a0">Notes: </span>'+(d.note||'\u2014');
+            if(!d){ tcPCtx.fillStyle=th.tick; tcPCtx.font='12px system-ui'; tcPCtx.textAlign='center'; tcPCtx.fillText('Click a point',W/2,H/2-8); tcPCtx.fillStyle='rgba(255,255,255,0.10)'; tcPCtx.font='11px system-ui'; tcPCtx.fillText('to see its T\u2013P diagram',W/2,H/2+10); document.getElementById('tc-phase-title').textContent='T\u2013P Phase diagram \u2014 click a point'; document.getElementById('tc-phase-info').textContent='Hover a point to preview, click to lock the phase diagram.'; return; }
+            document.getElementById('tc-phase-title').textContent='T\u2013P Phase \u2014 '+d.formula;
+            const col=TC_FC[d.family]||'#888', PD={ l:46, r:14, t:28, b:38 }, cw=W-PD.l-PD.r, ch=H-PD.t-PD.b, isHP=(d.pGPa||0)>1, maxP=isHP?Math.max((d.pGPa||0)*1.6,20):6, Tc=d.tc;
+            const pts=[]; for(let i=0;i<=100;i++){ const pv=i/100*maxP; let tcP; if(isHP){ const pOpt=(d.pGPa||0)*0.72, sig=pOpt*0.55; tcP=Tc*Math.exp(-0.5*Math.pow((pv-pOpt)/sig,2)); } else tcP=Tc*Math.pow(Math.max(0,1-pv/maxP),0.6); pts.push([PD.l+i/100*cw, PD.t+ch-Math.max(0,tcP)/Tc*ch]); }
+            tcPCtx.beginPath(); pts.forEach(([x,y],i)=>i===0?tcPCtx.moveTo(x,y):tcPCtx.lineTo(x,y)); tcPCtx.lineTo(PD.l+cw,PD.t+ch); tcPCtx.lineTo(PD.l,PD.t+ch); tcPCtx.closePath(); tcPCtx.fillStyle=tcHexRgba(col,0.18); tcPCtx.fill(); tcPCtx.strokeStyle=col; tcPCtx.lineWidth=2; tcPCtx.beginPath(); pts.forEach(([x,y],i)=>i===0?tcPCtx.moveTo(x,y):tcPCtx.lineTo(x,y)); tcPCtx.stroke(); tcPCtx.font='bold 10px system-ui'; tcPCtx.textAlign='center'; tcPCtx.fillStyle=tcHexRgba(col,0.75); tcPCtx.fillText('SC',PD.l+cw*0.15,PD.t+ch*0.78); tcPCtx.fillStyle='rgba(160,170,200,0.50)'; tcPCtx.fillText('Normal',PD.l+cw*0.65,PD.t+ch*0.35);
+            tcPCtx.setLineDash([3,3]); tcPCtx.strokeStyle='rgba(255,255,255,0.18)'; tcPCtx.lineWidth=0.7; tcPCtx.beginPath(); tcPCtx.moveTo(PD.l,PD.t+2); tcPCtx.lineTo(PD.l+cw,PD.t+2); tcPCtx.stroke(); tcPCtx.setLineDash([]); tcPCtx.strokeStyle=th.axis; tcPCtx.lineWidth=0.8; tcPCtx.beginPath(); tcPCtx.moveTo(PD.l,PD.t); tcPCtx.lineTo(PD.l,PD.t+ch); tcPCtx.lineTo(PD.l+cw,PD.t+ch); tcPCtx.stroke(); tcPCtx.fillStyle=th.tick; tcPCtx.font='9px monospace'; [0,0.25,0.5,0.75,1].forEach(f=>{ const y=PD.t+ch-f*ch; tcPCtx.textAlign='right'; tcPCtx.fillText(Math.round(Tc*f),PD.l-4,y+3); if(f>0){ tcPCtx.strokeStyle='rgba(255,255,255,0.04)'; tcPCtx.beginPath(); tcPCtx.moveTo(PD.l,y); tcPCtx.lineTo(PD.l+cw,y); tcPCtx.stroke(); } }); [0,0.5,1].forEach(f=>{ tcPCtx.textAlign='center'; tcPCtx.fillText(Math.round(maxP*f),PD.l+f*cw,PD.t+ch+13); }); tcPCtx.fillStyle=th.tick; tcPCtx.font='9px system-ui'; tcPCtx.textAlign='center'; tcPCtx.fillText('P (GPa)',PD.l+cw/2,H-4); tcPCtx.save(); tcPCtx.translate(10,PD.t+ch/2); tcPCtx.rotate(-Math.PI/2); tcPCtx.fillText('T (K)',0,0); tcPCtx.restore(); tcPCtx.fillStyle='rgba(255,255,255,0.45)'; tcPCtx.font='9px monospace'; tcPCtx.textAlign='left'; tcPCtx.fillText('Tc\u202f=\u202f'+Tc+'\u202fK',PD.l+2,PD.t+10);
+            TC_COOLANTS.forEach(cl=>{ if(cl.T>=Tc) return; const y=PD.t+ch-cl.T/Tc*ch; tcPCtx.setLineDash([3,3]); tcPCtx.strokeStyle=cl.color+'66'; tcPCtx.lineWidth=0.7; tcPCtx.beginPath(); tcPCtx.moveTo(PD.l,y); tcPCtx.lineTo(PD.l+cw,y); tcPCtx.stroke(); tcPCtx.setLineDash([]); tcPCtx.fillStyle=cl.color+'aa'; tcPCtx.font='8px monospace'; tcPCtx.textAlign='right'; tcPCtx.fillText(cl.name,PD.l+cw-2,y-2); });
+            document.getElementById('tc-phase-info').innerHTML='<b style="color:'+col+'">'+d.name+'</b><br><span style="color:#5060a0">Structure: </span>'+d.structure+'<br>'+(d.note?'<span style="color:#5060a0">Note: </span>'+d.note:'');
         }
-        function tcGetPointAt(mx,my){ const W=tcMainCanvas.offsetWidth||700, H=tcMainCanvas.offsetHeight||500, p=tcPad(), cw=W-p.l-p.r, ch=H-p.t-p.b; let best=null, bestDist=14; TCDATA.forEach(d=>{ const x=tcYearToX(d.year,cw,p), y=tcTcToY(d.tc,ch,p), dd=Math.sqrt((mx-x)**2+(my-y)**2); if(dd<bestDist){ bestDist=dd; best=d; } }); return best; }
-        if(tcMainCanvas){ tcMainCanvas.addEventListener('mousemove',e=>{ const rect=tcMainCanvas.getBoundingClientRect(), mx=(e.clientX-rect.left)*(tcMainCanvas.width/rect.width), my=(e.clientY-rect.top)*(tcMainCanvas.height/rect.height), pt=tcGetPointAt(mx,my); if(pt!==tcHovered){ tcHovered=pt; tcDrawMain(); } if(pt){ tcTooltip.style.display='block'; tcTooltip.style.left=Math.min(e.clientX-rect.left+18,rect.width-270)+'px'; tcTooltip.style.top=Math.max(e.clientY-rect.top-10,0)+'px'; document.getElementById('tc-tt-name').textContent=pt.name; document.getElementById('tc-tt-formula').textContent=pt.formula; document.getElementById('tc-tt-tc').textContent=pt.tc+' K'; document.getElementById('tc-tt-year').textContent=pt.year; document.getElementById('tc-tt-family').textContent=TCFAMILY_NAMES[pt.family]||pt.family; document.getElementById('tc-tt-pressure').textContent=pt.pressure; document.getElementById('tc-tt-struct').textContent=pt.structure; tcPubUrl=pt.doi; } else{ tcTooltip.style.display='none'; tcPubUrl=null; } }); tcMainCanvas.addEventListener('click',e=>{ const rect=tcMainCanvas.getBoundingClientRect(), mx=(e.clientX-rect.left)*(tcMainCanvas.width/rect.width), my=(e.clientY-rect.top)*(tcMainCanvas.height/rect.height), pt=tcGetPointAt(mx,my); if(pt){ tcSelected=pt; tcDrawPhase(pt); tcDrawMain(); } }); tcMainCanvas.addEventListener('mouseleave',()=>{ tcHovered=null; tcTooltip.style.display='none'; tcDrawMain(); }); }
+        function tcHitTest(mx,my){ const W=tcMc.offsetWidth||700, H=tcMc.offsetHeight||480, p=tcPAD(), cw=W-p.l-p.r, ch=H-p.t-p.b; let best=null, bd=13; TC_DATA.forEach(d=>{ const dx=mx-tcYrX(d.year,cw,p), dy=my-tcTcY(d.tc,ch,p), dist=Math.sqrt(dx*dx+dy*dy); if(dist<bd){ bd=dist; best=d; } }); return best; }
+        if(tcMc){ tcMc.addEventListener('mousemove',e=>{ const rect=tcMc.getBoundingClientRect(), mx=(e.clientX-rect.left)*(tcMc.width/rect.width), my=(e.clientY-rect.top)*(tcMc.height/rect.height), pt=tcHitTest(mx,my); if(pt!==tcHovered){ tcHovered=pt; tcDrawMain(); } if(!tcSelected) tcDrawPhase(pt||null); if(pt){ tcTt.style.display='block'; tcTt.style.left=Math.min(e.clientX-rect.left+16,rect.width-260)+'px'; tcTt.style.top=Math.max(e.clientY-rect.top-10,4)+'px'; document.getElementById('tc-tt-name').textContent=pt.name; document.getElementById('tc-tt-form').textContent=pt.formula; document.getElementById('tc-tt-tc').textContent=pt.tc+' K'; document.getElementById('tc-tt-yr').textContent=pt.year; document.getElementById('tc-tt-fam').textContent=TC_FN[pt.family]||pt.family; document.getElementById('tc-tt-pres').textContent=pt.pressure; document.getElementById('tc-tt-str').textContent=pt.structure; tcPubUrl=pt.doi; } else{ tcTt.style.display='none'; tcPubUrl=null; } }); tcMc.addEventListener('click',e=>{ const rect=tcMc.getBoundingClientRect(), mx=(e.clientX-rect.left)*(tcMc.width/rect.width), my=(e.clientY-rect.top)*(tcMc.height/rect.height), pt=tcHitTest(mx,my); tcSelected=pt||null; tcDrawPhase(tcSelected); tcDrawMain(); }); tcMc.addEventListener('mouseleave',()=>{ tcHovered=null; tcTt.style.display='none'; tcDrawMain(); if(!tcSelected) tcDrawPhase(null); }); }
         function tcSetScale(s){ tcScale=s; document.getElementById('tc-btn-lin').classList.toggle('active',s==='linear'); document.getElementById('tc-btn-log').classList.toggle('active',s==='log'); tcDrawMain(); }
-        function tcToggleFrontier(){ tcShowFrontier=!tcShowFrontier; document.getElementById('tc-btn-frontier').classList.toggle('active',tcShowFrontier); tcDrawMain(); }
-        function tcToggleCoolants(){ tcShowCoolants=!tcShowCoolants; document.getElementById('tc-btn-coolants').classList.toggle('active',tcShowCoolants); tcDrawMain(); }
-        function tcToggleLabels(){ tcShowLabels=!tcShowLabels; document.getElementById('tc-btn-labels').classList.toggle('active',tcShowLabels); tcDrawMain(); }
-        const TC_BTN_ID={ all:'all', elemental:'elem', alloy:'alloy', cuprate:'oxide', iron:'iron', hydride:'hydride', other:'other' };
-        function tcFilterFamily(f){ tcActiveFamily=f; Object.keys(TC_BTN_ID).forEach(k=>{ document.getElementById('tc-flt-'+TC_BTN_ID[k])?.classList.toggle('active',k===f); }); tcDrawMain(); }
+        function tcToggleFrontier(){ tcShowFront=!tcShowFront; document.getElementById('tc-btn-front').classList.toggle('active',tcShowFront); tcDrawMain(); }
+        function tcToggleCoolants(){ tcShowCool=!tcShowCool; document.getElementById('tc-btn-cool').classList.toggle('active',tcShowCool); tcDrawMain(); }
+        function tcToggleLabels(){ tcShowLbl=!tcShowLbl; document.getElementById('tc-btn-lbl').classList.toggle('active',tcShowLbl); tcDrawMain(); }
+        const TC_ID = { all:'all', elemental:'elem', alloy:'alloy', cuprate:'cuprate', iron:'iron', hydride:'hydride', other:'other' };
+        function tcFlt(f){ tcActiveFam=f; Object.keys(TC_ID).forEach(k=>{ document.getElementById('tc-flt-'+TC_ID[k])?.classList.toggle('active',k===f); }); tcDrawMain(); }
         function tcOpenPub(){ if(tcPubUrl) window.open(tcPubUrl,'_blank'); }
-        function tcResizeAndDraw(){ const leftW=document.getElementById('tc-left-panel')?.offsetWidth||700, H=Math.max(460,window.innerHeight-220); if(tcMainCanvas){ tcMainCanvas.style.width=leftW+'px'; tcMainCanvas.style.height=H+'px'; } tcDrawMain(); tcDrawPhase(tcSelected); }
-        window.tcSetScale=tcSetScale; window.tcToggleFrontier=tcToggleFrontier; window.tcToggleCoolants=tcToggleCoolants; window.tcToggleLabels=tcToggleLabels; window.tcFilterFamily=tcFilterFamily; window.tcOpenPub=tcOpenPub;
-        window.addEventListener('resize',tcResizeAndDraw);
-        (function(){
-            const obs=new MutationObserver(()=>{ tcDrawMain(); if(tcSelected) tcDrawPhase(tcSelected); });
-            obs.observe(document.body,{attributes:true,attributeFilter:['class']});
-        })();
+        function tcResize(){ const lW=document.getElementById('tc-left-panel')?.offsetWidth||700, H=Math.max(440,window.innerHeight-160), rW=document.getElementById('tc-right-panel')?.offsetWidth||270; if(tcMc){ tcMc.style.width=lW+'px'; tcMc.style.height=H+'px'; } if(tcPc) tcPc.style.width=rW+'px'; tcDrawMain(); tcDrawPhase(tcSelected); }
+        window.tcSetScale=tcSetScale; window.tcToggleFrontier=tcToggleFrontier; window.tcToggleCoolants=tcToggleCoolants; window.tcToggleLabels=tcToggleLabels; window.tcFlt=tcFlt; window.tcOpenPub=tcOpenPub;
+        window.addEventListener('resize',tcResize);
+        (function(){ const obs=new MutationObserver(()=>{ tcDrawMain(); if(tcSelected) tcDrawPhase(tcSelected); }); obs.observe(document.body,{attributes:true,attributeFilter:['class']}); })();
 
         document.addEventListener("DOMContentLoaded", () => {
             loadMaterials();
-            tcResizeAndDraw();
+            tcResize();
             tcDrawPhase(null);
         });
     </script>
