@@ -3,904 +3,1016 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MD Simulator · SMAD</title>
+    <title>MD Simulations · SMAD</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/3dmol/build/3Dmol-min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
         :root {
-            --md-bg-dark: #0d1117;
-            --md-bg-panel: #161b22;
-            --md-bg-card: #21262d;
-            --md-border: #30363d;
-            --md-text: #c9d1d9;
-            --md-text-muted: #8b949e;
-            --md-accent: #58a6ff;
-            --md-success: #3fb950;
-            --md-warning: #d29922;
-            --md-danger: #f85149;
+            --bg0: #060810;
+            --bg1: #0c0f1a;
+            --bg2: #111627;
+            --accent: #4f8fff;
+            --green: #3de87a;
+            --red: #ff4f6a;
+            --text: #d4deff;
+            --text2: #7a8bbf;
+            --mono: 'JetBrains Mono', ui-monospace, monospace;
+            --sans: 'Space Grotesk', system-ui, sans-serif;
         }
-        body.theme-light {
-            --md-bg-dark: #f0f2f5;
-            --md-bg-panel: #ffffff;
-            --md-bg-card: #ffffff;
-            --md-border: #e1e4e8;
-            --md-text: #1a1d21;
-            --md-text-muted: #57606a;
-            --md-accent: #0969da;
-        }
-        .theme-toggle { background: var(--md-bg-card); border: 1px solid var(--md-border); color: var(--md-text); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
-        .theme-toggle:hover { border-color: var(--md-accent); }
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            background: var(--md-bg-dark);
-            color: var(--md-text);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden;
-        }
-        .md-app {
+            background: var(--bg0);
+            color: var(--text);
+            font-family: var(--sans);
             display: flex;
             flex-direction: column;
             height: 100vh;
-            width: 100vw;
-        }
-        .md-navbar {
-            background: var(--md-bg-panel);
-            border-bottom: 1px solid var(--md-border);
-            padding: 0.5rem 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            z-index: 100;
-        }
-        .md-navbar-brand {
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: var(--md-text);
-            text-decoration: none;
-        }
-        .md-navbar-brand:hover { color: var(--md-accent); }
-        .md-navbar-links {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-        .md-navbar-links a {
-            color: var(--md-text-muted);
-            text-decoration: none;
-            font-size: 0.85rem;
-        }
-        .md-navbar-links a:hover, .md-navbar-links a.active { color: var(--md-accent); }
-        .md-main {
-            display: flex;
-            flex: 1;
-            min-height: 0;
             overflow: hidden;
         }
-        .md-sidebar {
-            width: 320px;
-            background: var(--md-bg-panel);
-            border-right: 1px solid var(--md-border);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            flex-shrink: 0;
+        .md-fill { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+        .workspace {
+            flex: 1; min-height: 0;
+            display: grid;
+            grid-template-columns: 300px 1fr 280px;
+            gap: 0;
         }
-        .md-sidebar-section {
-            padding: 1rem;
-            border-bottom: 1px solid var(--md-border);
-        }
-        .md-sidebar-section h3 {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--md-text-muted);
-            margin: 0 0 0.75rem 0;
-            letter-spacing: 0.05em;
-        }
-        .md-canvas-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            position: relative;
-        }
-        .md-viewer {
-            flex: 1;
-            background: #000;
-            position: relative;
-        }
-        #md-3dviewer {
-            width: 100%;
-            height: 100%;
-        }
-        .md-stats-bar {
-            background: var(--md-bg-card);
-            border-top: 1px solid var(--md-border);
-            padding: 0.5rem 1rem;
-            display: flex;
-            gap: 2rem;
-            font-size: 0.8rem;
-            flex-shrink: 0;
-        }
-        .md-stat { display: flex; align-items: center; gap: 0.5rem; }
-        .md-stat-label { color: var(--md-text-muted); }
-        .md-stat-value { font-weight: 600; font-family: monospace; }
-        .md-right-panel {
-            width: 300px;
-            background: var(--md-bg-panel);
-            border-left: 1px solid var(--md-border);
-            display: flex;
-            flex-direction: column;
+        .sidebar, .canvas-area, .rpanel {
+            border-radius: 12px;
+            background: var(--bg1);
+            border: 1px solid rgba(120, 150, 255, 0.22);
             overflow: hidden;
-            flex-shrink: 0;
         }
-        .md-plot-area {
-            flex: 1;
-            min-height: 200px;
+        .sidebar { display: flex; flex-direction: column; padding: 0.75rem; }
+        .sidebar-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-right: 0.2rem; }
+        .sidebar-section {
+            padding: 0.5rem 0.25rem 0.75rem;
+            border-bottom: 1px solid rgba(110, 135, 210, 0.25);
         }
-        .md-output-area {
-            flex: 1;
-            border-top: 1px solid var(--md-border);
-            display: flex;
-            flex-direction: column;
+        .sidebar-section:last-child { border-bottom: none; }
+        .section-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.16em; color: var(--text2); margin-bottom: 0.35rem; }
+        .section-sub { font-size: 0.7rem; color: var(--text2); margin-bottom: 0.35rem; }
+        .setup-tabs { display: flex; gap: 4px; margin-bottom: 0.5rem; padding: 2px; background: var(--bg2); border-radius: 999px; }
+        .setup-tab {
+            flex: 1; border: none; background: transparent; color: var(--text2); font-size: 0.72rem;
+            padding: 0.32rem 0.4rem; border-radius: 999px; cursor: pointer; transition: all 0.18s;
         }
-        .md-output-header {
-            padding: 0.5rem 1rem;
-            background: var(--md-bg-card);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--md-text-muted);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .setup-tab.active { background: var(--accent); color: #fff; }
+        .setup-tab:hover { color: var(--text); }
+        .setup-pane { display: none; }
+        .setup-pane.active { display: block; }
+        .form-row { margin-bottom: 0.5rem; }
+        .form-row label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75rem; color: var(--text2); margin-bottom: 0.18rem; }
+        .form-row label span.value { font-family: var(--mono); font-size: 0.7rem; color: var(--text); }
+        .form-control-sm, .form-select-sm, textarea.form-control-sm {
+            background: var(--bg2); border: 1px solid rgba(106, 136, 220, 0.55); color: var(--text);
+            font-size: 0.78rem; border-radius: 8px;
         }
-        .md-output-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0.5rem;
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-size: 0.75rem;
-            background: #0d1117;
-            color: #7ee787;
-            white-space: pre-wrap;
+        .form-control-sm:focus, .form-select-sm:focus, textarea.form-control-sm:focus {
+            border-color: var(--accent); outline: none;
         }
-        .md-form-group { margin-bottom: 0.75rem; }
-        .md-form-group label {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--md-text-muted);
-            margin-bottom: 0.25rem;
+        .input-group-sm > .form-control, .input-group-sm > .form-select {
+            background: var(--bg2); border-radius: 8px; border-color: rgba(106, 136, 220, 0.55); color: var(--text); font-size: 0.78rem;
         }
-        .md-input, .md-select {
-            width: 100%;
-            padding: 0.5rem;
-            background: var(--md-bg-card);
-            border: 1px solid var(--md-border);
-            border-radius: 6px;
-            color: var(--md-text);
-            font-size: 0.85rem;
+        .btn-soft, .btn-soft-sm {
+            border-radius: 999px; border: 1px solid rgba(105, 136, 216, 0.7);
+            background: linear-gradient(180deg, #3f63d5, #182046); color: #f5f7ff;
+            font-size: 0.8rem; padding: 0.45rem 0.8rem; cursor: pointer; transition: all 0.18s;
         }
-        .md-input:focus, .md-select:focus {
-            outline: none;
-            border-color: var(--md-accent);
+        .btn-soft-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+        .btn-soft:hover { border-color: #8cb0ff; color: #fff; }
+        .btn-ghost {
+            border-radius: 999px; border: 1px solid rgba(106, 136, 220, 0.45); background: rgba(7, 9, 23, 0.75);
+            color: var(--text2); font-size: 0.78rem; padding: 0.38rem 0.75rem; cursor: pointer; transition: all 0.15s;
         }
-        .md-btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.15s;
+        .btn-ghost:hover { border-color: rgba(130, 160, 242, 0.95); color: var(--text); }
+        .btn-ghost-sm { font-size: 0.72rem; padding: 0.18rem 0.45rem; }
+        .badge-status { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.16rem 0.5rem; border-radius: 999px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; }
+        .badge-status.running { background: rgba(61, 232, 122, 0.14); border: 1px solid var(--green); color: var(--green); }
+        .badge-status.paused { background: rgba(255, 161, 69, 0.14); border: 1px solid #ffbf69; color: #ffbf69; }
+        .badge-status.idle { background: rgba(128, 144, 204, 0.12); border: 1px solid rgba(132, 152, 215, 0.7); color: var(--text2); }
+        .progress-sm { height: 4px; border-radius: 999px; background: rgba(30, 41, 94, 0.8); overflow: hidden; }
+        .progress-sm .progress-bar { background: linear-gradient(90deg, #4f8fff, #3de87a); }
+        .pill-group { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+        .pill { border-radius: 999px; padding: 0.2rem 0.55rem; font-size: 0.68rem; border: 1px solid rgba(116, 142, 226, 0.6); background: rgba(10, 13, 29, 0.9); color: var(--text2); }
+        .canvas-area { position: relative; display: flex; flex-direction: column; padding: 0.5rem; gap: 0.5rem; }
+        .viewer-wrap {
+            position: relative; flex: 1; min-height: 0; border-radius: 10px; background: var(--bg0); overflow: hidden; border: 1px solid rgba(72, 94, 170, 0.7);
         }
-        .md-btn-primary {
-            background: var(--md-accent);
-            color: #fff;
+        #canvas3d { width: 100%; height: 100%; display: block; }
+        .overlay-hud { position: absolute; top: 0.45rem; left: 0.45rem; display: flex; flex-direction: column; gap: 0.18rem; font-family: var(--mono); font-size: 0.7rem; pointer-events: none; }
+        .hud-chip-row { display: flex; flex-wrap: wrap; gap: 0.2rem; }
+        .hud-chip { padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(5, 10, 30, 0.9); border: 1px solid rgba(100, 128, 220, 0.55); color: var(--text2); }
+        .hud-chip strong { color: var(--text); }
+        .overlay-controls { position: absolute; top: 0.45rem; right: 0.45rem; display: flex; flex-direction: column; gap: 0.25rem; }
+        .stats-bar {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; font-size: 0.72rem;
+            background: var(--bg2); border-radius: 10px; padding: 0.35rem 0.55rem; border: 1px solid rgba(79, 143, 255, 0.45);
         }
-        .md-btn-primary:hover { background: #79b8ff; }
-        .md-btn-success {
-            background: var(--md-success);
-            color: #fff;
+        .stat-item { display: flex; flex-direction: column; gap: 0.05rem; }
+        .stat-label { color: var(--text2); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.64rem; }
+        .stat-value { font-family: var(--mono); color: var(--text); }
+        .plot-tabs-bar { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.15rem; }
+        .plot-tab { font-size: 0.72rem; padding: 0.18rem 0.55rem; border-radius: 999px; border: 1px solid rgba(97, 128, 220, 0.7); background: rgba(5, 9, 25, 0.92); color: var(--text2); cursor: pointer; transition: all 0.16s; }
+        .plot-tab.active { background: var(--accent); color: #f8f9ff; border-color: rgba(126, 170, 255, 0.96); }
+        .plot-panel { margin-top: 0.25rem; flex: 1; min-height: 140px; border-radius: 10px; background: var(--bg0); border: 1px solid rgba(72, 92, 160, 0.8); overflow: hidden; }
+        .plot-pane { width: 100%; height: 100%; display: none; }
+        .plot-pane.active { display: block; }
+        .rpanel { display: flex; flex-direction: column; padding: 0.6rem; gap: 0.4rem; }
+        .rpanel-section { padding: 0.4rem 0.25rem 0.6rem; border-bottom: 1px solid rgba(105, 134, 210, 0.24); }
+        .rpanel-section:last-child { border-bottom: none; }
+        .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+        .analysis-card { border-radius: 10px; padding: 0.35rem 0.4rem; background: var(--bg2); border: 1px solid rgba(90, 120, 210, 0.7); }
+        .analysis-label { font-size: 0.7rem; color: var(--text2); }
+        .analysis-value { font-family: var(--mono); font-size: 0.75rem; color: var(--text); }
+        .rpanel-plot { height: 120px; border-radius: 10px; background: var(--bg0); border: 1px solid rgba(72, 92, 160, 0.8); overflow: hidden; }
+        .console-wrap { display: flex; flex-direction: column; height: 180px; border-radius: 10px; overflow: hidden; background: #03040a; border: 1px solid rgba(115, 132, 205, 0.75); }
+        .console-head { display: flex; justify-content: space-between; align-items: center; padding: 0.28rem 0.5rem; font-size: 0.7rem; color: var(--text2); background: var(--bg2); border-bottom: 1px solid rgba(94, 118, 200, 0.8); }
+        .console-body { flex: 1; padding: 0.35rem 0.45rem; font-family: var(--mono); font-size: 0.7rem; color: #9effb2; background: var(--bg0); overflow-y: auto; white-space: pre-wrap; }
+        .loading-overlay {
+            position: fixed; inset: 0; background: var(--bg0); z-index: 2000;
+            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.9rem; color: var(--text); transition: opacity 0.35s, visibility 0.35s;
         }
-        .md-btn-success:hover { background: #56d364; }
-        .md-btn-danger {
-            background: var(--md-danger);
-            color: #fff;
-        }
-        .md-btn-danger:hover { background: #ff7b72; }
-        .md-btn-outline {
-            background: transparent;
-            border: 1px solid var(--md-border);
-            color: var(--md-text);
-        }
-        .md-btn-outline:hover { border-color: var(--md-accent); color: var(--md-accent); }
-        .md-btn-group { display: flex; gap: 0.5rem; }
-        .md-btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
-        .md-slider-row { display: flex; align-items: center; gap: 0.5rem; }
-        .md-slider { flex: 1; accent-color: var(--md-accent); }
-        .md-slider-value { width: 50px; text-align: right; font-family: monospace; font-size: 0.8rem; }
-        .md-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-        .md-badge-running { background: var(--md-success); color: #fff; }
-        .md-badge-stopped { background: var(--md-text-muted); color: #fff; }
-        .md-badge-error { background: var(--md-danger); color: #fff; }
-        .md-loading {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--md-bg-dark);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.3s;
-        }
-        .md-loading.hidden { opacity: 0; pointer-events: none; }
-        .md-spinner {
-            width: 40px; height: 40px;
-            border: 3px solid var(--md-border);
-            border-top-color: var(--md-accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+        .loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loading-spinner { width: 42px; height: 42px; border-radius: 999px; border: 3px solid rgba(180, 196, 255, 0.2); border-top-color: #4f8fff; animation: spin 0.85s linear infinite; }
+        .loading-text { font-size: 0.9rem; color: var(--text2); }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .md-loading-text { margin-top: 1rem; color: var(--md-text-muted); font-size: 0.9rem; }
-        @media (max-width: 1024px) {
-            .md-right-panel { display: none; }
-        }
-        @media (max-width: 768px) {
-            .md-sidebar { width: 260px; }
-            .md-navbar-links { display: none; }
-        }
-        @media (max-width: 600px) {
-            .md-sidebar { display: none; }
-        }
-        .md-tabs {
-            display: flex;
-            gap: 2px;
-            margin-bottom: 0.75rem;
-            background: var(--md-bg-dark);
-            border-radius: 6px;
-            padding: 2px;
-        }
-        .md-tab {
-            flex: 1;
-            padding: 0.4rem 0.5rem;
-            background: transparent;
-            border: none;
-            color: var(--md-text-muted);
-            font-size: 0.7rem;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.15s;
-        }
-        .md-tab:hover { color: var(--md-text); }
-        .md-tab.active {
-            background: var(--md-accent);
-            color: #fff;
-        }
-        .md-tab-content { display: none; }
-        .md-tab-content.active { display: block; }
-        .md-potential-info {
-            font-size: 0.75rem;
-            color: var(--md-text-muted);
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            background: var(--md-bg-dark);
-            border-radius: 4px;
-        }
+        .drop-zone { border-radius: 10px; border: 1px dashed rgba(106, 136, 220, 0.85); background: rgba(5, 8, 22, 0.9); padding: 0.5rem; font-size: 0.75rem; color: var(--text2); text-align: center; cursor: pointer; }
+        .drop-zone.dragover { background: rgba(87, 128, 238, 0.2); border-color: rgba(126, 172, 255, 0.98); color: #f8f9ff; }
+        .import-meta { font-size: 0.68rem; color: var(--text2); margin-top: 0.25rem; }
+        .import-card { border-radius: 9px; padding: 0.35rem 0.45rem; background: var(--bg2); border: 1px solid rgba(102, 136, 225, 0.8); margin-top: 0.35rem; font-size: 0.7rem; }
+        .slider-row { display: flex; align-items: center; gap: 0.45rem; }
+        .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+        .slider-value { width: 48px; text-align: right; font-size: 0.7rem; font-family: var(--mono); color: var(--text); }
+        .check-row { display: flex; gap: 0.35rem; align-items: center; font-size: 0.74rem; color: var(--text2); }
+        .check-row input[type="checkbox"] { accent-color: var(--accent); }
+        .controls-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 0.35rem; align-items: center; }
+        .controls-sub { display: flex; flex-direction: column; gap: 0.2rem; }
+        .controls-meta { font-family: var(--mono); font-size: 0.68rem; color: var(--text2); }
+        .small-label { font-size: 0.68rem; color: var(--text2); }
+        @media (max-width: 1024px) { .workspace { grid-template-columns: 280px minmax(0, 1fr); } .rpanel { display: none; } }
+        @media (max-width: 768px) { .workspace { grid-template-columns: 1fr; } .sidebar { display: none; } }
     </style>
 </head>
 <body>
-    <div class="md-app">
-        <nav class="md-navbar">
-            <a href="/" class="md-navbar-brand">SMAD · MD Simulator</a>
-            <div class="md-navbar-links">
-                <a href="/">Home</a>
-                <a href="/databases">Materials DB</a>
-                <a href="/structures">Structures</a>
-                <a href="/dft">DFT</a>
-                <a href="/md" class="active">MD</a>
-                <a href="/montecarlo">Monte Carlo</a>
-                <a href="/analysis">Analysis</a>
-                <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">🌙 Dark</button>
-            </div>
-        </nav>
+    <div id="loading" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Initializing SMAD MD simulator...</div>
+    </div>
 
-        <div class="md-main">
-            <aside class="md-sidebar">
-                <div class="md-sidebar-section">
-                    <h3>System Setup</h3>
-                    <div class="md-form-group">
-                        <label>Example System</label>
-                        <select id="exampleSelect" class="md-select">
-                            <option value="lj_fluid">Lennard-Jones Fluid</option>
-                            <option value="lj_solid">LJ Crystal (FCC)</option>
-                            <option value="water">Water (TIP3P)</option>
-                            <option value="nacl">NaCl Crystal</option>
-                            <option value="copper">Copper (EAM)</option>
-                            <option value="argon">Argon Gas</option>
-                        </select>
-                    </div>
-                    <div class="md-form-group">
-                        <label>N Particles</label>
-                        <input type="number" id="nParticles" class="md-input" value="256" min="8" max="4000">
-                    </div>
-                    <div class="md-form-group">
-                        <label>Box Size (Å)</label>
-                        <input type="number" id="boxSize" class="md-input" value="20.0" step="0.1" min="5">
-                    </div>
-                    <button class="md-btn md-btn-primary w-100" onclick="initializeSystem()">Initialize</button>
-                </div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary-subtle px-3 py-2">
+        <a class="navbar-brand fw-semibold" href="/">SMAD</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#smadNav" aria-controls="smadNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="smadNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 small">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/databases">Materials DB</a></li>
+                <li class="nav-item"><a class="nav-link" href="/structures">Structures</a></li>
+                <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
+                <li class="nav-item"><a class="nav-link active" aria-current="page" href="/md">MD Simulations</a></li>
+                <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
+                <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
+                <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
 
-                <div class="md-sidebar-section">
-                    <h3>Potentials</h3>
-                    <div class="md-tabs">
-                        <button class="md-tab active" onclick="showPotentialTab('ff')">Force Fields</button>
-                        <button class="md-tab" onclick="showPotentialTab('reaxff')">ReaxFF</button>
-                        <button class="md-tab" onclick="showPotentialTab('ml')">ML Potentials</button>
-                    </div>
-                    
-                    <div id="tab-ff" class="md-tab-content active">
-                        <div class="md-form-group">
-                            <label>Force Field</label>
-                            <select id="forceField" class="md-select">
-                                <option value="lj">Lennard-Jones</option>
-                                <option value="eam">EAM (metals)</option>
-                                <option value="tersoff">Tersoff (Si, C, ...)</option>
-                                <option value="tip3p">TIP3P (water)</option>
-                                <option value="tip4p">TIP4P (water)</option>
-                                <option value="spce">SPC/E (water)</option>
-                                <option value="opls">OPLS-AA</option>
-                                <option value="amber">AMBER</option>
-                                <option value="charmm">CHARMM</option>
-                                <option value="uff">UFF (universal)</option>
+    <div class="md-fill">
+        <div class="workspace">
+            <aside class="sidebar">
+                <div class="sidebar-scroll">
+                    <section class="sidebar-section" id="sectionSystemSetup">
+                        <div class="section-label">System Setup</div>
+                        <div class="section-sub">Presets, imports, and replication.</div>
+                        <div id="setupTabBar" class="setup-tabs">
+                            <button class="setup-tab active" data-target="setupPresets">Presets</button>
+                            <button class="setup-tab" data-target="setupImport">Import</button>
+                            <button class="setup-tab" data-target="setupStructures">Structures</button>
+                        </div>
+                        <div id="setupPresets" class="setup-pane active">
+                            <div class="form-row">
+                                <label for="exampleSelect"><span>Example system</span></label>
+                                <select id="exampleSelect" class="form-select form-select-sm">
+                                    <option value="lj_fluid">Lennard-Jones fluid</option>
+                                    <option value="lj_solid">LJ crystal (FCC)</option>
+                                    <option value="argon">Argon gas</option>
+                                    <option value="neon">Neon gas</option>
+                                    <option value="kr_solid">Kr solid</option>
+                                    <option value="copper">Copper (FCC)</option>
+                                    <option value="iron">Iron (BCC)</option>
+                                    <option value="nacl">NaCl crystal</option>
+                                    <option value="silicon">Silicon diamond</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label for="presetN"><span>Particles</span><span class="value" id="presetNValue">512</span></label>
+                                <input id="presetN" type="range" class="form-range" min="64" max="4096" step="64" value="512">
+                            </div>
+                            <div class="form-row">
+                                <label for="boxSize"><span>Box size (Å)</span><span class="value" id="boxSizeValue">40.0</span></label>
+                                <input id="boxSize" type="range" class="form-range" min="10" max="80" step="2" value="40">
+                            </div>
+                        </div>
+                        <div id="setupImport" class="setup-pane">
+                            <div id="dropZone" class="drop-zone">Drop structure file here or click to browse</div>
+                            <input id="fileInput" type="file" accept=".xyz,.pdb,.cif,.vasp,.poscar,.lmp,.data,.txt" hidden>
+                            <div class="import-meta">Supported: XYZ, PDB, POSCAR/CONTCAR, LAMMPS data, CIF.</div>
+                            <div class="form-row mt-2">
+                                <label for="pasteArea">Paste structure text</label>
+                                <textarea id="pasteArea" class="form-control form-control-sm" rows="3" spellcheck="false"></textarea>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <button id="parseBtn" class="btn-soft-sm" type="button">Parse</button>
+                                <span class="small-label">Detected: <span id="detectedFormat">–</span></span>
+                            </div>
+                            <div id="importStatus" class="small-label"></div>
+                            <div class="form-row mt-1">
+                                <label><span>Supercell replication</span><span class="value" id="scLabel">1 × 1 × 1</span></label>
+                                <div class="input-group input-group-sm">
+                                    <input id="scNx" type="number" class="form-control" value="1" min="1" max="10">
+                                    <span class="input-group-text">×</span>
+                                    <input id="scNy" type="number" class="form-control" value="1" min="1" max="10">
+                                    <span class="input-group-text">×</span>
+                                    <input id="scNz" type="number" class="form-control" value="1" min="1" max="10">
+                                </div>
+                            </div>
+                            <div id="importedInfoCard" class="import-card" style="display:none;"></div>
+                        </div>
+                        <div id="setupStructures" class="setup-pane">
+                            <div class="form-row">
+                                <button id="loadFromStructureTab" class="btn-ghost w-100" type="button">Load from "Structures" tab</button>
+                            </div>
+                            <div class="form-row">
+                                <button id="loadFromLocalStorage" class="btn-ghost w-100" type="button">Load last saved structure</button>
+                            </div>
+                            <div class="form-row">
+                                <label><span>Preview</span></label>
+                                <div id="structureTabPreview" class="import-card" style="min-height: 40px;">No structure linked yet.</div>
+                            </div>
+                            <div class="form-row">
+                                <label><span>Supercell for linked structure</span></label>
+                                <div class="input-group input-group-sm">
+                                    <input id="stNx" type="number" class="form-control" value="1" min="1" max="10">
+                                    <span class="input-group-text">×</span>
+                                    <input id="stNy" type="number" class="form-control" value="1" min="1" max="10">
+                                    <span class="input-group-text">×</span>
+                                    <input id="stNz" type="number" class="form-control" value="1" min="1" max="10">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="form-row">
+                                <label for="initTemp"><span>Initial temperature (K)</span><span class="value" id="initTempValue">300</span></label>
+                                <input id="initTemp" type="range" class="form-range" min="1" max="2000" value="300">
+                            </div>
+                            <div class="form-row">
+                                <label for="nParticles"><span>Target particles (override)</span><span class="value" id="nParticlesLabel">auto</span></label>
+                                <input id="nParticles" type="number" class="form-control form-control-sm" value="0" min="0" step="1">
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between gap-2 mt-1">
+                                <button id="initializeSystemBtn" class="btn-soft flex-grow-1" type="button">Initialize system</button>
+                                <div class="d-flex flex-column align-items-end" style="min-width: 80px;">
+                                    <div id="initProgressLabel" class="small-label">Not initialized</div>
+                                    <div class="progress progress-sm w-100 mt-1">
+                                        <div id="initProgress" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="sidebar-section" id="sectionForceField">
+                        <div class="section-label">Force Field</div>
+                        <div class="setup-tabs mb-2" id="ffTabBar">
+                            <button class="setup-tab active" data-ff="classic">Classic</button>
+                            <button class="setup-tab" data-ff="reaxff">ReaxFF</button>
+                            <button class="setup-tab" data-ff="mlip">MLIP</button>
+                        </div>
+                        <div id="ffClassic" class="setup-pane active">
+                            <div class="form-row">
+                                <label for="ffType">Potential</label>
+                                <select id="ffType" class="form-select form-select-sm">
+                                    <option value="lj">Lennard-Jones (12-6)</option>
+                                    <option value="wca">Weeks–Chandler–Andersen</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label for="ffCutoff"><span>Cutoff (σ units)</span><span class="value" id="ffCutoffLabel">2.5</span></label>
+                                <input id="ffCutoff" type="range" class="form-range" min="1.5" max="4.0" step="0.1" value="2.5">
+                            </div>
+                        </div>
+                        <div id="ffReax" class="setup-pane"><div class="small-label">ReaxFF – not active in browser build.</div></div>
+                        <div id="ffMLIP" class="setup-pane"><div class="small-label">MLIP – placeholder.</div></div>
+                    </section>
+
+                    <section class="sidebar-section" id="sectionEnsemble">
+                        <div class="section-label">Ensemble & Thermostat</div>
+                        <div class="form-row">
+                            <label for="ensemble">Ensemble</label>
+                            <select id="ensemble" class="form-select form-select-sm">
+                                <option value="NVE">NVE (microcanonical)</option>
+                                <option value="NVT" selected>NVT (canonical)</option>
+                                <option value="NPT">NPT (isothermal–isobaric)</option>
                             </select>
                         </div>
-                        <div class="md-form-group">
-                            <label>Cutoff (Å)</label>
-                            <input type="number" id="ffCutoff" class="md-input" value="12.0" step="0.5">
+                        <div id="thermoGroup">
+                            <div class="form-row">
+                                <label for="thermoType">Thermostat</label>
+                                <select id="thermoType" class="form-select form-select-sm">
+                                    <option value="none">None</option>
+                                    <option value="vr">Velocity rescale</option>
+                                    <option value="nh">Nose–Hoover (single)</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label for="thermoTau"><span>τ<sub>T</sub> (ps)</span></label>
+                                <input id="thermoTau" type="number" class="form-control form-control-sm" value="0.1" step="0.01" min="0.001">
+                            </div>
                         </div>
-                        <div class="md-potential-info">
-                            Classical pairwise and many-body potentials for standard MD simulations.
+                        <div id="baroGroup" class="mt-1">
+                            <div class="form-row">
+                                <label for="baroTau"><span>τ<sub>P</sub> (ps)</span></label>
+                                <input id="baroTau" type="number" class="form-control form-control-sm" value="1.0" step="0.05" min="0.01">
+                            </div>
+                            <div class="form-row">
+                                <label for="targetPressure"><span>P target (bar)</span></label>
+                                <input id="targetPressure" type="number" class="form-control form-control-sm" value="1.0" step="0.1">
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div id="tab-reaxff" class="md-tab-content">
-                        <div class="md-form-group">
-                            <label>ReaxFF Parameter Set</label>
-                            <select id="reaxffParams" class="md-select">
-                                <option value="cho">C/H/O (combustion)</option>
-                                <option value="chon">C/H/O/N (energetic)</option>
-                                <option value="sio">Si/O (silica)</option>
-                                <option value="alo">Al/O (alumina)</option>
-                                <option value="feo">Fe/O/H (corrosion)</option>
-                                <option value="zno">Zn/O (ZnO)</option>
-                                <option value="nico">Ni/C/O/H (catalysis)</option>
-                                <option value="water">Water (bulk/interface)</option>
-                                <option value="lipf6">Li/P/F (batteries)</option>
-                                <option value="custom">Custom ffield file</option>
+                    </section>
+
+                    <section class="sidebar-section" id="sectionIntegration">
+                        <div class="section-label">Integration</div>
+                        <div class="form-row">
+                            <label for="integrator">Integrator</label>
+                            <select id="integrator" class="form-select form-select-sm">
+                                <option value="vv">Velocity Verlet</option>
+                                <option value="leapfrog">Leapfrog (approx)</option>
                             </select>
                         </div>
-                        <div class="md-form-group">
-                            <label>Charge Method</label>
-                            <select id="reaxffCharge" class="md-select">
-                                <option value="qeq">QEq (charge equilibration)</option>
-                                <option value="acks2">ACKS2</option>
+                        <div class="form-row">
+                            <label for="timestep"><span>Timestep (fs)</span><span class="value" id="dtLabel">2.0</span></label>
+                            <input id="timestep" type="range" class="form-range" min="0.1" max="10" step="0.1" value="2.0">
+                        </div>
+                        <div class="form-row">
+                            <label for="totalSteps"><span>Total steps</span></label>
+                            <input id="totalSteps" type="number" class="form-control form-control-sm" value="20000" min="100" step="100">
+                        </div>
+                        <div class="form-row">
+                            <label for="outEvery"><span>Sample every (steps)</span></label>
+                            <input id="outEvery" type="number" class="form-control form-control-sm" value="20" min="1" step="1">
+                        </div>
+                        <div class="form-row">
+                            <label for="pbcType">Boundary conditions</label>
+                            <select id="pbcType" class="form-select form-select-sm">
+                                <option value="xyz">Periodic in x,y,z</option>
+                                <option value="xy">Periodic in x,y</option>
+                                <option value="x">Periodic in x only</option>
+                                <option value="none">Open box (visual)</option>
                             </select>
                         </div>
-                        <div class="md-form-group">
-                            <label>Bond Order Cutoff (Å)</label>
-                            <input type="number" id="reaxffBOCutoff" class="md-input" value="0.3" step="0.01">
+                    </section>
+
+                    <section class="sidebar-section" id="sectionControls">
+                        <div class="section-label">Controls</div>
+                        <div class="controls-grid">
+                            <button id="startBtn" class="btn-soft" type="button">Start</button>
+                            <div class="controls-sub">
+                                <button id="pauseBtn" class="btn-ghost w-100" type="button" disabled>Pause</button>
+                                <button id="reset" class="btn-ghost w-100" type="button">Reset</button>
+                            </div>
                         </div>
-                        <div class="md-potential-info">
-                            Reactive force field for bond breaking/formation, redox, combustion, and interfaces.
+                        <div class="d-flex align-items-center justify-content-between mt-2">
+                            <div id="statusBadge" class="badge-status idle">idle</div>
+                            <div class="controls-meta">step <span id="stepCounter">0</span> · t = <span id="simTimeLabel">0.000</span> ps</div>
                         </div>
-                    </div>
-                    
-                    <div id="tab-ml" class="md-tab-content">
-                        <div class="md-form-group">
-                            <label>ML Potential Type</label>
-                            <select id="mlPotential" class="md-select">
-                                <option value="nequip">NequIP (E(3)-equivariant)</option>
-                                <option value="mace">MACE</option>
-                                <option value="allegro">Allegro</option>
-                                <option value="schnet">SchNet</option>
-                                <option value="painn">PaiNN</option>
-                                <option value="nep">NEP (GPUMD)</option>
-                                <option value="gap">GAP (SOAP)</option>
-                                <option value="ace">ACE</option>
-                                <option value="snap">SNAP</option>
-                                <option value="dp">DeepMD-kit</option>
-                                <option value="ani">ANI (TorchANI)</option>
-                                <option value="m3gnet">M3GNet</option>
-                                <option value="chgnet">CHGNet</option>
+                        <div class="mt-1 small-label">
+                            <span>Progress</span>
+                            <div class="progress progress-sm mt-1">
+                                <div id="simProgress" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="sidebar-section" id="sectionVisualization">
+                        <div class="section-label">Visualization</div>
+                        <div class="form-row">
+                            <label for="renderMode">Render mode</label>
+                            <select id="renderMode" class="form-select form-select-sm">
+                                <option value="points">Points</option>
+                                <option value="spheres">Spheres (pseudo)</option>
                             </select>
                         </div>
-                        <div class="md-form-group">
-                            <label>Model File</label>
-                            <input type="text" id="mlModelPath" class="md-input" placeholder="path/to/model.pt">
-                        </div>
-                        <div class="md-form-group">
-                            <label>Device</label>
-                            <select id="mlDevice" class="md-select">
-                                <option value="cuda">CUDA (GPU)</option>
-                                <option value="cpu">CPU</option>
+                        <div class="form-row">
+                            <label for="colorBy">Color by</label>
+                            <select id="colorBy" class="form-select form-select-sm">
+                                <option value="element">Element</option>
+                                <option value="velocity">Speed</option>
                             </select>
                         </div>
-                        <div class="md-potential-info">
-                            Machine learning interatomic potentials trained on DFT data for near-DFT accuracy at FF cost.
+                        <div class="form-row">
+                            <label for="atomScale"><span>Atom scale</span><span class="value" id="atomScaleLabel">1.0</span></label>
+                            <input id="atomScale" type="range" class="form-range" min="0.3" max="2.0" step="0.1" value="1.0">
                         </div>
-                    </div>
-                </div>
+                        <div class="form-row"><div class="check-row"><input id="showBox" type="checkbox" checked><span>Show simulation box</span></div></div>
+                        <div class="form-row"><div class="check-row"><input id="showBonds" type="checkbox"><span>Approximate bonds</span></div></div>
+                        <div class="form-row"><div class="check-row"><input id="showVelocity" type="checkbox"><span>Velocity vectors</span></div></div>
+                        <div class="form-row"><div class="check-row"><input id="showAxes" type="checkbox" checked><span>Coordinate axes</span></div></div>
+                    </section>
 
-                <div class="md-sidebar-section">
-                    <h3>Simulation Parameters</h3>
-                    <div class="md-form-group">
-                        <label>Ensemble</label>
-                        <select id="ensemble" class="md-select">
-                            <option value="NVE">NVE (Microcanonical)</option>
-                            <option value="NVT" selected>NVT (Canonical)</option>
-                            <option value="NPT">NPT (Isothermal-isobaric)</option>
-                        </select>
-                    </div>
-                    <div class="md-form-group">
-                        <label>Temperature (K)</label>
-                        <div class="md-slider-row">
-                            <input type="range" id="temperature" class="md-slider" min="1" max="1000" value="300">
-                            <span class="md-slider-value" id="tempValue">300</span>
+                    <section class="sidebar-section" id="sectionAnalysisOnTheFly">
+                        <div class="section-label">Analysis On-the-fly</div>
+                        <div class="pill-group mb-1">
+                            <label class="pill"><input id="calcRDF" type="checkbox" class="form-check-input me-1"> RDF g(r)</label>
+                            <label class="pill"><input id="calcMSD" type="checkbox" class="form-check-input me-1"> MSD</label>
+                            <label class="pill"><input id="calcVACF" type="checkbox" class="form-check-input me-1"> VACF</label>
+                            <label class="pill"><input id="calcStress" type="checkbox" class="form-check-input me-1"> Stress</label>
                         </div>
-                    </div>
-                    <div class="md-form-group">
-                        <label>Timestep (fs)</label>
-                        <div class="md-slider-row">
-                            <input type="range" id="timestep" class="md-slider" min="0.1" max="5" step="0.1" value="1.0">
-                            <span class="md-slider-value" id="dtValue">1.0</span>
+                        <div class="form-row">
+                            <label for="rdfBins"><span>RDF bins</span></label>
+                            <input id="rdfBins" type="number" class="form-control form-control-sm" value="120" min="10" max="1000">
                         </div>
-                    </div>
-                    <div class="md-form-group">
-                        <label>Thermostat (τ, ps)</label>
-                        <input type="number" id="thermostatTau" class="md-input" value="0.1" step="0.01" min="0.01">
-                    </div>
-                </div>
-
-                <div class="md-sidebar-section">
-                    <h3>Controls</h3>
-                    <div class="md-btn-group" style="margin-bottom: 0.75rem;">
-                        <button class="md-btn md-btn-success flex-grow-1" id="startBtn" onclick="startSimulation()">▶ Start</button>
-                        <button class="md-btn md-btn-danger flex-grow-1" id="stopBtn" onclick="stopSimulation()" disabled>■ Stop</button>
-                    </div>
-                    <button class="md-btn md-btn-outline w-100" onclick="resetSimulation()">Reset</button>
-                    <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <span class="md-badge md-badge-stopped" id="statusBadge">Stopped</span>
-                        <span class="md-stat-value" id="stepCounter">Step: 0</span>
-                    </div>
-                </div>
-
-                <div class="md-sidebar-section">
-                    <h3>Visualization</h3>
-                    <div class="md-form-group">
-                        <label>Render Style</label>
-                        <select id="renderStyle" class="md-select" onchange="updateRenderStyle()">
-                            <option value="sphere">Spheres</option>
-                            <option value="stick">Sticks</option>
-                            <option value="line">Lines</option>
-                            <option value="cross">Crosses</option>
-                        </select>
-                    </div>
-                    <div class="md-form-group">
-                        <label>Atom Size</label>
-                        <div class="md-slider-row">
-                            <input type="range" id="atomSize" class="md-slider" min="0.1" max="2" step="0.1" value="0.5" onchange="updateRenderStyle()">
-                            <span class="md-slider-value" id="sizeValue">0.5</span>
+                        <div class="form-row">
+                            <label for="rdfMax"><span>RDF r<sub>max</sub> (Å)</span></label>
+                            <input id="rdfMax" type="number" class="form-control form-control-sm" value="12.0" step="0.1" min="2">
                         </div>
-                    </div>
-                    <div class="md-form-group">
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="showBox" checked onchange="toggleBox()">
-                            Show simulation box
-                        </label>
-                    </div>
-                    <div class="md-form-group">
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="showTrails" onchange="toggleTrails()">
-                            Show particle trails
-                        </label>
-                    </div>
-                </div>
-
-                <div class="md-sidebar-section">
-                    <h3>HPC Execution</h3>
-                    <div class="md-form-group">
-                        <label>Login Node</label>
-                        <input type="text" id="hpcHost" class="md-input" placeholder="hpc.example.org">
-                    </div>
-                    <div class="md-form-group">
-                        <label>LAMMPS Command</label>
-                        <input type="text" id="lammpsCmd" class="md-input" value="lmp -in in.smad">
-                    </div>
-                    <button class="md-btn md-btn-primary w-100" onclick="runOnHPC()">Run on HPC</button>
+                    </section>
                 </div>
             </aside>
 
-            <div class="md-canvas-area">
-                <div class="md-loading" id="loadingScreen">
-                    <div class="md-spinner"></div>
-                    <div class="md-loading-text">Initializing MD Simulator...</div>
-                </div>
-                <div class="md-viewer">
-                    <div id="md-3dviewer"></div>
-                </div>
-                <div class="md-stats-bar">
-                    <div class="md-stat">
-                        <span class="md-stat-label">T:</span>
-                        <span class="md-stat-value" id="statTemp">0 K</span>
+            <main class="canvas-area">
+                <div class="viewer-wrap">
+                    <canvas id="canvas3d"></canvas>
+                    <div class="overlay-hud">
+                        <div class="hud-chip-row">
+                            <div class="hud-chip"><strong>T</strong> <span id="hudT">0.0 K</span></div>
+                            <div class="hud-chip"><strong>P</strong> <span id="hudP">– bar</span></div>
+                            <div class="hud-chip"><strong>ρ</strong> <span id="hudRho">– g/cc</span></div>
+                        </div>
+                        <div class="hud-chip-row">
+                            <div class="hud-chip"><strong>E</strong> <span id="hudE">0.000 eV</span></div>
+                            <div class="hud-chip"><strong>step</strong> <span id="hudStep">0</span></div>
+                            <div class="hud-chip"><strong>t</strong> <span id="hudTime">0.000 ps</span></div>
+                        </div>
                     </div>
-                    <div class="md-stat">
-                        <span class="md-stat-label">E<sub>kin</sub>:</span>
-                        <span class="md-stat-value" id="statEkin">0 eV</span>
-                    </div>
-                    <div class="md-stat">
-                        <span class="md-stat-label">E<sub>pot</sub>:</span>
-                        <span class="md-stat-value" id="statEpot">0 eV</span>
-                    </div>
-                    <div class="md-stat">
-                        <span class="md-stat-label">E<sub>tot</sub>:</span>
-                        <span class="md-stat-value" id="statEtot">0 eV</span>
-                    </div>
-                    <div class="md-stat">
-                        <span class="md-stat-label">Time:</span>
-                        <span class="md-stat-value" id="statTime">0 ps</span>
+                    <div class="overlay-controls">
+                        <button id="resetViewBtn" type="button" class="btn-ghost btn-ghost-sm">Reset view</button>
+                        <button id="autoRotBtn" type="button" class="btn-ghost btn-ghost-sm">Auto-rot</button>
+                        <button id="snapshotBtn" type="button" class="btn-ghost btn-ghost-sm">Snapshot</button>
+                        <button id="exportXYZBtn" type="button" class="btn-ghost btn-ghost-sm">Export XYZ</button>
                     </div>
                 </div>
-            </div>
+                <div class="stats-bar mt-1">
+                    <div class="stat-item"><div class="stat-label">T [K]</div><div class="stat-value"><span id="sT">0.0</span></div></div>
+                    <div class="stat-item"><div class="stat-label">Ek / Ep / Et [eV]</div><div class="stat-value"><span id="sEk">0.000</span> / <span id="sEp">0.000</span> / <span id="sEt">0.000</span></div></div>
+                    <div class="stat-item"><div class="stat-label">P [bar] · ρ [g/cc]</div><div class="stat-value"><span id="sPr">–</span> · <span id="sDen">–</span></div></div>
+                    <div class="stat-item"><div class="stat-label">t [ps] · N</div><div class="stat-value"><span id="sTime">0.000</span> · <span id="sN">0</span></div></div>
+                </div>
+                <div class="plot-tabs-bar">
+                    <button class="plot-tab active" data-plot="plotEnergy">Energy</button>
+                    <button class="plot-tab" data-plot="plotTemperature">Temperature</button>
+                    <button class="plot-tab" data-plot="plotPressure">Pressure</button>
+                    <button class="plot-tab" data-plot="plotRDF">g(r) RDF</button>
+                    <button class="plot-tab" data-plot="plotMSD">MSD</button>
+                    <button class="plot-tab" data-plot="plotVACF">VACF</button>
+                    <button class="plot-tab" data-plot="plotStress">Stress</button>
+                </div>
+                <div class="plot-panel">
+                    <div id="plotEnergy" class="plot-pane active"></div>
+                    <div id="plotTemperature" class="plot-pane"></div>
+                    <div id="plotPressure" class="plot-pane"></div>
+                    <div id="plotRDF" class="plot-pane"></div>
+                    <div id="plotMSD" class="plot-pane"></div>
+                    <div id="plotVACF" class="plot-pane"></div>
+                    <div id="plotStress" class="plot-pane"></div>
+                </div>
+            </main>
 
-            <div class="md-right-panel">
-                <div class="md-plot-area">
-                    <div id="energyPlot" style="width:100%;height:100%;"></div>
-                </div>
-                <div class="md-output-area">
-                    <div class="md-output-header">
-                        <span>Console Output</span>
-                        <button class="md-btn md-btn-outline md-btn-sm" onclick="clearOutput()">Clear</button>
+            <aside class="rpanel">
+                <section class="rpanel-section">
+                    <div class="section-label">Properties (avg)</div>
+                    <div class="analysis-grid">
+                        <div class="analysis-card"><div class="analysis-label">⟨T⟩ [K]</div><div id="propAvgT" class="analysis-value">–</div></div>
+                        <div class="analysis-card"><div class="analysis-label">C<sub>V</sub> [k<sub>B</sub>/atom]</div><div id="propCv" class="analysis-value">–</div></div>
+                        <div class="analysis-card"><div class="analysis-label">⟨P⟩ [bar]</div><div id="propAvgP" class="analysis-value">–</div></div>
+                        <div class="analysis-card"><div class="analysis-label">D [Å²/ps]</div><div id="propD" class="analysis-value">–</div></div>
+                        <div class="analysis-card"><div class="analysis-label">g(r<sub>1st</sub>)</div><div id="propRDF1" class="analysis-value">–</div></div>
+                        <div class="analysis-card"><div class="analysis-label">CN (1st shell)</div><div id="propCN" class="analysis-value">–</div></div>
                     </div>
-                    <div class="md-output-content" id="outputConsole">SMAD MD Simulator v1.0
-Molecular dynamics simulation environment
+                </section>
+                <section class="rpanel-section">
+                    <div class="section-label">Inline Plot</div>
+                    <div id="rpanelPlot" class="rpanel-plot"></div>
+                </section>
+                <section class="rpanel-section">
+                    <div class="section-label">Console</div>
+                    <div class="console-wrap">
+                        <div class="console-head">
+                            <span>MD console</span>
+                            <button id="clearConsoleBtn" type="button" class="btn-ghost btn-ghost-sm">Clear</button>
+                        </div>
+                        <div id="console" class="console-body">SMAD MD Simulator
 Ready.</div>
-                </div>
-            </div>
+                    </div>
+                </section>
+            </aside>
         </div>
     </div>
 
     <script>
-        let viewer = null;
-        let running = false;
-        let animationId = null;
-        let step = 0;
-        let simTime = 0;
-        let particles = [];
-        let energyHistory = { time: [], ekin: [], epot: [], etot: [] };
-
-        const elementColors = {
-            Ar: '#80d4ff', Ne: '#b3e0ff', Xe: '#429eb0', Kr: '#5cb8d1',
-            O: '#ff0d0d', H: '#ffffff', C: '#909090', N: '#3050f8',
-            Na: '#ab5cf2', Cl: '#1ff01f', Cu: '#c88033', Fe: '#e06633',
-        };
-
-        function showPotentialTab(tabId) {
-            document.querySelectorAll('.md-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.md-tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tab-' + tabId).classList.add('active');
-            log('Switched to ' + (tabId === 'ff' ? 'Force Fields' : tabId === 'reaxff' ? 'ReaxFF' : 'ML Potentials'));
+(function () {
+    const KB = 8.617333262e-5;
+    const AMU_TO_KG = 1.66053906660e-27;
+    const ANG_TO_M = 1e-10;
+    const FS_TO_S = 1e-15;
+    const EV_TO_J = 1.602176634e-19;
+    const BAR_TO_PA = 1e5;
+    const ELEMENTS = {
+        Ar: { mass: 39.948, color: "#80d4ff", r: 1.9, eps: 0.0103, sig: 3.40 },
+        Ne: { mass: 20.18, color: "#b3e0ff", r: 1.5, eps: 0.0031, sig: 2.79 },
+        Kr: { mass: 83.8, color: "#5cb8d1", r: 2.0, eps: 0.0175, sig: 3.65 },
+        Cu: { mass: 63.546, color: "#c88033", r: 1.3, eps: 0.40, sig: 2.30 },
+        Fe: { mass: 55.845, color: "#e06633", r: 1.3, eps: 0.25, sig: 2.30 },
+        Na: { mass: 22.99, color: "#ab5cf2", r: 1.5, eps: 0.01, sig: 2.80 },
+        Cl: { mass: 35.45, color: "#1ff01f", r: 1.7, eps: 0.01, sig: 3.30 },
+        Si: { mass: 28.085, color: "#f0b342", r: 1.2, eps: 0.20, sig: 2.35 },
+        A: { mass: 40.0, color: "#80d4ff", r: 1.9, eps: 0.0103, sig: 3.40 },
+        B: { mass: 10.0, color: "#f58fff", r: 1.3, eps: 0.005, sig: 2.5 }
+    };
+    const PRESETS = {
+        lj_fluid: { element: "A", density: 0.8, temp: 1.2, eps: 1.0, sig: 1.0 },
+        lj_solid: { element: "A", density: 0.95, temp: 0.7, eps: 1.0, sig: 1.0 },
+        argon: { element: "Ar", density: 0.8, temp: 90.0, eps: 0.0103, sig: 3.40 },
+        neon: { element: "Ne", density: 1.2, temp: 40.0, eps: 0.0031, sig: 2.79 },
+        kr_solid: { element: "Kr", density: 1.6, temp: 120.0, eps: 0.0175, sig: 3.65 },
+        copper: { element: "Cu", density: 8.0, temp: 300.0, eps: 0.40, sig: 2.30 },
+        iron: { element: "Fe", density: 7.8, temp: 300.0, eps: 0.25, sig: 2.30 },
+        nacl: { element: "Na", density: 2.2, temp: 300.0, eps: 0.01, sig: 2.80 },
+        silicon: { element: "Si", density: 2.3, temp: 300.0, eps: 0.20, sig: 2.35 }
+    };
+    let SIM = { atoms: [], box: [40, 40, 40], step: 0, time: 0, running: false, paused: false, history: { time: [], ekin: [], epot: [], etot: [], T: [], P: [] }, rdf: { r: [], g: [] } };
+    let VIZ = { canvas: null, ctx: null, rotX: 0.3, rotY: 0.5, zoom: 120, dragging: false, lastX: 0, lastY: 0, autoRot: false };
+    let IMPORTED = null;
+    function log(msg) { const el = document.getElementById('console'); if (el) { el.textContent += '\n' + msg; el.scrollTop = el.scrollHeight; } }
+    function clearConsole() { const el = document.getElementById('console'); if (el) el.textContent = 'Console cleared.'; }
+    function showSetupTab(targetId) {
+        document.querySelectorAll('#setupTabBar .setup-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.setup-pane').forEach(p => p.classList.remove('active'));
+        const tab = document.querySelector('#setupTabBar .setup-tab[data-target="' + targetId + '"]');
+        const pane = document.getElementById(targetId);
+        if (tab) tab.classList.add('active'); if (pane) pane.classList.add('active');
+    }
+    function showFFTab(ff) {
+        document.querySelectorAll('#ffTabBar .setup-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('#sectionForceField .setup-pane').forEach(p => p.classList.remove('active'));
+        const tab = document.querySelector('#ffTabBar .setup-tab[data-ff="' + ff + '"]');
+        const pane = document.getElementById('ff' + (ff === 'classic' ? 'Classic' : ff === 'reaxff' ? 'Reax' : 'MLIP'));
+        if (tab) tab.classList.add('active'); if (pane) pane.classList.add('active');
+    }
+    function showPlot(plotId) {
+        document.querySelectorAll('.plot-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.plot-pane').forEach(p => p.classList.remove('active'));
+        const tab = document.querySelector('.plot-tab[data-plot="' + plotId + '"]');
+        const pane = document.getElementById(plotId);
+        if (tab) tab.classList.add('active'); if (pane) pane.classList.add('active');
+    }
+    function updateEnsembleUI() {
+        const ens = document.getElementById('ensemble').value;
+        document.getElementById('thermoGroup').style.display = ens === 'NVE' ? 'none' : 'block';
+        document.getElementById('baroGroup').style.display = ens === 'NPT' ? 'block' : 'none';
+    }
+    function detectFormat(text) {
+        const t = text.trim();
+        if (/^\d+\s*\n/.test(t) && t.split('\n').length > 2) return 'xyz';
+        if (/^ATOM\s+|^HETATM\s+/.test(t)) return 'pdb';
+        if (/^[A-Za-z ]+\s*\n\s*[\d.]+\s*\n/.test(t)) return 'poscar';
+        if (/^\s*#\s*LAMMPS|^\s*\d+\s+atoms/.test(t)) return 'lammps';
+        if (/^data_|_cell\.|_atom_site/.test(t)) return 'cif';
+        return null;
+    }
+    function parseXYZ(text) {
+        const lines = text.trim().split('\n').filter(l => l.trim());
+        const n = parseInt(lines[0], 10);
+        if (isNaN(n) || lines.length < n + 2) return null;
+        const atoms = [];
+        for (let i = 0; i < n; i++) {
+            const parts = lines[i + 2].trim().split(/\s+/);
+            if (parts.length >= 4) {
+                const el = parts[0];
+                const info = ELEMENTS[el] || ELEMENTS.A;
+                atoms.push({ x: parseFloat(parts[1]), y: parseFloat(parts[2]), z: parseFloat(parts[3]), vx: 0, vy: 0, vz: 0, element: el, mass: info.mass, sig: info.sig || 1, eps: info.eps || 1 });
+            }
         }
-
-        function initViewer() {
-            const container = document.getElementById('md-3dviewer');
-            viewer = $3Dmol.createViewer(container, {
-                backgroundColor: '#0d1117',
-                antialias: true,
-            });
-            viewer.setViewStyle({ style: 'outline', color: '#30363d', width: 0.02 });
-            viewer.zoomTo();
-            viewer.render();
-
-            setTimeout(() => {
-                document.getElementById('loadingScreen').classList.add('hidden');
-            }, 500);
-
-            initPlot();
-            log('Viewer initialized.');
-        }
-
-        function initPlot() {
-            Plotly.newPlot('energyPlot', [
-                { x: [], y: [], name: 'E_kin', line: { color: '#58a6ff' } },
-                { x: [], y: [], name: 'E_pot', line: { color: '#f85149' } },
-                { x: [], y: [], name: 'E_tot', line: { color: '#3fb950' } },
-            ], {
-                margin: { t: 30, r: 10, b: 40, l: 50 },
-                paper_bgcolor: '#161b22',
-                plot_bgcolor: '#0d1117',
-                font: { color: '#8b949e', size: 10 },
-                xaxis: { title: 'Time (ps)', gridcolor: '#21262d' },
-                yaxis: { title: 'Energy (eV)', gridcolor: '#21262d' },
-                legend: { x: 0, y: 1.1, orientation: 'h' },
-                showlegend: true,
-            }, { responsive: true, displayModeBar: false });
-        }
-
-        function initializeSystem() {
-            const example = document.getElementById('exampleSelect').value;
-            const n = parseInt(document.getElementById('nParticles').value);
-            const box = parseFloat(document.getElementById('boxSize').value);
-
-            particles = [];
-            const side = Math.ceil(Math.cbrt(n));
-            const spacing = box / side;
-
-            let element = 'Ar';
-            let mass = 39.948;
-            if (example === 'water') { element = 'O'; mass = 18; }
-            else if (example === 'nacl') { element = 'Na'; mass = 23; }
-            else if (example === 'copper') { element = 'Cu'; mass = 63.546; }
-
+        return atoms.length ? atoms : null;
+    }
+    function parsePDB(text) {
+        const atoms = [];
+        text.split('\n').forEach(line => {
+            if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
+                const el = (line.substring(76, 78) || line.substring(12, 16)).trim().replace(/\d/g, '') || 'X';
+                const info = ELEMENTS[el] || ELEMENTS.A;
+                atoms.push({ x: parseFloat(line.substring(30, 38)), y: parseFloat(line.substring(38, 46)), z: parseFloat(line.substring(46, 54)), vx: 0, vy: 0, vz: 0, element: el, mass: info.mass, sig: info.sig || 1, eps: info.eps || 1 });
+            }
+        });
+        return atoms.length ? atoms : null;
+    }
+    function parsePOSCAR(text) {
+        const lines = text.trim().split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length < 8) return null;
+        const scale = parseFloat(lines[1]);
+        const a = lines[2].split(/\s+/).map(Number).map(x => x * scale);
+        const b = lines[3].split(/\s+/).map(Number).map(x => x * scale);
+        const c = lines[4].split(/\s+/).map(Number).map(x => x * scale);
+        const types = lines[5].split(/\s+/).filter(Boolean);
+        const counts = lines[6].split(/\s+/).map(Number);
+        let idx = 7;
+        if (counts.some(isNaN)) idx = 6;
+        const atoms = [];
+        const elList = idx === 7 ? types : lines[6].split(/\s+/).filter(Boolean);
+        const countList = idx === 7 ? counts : lines[7].split(/\s+/).map(Number);
+        for (let t = 0; t < elList.length; t++) {
+            const info = ELEMENTS[elList[t]] || ELEMENTS.A;
+            const n = countList[t] || 1;
             for (let i = 0; i < n; i++) {
-                const ix = i % side;
-                const iy = Math.floor(i / side) % side;
-                const iz = Math.floor(i / (side * side));
-                particles.push({
-                    x: (ix + 0.5) * spacing - box / 2 + (Math.random() - 0.5) * 0.1,
-                    y: (iy + 0.5) * spacing - box / 2 + (Math.random() - 0.5) * 0.1,
-                    z: (iz + 0.5) * spacing - box / 2 + (Math.random() - 0.5) * 0.1,
-                    vx: (Math.random() - 0.5) * 2,
-                    vy: (Math.random() - 0.5) * 2,
-                    vz: (Math.random() - 0.5) * 2,
-                    element: example === 'nacl' ? (i % 2 === 0 ? 'Na' : 'Cl') : element,
-                    mass: mass,
-                });
-            }
-
-            step = 0;
-            simTime = 0;
-            energyHistory = { time: [], ekin: [], epot: [], etot: [] };
-            Plotly.restyle('energyPlot', { x: [[],[],[]], y: [[],[],[]] });
-
-            renderParticles();
-            updateStats();
-            log(`Initialized ${n} particles (${example}), box = ${box} Å`);
-        }
-
-        function renderParticles() {
-            if (!viewer) return;
-            viewer.removeAllModels();
-
-            const style = document.getElementById('renderStyle').value;
-            const size = parseFloat(document.getElementById('atomSize').value);
-
-            let xyz = particles.length + '\nSMAD MD\n';
-            particles.forEach(p => {
-                xyz += `${p.element} ${p.x.toFixed(4)} ${p.y.toFixed(4)} ${p.z.toFixed(4)}\n`;
-            });
-
-            viewer.addModel(xyz, 'xyz');
-
-            if (style === 'sphere') {
-                viewer.setStyle({}, { sphere: { radius: size, colorscheme: 'Jmol' } });
-            } else if (style === 'stick') {
-                viewer.setStyle({}, { stick: { radius: size * 0.3, colorscheme: 'Jmol' } });
-            } else if (style === 'line') {
-                viewer.setStyle({}, { line: { colorscheme: 'Jmol' } });
-            } else if (style === 'cross') {
-                viewer.setStyle({}, { cross: { radius: size, colorscheme: 'Jmol' } });
-            }
-
-            if (document.getElementById('showBox').checked) {
-                const box = parseFloat(document.getElementById('boxSize').value);
-                const half = box / 2;
-                viewer.addBox({
-                    center: { x: 0, y: 0, z: 0 },
-                    dimensions: { w: box, h: box, d: box },
-                    color: '#58a6ff',
-                    opacity: 0.1,
-                    wireframe: true,
-                });
-            }
-
-            viewer.zoomTo();
-            viewer.render();
-        }
-
-        function updateRenderStyle() {
-            document.getElementById('sizeValue').textContent = document.getElementById('atomSize').value;
-            renderParticles();
-        }
-
-        function toggleBox() { renderParticles(); }
-        function toggleTrails() { }
-
-        function startSimulation() {
-            if (running) return;
-            if (particles.length === 0) {
-                log('No particles. Initialize system first.');
-                return;
-            }
-            running = true;
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
-            document.getElementById('statusBadge').className = 'md-badge md-badge-running';
-            document.getElementById('statusBadge').textContent = 'Running';
-            log('Simulation started.');
-            simulate();
-        }
-
-        function stopSimulation() {
-            running = false;
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
-            document.getElementById('statusBadge').className = 'md-badge md-badge-stopped';
-            document.getElementById('statusBadge').textContent = 'Stopped';
-            if (animationId) cancelAnimationFrame(animationId);
-            log('Simulation stopped.');
-        }
-
-        function resetSimulation() {
-            stopSimulation();
-            particles = [];
-            step = 0;
-            simTime = 0;
-            energyHistory = { time: [], ekin: [], epot: [], etot: [] };
-            if (viewer) {
-                viewer.removeAllModels();
-                viewer.render();
-            }
-            Plotly.restyle('energyPlot', { x: [[],[],[]], y: [[],[],[]] });
-            updateStats();
-            log('Simulation reset.');
-        }
-
-        function simulate() {
-            if (!running) return;
-
-            const dt = parseFloat(document.getElementById('timestep').value) * 0.001;
-            const T_target = parseFloat(document.getElementById('temperature').value);
-            const box = parseFloat(document.getElementById('boxSize').value);
-            const half = box / 2;
-
-            particles.forEach(p => {
-                p.x += p.vx * dt;
-                p.y += p.vy * dt;
-                p.z += p.vz * dt;
-
-                if (p.x > half) { p.x -= box; }
-                if (p.x < -half) { p.x += box; }
-                if (p.y > half) { p.y -= box; }
-                if (p.y < -half) { p.y += box; }
-                if (p.z > half) { p.z -= box; }
-                if (p.z < -half) { p.z += box; }
-            });
-
-            step++;
-            simTime += dt;
-
-            if (step % 5 === 0) {
-                renderParticles();
-                updateStats();
-            }
-
-            if (step % 50 === 0) {
-                updatePlot();
-            }
-
-            animationId = requestAnimationFrame(simulate);
-        }
-
-        function updateStats() {
-            let ekin = 0;
-            particles.forEach(p => {
-                const v2 = p.vx * p.vx + p.vy * p.vy + p.vz * p.vz;
-                ekin += 0.5 * p.mass * v2 * 1.0364e-4;
-            });
-            const T = particles.length > 0 ? (2 * ekin) / (3 * particles.length * 8.617e-5) : 0;
-            const epot = -0.1 * particles.length;
-            const etot = ekin + epot;
-
-            document.getElementById('statTemp').textContent = T.toFixed(1) + ' K';
-            document.getElementById('statEkin').textContent = ekin.toFixed(3) + ' eV';
-            document.getElementById('statEpot').textContent = epot.toFixed(3) + ' eV';
-            document.getElementById('statEtot').textContent = etot.toFixed(3) + ' eV';
-            document.getElementById('statTime').textContent = simTime.toFixed(3) + ' ps';
-            document.getElementById('stepCounter').textContent = 'Step: ' + step;
-
-            energyHistory.time.push(simTime);
-            energyHistory.ekin.push(ekin);
-            energyHistory.epot.push(epot);
-            energyHistory.etot.push(etot);
-        }
-
-        function updatePlot() {
-            const maxPoints = 500;
-            const t = energyHistory.time.slice(-maxPoints);
-            const ek = energyHistory.ekin.slice(-maxPoints);
-            const ep = energyHistory.epot.slice(-maxPoints);
-            const et = energyHistory.etot.slice(-maxPoints);
-            Plotly.restyle('energyPlot', {
-                x: [t, t, t],
-                y: [ek, ep, et],
-            });
-        }
-
-        async function runOnHPC() {
-            const host = document.getElementById('hpcHost').value.trim();
-            const cmd = document.getElementById('lammpsCmd').value.trim();
-            if (!host || !cmd) {
-                log('[Error] Provide HPC host and command.');
-                return;
-            }
-            log(`[HPC] Connecting to ${host}...`);
-            log(`[HPC] Command: ${cmd}`);
-
-            try {
-                const resp = await fetch('/api/md/run', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ host, command: cmd }),
-                });
-                const data = await resp.json();
-                if (data.error) {
-                    log('[Error] ' + data.error);
-                } else {
-                    log('[HPC Output]\n' + (data.output || 'No output.'));
-                }
-            } catch (err) {
-                log('[Error] ' + err);
+                const parts = lines[idx].trim().split(/\s+/);
+                idx++;
+                const x = parseFloat(parts[0]), y = parseFloat(parts[1]), z = parseFloat(parts[2]);
+                atoms.push({ x: a[0]*x+b[0]*y+c[0]*z, y: a[1]*x+b[1]*y+c[1]*z, z: a[2]*x+b[2]*y+c[2]*z, vx: 0, vy: 0, vz: 0, element: elList[t], mass: info.mass, sig: info.sig || 1, eps: info.eps || 1 });
             }
         }
-
-        function log(msg) {
-            const console = document.getElementById('outputConsole');
-            console.textContent += '\n' + msg;
-            console.scrollTop = console.scrollHeight;
+        return atoms.length ? atoms : null;
+    }
+    function parseLAMMPS(text) { return parseXYZ(text); }
+    function parseCIF(text) { return null; }
+    function parseAndLoadStructure(text) {
+        const fmt = detectFormat(text);
+        document.getElementById('detectedFormat').textContent = fmt || '?';
+        if (fmt === 'xyz') return parseXYZ(text);
+        if (fmt === 'pdb') return parsePDB(text);
+        if (fmt === 'poscar') return parsePOSCAR(text);
+        if (fmt === 'lammps') return parseLAMMPS(text);
+        if (fmt === 'cif') return parseCIF(text);
+        return null;
+    }
+    function showImportedCard(atoms, box) {
+        const card = document.getElementById('importedInfoCard');
+        if (!card) return;
+        if (!atoms || !atoms.length) { card.style.display = 'none'; return; }
+        card.textContent = 'Imported ' + atoms.length + ' atoms';
+        card.style.display = 'block';
+    }
+    function expandSupercell(atoms, box, nx, ny, nz) {
+        if (!atoms || !atoms.length) return { atoms: [], box: [box[0]*nx, box[1]*ny, box[2]*nz] };
+        const out = [];
+        for (let ix = 0; ix < nx; ix++) for (let iy = 0; iy < ny; iy++) for (let iz = 0; iz < nz; iz++)
+            atoms.forEach(a => out.push({ ...a, x: a.x + ix*box[0], y: a.y + iy*box[1], z: a.z + iz*box[2] }));
+        return { atoms: out, box: [box[0]*nx, box[1]*ny, box[2]*nz] };
+    }
+    function loadFromStructureTab() { log('Load from Structures tab – not linked.'); }
+    function loadFromLocalStorage() { log('Load from localStorage – not linked.'); }
+    function handleFileDrop(e) { e.preventDefault(); e.stopPropagation(); document.getElementById('dropZone').classList.remove('dragover'); const f = e.dataTransfer?.files?.[0]; if (f) readStructureFile(f); }
+    function handleFileSelect(e) { const f = e.target.files?.[0]; if (f) readStructureFile(f); }
+    function readStructureFile(file) {
+        const r = new FileReader();
+        r.onload = () => {
+            const atoms = parseAndLoadStructure(r.result);
+            if (atoms && atoms.length) { IMPORTED = { atoms, box: [40, 40, 40] }; showImportedCard(atoms, IMPORTED.box); document.getElementById('importStatus').textContent = 'Loaded ' + atoms.length + ' atoms.'; }
+            else document.getElementById('importStatus').textContent = 'Parse failed.';
+        };
+        r.readAsText(file);
+    }
+    function parsePastedText() {
+        const atoms = parseAndLoadStructure(document.getElementById('pasteArea').value);
+        if (atoms && atoms.length) { IMPORTED = { atoms, box: [40, 40, 40] }; showImportedCard(atoms, IMPORTED.box); document.getElementById('importStatus').textContent = 'Parsed ' + atoms.length + ' atoms.'; }
+        else document.getElementById('importStatus').textContent = 'Parse failed.';
+    }
+    function removeMomentum(atoms) {
+        let vx = 0, vy = 0, vz = 0, m = 0;
+        atoms.forEach(a => { vx += a.vx * a.mass; vy += a.vy * a.mass; vz += a.vz * a.mass; m += a.mass; });
+        if (m <= 0) return;
+        vx /= m; vy /= m; vz /= m;
+        atoms.forEach(a => { a.vx -= vx; a.vy -= vy; a.vz -= vz; });
+    }
+    function rescaleVelocities(atoms, T_target) {
+        const T = computeTemperature(atoms);
+        if (T <= 0) return;
+        const scale = Math.sqrt(T_target / T);
+        atoms.forEach(a => { a.vx *= scale; a.vy *= scale; a.vz *= scale; });
+    }
+    function computeTemperature(atoms) {
+        let ekin = 0, n = 0;
+        atoms.forEach(a => { ekin += 0.5 * a.mass * (a.vx*a.vx + a.vy*a.vy + a.vz*a.vz); n++; });
+        if (n < 2) return 0;
+        return (2 * ekin) / (3 * n * KB) * (FS_TO_S * FS_TO_S / (ANG_TO_M * ANG_TO_M)) * (1 / (AMU_TO_KG * 1e-3 / EV_TO_J));
+    }
+    function computeEkin(atoms) {
+        let e = 0;
+        atoms.forEach(a => e += 0.5 * a.mass * (a.vx*a.vx + a.vy*a.vy + a.vz*a.vz));
+        const conv = AMU_TO_KG * (ANG_TO_M/FS_TO_S)*(ANG_TO_M/FS_TO_S) / EV_TO_J * 1e-3;
+        return e * conv;
+    }
+    function computeForces(atoms, box, cutoff) {
+        atoms.forEach(a => { a.fx = 0; a.fy = 0; a.fz = 0; });
+        let epot = 0;
+        for (let i = 0; i < atoms.length; i++) {
+            for (let j = i + 1; j < atoms.length; j++) {
+                let dx = atoms[j].x - atoms[i].x, dy = atoms[j].y - atoms[i].y, dz = atoms[j].z - atoms[i].z;
+                dx -= Math.round(dx / box[0]) * box[0]; dy -= Math.round(dy / box[1]) * box[1]; dz -= Math.round(dz / box[2]) * box[2];
+                const r2 = dx*dx + dy*dy + dz*dz;
+                if (r2 > cutoff * cutoff) continue;
+                const sig = (atoms[i].sig + atoms[j].sig) * 0.5, eps = Math.sqrt((atoms[i].eps || 1) * (atoms[j].eps || 1));
+                const sr2 = sig*sig/r2, sr6 = sr2*sr2*sr2, sr12 = sr6*sr6;
+                const f = 24 * eps * (2*sr12 - sr6) / r2;
+                const fx = f*dx, fy = f*dy, fz = f*dz;
+                atoms[i].fx -= fx; atoms[i].fy -= fy; atoms[i].fz -= fz;
+                atoms[j].fx += fx; atoms[j].fy += fy; atoms[j].fz += fz;
+                epot += 4 * eps * (sr12 - sr6);
+            }
         }
-
-        function clearOutput() {
-            document.getElementById('outputConsole').textContent = 'Console cleared.';
-        }
-
-        document.getElementById('temperature').addEventListener('input', e => {
-            document.getElementById('tempValue').textContent = e.target.value;
+        return epot;
+    }
+    function velocityVerletStep(atoms, box, dt_fs, cutoff) {
+        const dt = dt_fs * 1e-3;
+        const half = [box[0]/2, box[1]/2, box[2]/2];
+        atoms.forEach(a => {
+            a._fx = a.fx || 0; a._fy = a.fy || 0; a._fz = a.fz || 0;
+            a.x += a.vx * dt + 0.5 * a._fx / a.mass * dt * dt;
+            a.y += a.vy * dt + 0.5 * a._fy / a.mass * dt * dt;
+            a.z += a.vz * dt + 0.5 * a._fz / a.mass * dt * dt;
+            a.x -= Math.round(a.x / box[0]) * box[0]; a.y -= Math.round(a.y / box[1]) * box[1]; a.z -= Math.round(a.z / box[2]) * box[2];
+            if (a.x > half[0]) a.x -= box[0]; if (a.x < -half[0]) a.x += box[0];
+            if (a.y > half[1]) a.y -= box[1]; if (a.y < -half[1]) a.y += box[1];
+            if (a.z > half[2]) a.z -= box[2]; if (a.z < -half[2]) a.z += box[2];
         });
-        document.getElementById('timestep').addEventListener('input', e => {
-            document.getElementById('dtValue').textContent = e.target.value;
+        const epot = computeForces(atoms, box, cutoff);
+        atoms.forEach(a => {
+            a.vx += 0.5 * (a._fx + a.fx) / a.mass * dt;
+            a.vy += 0.5 * (a._fy + a.fy) / a.mass * dt;
+            a.vz += 0.5 * (a._fz + a.fz) / a.mass * dt;
         });
-
-        function toggleTheme() {
-            document.body.classList.toggle('theme-light');
-            const isLight = document.body.classList.contains('theme-light');
-            localStorage.setItem('smad-theme', isLight ? 'light' : 'dark');
-            document.getElementById('themeToggle').textContent = isLight ? '☀ Light' : '🌙 Dark';
-        }
-        function applySavedTheme() {
-            const saved = localStorage.getItem('smad-theme');
-            if (saved === 'light') {
-                document.body.classList.add('theme-light');
-                document.getElementById('themeToggle').textContent = '☀ Light';
-            } else {
-                document.body.classList.remove('theme-light');
-                document.getElementById('themeToggle').textContent = '🌙 Dark';
+        return epot;
+    }
+    function resetSimState() {
+        SIM.atoms = []; SIM.box = [40, 40, 40]; SIM.step = 0; SIM.time = 0; SIM.running = false; SIM.paused = false;
+        SIM.history = { time: [], ekin: [], epot: [], etot: [], T: [], P: [] }; SIM.rdf = { r: [], g: [] };
+    }
+    function initializeSystem() {
+        resetSimState();
+        const presetId = document.getElementById('exampleSelect').value;
+        const preset = PRESETS[presetId] || PRESETS.lj_fluid;
+        let n = parseInt(document.getElementById('presetN').value, 10) || 512;
+        const boxSize = parseFloat(document.getElementById('boxSize').value) || 40;
+        const overrideN = parseInt(document.getElementById('nParticles').value, 10);
+        if (overrideN > 0) n = overrideN;
+        const initT = parseFloat(document.getElementById('initTemp').value) || 300;
+        const scNx = parseInt(document.getElementById('scNx').value, 10) || 1;
+        const scNy = parseInt(document.getElementById('scNy').value, 10) || 1;
+        const scNz = parseInt(document.getElementById('scNz').value, 10) || 1;
+        let atoms = [];
+        if (IMPORTED && IMPORTED.atoms && IMPORTED.atoms.length) {
+            const expanded = expandSupercell(IMPORTED.atoms, IMPORTED.box, scNx, scNy, scNz);
+            atoms = expanded.atoms; SIM.box = expanded.box;
+        } else {
+            SIM.box = [boxSize, boxSize, boxSize];
+            const side = Math.ceil(Math.cbrt(n));
+            const sp = boxSize / side;
+            const info = ELEMENTS[preset.element] || ELEMENTS.A;
+            for (let i = 0; i < n; i++) {
+                const ix = i % side, iy = Math.floor(i / side) % side, iz = Math.floor(i / (side * side));
+                atoms.push({ x: (ix + 0.5) * sp - boxSize/2 + (Math.random()-0.5)*0.1, y: (iy + 0.5) * sp - boxSize/2 + (Math.random()-0.5)*0.1, z: (iz + 0.5) * sp - boxSize/2 + (Math.random()-0.5)*0.1, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, vz: (Math.random()-0.5)*2, element: preset.element, mass: info.mass, sig: preset.sig || info.sig || 1, eps: preset.eps || info.eps || 1 });
             }
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            applySavedTheme();
-            initViewer();
+        removeMomentum(atoms);
+        rescaleVelocities(atoms, initT);
+        computeForces(atoms, SIM.box, parseFloat(document.getElementById('ffCutoff').value) * (preset.sig || 1));
+        SIM.atoms = atoms;
+        document.getElementById('initProgressLabel').textContent = 'Initialized';
+        document.getElementById('initProgress').style.width = '100%';
+        updateStats(); updateHUD(); drawScene();
+        log('Initialized ' + SIM.atoms.length + ' particles, box ' + SIM.box.join('×') + ' Å');
+    }
+    function startSim() {
+        if (SIM.running || SIM.atoms.length === 0) return;
+        SIM.running = true; SIM.paused = false;
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('pauseBtn').disabled = false;
+        document.getElementById('statusBadge').className = 'badge-status running'; document.getElementById('statusBadge').textContent = 'running';
+        simLoop();
+    }
+    function pauseSim() {
+        SIM.paused = !SIM.paused;
+        document.getElementById('statusBadge').className = 'badge-status ' + (SIM.paused ? 'paused' : 'running');
+        document.getElementById('statusBadge').textContent = SIM.paused ? 'paused' : 'running';
+        if (!SIM.paused) simLoop();
+    }
+    function stopSim() {
+        SIM.running = false; SIM.paused = false;
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('pauseBtn').disabled = true;
+        document.getElementById('statusBadge').className = 'badge-status idle'; document.getElementById('statusBadge').textContent = 'idle';
+    }
+    function resetSim() { stopSim(); resetSimState(); updateStats(); updateHUD(); drawScene(); log('Simulation reset.'); }
+    function simLoop() {
+        if (!SIM.running || SIM.paused || SIM.atoms.length === 0) return;
+        const dt = parseFloat(document.getElementById('timestep').value) || 2;
+        const totalSteps = parseInt(document.getElementById('totalSteps').value, 10) || 20000;
+        const outEvery = parseInt(document.getElementById('outEvery').value, 10) || 20;
+        const cutoff = parseFloat(document.getElementById('ffCutoff').value) * (SIM.atoms[0].sig || 1);
+        const epot = velocityVerletStep(SIM.atoms, SIM.box, dt, cutoff);
+        SIM.step++;
+        SIM.time += dt * 1e-3;
+        if (SIM.step % outEvery === 0) {
+            const ekin = computeEkin(SIM.atoms);
+            const T = computeTemperature(SIM.atoms);
+            SIM.history.time.push(SIM.time);
+            SIM.history.ekin.push(ekin);
+            SIM.history.epot.push(epot);
+            SIM.history.etot.push(ekin + epot);
+            SIM.history.T.push(T);
+            SIM.history.P.push(0);
+            updateStats(); updateHUD(); updatePlots();
+        }
+        drawScene();
+        if (SIM.step < totalSteps) requestAnimationFrame(simLoop);
+        else stopSim();
+    }
+    function updateStats() {
+        const el = id => document.getElementById(id);
+        if (!el('sT')) return;
+        if (SIM.atoms.length === 0) {
+            el('sT').textContent = '0.0'; el('sEk').textContent = '0.000'; el('sEp').textContent = '0.000'; el('sEt').textContent = '0.000';
+            el('sPr').textContent = '–'; el('sDen').textContent = '–'; el('sTime').textContent = '0.000'; el('sN').textContent = '0';
+            el('stepCounter').textContent = '0'; el('simTimeLabel').textContent = '0.000';
+            return;
+        }
+        const ekin = computeEkin(SIM.atoms);
+        const T = computeTemperature(SIM.atoms);
+        let epot = SIM.history.epot.length ? SIM.history.epot[SIM.history.epot.length - 1] : computeForces(SIM.atoms, SIM.box, 4);
+        el('sT').textContent = T.toFixed(1);
+        el('sEk').textContent = ekin.toFixed(4);
+        el('sEp').textContent = epot.toFixed(4);
+        el('sEt').textContent = (ekin + epot).toFixed(4);
+        el('sPr').textContent = '–'; el('sDen').textContent = '–';
+        el('sTime').textContent = SIM.time.toFixed(3);
+        el('sN').textContent = String(SIM.atoms.length);
+        el('stepCounter').textContent = String(SIM.step);
+        el('simTimeLabel').textContent = SIM.time.toFixed(3);
+        const totalSteps = parseInt(document.getElementById('totalSteps').value, 10) || 20000;
+        el('simProgress').style.width = (100 * SIM.step / totalSteps) + '%';
+    }
+    function updateHUD() {
+        const el = id => document.getElementById(id);
+        if (SIM.atoms.length === 0) return;
+        const T = computeTemperature(SIM.atoms);
+        const ekin = computeEkin(SIM.atoms);
+        let epot = SIM.history.epot.length ? SIM.history.epot[SIM.history.epot.length - 1] : 0;
+        el('hudT').textContent = T.toFixed(1) + ' K';
+        el('hudP').textContent = '– bar';
+        el('hudRho').textContent = '–';
+        el('hudE').textContent = (ekin + epot).toFixed(4) + ' eV';
+        el('hudStep').textContent = String(SIM.step);
+        el('hudTime').textContent = SIM.time.toFixed(3) + ' ps';
+    }
+    function initCanvas() {
+        VIZ.canvas = document.getElementById('canvas3d');
+        if (!VIZ.canvas) return;
+        VIZ.ctx = VIZ.canvas.getContext('2d');
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        VIZ.canvas.addEventListener('mousedown', e => { VIZ.dragging = true; VIZ.lastX = e.clientX; VIZ.lastY = e.clientY; });
+        VIZ.canvas.addEventListener('mouseup', () => VIZ.dragging = false);
+        VIZ.canvas.addEventListener('mouseleave', () => VIZ.dragging = false);
+        VIZ.canvas.addEventListener('mousemove', e => {
+            if (!VIZ.dragging) return;
+            VIZ.rotY += (e.clientX - VIZ.lastX) * 0.01;
+            VIZ.rotX += (e.clientY - VIZ.lastY) * 0.01;
+            VIZ.lastX = e.clientX; VIZ.lastY = e.clientY;
+            drawScene();
         });
+        VIZ.canvas.addEventListener('wheel', e => { e.preventDefault(); VIZ.zoom = Math.max(20, Math.min(300, VIZ.zoom - e.deltaY * 0.5)); drawScene(); }, { passive: false });
+    }
+    function resizeCanvas() {
+        if (!VIZ.canvas) return;
+        const wrap = VIZ.canvas.parentElement;
+        if (!wrap) return;
+        const w = wrap.clientWidth, h = wrap.clientHeight;
+        if (VIZ.canvas.width !== w || VIZ.canvas.height !== h) { VIZ.canvas.width = w; VIZ.canvas.height = h; drawScene(); }
+    }
+    function project(x, y, z) {
+        const cosX = Math.cos(VIZ.rotX), sinX = Math.sin(VIZ.rotX);
+        const cosY = Math.cos(VIZ.rotY), sinY = Math.sin(VIZ.rotY);
+        const x1 = x*cosY - z*sinY, z1 = x*sinY + z*cosY;
+        const y1 = y*cosX + z1*sinX, z2 = -y*sinX + z1*cosX;
+        return { x: x1 * VIZ.zoom + VIZ.canvas.width/2, y: -y1 * VIZ.zoom + VIZ.canvas.height/2, z: z2 };
+    }
+    function tempColor(T, Tmin, Tmax) {
+        const t = Math.max(0, Math.min(1, (T - Tmin) / (Tmax - Tmin || 1)));
+        return 'rgb(' + Math.round(79 + t * 176) + ',' + Math.round(143 + t * 112) + ',255)';
+    }
+    function drawScene() {
+        if (!VIZ.ctx || !VIZ.canvas) return;
+        const w = VIZ.canvas.width, h = VIZ.canvas.height;
+        VIZ.ctx.fillStyle = '#060810';
+        VIZ.ctx.fillRect(0, 0, w, h);
+        if (SIM.atoms.length === 0) return;
+        const box = SIM.box;
+        const colorBy = document.getElementById('colorBy').value;
+        const scale = parseFloat(document.getElementById('atomScale').value) || 1;
+        const showBox = document.getElementById('showBox').checked;
+        const colors = {};
+        SIM.atoms.forEach(a => { const key = a.element; if (!colors[key]) colors[key] = (ELEMENTS[key] || ELEMENTS.A).color; });
+        SIM.atoms.forEach(a => {
+            const p = project(a.x - box[0]/2, a.y - box[1]/2, a.z - box[2]/2);
+            if (p.z < -50) return;
+            const vel = Math.sqrt(a.vx*a.vx + a.vy*a.vy + a.vz*a.vz);
+            VIZ.ctx.fillStyle = colorBy === 'velocity' ? tempColor(vel, 0, 2) : (colors[a.element] || '#80d4ff');
+            VIZ.ctx.beginPath();
+            VIZ.ctx.arc(p.x, p.y, Math.max(1, 3 * scale), 0, Math.PI * 2);
+            VIZ.ctx.fill();
+        });
+        if (showBox) {
+            VIZ.ctx.strokeStyle = 'rgba(79, 143, 255, 0.6)';
+            VIZ.ctx.lineWidth = 1;
+            const corners = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1],[1,1,1],[1,1,-1],[-1,1,-1],[-1,1,1]];
+            for (let i = 0; i < corners.length - 1; i++) {
+                const c = corners[i], d = corners[i+1];
+                const p1 = project(c[0]*box[0]/2, c[1]*box[1]/2, c[2]*box[2]/2);
+                const p2 = project(d[0]*box[0]/2, d[1]*box[1]/2, d[2]*box[2]/2);
+                if (p1.z > -50 && p2.z > -50) { VIZ.ctx.beginPath(); VIZ.ctx.moveTo(p1.x, p1.y); VIZ.ctx.lineTo(p2.x, p2.y); VIZ.ctx.stroke(); }
+            }
+        }
+    }
+    function initPlots() {
+        const layout = { margin: { t: 20, r: 10, b: 35, l: 50 }, paper_bgcolor: '#0c0f1a', plot_bgcolor: '#060810', font: { color: '#7a8bbf', size: 10 }, xaxis: { gridcolor: 'rgba(79,143,255,0.2)' }, yaxis: { gridcolor: 'rgba(79,143,255,0.2)' }, showlegend: true, legend: { x: 0, y: 1.05 } };
+        if (document.getElementById('plotEnergy') && typeof Plotly !== 'undefined')
+            Plotly.newPlot('plotEnergy', [{ x: [], y: [], name: 'E_kin', line: { color: '#4f8fff' } }, { x: [], y: [], name: 'E_pot', line: { color: '#ff4f6a' } }, { x: [], y: [], name: 'E_tot', line: { color: '#3de87a' } }], { ...layout, yaxis: { ...layout.yaxis, title: 'Energy (eV)' }, xaxis: { ...layout.xaxis, title: 'Time (ps)' } }, { responsive: true, displayModeBar: false });
+    }
+    function updatePlots() {
+        if (!SIM.history.time.length) return;
+        const t = SIM.history.time.slice(-500), ek = SIM.history.ekin.slice(-500), ep = SIM.history.epot.slice(-500), et = SIM.history.etot.slice(-500);
+        if (document.getElementById('plotEnergy') && typeof Plotly !== 'undefined') Plotly.restyle('plotEnergy', { x: [t, t, t], y: [ek, ep, et] });
+    }
+    function resetCamera() { VIZ.rotX = 0.3; VIZ.rotY = 0.5; VIZ.zoom = 120; drawScene(); }
+    function toggleAutoRot() { VIZ.autoRot = !VIZ.autoRot; log('Auto-rot ' + (VIZ.autoRot ? 'on' : 'off')); }
+    function captureFrame() { if (VIZ.canvas) { const a = document.createElement('a'); a.href = VIZ.canvas.toDataURL('image/png'); a.download = 'md_frame.png'; a.click(); } }
+    function exportXYZ() {
+        if (SIM.atoms.length === 0) { log('No atoms to export.'); return; }
+        let s = SIM.atoms.length + '\nSMAD MD export\n';
+        SIM.atoms.forEach(a => s += a.element + ' ' + a.x + ' ' + a.y + ' ' + a.z + '\n');
+        const a = document.createElement('a');
+        a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(s);
+        a.download = 'md_export.xyz';
+        a.click();
+        log('Exported XYZ.');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('#setupTabBar .setup-tab').forEach(btn => { btn.addEventListener('click', () => showSetupTab(btn.getAttribute('data-target'))); });
+        document.querySelectorAll('#ffTabBar .setup-tab').forEach(btn => { btn.addEventListener('click', () => showFFTab(btn.getAttribute('data-ff'))); });
+        document.querySelectorAll('.plot-tab').forEach(btn => { btn.addEventListener('click', () => showPlot(btn.getAttribute('data-plot'))); });
+        document.getElementById('ensemble').addEventListener('change', updateEnsembleUI);
+        document.getElementById('initializeSystemBtn').addEventListener('click', initializeSystem);
+        document.getElementById('startBtn').addEventListener('click', startSim);
+        document.getElementById('pauseBtn').addEventListener('click', pauseSim);
+        document.getElementById('reset').addEventListener('click', resetSim);
+        document.getElementById('clearConsoleBtn').addEventListener('click', clearConsole);
+        document.getElementById('resetViewBtn').addEventListener('click', resetCamera);
+        document.getElementById('autoRotBtn').addEventListener('click', toggleAutoRot);
+        document.getElementById('snapshotBtn').addEventListener('click', captureFrame);
+        document.getElementById('exportXYZBtn').addEventListener('click', exportXYZ);
+        document.getElementById('parseBtn').addEventListener('click', parsePastedText);
+        document.getElementById('dropZone').addEventListener('click', () => document.getElementById('fileInput').click());
+        document.getElementById('dropZone').addEventListener('dragover', e => { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); });
+        document.getElementById('dropZone').addEventListener('dragleave', () => document.getElementById('dropZone').classList.remove('dragover'));
+        document.getElementById('dropZone').addEventListener('drop', handleFileDrop);
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        document.getElementById('loadFromStructureTab').addEventListener('click', loadFromStructureTab);
+        document.getElementById('loadFromLocalStorage').addEventListener('click', loadFromLocalStorage);
+        document.getElementById('presetN').addEventListener('input', e => { document.getElementById('presetNValue').textContent = e.target.value; });
+        document.getElementById('boxSize').addEventListener('input', e => { document.getElementById('boxSizeValue').textContent = e.target.value; });
+        document.getElementById('initTemp').addEventListener('input', e => { document.getElementById('initTempValue').textContent = e.target.value; });
+        document.getElementById('timestep').addEventListener('input', e => { document.getElementById('dtLabel').textContent = e.target.value; });
+        document.getElementById('ffCutoff').addEventListener('input', e => { document.getElementById('ffCutoffLabel').textContent = e.target.value; });
+        document.getElementById('atomScale').addEventListener('input', e => { document.getElementById('atomScaleLabel').textContent = e.target.value; });
+        function updateScLabel() {
+            var el = document.getElementById('scLabel');
+            if (el) el.textContent = document.getElementById('scNx').value + ' × ' + document.getElementById('scNy').value + ' × ' + document.getElementById('scNz').value;
+        }
+        document.getElementById('scNx').addEventListener('input', updateScLabel);
+        document.getElementById('scNy').addEventListener('input', updateScLabel);
+        document.getElementById('scNz').addEventListener('input', updateScLabel);
+        updateEnsembleUI();
+        initCanvas();
+        initPlots();
+        initializeSystem();
+        drawScene();
+        setTimeout(() => document.getElementById('loading').classList.add('hidden'), 400);
+    });
+})();
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
