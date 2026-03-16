@@ -3,49 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crystal Structure Builder</title>
+<title>Structure · Crystal Structure Builder · SMAD</title>
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,sans-serif;background:#06080f;color:#c0c8e0;min-height:100vh;display:flex;flex-direction:column}
+body{background:#0a0c14;font-family:system-ui,sans-serif;color:#c0c8e0;min-height:100vh;display:flex;flex-direction:column}
 .struct-fill{flex:1;min-height:0;display:flex;flex-direction:column}
-#app{background:#0a0c14;display:flex;flex-direction:column;min-height:100vh}
-.struct-fill #app{min-height:0;flex:1}
-#toolbar{background:#10131f;border-bottom:0.5px solid rgba(255,255,255,0.1);padding:7px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.struct-fill #app{min-height:0;flex:1;overflow:hidden;height:auto}
+#app{background:#0a0c14;display:flex;flex-direction:column;color:#c0c8e0;font-family:system-ui,sans-serif}
+
+#toolbar{background:#10131f;border-bottom:0.5px solid rgba(255,255,255,0.1);padding:6px 10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .tb-label{font-size:11px;color:#6070a0;white-space:nowrap}
-select.tb-sel{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:6px;padding:4px 7px;font-size:12px;cursor:pointer}
-input.tb-num{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:6px;padding:4px 6px;font-size:12px;width:44px;text-align:center;font-family:monospace}
-.tb-btn{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+select.tb-sel{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:5px;padding:3px 6px;font-size:11px;cursor:pointer}
+input.tb-num{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:5px;padding:3px 5px;font-size:11px;width:40px;text-align:center;font-family:monospace}
+.tb-btn{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;white-space:nowrap}
 .tb-btn:hover{background:rgba(255,255,255,0.13)}
 .tb-btn.active{background:rgba(90,140,255,0.22);border-color:rgba(90,140,255,0.5);color:#adc8ff}
-.sep{width:0.5px;height:22px;background:rgba(255,255,255,0.1);margin:0 2px;flex-shrink:0}
-#main-area{display:flex;flex:1;min-height:0}
-#canvas-wrap{flex:1;position:relative;min-height:500px}
+.sep{width:0.5px;height:20px;background:rgba(255,255,255,0.1);margin:0 2px;flex-shrink:0}
+#main-area{display:flex;gap:0;flex:1;min-height:0}
+#canvas-wrap{flex:1;position:relative}
 #mol-canvas{display:block;width:100%;height:100%;cursor:grab}
 #mol-canvas:active{cursor:grabbing}
-#side-panel{width:210px;background:#10131f;border-left:0.5px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;overflow:hidden}
-#info-box{padding:10px 12px;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0;font-family:monospace}
-.info-title{font-size:13px;font-weight:500;color:#e0e8ff;margin-bottom:6px;font-family:system-ui,sans-serif}
-.info-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+#side-panel{width:240px;background:#10131f;border-left:0.5px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;overflow:hidden}
+#info-box{padding:9px 11px;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0;font-family:monospace}
+.info-title{font-size:12px;font-weight:500;color:#e0e8ff;margin-bottom:5px;font-family:system-ui,sans-serif}
+.info-row{display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px}
 .info-lbl{color:#5060a0}.info-val{color:#a0b0d0}
-#pt-panel{flex:1;overflow-y:auto;padding:7px}
-.pt-title{font-size:11px;color:#5060a0;margin-bottom:5px;font-weight:500}
-#pt-grid{display:grid;grid-template-columns:repeat(18,1fr);gap:1.5px}
-.el-cell{aspect-ratio:1;border-radius:2px;font-size:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:500;transition:transform 0.1s;line-height:1;font-family:monospace}
-.el-cell:hover{transform:scale(1.5);z-index:10;position:relative}
-.el-cell.selected{outline:1.5px solid #fff;outline-offset:0;z-index:20;position:relative}
-.ec-alkali{background:#c04050}.ec-alkaline{background:#a05020}.ec-transition{background:#305878}
-.ec-post{background:#406080}.ec-metalloid{background:#1e6644}.ec-nonmetal{background:#1e5050}
-.ec-halogen{background:#604455}.ec-noble{background:#383858}.ec-lanthanide{background:#504830}.ec-actinide{background:#4a4428}
-#charge-scale{position:absolute;bottom:8px;left:8px;background:rgba(8,10,22,0.9);border:0.5px solid rgba(255,255,255,0.14);border-radius:7px;padding:7px 9px;display:none}
-#bond-scale{position:absolute;bottom:8px;right:8px;background:rgba(8,10,22,0.9);border:0.5px solid rgba(255,255,255,0.14);border-radius:7px;padding:7px 9px;display:none}
-.sc-title{font-size:10px;color:#8090b8;margin-bottom:3px;font-family:monospace}
+#tabs{display:flex;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0}
+.tab-btn{flex:1;padding:5px 3px;font-size:9px;background:transparent;border:none;color:#5060a0;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab-btn.active{color:#adc8ff;border-bottom-color:#5080ff}
+.tab-btn:hover{color:#c0c8e0}
+#tab-pt,#tab-export,#tab-import,#tab-formula{overflow-y:auto;flex:1;padding:6px;display:none;flex-direction:column}
+#tab-pt{display:flex}
+.pt-title{font-size:10px;color:#5060a0;margin-bottom:4px;font-weight:500}
+#assign-btns{display:flex;gap:3px;margin-bottom:5px}
+#assign-btns button{flex:1;font-size:10px;padding:3px 0}
+#pt-grid{display:grid;grid-template-columns:repeat(18,1fr);gap:1px;margin-bottom:3px}
+#pt-lan,#pt-act{display:grid;grid-template-columns:repeat(15,1fr);gap:1px;margin-bottom:2px}
+.el-cell{aspect-ratio:1;border-radius:2px;font-size:6.5px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:600;font-family:monospace;color:rgba(255,255,255,0.9);transition:transform .1s}
+.el-cell:hover{transform:scale(1.6);z-index:10;position:relative}
+.el-cell.selected{outline:2px solid #fff;z-index:20;position:relative;transform:scale(1.25)}
+.el-cell.empty{background:transparent;cursor:default;pointer-events:none}
+.ec-alkali{background:#8b2020}.ec-alkaline{background:#7a4010}.ec-transition{background:#1e4a6a}
+.ec-post{background:#2e4a5e}.ec-metalloid{background:#1a5535}.ec-nonmetal{background:#1a4545}
+.ec-halogen{background:#52304a}.ec-noble{background:#2a2a50}.ec-lanthanide{background:#3a3318}.ec-actinide{background:#3a2e10}
+.exp-btn{width:100%;background:rgba(90,140,255,0.12);border:0.5px solid rgba(90,140,255,0.35);color:#adc8ff;border-radius:4px;padding:4px 7px;font-size:10px;cursor:pointer;margin-bottom:3px;text-align:left;font-family:monospace;display:block;text-decoration:none}
+.exp-btn:hover{background:rgba(90,140,255,0.22)}
+.exp-group{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px;margin-bottom:5px}
+.exp-title{font-size:10px;color:#8090b8;margin-bottom:4px;font-weight:500}
+input.lat-inp{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:4px;padding:2px 4px;font-size:10px;width:55px;font-family:monospace}
+.lat-row{display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.lat-lbl{font-size:10px;color:#5060a0;width:18px;text-align:right;font-family:monospace}
+#charge-scale,#bond-scale{position:absolute;background:rgba(8,10,22,0.92);border:0.5px solid rgba(255,255,255,0.14);border-radius:7px;padding:6px 8px}
+#charge-scale{bottom:8px;left:8px}
+#bond-scale{bottom:8px;right:8px}
+.sc-title{font-size:9px;color:#8090b8;margin-bottom:2px;font-family:monospace}
 .sc-bar{display:block;border-radius:2px;margin-bottom:2px}
-.sc-labels{display:flex;justify-content:space-between;font-size:10px;color:#6070a0;font-family:monospace}
-#legend-bar{display:flex;flex-wrap:wrap;gap:5px;padding:5px 10px;background:#10131f;border-top:0.5px solid rgba(255,255,255,0.08);font-size:10px}
-.leg-item{display:flex;align-items:center;gap:3px;color:#5060a0}
-.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sc-labels{display:flex;justify-content:space-between;font-size:9px;color:#6070a0;font-family:monospace;gap:8px}
+#legend-bar{display:flex;flex-wrap:wrap;gap:4px;padding:4px 10px;background:#10131f;border-top:0.5px solid rgba(255,255,255,0.08);font-size:9px}
+.leg-item{display:flex;align-items:center;gap:3px;color:#4a5880}
+.leg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+#toast{position:absolute;top:8px;right:8px;background:rgba(40,180,90,0.92);color:#fff;font-size:11px;padding:5px 12px;border-radius:6px;display:none;font-family:monospace;z-index:100}
+textarea.code-area{width:100%;background:#0d1020;border:0.5px solid rgba(255,255,255,0.15);color:#a0d0ff;border-radius:4px;padding:5px;font-size:9px;font-family:monospace;resize:vertical;min-height:80px}
+.import-drop{border:1.5px dashed rgba(90,140,255,0.4);border-radius:6px;padding:12px 8px;text-align:center;color:#5868a0;font-size:10px;cursor:pointer;margin-bottom:5px;transition:all .2s}
+.import-drop:hover,.import-drop.over{border-color:rgba(90,140,255,0.8);background:rgba(90,140,255,0.08);color:#adc8ff}
+#formula-inp{width:100%;background:#0d1020;border:0.5px solid rgba(90,140,255,0.4);color:#e0e8ff;border-radius:5px;padding:5px 8px;font-size:13px;font-family:monospace;letter-spacing:1px;margin-bottom:5px}
+#formula-inp:focus{outline:none;border-color:rgba(90,140,255,0.8)}
+.role-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-family:monospace;font-weight:600;margin-right:3px}
 </style>
 </head>
 <body>
@@ -74,478 +99,193 @@ input.tb-num{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:
 <div id="toolbar">
   <span class="tb-label">Structure:</span>
   <select class="tb-sel" id="sel-struct" onchange="onStructChange()">
-    <option value="fcc">FCC</option>
-    <option value="bcc">BCC</option>
-    <option value="sc">Simple cubic</option>
-    <option value="hcp">HCP</option>
-    <option value="diamond">Diamond</option>
-    <option value="nacl">NaCl (rocksalt)</option>
-    <option value="zincblende">Zinc blende</option>
-    <option value="perovskite">Perovskite ABO3</option>
+    <option value="fcc">FCC</option><option value="bcc">BCC</option><option value="sc">Simple cubic</option>
+    <option value="hcp">HCP</option><option value="diamond">Diamond</option>
+    <option value="nacl">NaCl</option><option value="zincblende">Zinc blende</option><option value="perovskite">Perovskite ABO3</option>
   </select>
   <div class="sep"></div>
-  <span class="tb-label">Mode:</span>
   <button class="tb-btn active" id="btn-uc" onclick="setMode('unitcell')">Unit cell</button>
   <button class="tb-btn" id="btn-ss" onclick="setMode('super')">Supercell</button>
   <button class="tb-btn" id="btn-slab" onclick="setMode('slab')">Slab</button>
   <div class="sep"></div>
-  <span class="tb-label">nx</span><input class="tb-num" id="inp-nx" type="number" value="2" min="1" max="6" onchange="rebuild()">
-  <span class="tb-label">ny</span><input class="tb-num" id="inp-ny" type="number" value="2" min="1" max="6" onchange="rebuild()">
-  <span class="tb-label">nz</span><input class="tb-num" id="inp-nz" type="number" value="2" min="1" max="6" onchange="rebuild()">
+  <span class="tb-label">nx</span><input class="tb-num" id="inp-nx" type="number" value="2" min="1" max="5" onchange="rebuild()">
+  <span class="tb-label">ny</span><input class="tb-num" id="inp-ny" type="number" value="2" min="1" max="5" onchange="rebuild()">
+  <span class="tb-label">nz</span><input class="tb-num" id="inp-nz" type="number" value="2" min="1" max="5" onchange="rebuild()">
   <div class="sep"></div>
   <span class="tb-label">Surface:</span>
   <select class="tb-sel" id="sel-surf" onchange="rebuild()">
-    <option value="100">(1 0 0)</option>
-    <option value="110">(1 1 0)</option>
-    <option value="111">(1 1 1)</option>
-    <option value="211">(2 1 1)</option>
+    <option value="100">(100)</option><option value="110">(110)</option><option value="111">(111)</option><option value="211">(211)</option>
   </select>
   <span class="tb-label">Layers:</span>
   <input class="tb-num" id="inp-layers" type="number" value="4" min="2" max="8" onchange="rebuild()">
   <div class="sep"></div>
   <span class="tb-label">Charge:</span>
-  <select class="tb-sel" id="sel-charge-pal" onchange="render()">
-    <option value="blue">Blue</option>
-    <option value="red">Red</option>
-    <option value="green">Green</option>
-    <option value="purple">Purple</option>
+  <select class="tb-sel" id="sel-cp" onchange="render()">
+    <option value="blue">Blue</option><option value="red">Red</option><option value="green">Green</option><option value="purple">Purple</option>
   </select>
   <span class="tb-label">Bond:</span>
-  <select class="tb-sel" id="sel-bond-pal" onchange="render()">
-    <option value="orange">Orange</option>
-    <option value="teal">Teal</option>
-    <option value="pink">Pink</option>
-    <option value="gold">Gold</option>
+  <select class="tb-sel" id="sel-bp" onchange="render()">
+    <option value="orange">Orange</option><option value="teal">Teal</option><option value="pink">Pink</option><option value="gold">Gold</option>
   </select>
   <div class="sep"></div>
-  <button class="tb-btn active" id="btn-spin" onclick="toggleSpin()">&#8635; Spin</button>
-  <button class="tb-btn active" id="btn-bonds-tog" onclick="toggleBonds()">Bonds</button>
-  <button class="tb-btn active" id="btn-labels-tog" onclick="toggleLabels()">Labels</button>
-  <button class="tb-btn active" id="btn-charges-tog" onclick="toggleCharges()">&#963; charges</button>
-  <button class="tb-btn active" id="btn-blens-tog" onclick="toggleBondLens()">Bond &#8491;</button>
-  <button class="tb-btn active" id="btn-ucbox" onclick="toggleUCBox()">UC box</button>
+  <button class="tb-btn active" id="btn-spin" onclick="toggleSpin()">&#x21BB; Spin</button>
+  <button class="tb-btn active" id="btn-bt" onclick="tog('showBonds','btn-bt')">Bonds</button>
+  <button class="tb-btn active" id="btn-lt" onclick="tog('showLabels','btn-lt')">Labels</button>
+  <button class="tb-btn active" id="btn-ct" onclick="tog('showCharges','btn-ct')">&#963; charges</button>
+  <button class="tb-btn active" id="btn-blt" onclick="tog('showBondLens','btn-blt')">Bond &#8491;</button>
+  <button class="tb-btn active" id="btn-ucb" onclick="tog('showUCBox','btn-ucb')">UC box</button>
+  <button class="tb-btn active" id="btn-axes" onclick="tog('showAxes','btn-axes')">XYZ</button>
 </div>
 
 <div id="main-area">
 <div id="canvas-wrap">
   <canvas id="mol-canvas"></canvas>
-  <div id="charge-scale">
+  <div id="toast"></div>
+  <div id="charge-scale" style="display:none">
     <div class="sc-title">&#963; charge</div>
-    <canvas class="sc-bar" id="sc-charge" width="120" height="10"></canvas>
+    <canvas class="sc-bar" id="sc-c" width="110" height="9"></canvas>
     <div class="sc-labels"><span id="sc-cmin"></span><span id="sc-cmax"></span></div>
   </div>
-  <div id="bond-scale">
+  <div id="bond-scale" style="display:none">
     <div class="sc-title">bond length</div>
-    <canvas class="sc-bar" id="sc-bond" width="120" height="10"></canvas>
+    <canvas class="sc-bar" id="sc-b" width="110" height="9"></canvas>
     <div class="sc-labels"><span id="sc-bmin"></span><span id="sc-bmax"></span></div>
   </div>
 </div>
 
 <div id="side-panel">
   <div id="info-box">
-    <div class="info-title" id="info-name">FCC — Unit cell</div>
+    <div class="info-title" id="info-name">FCC &#8212; Unit cell</div>
     <div class="info-row"><span class="info-lbl">Lattice</span><span class="info-val" id="info-latt">cubic</span></div>
     <div class="info-row"><span class="info-lbl">a (&#8491;)</span><span class="info-val" id="info-a">3.52</span></div>
-    <div class="info-row"><span class="info-lbl">Space group</span><span class="info-val" id="info-sg">Fm3m</span></div>
-    <div class="info-row"><span class="info-lbl">Atoms</span><span class="info-val" id="info-atoms">—</span></div>
-    <div class="info-row"><span class="info-lbl">Element A</span><span class="info-val" id="info-elA">Ni</span></div>
-    <div class="info-row"><span class="info-lbl">Element B/X</span><span class="info-val" id="info-elB">—</span></div>
-    <div class="info-row"><span class="info-lbl">Hovered</span><span class="info-val" id="info-hov">—</span></div>
-    <div class="info-row"><span class="info-lbl">&#963; charge</span><span class="info-val" id="info-hcharge">—</span></div>
-    <div class="info-row"><span class="info-lbl">Bonds</span><span class="info-val" id="info-hbonds">—</span></div>
-    <div class="info-row"><span class="info-lbl">Bond &#8491;</span><span class="info-val" id="info-hblens">—</span></div>
+    <div class="info-row"><span class="info-lbl">Space group</span><span class="info-val" id="info-sg">Fm-3m</span></div>
+    <div class="info-row"><span class="info-lbl">Atoms total</span><span class="info-val" id="info-atoms">&#8212;</span></div>
+    <div class="info-row"><span class="info-lbl">Formula</span><span class="info-val" id="info-formula">&#8212;</span></div>
+    <div class="info-row"><span class="info-lbl">El A/B/X</span><span class="info-val" id="info-els">Ni/&#8212;/&#8212;</span></div>
+    <div style="border-top:0.5px solid rgba(255,255,255,0.07);margin:4px 0"></div>
+    <div class="info-row"><span class="info-lbl">Hovered</span><span class="info-val" id="info-hov">&#8212;</span></div>
+    <div class="info-row"><span class="info-lbl">&#963; charge</span><span class="info-val" id="info-hc">&#8212;</span></div>
+    <div class="info-row"><span class="info-lbl">Bonds</span><span class="info-val" id="info-hb">&#8212;</span></div>
+    <div class="info-row"><span class="info-lbl">Bond &#8491;</span><span class="info-val" id="info-hl">&#8212;</span></div>
   </div>
-  <div id="pt-panel">
-    <div class="pt-title">Pick element &rarr; assign role</div>
-    <div style="display:flex;gap:4px;margin-bottom:6px">
-      <button class="tb-btn" id="btn-role-a" onclick="setRole('A')" style="flex:1;font-size:11px">Set A</button>
-      <button class="tb-btn" id="btn-role-b" onclick="setRole('B')" style="flex:1;font-size:11px">Set B</button>
-      <button class="tb-btn" id="btn-role-o" onclick="setRole('O')" style="flex:1;font-size:11px">Set X</button>
+  <div id="tabs">
+    <button class="tab-btn active" id="tab-pt-btn" onclick="switchTab('pt')">Elements</button>
+    <button class="tab-btn" id="tab-formula-btn" onclick="switchTab('formula')">Formula</button>
+    <button class="tab-btn" id="tab-import-btn" onclick="switchTab('import')">Import</button>
+    <button class="tab-btn" id="tab-export-btn" onclick="switchTab('export')">Export</button>
+  </div>
+
+  <div id="tab-pt" style="display:flex;flex-direction:column">
+    <div class="pt-title">1. Click element &nbsp; 2. Assign role</div>
+    <div id="assign-btns">
+      <button class="tb-btn" onclick="setRole('A')">Set A</button>
+      <button class="tb-btn" onclick="setRole('B')">Set B</button>
+      <button class="tb-btn" onclick="setRole('O')">Set X</button>
     </div>
+    <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">
+      <span class="pt-title" style="margin:0">Type symbol:</span>
+      <input id="el-input" style="background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:4px;padding:2px 5px;font-size:10px;width:40px;font-family:monospace" placeholder="Fe" oninput="onElInput(this.value)">
+      <span id="sel-badge" style="font-size:9px;color:#adc8ff;font-family:monospace">&#8212;</span>
+    </div>
+    <div id="el-assign-display" style="display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap"></div>
     <div id="pt-grid"></div>
+    <div class="pt-title" style="margin-top:3px">Lanthanides</div><div id="pt-lan"></div>
+    <div class="pt-title" style="margin-top:2px">Actinides</div><div id="pt-act"></div>
+  </div>
+
+  <div id="tab-formula" style="flex-direction:column">
+    <div class="pt-title">Chemical formula &#8594; build structure</div>
+    <input id="formula-inp" placeholder="e.g. NiO  Fe3O4  BaTiO3  GaAs" oninput="onFormulaInput(this.value)" onkeydown="if(event.key==='Enter')applyFormula()">
+    <div id="formula-preview" style="font-size:10px;color:#8090b8;font-family:monospace;min-height:14px;margin-bottom:4px"></div>
+    <button class="exp-btn" onclick="applyFormula()" style="text-align:center;margin-bottom:6px">Apply formula &#8594; update structure</button>
+    <div class="exp-group">
+      <div class="exp-title">Quick formulas</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px">
+        <button class="tb-btn" onclick="quickFormula('NiAl')">NiAl</button>
+        <button class="tb-btn" onclick="quickFormula('Fe3O4')">Fe3O4</button>
+        <button class="tb-btn" onclick="quickFormula('BaTiO3')">BaTiO3</button>
+        <button class="tb-btn" onclick="quickFormula('GaAs')">GaAs</button>
+        <button class="tb-btn" onclick="quickFormula('NaCl')">NaCl</button>
+        <button class="tb-btn" onclick="quickFormula('CsPbI3')">CsPbI3</button>
+        <button class="tb-btn" onclick="quickFormula('MgO')">MgO</button>
+        <button class="tb-btn" onclick="quickFormula('TiN')">TiN</button>
+        <button class="tb-btn" onclick="quickFormula('ZnS')">ZnS</button>
+        <button class="tb-btn" onclick="quickFormula('AlN')">AlN</button>
+      </div>
+    </div>
+    <div class="exp-group" style="margin-top:4px">
+      <div class="exp-title">Role assignment</div>
+      <div id="formula-role-out" style="font-size:10px;color:#8090b8;font-family:monospace;min-height:18px"></div>
+    </div>
+  </div>
+
+  <div id="tab-import" style="flex-direction:column">
+    <div class="exp-group">
+      <div class="exp-title">Import from computer</div>
+      <div class="import-drop" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="onFileDrop(event)">
+        Drop CIF / POSCAR / XYZ / PDB here<br>or click to browse
+      </div>
+      <input type="file" id="file-input" style="display:none" accept=".cif,.vasp,.poscar,.xyz,.pdb,.lammps,.gjf" onchange="onFileInput(this)">
+      <div id="import-status" style="font-size:10px;color:#8090b8;font-family:monospace;min-height:14px;margin-bottom:3px"></div>
+    </div>
+    <div class="exp-group">
+      <div class="exp-title">Paste structure text</div>
+      <textarea class="code-area" id="paste-area" placeholder="Paste CIF, POSCAR, or XYZ text here..." rows="5"></textarea>
+      <button class="exp-btn" onclick="parseFromText(document.getElementById('paste-area').value)">Parse &amp; load</button>
+    </div>
+    <div class="exp-group">
+      <div class="exp-title">Online databases</div>
+      <a class="exp-btn" href="https://materialsproject.org" target="_blank" rel="noopener">Materials Project &#8594;</a>
+      <a class="exp-btn" href="https://icsd.fiz-karlsruhe.de" target="_blank" rel="noopener">ICSD (FIZ Karlsruhe) &#8594;</a>
+      <a class="exp-btn" href="https://www.crystallography.net/cod/" target="_blank" rel="noopener">Crystallography Open DB &#8594;</a>
+      <a class="exp-btn" href="https://aflowlib.org" target="_blank" rel="noopener">AFLOW Library &#8594;</a>
+      <a class="exp-btn" href="https://www.ccdc.cam.ac.uk/structures/" target="_blank" rel="noopener">CCDC Cambridge &#8594;</a>
+      <div style="font-size:9px;color:#4a5880;margin-top:4px">Download CIF from any database, then import above</div>
+    </div>
+  </div>
+
+  <div id="tab-export" style="flex-direction:column">
+    <div class="exp-group">
+      <div class="exp-title">Lattice override (&#8491; / &#176;)</div>
+      <div class="lat-row"><span class="lat-lbl">a</span><input class="lat-inp" id="lat-a" placeholder="auto"><span class="lat-lbl">b</span><input class="lat-inp" id="lat-b" placeholder="=a"></div>
+      <div class="lat-row"><span class="lat-lbl">c</span><input class="lat-inp" id="lat-c" placeholder="=a"><span class="lat-lbl">&#945;</span><input class="lat-inp" id="lat-al" placeholder="90"></div>
+      <div class="lat-row"><span class="lat-lbl">&#946;</span><input class="lat-inp" id="lat-be" placeholder="90"><span class="lat-lbl">&#947;</span><input class="lat-inp" id="lat-ga" placeholder="90/120"></div>
+    </div>
+    <div class="exp-group">
+      <div class="exp-title">Download</div>
+      <button class="exp-btn" onclick="exportFile('cif')">CIF &#8212; VESTA, Mercury, CrystalMaker</button>
+      <button class="exp-btn" onclick="exportFile('poscar')">POSCAR &#8212; VASP, pymatgen, ASE</button>
+      <button class="exp-btn" onclick="exportFile('xyz')">XYZ &#8212; Avogadro, OVITO, Jmol</button>
+      <button class="exp-btn" onclick="exportFile('lammps')">LAMMPS data file</button>
+      <button class="exp-btn" onclick="exportFile('pdb')">PDB &#8212; VMD, PyMOL, Chimera</button>
+      <button class="exp-btn" onclick="exportFile('gjf')">GJF &#8212; Gaussian input</button>
+    </div>
+    <div class="exp-group">
+      <div class="exp-title">Copy to clipboard</div>
+      <button class="exp-btn" onclick="copyFormat('cif')">Copy CIF text</button>
+      <button class="exp-btn" onclick="copyFormat('poscar')">Copy POSCAR text</button>
+      <button class="exp-btn" onclick="copyFormat('xyz')">Copy XYZ text</button>
+    </div>
   </div>
 </div>
 </div>
 
 <div id="legend-bar">
-  <span class="leg-item"><span class="leg-dot" style="background:#c04050"></span>Alkali</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#a05020"></span>Alkaline</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#305878"></span>Transition</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#406080"></span>Post-trans</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#1e6644"></span>Metalloid</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#1e5050"></span>Nonmetal</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#604455"></span>Halogen</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#383858"></span>Noble</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#8b2020"></span>Alkali</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#7a4010"></span>Alkaline</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#1e4a6a"></span>Transition</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#2e4a5e"></span>Post-trans</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#1a5535"></span>Metalloid</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#1a4545"></span>Nonmetal</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#52304a"></span>Halogen</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#2a2a50"></span>Noble gas</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#3a3318"></span>Lanthanide</span>
+  <span class="leg-item"><span class="leg-dot" style="background:#3a2e10"></span>Actinide</span>
 </div>
 </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-// ── Element data ──────────────────────────────────────────────────────────────
-const ELEMENTS = [
-  {s:'H', n:'Hydrogen',     Z:1,  r:53,  c:'#eeeeee', cat:'nonmetal',   row:1, col:1},
-  {s:'He',n:'Helium',       Z:2,  r:31,  c:'#a090cc', cat:'noble',      row:1, col:18},
-  {s:'Li',n:'Lithium',      Z:3,  r:167, c:'#ff6655', cat:'alkali',     row:2, col:1},
-  {s:'Be',n:'Beryllium',    Z:4,  r:112, c:'#e08040', cat:'alkaline',   row:2, col:2},
-  {s:'B', n:'Boron',        Z:5,  r:87,  c:'#44aa66', cat:'metalloid',  row:2, col:13},
-  {s:'C', n:'Carbon',       Z:6,  r:67,  c:'#888888', cat:'nonmetal',   row:2, col:14},
-  {s:'N', n:'Nitrogen',     Z:7,  r:56,  c:'#4488cc', cat:'nonmetal',   row:2, col:15},
-  {s:'O', n:'Oxygen',       Z:8,  r:48,  c:'#ff4444', cat:'nonmetal',   row:2, col:16},
-  {s:'F', n:'Fluorine',     Z:9,  r:42,  c:'#99cc44', cat:'halogen',    row:2, col:17},
-  {s:'Ne',n:'Neon',         Z:10, r:38,  c:'#8877bb', cat:'noble',      row:2, col:18},
-  {s:'Na',n:'Sodium',       Z:11, r:190, c:'#ff6655', cat:'alkali',     row:3, col:1},
-  {s:'Mg',n:'Magnesium',    Z:12, r:145, c:'#e08040', cat:'alkaline',   row:3, col:2},
-  {s:'Al',n:'Aluminium',    Z:13, r:118, c:'#6688aa', cat:'post',       row:3, col:13},
-  {s:'Si',n:'Silicon',      Z:14, r:111, c:'#44aa66', cat:'metalloid',  row:3, col:14},
-  {s:'P', n:'Phosphorus',   Z:15, r:98,  c:'#ff8844', cat:'nonmetal',   row:3, col:15},
-  {s:'S', n:'Sulfur',       Z:16, r:88,  c:'#ddcc22', cat:'nonmetal',   row:3, col:16},
-  {s:'Cl',n:'Chlorine',     Z:17, r:79,  c:'#99cc44', cat:'halogen',    row:3, col:17},
-  {s:'Ar',n:'Argon',        Z:18, r:71,  c:'#8877bb', cat:'noble',      row:3, col:18},
-  {s:'K', n:'Potassium',    Z:19, r:243, c:'#ff6655', cat:'alkali',     row:4, col:1},
-  {s:'Ca',n:'Calcium',      Z:20, r:194, c:'#e08040', cat:'alkaline',   row:4, col:2},
-  {s:'Sc',n:'Scandium',     Z:21, r:184, c:'#5588aa', cat:'transition', row:4, col:3},
-  {s:'Ti',n:'Titanium',     Z:22, r:176, c:'#5588aa', cat:'transition', row:4, col:4},
-  {s:'V', n:'Vanadium',     Z:23, r:171, c:'#5588aa', cat:'transition', row:4, col:5},
-  {s:'Cr',n:'Chromium',     Z:24, r:166, c:'#5588aa', cat:'transition', row:4, col:6},
-  {s:'Mn',n:'Manganese',    Z:25, r:161, c:'#5588aa', cat:'transition', row:4, col:7},
-  {s:'Fe',n:'Iron',         Z:26, r:156, c:'#cc6644', cat:'transition', row:4, col:8},
-  {s:'Co',n:'Cobalt',       Z:27, r:152, c:'#5588aa', cat:'transition', row:4, col:9},
-  {s:'Ni',n:'Nickel',       Z:28, r:149, c:'#88aacc', cat:'transition', row:4, col:10},
-  {s:'Cu',n:'Copper',       Z:29, r:145, c:'#cc8844', cat:'transition', row:4, col:11},
-  {s:'Zn',n:'Zinc',         Z:30, r:142, c:'#6699aa', cat:'transition', row:4, col:12},
-  {s:'Ga',n:'Gallium',      Z:31, r:136, c:'#6688aa', cat:'post',       row:4, col:13},
-  {s:'Ge',n:'Germanium',    Z:32, r:125, c:'#44aa66', cat:'metalloid',  row:4, col:14},
-  {s:'As',n:'Arsenic',      Z:33, r:114, c:'#44aa66', cat:'metalloid',  row:4, col:15},
-  {s:'Se',n:'Selenium',     Z:34, r:103, c:'#ddcc22', cat:'nonmetal',   row:4, col:16},
-  {s:'Br',n:'Bromine',      Z:35, r:94,  c:'#aa5544', cat:'halogen',    row:4, col:17},
-  {s:'Kr',n:'Krypton',      Z:36, r:88,  c:'#8877bb', cat:'noble',      row:4, col:18},
-  {s:'Rb',n:'Rubidium',     Z:37, r:265, c:'#ff6655', cat:'alkali',     row:5, col:1},
-  {s:'Sr',n:'Strontium',    Z:38, r:219, c:'#e08040', cat:'alkaline',   row:5, col:2},
-  {s:'Y', n:'Yttrium',      Z:39, r:212, c:'#5588aa', cat:'transition', row:5, col:3},
-  {s:'Zr',n:'Zirconium',    Z:40, r:206, c:'#5588aa', cat:'transition', row:5, col:4},
-  {s:'Nb',n:'Niobium',      Z:41, r:198, c:'#5588aa', cat:'transition', row:5, col:5},
-  {s:'Mo',n:'Molybdenum',   Z:42, r:190, c:'#5588aa', cat:'transition', row:5, col:6},
-  {s:'Tc',n:'Technetium',   Z:43, r:183, c:'#5588aa', cat:'transition', row:5, col:7},
-  {s:'Ru',n:'Ruthenium',    Z:44, r:178, c:'#5588aa', cat:'transition', row:5, col:8},
-  {s:'Rh',n:'Rhodium',      Z:45, r:173, c:'#aabbcc', cat:'transition', row:5, col:9},
-  {s:'Pd',n:'Palladium',    Z:46, r:169, c:'#aabbcc', cat:'transition', row:5, col:10},
-  {s:'Ag',n:'Silver',       Z:47, r:165, c:'#d0d0d0', cat:'transition', row:5, col:11},
-  {s:'Cd',n:'Cadmium',      Z:48, r:161, c:'#6699aa', cat:'transition', row:5, col:12},
-  {s:'In',n:'Indium',       Z:49, r:156, c:'#6688aa', cat:'post',       row:5, col:13},
-  {s:'Sn',n:'Tin',          Z:50, r:145, c:'#6688aa', cat:'post',       row:5, col:14},
-  {s:'Sb',n:'Antimony',     Z:51, r:133, c:'#44aa66', cat:'metalloid',  row:5, col:15},
-  {s:'Te',n:'Tellurium',    Z:52, r:123, c:'#44aa66', cat:'metalloid',  row:5, col:16},
-  {s:'I', n:'Iodine',       Z:53, r:115, c:'#8855aa', cat:'halogen',    row:5, col:17},
-  {s:'Xe',n:'Xenon',        Z:54, r:108, c:'#8877bb', cat:'noble',      row:5, col:18},
-  {s:'Cs',n:'Cesium',       Z:55, r:298, c:'#ff6655', cat:'alkali',     row:6, col:1},
-  {s:'Ba',n:'Barium',       Z:56, r:253, c:'#e08040', cat:'alkaline',   row:6, col:2},
-  {s:'La',n:'Lanthanum',    Z:57, r:250, c:'#778855', cat:'lanthanide', row:6, col:3},
-  {s:'Hf',n:'Hafnium',      Z:72, r:208, c:'#5588aa', cat:'transition', row:6, col:4},
-  {s:'Ta',n:'Tantalum',     Z:73, r:200, c:'#5588aa', cat:'transition', row:6, col:5},
-  {s:'W', n:'Tungsten',     Z:74, r:193, c:'#5588aa', cat:'transition', row:6, col:6},
-  {s:'Re',n:'Rhenium',      Z:75, r:188, c:'#5588aa', cat:'transition', row:6, col:7},
-  {s:'Os',n:'Osmium',       Z:76, r:185, c:'#5588aa', cat:'transition', row:6, col:8},
-  {s:'Ir',n:'Iridium',      Z:77, r:180, c:'#aabbcc', cat:'transition', row:6, col:9},
-  {s:'Pt',n:'Platinum',     Z:78, r:177, c:'#d0d0e0', cat:'transition', row:6, col:10},
-  {s:'Au',n:'Gold',         Z:79, r:174, c:'#ffcc44', cat:'transition', row:6, col:11},
-  {s:'Hg',n:'Mercury',      Z:80, r:171, c:'#6699aa', cat:'transition', row:6, col:12},
-  {s:'Tl',n:'Thallium',     Z:81, r:156, c:'#6688aa', cat:'post',       row:6, col:13},
-  {s:'Pb',n:'Lead',         Z:82, r:154, c:'#6688aa', cat:'post',       row:6, col:14},
-  {s:'Bi',n:'Bismuth',      Z:83, r:143, c:'#997766', cat:'post',       row:6, col:15},
-  {s:'Fr',n:'Francium',     Z:87, r:348, c:'#ff6655', cat:'alkali',     row:7, col:1},
-  {s:'Ra',n:'Radium',       Z:88, r:283, c:'#e08040', cat:'alkaline',   row:7, col:2},
-  {s:'Ac',n:'Actinium',     Z:89, r:260, c:'#887744', cat:'actinide',   row:7, col:3},
-];
-const EL_MAP = {};
-ELEMENTS.forEach(e => { EL_MAP[e.s] = e; });
-const CAT_CLASS = {
-  alkali:'ec-alkali', alkaline:'ec-alkaline', transition:'ec-transition',
-  post:'ec-post', metalloid:'ec-metalloid', nonmetal:'ec-nonmetal',
-  halogen:'ec-halogen', noble:'ec-noble', lanthanide:'ec-lanthanide', actinide:'ec-actinide'
-};
-
-// ── Crystal structure definitions ─────────────────────────────────────────────
-const STRUCTURES = {
-  fcc: { name:'FCC', lattice:'cubic', sg:'Fm3m', a:3.52,
-    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'}], roles:['A'] },
-  bcc: { name:'BCC', lattice:'cubic', sg:'Im3m', a:2.87,
-    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:.5,role:'A'}], roles:['A'] },
-  sc: { name:'Simple cubic', lattice:'cubic', sg:'Pm3m', a:3.0,
-    sites:[{x:0,y:0,z:0,role:'A'}], roles:['A'] },
-  hcp: { name:'HCP', lattice:'hexagonal', sg:'P63/mmc', a:2.51, c:4.07,
-    sites:[{x:0,y:0,z:0,role:'A'},{x:1/3,y:2/3,z:.5,role:'A'}], roles:['A'] },
-  diamond: { name:'Diamond', lattice:'cubic', sg:'Fd3m', a:5.43,
-    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},
-      {x:.25,y:.25,z:.25,role:'A'},{x:.75,y:.75,z:.25,role:'A'},{x:.75,y:.25,z:.75,role:'A'},{x:.25,y:.75,z:.75,role:'A'}], roles:['A'] },
-  nacl: { name:'NaCl', lattice:'cubic', sg:'Fm3m', a:5.64,
-    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},
-      {x:.5,y:0,z:0,role:'B'},{x:0,y:.5,z:0,role:'B'},{x:0,y:0,z:.5,role:'B'},{x:.5,y:.5,z:.5,role:'B'}], roles:['A','B'] },
-  zincblende: { name:'Zinc blende', lattice:'cubic', sg:'F43m', a:5.41,
-    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},
-      {x:.25,y:.25,z:.25,role:'B'},{x:.75,y:.75,z:.25,role:'B'},{x:.75,y:.25,z:.75,role:'B'},{x:.25,y:.75,z:.75,role:'B'}], roles:['A','B'] },
-  perovskite: { name:'Perovskite', lattice:'cubic', sg:'Pm3m', a:3.91,
-    sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:.5,role:'B'},
-      {x:.5,y:.5,z:0,role:'O'},{x:.5,y:0,z:.5,role:'O'},{x:0,y:.5,z:.5,role:'O'}], roles:['A','B','O'] }
-};
-
-const CHARGE_PALETTES = { blue:{lo:[15,25,80],hi:[160,210,255]}, red:{lo:[60,10,10],hi:[255,160,140]}, green:{lo:[10,40,20],hi:[130,255,160]}, purple:{lo:[30,10,60],hi:[200,150,255]} };
-const BOND_PALETTES = { orange:{lo:[40,20,5],hi:[255,175,60]}, teal:{lo:[5,30,35],hi:[60,220,210]}, pink:{lo:[50,10,30],hi:[255,150,200]}, gold:{lo:[35,28,5],hi:[240,210,80]} };
-function lerp3(lo,hi,t){return lo.map((v,i)=>Math.round(v+(hi[i]-v)*t));}
-function rgb(a){return `rgb(${a[0]},${a[1]},${a[2]})`;}
-function chargePal(){return CHARGE_PALETTES[document.getElementById('sel-charge-pal').value];}
-function bondPal(){return BOND_PALETTES[document.getElementById('sel-bond-pal').value];}
-function chargeToColor(charge,allCharges){const mx=Math.max(...allCharges.map(Math.abs),0.001);const t=Math.max(0,Math.min(1,(charge/mx+1)/2));return rgb(lerp3(chargePal().lo,chargePal().hi,t));}
-function bondLenColor(len,minLen,maxLen){const t=maxLen>minLen?(len-minLen)/(maxLen-minLen):0.5;return rgb(lerp3(bondPal().lo,bondPal().hi,t));}
-
-let elAssign={A:'Ni',B:'Cl',O:'O'}, selectedEl=null, mode='unitcell';
-let showBonds=true, showLabels=true, showCharges=true, showBondLens=true, showUCBox=true, spinning=true;
-let rotX=0.35, rotY=0.45, dragging=false, lastMX=0, lastMY=0, spinRAF=null;
-let currentAtoms=[], currentBonds=[], ucVecs=[[1,0,0],[0,1,0],[0,0,1]], hoveredAtom=null;
-
-const canvas = document.getElementById('mol-canvas');
-const ctx = canvas.getContext('2d');
-
-function buildPT() {
-  const grid = document.getElementById('pt-grid');
-  grid.innerHTML = '';
-  const cells = Array(7*18).fill(null);
-  ELEMENTS.forEach(el => { if (el.row <= 7) cells[(el.row-1)*18 + (el.col-1)] = el; });
-  cells.forEach(el => {
-    const div = document.createElement('div');
-    div.className = 'el-cell ' + (el ? (CAT_CLASS[el.cat]||'ec-transition') : '');
-    if (el) { div.textContent=el.s; div.title=el.n; div.dataset.sym=el.s; div.onclick=()=>selectEl(el.s); }
-    grid.appendChild(div);
-  });
-}
-function selectEl(sym) { selectedEl = sym; document.querySelectorAll('.el-cell').forEach(c => c.classList.remove('selected')); document.querySelectorAll(`[data-sym="${sym}"]`).forEach(c => c.classList.add('selected')); }
-function setRole(role) { if (!selectedEl) return; elAssign[role] = selectedEl; rebuild(); updateInfoPanel(); }
-function getElSym(role) { return elAssign[role] || {A:'Ni',B:'Cl',O:'O'}[role]; }
-function getElColor(role) { const e=EL_MAP[getElSym(role)]; return e ? e.c : '#aaaaaa'; }
-function getElR(role) { const e=EL_MAP[getElSym(role)]; return e ? Math.max(10,(e.r/140)*18) : 14; }
-
-function hexToRgb(hex) { if (hex.startsWith('rgb')) return hex; return `rgb(${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)})`; }
-function blendW(col,t) { const m=hexToRgb(col).match(/\d+/g); const r=+m[0],g=+m[1],b=+m[2]; return `rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`; }
-function darkenC(col,t) { const m=hexToRgb(col).match(/\d+/g); const r=+m[0],g=+m[1],b=+m[2]; return `rgb(${Math.round(r*(1-t))},${Math.round(g*(1-t))},${Math.round(b*(1-t))})`; }
-
-function getLattVecs(sp) {
-  const a=sp.a, c_=sp.c||sp.a;
-  if (sp.lattice === 'hexagonal') return [[a,0,0], [a*Math.cos(2*Math.PI/3), a*Math.sin(2*Math.PI/3)*0.5+a*0.5*Math.sin(Math.PI/3), 0], [0,0,c_]];
-  return [[a,0,0],[0,a,0],[0,0,a]];
-}
-
-function buildUCAtoms(sp, sc) {
-  const [nx,ny,nz] = sc;
-  const latt = getLattVecs(sp);
-  const atoms = [], seen = new Set();
-  for (let ix=0; ix<nx; ix++) for (let iy=0; iy<ny; iy++) for (let iz=0; iz<nz; iz++) {
-    sp.sites.forEach(site => {
-      const fx=site.x+ix, fy=site.y+iy, fz=site.z+iz;
-      if (fx>nx-1e-6 || fy>ny-1e-6 || fz>nz-1e-6) return;
-      const key=`${fx.toFixed(4)},${fy.toFixed(4)},${fz.toFixed(4)},${site.role}`;
-      if (seen.has(key)) return; seen.add(key);
-      atoms.push({ x: fx*latt[0][0]+fy*latt[1][0]+fz*latt[2][0], y: fx*latt[0][1]+fy*latt[1][1]+fz*latt[2][1], z: fx*latt[0][2]+fy*latt[1][2]+fz*latt[2][2], role:site.role, fx, fy, fz, id:atoms.length });
-    });
-  }
-  const ucV = [[nx*latt[0][0],nx*latt[0][1],nx*latt[0][2]],[ny*latt[1][0],ny*latt[1][1],ny*latt[1][2]],[nz*latt[2][0],nz*latt[2][1],nz*latt[2][2]]];
-  return { atoms, ucV };
-}
-
-function buildSlabAtoms(sp, layers, surfStr) {
-  const latt = getLattVecs(sp);
-  const h=parseInt(surfStr[0])||1, k=parseInt(surfStr[1])||0, l=parseInt(surfStr[2])||0;
-  const atoms = [], seen = new Set();
-  const range = Math.max(layers, 4);
-  for (let ix=-range; ix<=range; ix++) for (let iy=-range; iy<=range; iy++) for (let iz=-range; iz<=range; iz++) {
-    sp.sites.forEach(site => {
-      const fx=site.x+ix, fy=site.y+iy, fz=site.z+iz;
-      const proj = fx*h + fy*k + fz*l;
-      if (proj < -0.5 || proj > layers+0.5) return;
-      const cx=fx*latt[0][0]+fy*latt[1][0]+fz*latt[2][0], cy=fx*latt[0][1]+fy*latt[1][1]+fz*latt[2][1], cz=fx*latt[0][2]+fy*latt[1][2]+fz*latt[2][2];
-      const key=`${cx.toFixed(3)},${cy.toFixed(3)},${cz.toFixed(3)},${site.role}`;
-      if (seen.has(key)) return; seen.add(key);
-      atoms.push({ x:cx, y:cy, z:cz, role:site.role, fx, fy, fz, id:atoms.length, layer:Math.round(proj) });
-    });
-  }
-  const d = sp.a / Math.sqrt(h*h+k*k+l*l);
-  const ucV = [[3*latt[0][0],0,0],[0,3*(latt[1][1]||latt[0][0]),0],[0,0,layers*d]];
-  return { atoms, ucV };
-}
-
-function assignCharges(atoms, sp) {
-  const chargeMap = { A:0.417, B:-0.417, O:-0.834 };
-  if (sp.roles.length === 1) atoms.forEach(a => { a.charge = 0; });
-  else atoms.forEach(a => { a.charge = chargeMap[a.role] || 0; });
-}
-
-function computeBonds(atoms, sp) {
-  const cutoff = sp.a * 0.85, bonds = [];
-  const n = Math.min(atoms.length, 300);
-  for (let i=0; i<n; i++) for (let j=i+1; j<n; j++) {
-    const dx=atoms[i].x-atoms[j].x, dy=atoms[i].y-atoms[j].y, dz=atoms[i].z-atoms[j].z;
-    const d = Math.sqrt(dx*dx+dy*dy+dz*dz);
-    if (d < cutoff) bonds.push({ a:i, b:j, len:parseFloat(d.toFixed(4)) });
-  }
-  return bonds;
-}
-
-function rebuild() {
-  const sp = STRUCTURES[document.getElementById('sel-struct').value];
-  const nx = Math.max(1, Math.min(6, parseInt(document.getElementById('inp-nx').value)||2));
-  const ny = Math.max(1, Math.min(6, parseInt(document.getElementById('inp-ny').value)||2));
-  const nz = Math.max(1, Math.min(6, parseInt(document.getElementById('inp-nz').value)||2));
-  const layers = Math.max(2, Math.min(8, parseInt(document.getElementById('inp-layers').value)||4));
-  const surf = document.getElementById('sel-surf').value;
-  let result = mode === 'slab' ? buildSlabAtoms(sp, layers, surf) : buildUCAtoms(sp, mode === 'super' ? [nx,ny,nz] : [1,1,1]);
-  currentAtoms = result.atoms;
-  ucVecs = result.ucV;
-  assignCharges(currentAtoms, sp);
-  currentBonds = computeBonds(currentAtoms, sp);
-  document.getElementById('info-atoms').textContent = currentAtoms.length;
-  render();
-}
-
-function getStrParams() { return STRUCTURES[document.getElementById('sel-struct').value]; }
-function setMode(m) { mode = m; ['btn-uc','btn-ss','btn-slab'].forEach(id => document.getElementById(id).classList.remove('active')); document.getElementById({unitcell:'btn-uc', super:'btn-ss', slab:'btn-slab'}[m]).classList.add('active'); updateInfoPanel(); rebuild(); }
-function onStructChange() { rebuild(); updateInfoPanel(); }
-
-function updateInfoPanel() {
-  const sp = getStrParams();
-  const mstr = {unitcell:'Unit cell', super:'Supercell', slab:'Slab'}[mode];
-  document.getElementById('info-name').textContent = sp.name + ' — ' + mstr;
-  document.getElementById('info-latt').textContent = sp.lattice;
-  document.getElementById('info-a').textContent = sp.a.toFixed(3);
-  document.getElementById('info-sg').textContent = sp.sg;
-  document.getElementById('info-elA').textContent = getElSym('A');
-  document.getElementById('info-elB').textContent = sp.roles.includes('B') ? getElSym('B') + (sp.roles.includes('O') ? '/'+getElSym('O') : '') : '—';
-}
-
-function rotateP(x, y, z) {
-  let cy=Math.cos(rotY), sy=Math.sin(rotY);
-  let x1=cy*x+sy*z, z1=-sy*x+cy*z;
-  let cx=Math.cos(rotX), sx=Math.sin(rotX);
-  let y2=cx*y-sx*z1, z2=sx*y+cx*z1;
-  return { x:x1, y:y2, z:z2 };
-}
-
-function drawSphere(x, y, r, col, pz, hovered) {
-  const bright = 0.55 + 0.45*Math.max(0, pz/4);
-  const grd = ctx.createRadialGradient(x-r*.3, y-r*.3, r*.07, x, y, r*1.1);
-  grd.addColorStop(0, blendW(col, 0.62)); grd.addColorStop(0.35, blendW(col, 0.1 + bright*0.12)); grd.addColorStop(1, darkenC(col, 0.58));
-  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle=grd; ctx.fill();
-  if (hovered) { ctx.beginPath(); ctx.arc(x,y,r+3,0,Math.PI*2); ctx.strokeStyle='rgba(220,240,255,0.85)'; ctx.lineWidth=2; ctx.stroke(); }
-  ctx.beginPath(); ctx.arc(x-r*.27, y-r*.27, r*.26, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fill();
-}
-
-function drawScaleBars() {
-  if (!currentAtoms.length) return;
-  const allCharges = currentAtoms.map(a => a.charge), allLens = currentBonds.map(b => b.len);
-  const drawBar = (canvId, lo, hi, minLbl, maxLbl, minElId, maxElId) => {
-    const c=document.getElementById(canvId), sc=c.getContext('2d');
-    const grd=sc.createLinearGradient(0,0,c.width,0); grd.addColorStop(0, rgb(lo)); grd.addColorStop(1, rgb(hi));
-    sc.fillStyle=grd; sc.fillRect(0,0,c.width,c.height);
-    document.getElementById(minElId).textContent = minLbl; document.getElementById(maxElId).textContent = maxLbl;
-  };
-  const mx = Math.max(...allCharges.map(Math.abs), 0.001);
-  drawBar('sc-charge', chargePal().lo, chargePal().hi, (-mx).toFixed(2)+'e', '+'+mx.toFixed(2)+'e', 'sc-cmin', 'sc-cmax');
-  document.getElementById('charge-scale').style.display = showCharges ? 'block' : 'none';
-  if (allLens.length > 0) { const bp=bondPal(), minL=Math.min(...allLens), maxL=Math.max(...allLens); drawBar('sc-bond', bp.lo, bp.hi, minL.toFixed(3)+' A', maxL.toFixed(3)+' A', 'sc-bmin', 'sc-bmax'); document.getElementById('bond-scale').style.display = (showBondLens && showBonds) ? 'block' : 'none'; }
-  else document.getElementById('bond-scale').style.display = 'none';
-}
-
-function render() {
-  const W=canvas.offsetWidth||900, H=500;
-  canvas.width=W; canvas.height=H;
-  ctx.fillStyle='#0a0c14'; ctx.fillRect(0,0,W,H);
-  for (let i=0; i<60; i++) { ctx.beginPath(); ctx.arc(Math.sin(i*137.5)*W*.48+W*.5, Math.cos(i*97.3)*220+250, i%3===0?.8:.5, 0, Math.PI*2); ctx.fillStyle=`rgba(200,210,255,${0.06+(i%5)*.022})`; ctx.fill(); }
-  if (!currentAtoms.length) { drawScaleBars(); return; }
-  const xs=currentAtoms.map(a=>a.x), ys=currentAtoms.map(a=>a.y), zs=currentAtoms.map(a=>a.z);
-  const cxc=(Math.max(...xs)+Math.min(...xs))/2, cyc=(Math.max(...ys)+Math.min(...ys))/2, czc=(Math.max(...zs)+Math.min(...zs))/2;
-  const span = Math.max(Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys), Math.max(...zs)-Math.min(...zs), 1);
-  const scale = Math.min(W,H)*0.36 / span;
-  const proj = currentAtoms.map(a => { const p = rotateP(a.x-cxc, a.y-cyc, a.z-czc); return { ...a, px:W/2+p.x*scale, py:H/2-p.y*scale, pz:p.z }; });
-  if (showUCBox) {
-    const c8 = [[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1]];
-    const cp = c8.map(([i,j,k]) => { const wx=i*ucVecs[0][0]+j*ucVecs[1][0]+k*ucVecs[2][0]-cxc, wy=i*ucVecs[0][1]+j*ucVecs[1][1]+k*ucVecs[2][1]-cyc, wz=i*ucVecs[0][2]+j*ucVecs[1][2]+k*ucVecs[2][2]-czc; const p=rotateP(wx,wy,wz); return { px:W/2+p.x*scale, py:H/2-p.y*scale }; });
-    const edges=[[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]];
-    ctx.strokeStyle='rgba(100,160,255,0.32)'; ctx.lineWidth=0.8; ctx.setLineDash([4,4]);
-    edges.forEach(([a,b]) => { ctx.beginPath(); ctx.moveTo(cp[a].px,cp[a].py); ctx.lineTo(cp[b].px,cp[b].py); ctx.stroke(); });
-    ctx.setLineDash([]);
-  }
-  const allCharges = currentAtoms.map(a => a.charge), allLens = currentBonds.map(b => b.len);
-  const minLen=allLens.length?Math.min(...allLens):0, maxLen=allLens.length?Math.max(...allLens):1;
-  proj.sort((a,b) => a.pz-b.pz);
-  if (showBonds) {
-    currentBonds.forEach(bond => {
-      const a=proj[bond.a], b=proj[bond.b]; if (!a||!b) return;
-      const ca = showCharges ? chargeToColor(a.charge,allCharges) : hexToRgb(getElColor(a.role));
-      const cb = showCharges ? chargeToColor(b.charge,allCharges) : hexToRgb(getElColor(b.role));
-      const grd=ctx.createLinearGradient(a.px,a.py,b.px,b.py); grd.addColorStop(0,blendW(ca,.28)); grd.addColorStop(1,blendW(cb,.28));
-      ctx.strokeStyle=grd; ctx.lineWidth=4.5; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(a.px,a.py); ctx.lineTo(b.px,b.py); ctx.stroke();
-      ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(a.px,a.py); ctx.lineTo(b.px,b.py); ctx.stroke();
-      if (showBondLens) { const mx2=(a.px+b.px)/2, my2=(a.py+b.py)/2; const txt=bond.len.toFixed(3)+' A'; const bc=bondLenColor(bond.len, minLen, maxLen); ctx.font='bold 10px monospace'; ctx.textAlign='center'; const tw=ctx.measureText(txt).width; ctx.fillStyle='rgba(5,8,22,0.82)'; ctx.beginPath(); ctx.roundRect(mx2-tw/2-4,my2-17,tw+8,14,3); ctx.fill(); ctx.fillStyle=bc; ctx.fillText(txt, mx2, my2-6); }
-    });
-  }
-  proj.forEach(a => {
-    let r = getElR(a.role) * (1 + a.pz/span*0.12);
-    const col = showCharges ? chargeToColor(a.charge,allCharges) : hexToRgb(getElColor(a.role));
-    drawSphere(a.px, a.py, r, col, a.pz, hoveredAtom===a.id);
-    if (showLabels && r > 7) { ctx.font=`bold ${Math.max(9,Math.round(r*.68))}px monospace`; ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.shadowColor='rgba(0,0,0,0.95)'; ctx.shadowBlur=4; ctx.fillText(getElSym(a.role), a.px, a.py+r*.28); ctx.shadowBlur=0; }
-    if (showCharges) { const sign = a.charge > 0 ? '+' : ''; const txt = sign + a.charge.toFixed(3) + 'e'; const cc = chargeToColor(a.charge, allCharges); ctx.font='bold 9px monospace'; ctx.textAlign='center'; const tw=ctx.measureText(txt).width; ctx.fillStyle='rgba(5,8,22,0.82)'; ctx.beginPath(); ctx.roundRect(a.px-tw/2-3,a.py+r+1,tw+6,13,3); ctx.fill(); ctx.fillStyle=cc; ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=3; ctx.fillText(txt, a.px, a.py+r+11); ctx.shadowBlur=0; }
-  });
-  if (mode === 'slab') { const surf=document.getElementById('sel-surf').value; ctx.fillStyle='rgba(120,190,255,0.55)'; ctx.font='bold 12px monospace'; ctx.textAlign='left'; ctx.fillText('Surface ('+surf.split('').join(' ')+')', 10, 20); }
-  drawScaleBars();
-}
-
-function findHovered(mx, my) {
-  const W=canvas.offsetWidth||900, H=500;
-  const xs=currentAtoms.map(a=>a.x), ys=currentAtoms.map(a=>a.y), zs=currentAtoms.map(a=>a.z);
-  if (!xs.length) return null;
-  const cxc=(Math.max(...xs)+Math.min(...xs))/2, cyc=(Math.max(...ys)+Math.min(...ys))/2, czc=(Math.max(...zs)+Math.min(...zs))/2;
-  const span=Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys),Math.max(...zs)-Math.min(...zs),1);
-  const scale=Math.min(W,H)*0.36/span;
-  const proj=currentAtoms.map(a=>{const p=rotateP(a.x-cxc,a.y-cyc,a.z-czc);return{...a,px:W/2+p.x*scale,py:H/2-p.y*scale,pz:p.z};});
-  proj.sort((a,b)=>b.pz-a.pz);
-  for (const a of proj) { const r=getElR(a.role)*(1+a.pz/span*0.12); if ((mx-a.px)**2 + (my-a.py)**2 <= r*r) return a; }
-  return null;
-}
-
-function updateHoverInfo(a) {
-  if (!a) { ['info-hov','info-hcharge','info-hbonds','info-hblens'].forEach(id=>document.getElementById(id).textContent='—'); document.getElementById('info-hcharge').style.color=''; document.getElementById('info-hblens').innerHTML='—'; return; }
-  const allCharges=currentAtoms.map(x=>x.charge), allLens=currentBonds.map(b=>b.len);
-  const minL=Math.min(...allLens,0), maxL=Math.max(...allLens,1);
-  document.getElementById('info-hov').textContent = getElSym(a.role)+' ('+a.role+')';
-  const cc=chargeToColor(a.charge,allCharges);
-  document.getElementById('info-hcharge').style.color=cc; document.getElementById('info-hcharge').textContent=(a.charge>0?'+':'')+a.charge.toFixed(3)+' e';
-  const bonds=currentBonds.filter(b=>b.a===a.id||b.b===a.id);
-  document.getElementById('info-hbonds').textContent=bonds.length;
-  document.getElementById('info-hblens').innerHTML=bonds.slice(0,4).map(b=>{const bc=bondLenColor(b.len,minL,maxL);return `<span style="color:${bc};font-weight:500">${b.len.toFixed(3)}</span>`;}).join(' ')||'—';
-}
-
-canvas.addEventListener('mousedown', e=>{dragging=true;lastMX=e.clientX;lastMY=e.clientY;});
-canvas.addEventListener('mousemove', e=>{
-  const rect=canvas.getBoundingClientRect();
-  const mx=(e.clientX-rect.left)*(canvas.width/rect.width), my=(e.clientY-rect.top)*(canvas.height/rect.height);
-  if (dragging) { rotY+=(e.clientX-lastMX)*0.012; rotX+=(e.clientY-lastMY)*0.012; lastMX=e.clientX; lastMY=e.clientY; render(); }
-  else { const a=findHovered(mx,my); const nid=a?a.id:null; if (nid!==hoveredAtom) { hoveredAtom=nid; updateHoverInfo(a); render(); } }
-});
-canvas.addEventListener('mouseup', ()=>dragging=false);
-canvas.addEventListener('mouseleave', ()=>{dragging=false;hoveredAtom=null;updateHoverInfo(null);render();});
-canvas.addEventListener('touchstart',e=>{const t=e.touches[0];dragging=true;lastMX=t.clientX;lastMY=t.clientY;e.preventDefault();},{passive:false});
-canvas.addEventListener('touchmove', e=>{const t=e.touches[0];rotY+=(t.clientX-lastMX)*0.012;rotX+=(t.clientY-lastMY)*0.012;lastMX=t.clientX;lastMY=t.clientY;render();e.preventDefault();},{passive:false});
-canvas.addEventListener('touchend', ()=>dragging=false);
-
-function toggleSpin() { spinning=!spinning; document.getElementById('btn-spin').classList.toggle('active',spinning); if(spinning) spinLoop(); }
-function toggleBonds() { showBonds=!showBonds; document.getElementById('btn-bonds-tog').classList.toggle('active',showBonds); render(); }
-function toggleLabels() { showLabels=!showLabels; document.getElementById('btn-labels-tog').classList.toggle('active',showLabels); render(); }
-function toggleCharges() { showCharges=!showCharges; document.getElementById('btn-charges-tog').classList.toggle('active',showCharges); render(); }
-function toggleBondLens() { showBondLens=!showBondLens; document.getElementById('btn-blens-tog').classList.toggle('active',showBondLens); render(); }
-function toggleUCBox() { showUCBox=!showUCBox; document.getElementById('btn-ucbox').classList.toggle('active',showUCBox); render(); }
-function spinLoop() { if (!spinning) return; rotY+=0.01; render(); spinRAF=requestAnimationFrame(spinLoop); }
-
-buildPT();
-rebuild();
-updateInfoPanel();
-spinLoop();
-</script>
+<script src="/static/structure-builder.js"></script>
 </body>
 </html>
