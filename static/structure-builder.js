@@ -72,7 +72,8 @@ const STRUCTURES={
   diamond:{name:'Diamond',lattice:'cubic',sg:'Fd-3m',sgN:227,a:5.43,alpha:90,sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},{x:.25,y:.25,z:.25,role:'A'},{x:.75,y:.75,z:.25,role:'A'},{x:.75,y:.25,z:.75,role:'A'},{x:.25,y:.75,z:.75,role:'A'}],roles:['A']},
   nacl:{name:'NaCl',lattice:'cubic',sg:'Fm-3m',sgN:225,a:5.64,alpha:90,sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},{x:.5,y:0,z:0,role:'B'},{x:0,y:.5,z:0,role:'B'},{x:0,y:0,z:.5,role:'B'},{x:.5,y:.5,z:.5,role:'B'}],roles:['A','B']},
   zincblende:{name:'Zinc blende',lattice:'cubic',sg:'F-43m',sgN:216,a:5.41,alpha:90,sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},{x:.25,y:.25,z:.25,role:'B'},{x:.75,y:.75,z:.25,role:'B'},{x:.75,y:.25,z:.75,role:'B'},{x:.25,y:.75,z:.75,role:'B'}],roles:['A','B']},
-  perovskite:{name:'Perovskite',lattice:'cubic',sg:'Pm-3m',sgN:221,a:3.91,alpha:90,sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:.5,role:'B'},{x:.5,y:.5,z:0,role:'O'},{x:.5,y:0,z:.5,role:'O'},{x:0,y:.5,z:.5,role:'O'}],roles:['A','B','O']}
+  perovskite:{name:'Perovskite',lattice:'cubic',sg:'Pm-3m',sgN:221,a:3.91,alpha:90,sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:.5,role:'B'},{x:.5,y:.5,z:0,role:'O'},{x:.5,y:0,z:.5,role:'O'},{x:0,y:.5,z:.5,role:'O'}],roles:['A','B','O']},
+  spinel:{name:'Spinel',lattice:'cubic',sg:'Fd-3m',sgN:227,a:8.08,alpha:90,sites:[{x:0,y:0,z:0,role:'A'},{x:.5,y:.5,z:0,role:'A'},{x:.5,y:0,z:.5,role:'A'},{x:0,y:.5,z:.5,role:'A'},{x:.25,y:.25,z:.25,role:'B'},{x:.75,y:.75,z:.25,role:'B'},{x:.75,y:.25,z:.75,role:'B'},{x:.25,y:.75,z:.75,role:'B'},{x:.375,y:.375,z:.375,role:'O'},{x:.875,y:.875,z:.375,role:'O'},{x:.875,y:.375,z:.875,role:'O'},{x:.375,y:.875,z:.875,role:'O'},{x:.125,y:.125,z:.125,role:'O'},{x:.625,y:.625,z:.125,role:'O'},{x:.625,y:.125,z:.625,role:'O'},{x:.125,y:.625,z:.625,role:'O'}],roles:['A','B','O']}
 };
 
 const CP={blue:{lo:[15,25,80],hi:[160,210,255]},red:{lo:[60,10,10],hi:[255,160,140]},green:{lo:[10,40,20],hi:[130,255,160]},purple:{lo:[30,10,60],hi:[200,150,255]}};
@@ -96,7 +97,7 @@ var ctx=canvas?canvas.getContext('2d'):null;
 
 function tog(flag,btnId){flags[flag]=!flags[flag];document.getElementById(btnId).classList.toggle('active',flags[flag]);render();}
 function switchTab(t){
-  ['pt','export','import','formula'].forEach(function(id){
+  ['pt','export','import','formula','search'].forEach(function(id){
     var el=document.getElementById('tab-'+id);
     el.style.display=id===t?'flex':'none';
     if(id===t)el.style.flexDirection='column';
@@ -231,6 +232,7 @@ function rebuild(){
   assignCharges(currentAtoms,sp);currentBonds=computeBonds(currentAtoms,sp);
   document.getElementById('info-atoms').textContent=currentAtoms.length;
   updateFormulaBadge();render();
+  if(typeof window.smadStructureUpdate==='function')window.smadStructureUpdate(currentAtoms,ucVecs);
 }
 function setMode(m){
   mode=m;
@@ -595,5 +597,38 @@ window.addEventListener('resize',function(){render();});
 
 function toggleSpin(){spinning=!spinning;document.getElementById('btn-spin').classList.toggle('active',spinning);if(spinning)spinLoop();}
 function spinLoop(){if(!spinning)return;rotY+=0.01;render();spinRAF=requestAnimationFrame(spinLoop);}
+
+function runRandomStructure(){
+  var formulaEl=document.getElementById('search-formula');
+  var formula=(formulaEl&&formulaEl.value)?formulaEl.value.trim():'C4 O2';
+  var parts=[],re=/([A-Z][a-z]?)(\d*)/g,m;
+  while((m=re.exec(formula))!==null){if(m[1]&&EL_MAP[m[1]])parts.push({sym:m[1],count:parseInt(m[2],10)||1});}
+  if(!parts.length)parts=[{sym:'C',count:4},{sym:'O',count:2}];
+  var mindist=parseFloat(document.getElementById('search-mindist').value)||1.5;
+  if(typeof StructureGenerator==='undefined'){showToast('Structure generator not loaded','error');return;}
+  var result=StructureGenerator.generateRandomStructure({composition:parts,latticeParams:{a:6,b:6,c:6},latticeSystem:'cubic',minDistance:mindist});
+  if(!result||!result.atoms)return;
+  currentAtoms=result.atoms.map(function(a,i){return {x:a.x,y:a.y,z:a.z,role:a.role||a.sym,id:i};});
+  ucVecs=result.vecs||[[6,0,0],[0,6,0],[0,0,6]];
+  currentBonds=typeof AnalysisTools!=='undefined'?AnalysisTools.computeBonds(currentAtoms,ucVecs,3.5):[];
+  document.getElementById('info-atoms').textContent=currentAtoms.length;
+  updateFormulaBadge();render();
+  if(typeof window.smadStructureUpdate==='function')window.smadStructureUpdate(currentAtoms,ucVecs);
+  var plat=typeof window.smadPlatform==='function'?window.smadPlatform():null;
+  if(plat&&plat.setAtoms)plat.setAtoms(ucVecs,currentAtoms.map(function(a,i){return {x:a.x,y:a.y,z:a.z,role:a.role,sym:getElSym(a.role),id:i};}));
+  showToast('Generated '+currentAtoms.length+' atoms');
+}
+function runOptimization(){
+  var plat=typeof window.smadPlatform==='function'?window.smadPlatform():null;
+  if(!plat||!plat.getAtoms||!plat.getAtoms().length){showToast('Load a structure first (e.g. Generate random)','error');return;}
+  var atoms=plat.getAtoms(),vecs=plat.getVecs();
+  if(!atoms.length||!vecs){showToast('No structure to optimize','error');return;}
+  if(typeof CrystalEngine==='undefined'){showToast('Crystal engine not loaded','error');return;}
+  var fracSites=atoms.map(function(a){var f=CrystalEngine.cartToFrac([a.x,a.y,a.z],vecs);return {x:f[0],y:f[1],z:f[2],role:a.role||a.sym};});
+  var gens=parseInt(document.getElementById('opt-gens').value,10)||30,pop=parseInt(document.getElementById('opt-pop').value,10)||16;
+  plat.runOptimization({initialSites:fracSites,vecs:vecs,generations:gens,populationSize:pop,potential:'lj'},null,function(){showToast('Optimization finished');});
+}
+function stopOptimization(){var plat=typeof window.smadPlatform==='function'?window.smadPlatform():null;if(plat&&plat.stopOptimization)plat.stopOptimization();}
+window.runRandomStructure=runRandomStructure;window.runOptimization=runOptimization;window.stopOptimization=stopOptimization;
 
 buildPT();rebuild();updateInfoPanel();updateAssignDisplay();spinLoop();
