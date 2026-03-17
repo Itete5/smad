@@ -101,7 +101,7 @@
         .viewer-wrap {
             position: relative; flex: 1; min-height: 0; border-radius: 10px; background: var(--bg0); overflow: hidden; border: 1px solid rgba(72, 94, 170, 0.7);
         }
-        #canvas3d { width: 100%; height: 100%; display: block; }
+        #viewer-container, #viewer-container canvas { width: 100%; height: 100%; display: block; }
         .overlay-hud { position: absolute; top: 0.45rem; left: 0.45rem; display: flex; flex-direction: column; gap: 0.18rem; font-family: var(--mono); font-size: 0.7rem; pointer-events: none; }
         .hud-chip-row { display: flex; flex-wrap: wrap; gap: 0.2rem; }
         .hud-chip { padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(5, 10, 30, 0.9); border: 1px solid rgba(100, 128, 220, 0.55); color: var(--text2); }
@@ -297,7 +297,9 @@
                                 <label for="ffType">Potential</label>
                                 <select id="ffType" class="form-select form-select-sm">
                                     <option value="lj">Lennard-Jones (12-6)</option>
-                                    <option value="wca">Weeks–Chandler–Andersen</option>
+                                    <option value="morse">Morse</option>
+                                    <option value="buckingham">Buckingham</option>
+                                    <option value="wca">Weeks–Chandler–Andersen (LJ)</option>
                                 </select>
                             </div>
                             <div class="form-row">
@@ -324,8 +326,9 @@
                                 <label for="thermoType">Thermostat</label>
                                 <select id="thermoType" class="form-select form-select-sm">
                                     <option value="none">None</option>
-                                    <option value="vr">Velocity rescale</option>
+                                    <option value="langevin" selected>Langevin</option>
                                     <option value="nh">Nose–Hoover (single)</option>
+                                    <option value="vr">Velocity rescale</option>
                                 </select>
                             </div>
                             <div class="form-row">
@@ -412,6 +415,8 @@
                             <select id="colorBy" class="form-select form-select-sm">
                                 <option value="element">Element</option>
                                 <option value="velocity">Speed</option>
+                                <option value="coordination">Coordination</option>
+                                <option value="potential">Potential</option>
                             </select>
                         </div>
                         <div class="form-row">
@@ -446,7 +451,7 @@
 
             <main class="canvas-area">
                 <div class="viewer-wrap">
-                    <canvas id="canvas3d"></canvas>
+                    <div id="viewer-container"></div>
                     <div class="overlay-hud">
                         <div class="hud-chip-row">
                             <div class="hud-chip"><strong>T</strong> <span id="hudT">0.0 K</span></div>
@@ -523,42 +528,14 @@ Ready.</div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="/static/md_simulation_engine.js"></script>
+    <script src="/static/md_structure.js"></script>
+    <script src="/static/md_analysis.js"></script>
+    <script src="/static/md_visualization.js"></script>
+    <script src="/static/md_ui_controls.js"></script>
     <script>
 (function () {
-    const KB = 8.617333262e-5;
-    const AMU_TO_KG = 1.66053906660e-27;
-    const ANG_TO_M = 1e-10;
-    const FS_TO_S = 1e-15;
-    const EV_TO_J = 1.602176634e-19;
-    const BAR_TO_PA = 1e5;
-    const ELEMENTS = {
-        Ar: { mass: 39.948, color: "#80d4ff", r: 1.9, eps: 0.0103, sig: 3.40 },
-        Ne: { mass: 20.18, color: "#b3e0ff", r: 1.5, eps: 0.0031, sig: 2.79 },
-        Kr: { mass: 83.8, color: "#5cb8d1", r: 2.0, eps: 0.0175, sig: 3.65 },
-        Cu: { mass: 63.546, color: "#c88033", r: 1.3, eps: 0.40, sig: 2.30 },
-        Fe: { mass: 55.845, color: "#e06633", r: 1.3, eps: 0.25, sig: 2.30 },
-        Na: { mass: 22.99, color: "#ab5cf2", r: 1.5, eps: 0.01, sig: 2.80 },
-        Cl: { mass: 35.45, color: "#1ff01f", r: 1.7, eps: 0.01, sig: 3.30 },
-        Si: { mass: 28.085, color: "#f0b342", r: 1.2, eps: 0.20, sig: 2.35 },
-        A: { mass: 40.0, color: "#80d4ff", r: 1.9, eps: 0.0103, sig: 3.40 },
-        B: { mass: 10.0, color: "#f58fff", r: 1.3, eps: 0.005, sig: 2.5 }
-    };
-    const PRESETS = {
-        lj_fluid: { element: "A", density: 0.8, temp: 1.2, eps: 1.0, sig: 1.0 },
-        lj_solid: { element: "A", density: 0.95, temp: 0.7, eps: 1.0, sig: 1.0 },
-        argon: { element: "Ar", density: 0.8, temp: 90.0, eps: 0.0103, sig: 3.40 },
-        neon: { element: "Ne", density: 1.2, temp: 40.0, eps: 0.0031, sig: 2.79 },
-        kr_solid: { element: "Kr", density: 1.6, temp: 120.0, eps: 0.0175, sig: 3.65 },
-        copper: { element: "Cu", density: 8.0, temp: 300.0, eps: 0.40, sig: 2.30 },
-        iron: { element: "Fe", density: 7.8, temp: 300.0, eps: 0.25, sig: 2.30 },
-        nacl: { element: "Na", density: 2.2, temp: 300.0, eps: 0.01, sig: 2.80 },
-        silicon: { element: "Si", density: 2.3, temp: 300.0, eps: 0.20, sig: 2.35 }
-    };
-    let SIM = { atoms: [], box: [40, 40, 40], step: 0, time: 0, running: false, paused: false, history: { time: [], ekin: [], epot: [], etot: [], T: [], P: [] }, rdf: { r: [], g: [] } };
-    let VIZ = { canvas: null, ctx: null, rotX: 0.3, rotY: 0.5, zoom: 120, dragging: false, lastX: 0, lastY: 0, autoRot: false };
-    let IMPORTED = null;
-    function log(msg) { const el = document.getElementById('console'); if (el) { el.textContent += '\n' + msg; el.scrollTop = el.scrollHeight; } }
-    function clearConsole() { const el = document.getElementById('console'); if (el) el.textContent = 'Console cleared.'; }
     function showSetupTab(targetId) {
         document.querySelectorAll('#setupTabBar .setup-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.setup-pane').forEach(p => p.classList.remove('active'));
@@ -581,435 +558,116 @@ Ready.</div>
         if (tab) tab.classList.add('active'); if (pane) pane.classList.add('active');
     }
     function updateEnsembleUI() {
-        const ens = document.getElementById('ensemble').value;
-        document.getElementById('thermoGroup').style.display = ens === 'NVE' ? 'none' : 'block';
-        document.getElementById('baroGroup').style.display = ens === 'NPT' ? 'block' : 'none';
+        const ens = document.getElementById('ensemble')?.value;
+        const thermo = document.getElementById('thermoGroup');
+        const baro = document.getElementById('baroGroup');
+        if (thermo) thermo.style.display = ens === 'NVE' ? 'none' : 'block';
+        if (baro) baro.style.display = ens === 'NPT' ? 'block' : 'none';
     }
-    function detectFormat(text) {
-        const t = text.trim();
-        if (/^\d+\s*\n/.test(t) && t.split('\n').length > 2) return 'xyz';
-        if (/^ATOM\s+|^HETATM\s+/.test(t)) return 'pdb';
-        if (/^[A-Za-z ]+\s*\n\s*[\d.]+\s*\n/.test(t)) return 'poscar';
-        if (/^\s*#\s*LAMMPS|^\s*\d+\s+atoms/.test(t)) return 'lammps';
-        if (/^data_|_cell\.|_atom_site/.test(t)) return 'cif';
-        return null;
+    function clearConsole() {
+        const el = document.getElementById('console');
+        if (el) el.textContent = 'Console cleared.';
     }
-    function parseXYZ(text) {
-        const lines = text.trim().split('\n').filter(l => l.trim());
-        const n = parseInt(lines[0], 10);
-        if (isNaN(n) || lines.length < n + 2) return null;
-        const atoms = [];
-        for (let i = 0; i < n; i++) {
-            const parts = lines[i + 2].trim().split(/\s+/);
-            if (parts.length >= 4) {
-                const el = parts[0];
-                const info = ELEMENTS[el] || ELEMENTS.A;
-                atoms.push({ x: parseFloat(parts[1]), y: parseFloat(parts[2]), z: parseFloat(parts[3]), vx: 0, vy: 0, vz: 0, element: el, mass: info.mass, sig: info.sig || 1, eps: info.eps || 1 });
-            }
-        }
-        return atoms.length ? atoms : null;
+    function handleFileDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone')?.classList.remove('dragover');
+        const f = e.dataTransfer?.files?.[0];
+        if (f) readStructureFile(f);
     }
-    function parsePDB(text) {
-        const atoms = [];
-        text.split('\n').forEach(line => {
-            if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
-                const el = (line.substring(76, 78) || line.substring(12, 16)).trim().replace(/\d/g, '') || 'X';
-                const info = ELEMENTS[el] || ELEMENTS.A;
-                atoms.push({ x: parseFloat(line.substring(30, 38)), y: parseFloat(line.substring(38, 46)), z: parseFloat(line.substring(46, 54)), vx: 0, vy: 0, vz: 0, element: el, mass: info.mass, sig: info.sig || 1, eps: info.eps || 1 });
-            }
-        });
-        return atoms.length ? atoms : null;
-    }
-    function parsePOSCAR(text) {
-        const lines = text.trim().split('\n').map(l => l.trim()).filter(l => l);
-        if (lines.length < 8) return null;
-        const scale = parseFloat(lines[1]);
-        const a = lines[2].split(/\s+/).map(Number).map(x => x * scale);
-        const b = lines[3].split(/\s+/).map(Number).map(x => x * scale);
-        const c = lines[4].split(/\s+/).map(Number).map(x => x * scale);
-        const types = lines[5].split(/\s+/).filter(Boolean);
-        const counts = lines[6].split(/\s+/).map(Number);
-        let idx = 7;
-        if (counts.some(isNaN)) idx = 6;
-        const atoms = [];
-        const elList = idx === 7 ? types : lines[6].split(/\s+/).filter(Boolean);
-        const countList = idx === 7 ? counts : lines[7].split(/\s+/).map(Number);
-        for (let t = 0; t < elList.length; t++) {
-            const info = ELEMENTS[elList[t]] || ELEMENTS.A;
-            const n = countList[t] || 1;
-            for (let i = 0; i < n; i++) {
-                const parts = lines[idx].trim().split(/\s+/);
-                idx++;
-                const x = parseFloat(parts[0]), y = parseFloat(parts[1]), z = parseFloat(parts[2]);
-                atoms.push({ x: a[0]*x+b[0]*y+c[0]*z, y: a[1]*x+b[1]*y+c[1]*z, z: a[2]*x+b[2]*y+c[2]*z, vx: 0, vy: 0, vz: 0, element: elList[t], mass: info.mass, sig: info.sig || 1, eps: info.eps || 1 });
-            }
-        }
-        return atoms.length ? atoms : null;
-    }
-    function parseLAMMPS(text) { return parseXYZ(text); }
-    function parseCIF(text) { return null; }
-    function parseAndLoadStructure(text) {
-        const fmt = detectFormat(text);
-        document.getElementById('detectedFormat').textContent = fmt || '?';
-        if (fmt === 'xyz') return parseXYZ(text);
-        if (fmt === 'pdb') return parsePDB(text);
-        if (fmt === 'poscar') return parsePOSCAR(text);
-        if (fmt === 'lammps') return parseLAMMPS(text);
-        if (fmt === 'cif') return parseCIF(text);
-        return null;
-    }
-    function showImportedCard(atoms, box) {
-        const card = document.getElementById('importedInfoCard');
-        if (!card) return;
-        if (!atoms || !atoms.length) { card.style.display = 'none'; return; }
-        card.textContent = 'Imported ' + atoms.length + ' atoms';
-        card.style.display = 'block';
-    }
-    function expandSupercell(atoms, box, nx, ny, nz) {
-        if (!atoms || !atoms.length) return { atoms: [], box: [box[0]*nx, box[1]*ny, box[2]*nz] };
-        const out = [];
-        for (let ix = 0; ix < nx; ix++) for (let iy = 0; iy < ny; iy++) for (let iz = 0; iz < nz; iz++)
-            atoms.forEach(a => out.push({ ...a, x: a.x + ix*box[0], y: a.y + iy*box[1], z: a.z + iz*box[2] }));
-        return { atoms: out, box: [box[0]*nx, box[1]*ny, box[2]*nz] };
-    }
-    function loadFromStructureTab() { log('Load from Structures tab – not linked.'); }
-    function loadFromLocalStorage() { log('Load from localStorage – not linked.'); }
-    function handleFileDrop(e) { e.preventDefault(); e.stopPropagation(); document.getElementById('dropZone').classList.remove('dragover'); const f = e.dataTransfer?.files?.[0]; if (f) readStructureFile(f); }
-    function handleFileSelect(e) { const f = e.target.files?.[0]; if (f) readStructureFile(f); }
     function readStructureFile(file) {
         const r = new FileReader();
-        r.onload = () => {
-            const atoms = parseAndLoadStructure(r.result);
-            if (atoms && atoms.length) { IMPORTED = { atoms, box: [40, 40, 40] }; showImportedCard(atoms, IMPORTED.box); document.getElementById('importStatus').textContent = 'Loaded ' + atoms.length + ' atoms.'; }
-            else document.getElementById('importStatus').textContent = 'Parse failed.';
+        r.onload = function() {
+            const result = window.MDStructure && MDStructure.parseStructure(r.result);
+            const status = document.getElementById('importStatus');
+            const fmtEl = document.getElementById('detectedFormat');
+            if (result && result.atoms && result.atoms.length) {
+                const box = result.box || [40, 40, 40];
+                if (window.smadMDPlatform) smadMDPlatform().setImported({ atoms: result.atoms, box: box });
+                if (fmtEl) fmtEl.textContent = MDStructure.detectFormat(r.result) || '?';
+                if (status) status.textContent = 'Loaded ' + result.atoms.length + ' atoms.';
+                const card = document.getElementById('importedInfoCard');
+                if (card) { card.textContent = 'Imported ' + result.atoms.length + ' atoms'; card.style.display = 'block'; }
+            } else {
+                if (status) status.textContent = 'Parse failed.';
+            }
         };
         r.readAsText(file);
     }
     function parsePastedText() {
-        const atoms = parseAndLoadStructure(document.getElementById('pasteArea').value);
-        if (atoms && atoms.length) { IMPORTED = { atoms, box: [40, 40, 40] }; showImportedCard(atoms, IMPORTED.box); document.getElementById('importStatus').textContent = 'Parsed ' + atoms.length + ' atoms.'; }
-        else document.getElementById('importStatus').textContent = 'Parse failed.';
-    }
-    function removeMomentum(atoms) {
-        let vx = 0, vy = 0, vz = 0, m = 0;
-        atoms.forEach(a => { vx += a.vx * a.mass; vy += a.vy * a.mass; vz += a.vz * a.mass; m += a.mass; });
-        if (m <= 0) return;
-        vx /= m; vy /= m; vz /= m;
-        atoms.forEach(a => { a.vx -= vx; a.vy -= vy; a.vz -= vz; });
-    }
-    function rescaleVelocities(atoms, T_target) {
-        const T = computeTemperature(atoms);
-        if (T <= 0) return;
-        const scale = Math.sqrt(T_target / T);
-        atoms.forEach(a => { a.vx *= scale; a.vy *= scale; a.vz *= scale; });
-    }
-    function computeTemperature(atoms) {
-        let ekin = 0, n = 0;
-        atoms.forEach(a => { ekin += 0.5 * a.mass * (a.vx*a.vx + a.vy*a.vy + a.vz*a.vz); n++; });
-        if (n < 2) return 0;
-        return (2 * ekin) / (3 * n * KB) * (FS_TO_S * FS_TO_S / (ANG_TO_M * ANG_TO_M)) * (1 / (AMU_TO_KG * 1e-3 / EV_TO_J));
-    }
-    function computeEkin(atoms) {
-        let e = 0;
-        atoms.forEach(a => e += 0.5 * a.mass * (a.vx*a.vx + a.vy*a.vy + a.vz*a.vz));
-        const conv = AMU_TO_KG * (ANG_TO_M/FS_TO_S)*(ANG_TO_M/FS_TO_S) / EV_TO_J * 1e-3;
-        return e * conv;
-    }
-    function computeForces(atoms, box, cutoff) {
-        atoms.forEach(a => { a.fx = 0; a.fy = 0; a.fz = 0; });
-        let epot = 0;
-        for (let i = 0; i < atoms.length; i++) {
-            for (let j = i + 1; j < atoms.length; j++) {
-                let dx = atoms[j].x - atoms[i].x, dy = atoms[j].y - atoms[i].y, dz = atoms[j].z - atoms[i].z;
-                dx -= Math.round(dx / box[0]) * box[0]; dy -= Math.round(dy / box[1]) * box[1]; dz -= Math.round(dz / box[2]) * box[2];
-                const r2 = dx*dx + dy*dy + dz*dz;
-                if (r2 > cutoff * cutoff) continue;
-                const sig = (atoms[i].sig + atoms[j].sig) * 0.5, eps = Math.sqrt((atoms[i].eps || 1) * (atoms[j].eps || 1));
-                const sr2 = sig*sig/r2, sr6 = sr2*sr2*sr2, sr12 = sr6*sr6;
-                const f = 24 * eps * (2*sr12 - sr6) / r2;
-                const fx = f*dx, fy = f*dy, fz = f*dz;
-                atoms[i].fx -= fx; atoms[i].fy -= fy; atoms[i].fz -= fz;
-                atoms[j].fx += fx; atoms[j].fy += fy; atoms[j].fz += fz;
-                epot += 4 * eps * (sr12 - sr6);
-            }
-        }
-        return epot;
-    }
-    function velocityVerletStep(atoms, box, dt_fs, cutoff) {
-        const dt = dt_fs * 1e-3;
-        const half = [box[0]/2, box[1]/2, box[2]/2];
-        atoms.forEach(a => {
-            a._fx = a.fx || 0; a._fy = a.fy || 0; a._fz = a.fz || 0;
-            a.x += a.vx * dt + 0.5 * a._fx / a.mass * dt * dt;
-            a.y += a.vy * dt + 0.5 * a._fy / a.mass * dt * dt;
-            a.z += a.vz * dt + 0.5 * a._fz / a.mass * dt * dt;
-            a.x -= Math.round(a.x / box[0]) * box[0]; a.y -= Math.round(a.y / box[1]) * box[1]; a.z -= Math.round(a.z / box[2]) * box[2];
-            if (a.x > half[0]) a.x -= box[0]; if (a.x < -half[0]) a.x += box[0];
-            if (a.y > half[1]) a.y -= box[1]; if (a.y < -half[1]) a.y += box[1];
-            if (a.z > half[2]) a.z -= box[2]; if (a.z < -half[2]) a.z += box[2];
-        });
-        const epot = computeForces(atoms, box, cutoff);
-        atoms.forEach(a => {
-            a.vx += 0.5 * (a._fx + a.fx) / a.mass * dt;
-            a.vy += 0.5 * (a._fy + a.fy) / a.mass * dt;
-            a.vz += 0.5 * (a._fz + a.fz) / a.mass * dt;
-        });
-        return epot;
-    }
-    function resetSimState() {
-        SIM.atoms = []; SIM.box = [40, 40, 40]; SIM.step = 0; SIM.time = 0; SIM.running = false; SIM.paused = false;
-        SIM.history = { time: [], ekin: [], epot: [], etot: [], T: [], P: [] }; SIM.rdf = { r: [], g: [] };
-    }
-    function initializeSystem() {
-        resetSimState();
-        const presetId = document.getElementById('exampleSelect').value;
-        const preset = PRESETS[presetId] || PRESETS.lj_fluid;
-        let n = parseInt(document.getElementById('presetN').value, 10) || 512;
-        const boxSize = parseFloat(document.getElementById('boxSize').value) || 40;
-        const overrideN = parseInt(document.getElementById('nParticles').value, 10);
-        if (overrideN > 0) n = overrideN;
-        const initT = parseFloat(document.getElementById('initTemp').value) || 300;
-        const scNx = parseInt(document.getElementById('scNx').value, 10) || 1;
-        const scNy = parseInt(document.getElementById('scNy').value, 10) || 1;
-        const scNz = parseInt(document.getElementById('scNz').value, 10) || 1;
-        let atoms = [];
-        if (IMPORTED && IMPORTED.atoms && IMPORTED.atoms.length) {
-            const expanded = expandSupercell(IMPORTED.atoms, IMPORTED.box, scNx, scNy, scNz);
-            atoms = expanded.atoms; SIM.box = expanded.box;
+        const text = document.getElementById('pasteArea')?.value || '';
+        const result = window.MDStructure && MDStructure.parseStructure(text);
+        const status = document.getElementById('importStatus');
+        const fmtEl = document.getElementById('detectedFormat');
+        if (result && result.atoms && result.atoms.length) {
+            const box = result.box || [40, 40, 40];
+            if (window.smadMDPlatform) smadMDPlatform().setImported({ atoms: result.atoms, box: box });
+            if (fmtEl) fmtEl.textContent = MDStructure.detectFormat(text) || '?';
+            if (status) status.textContent = 'Parsed ' + result.atoms.length + ' atoms.';
+            const card = document.getElementById('importedInfoCard');
+            if (card) { card.textContent = 'Imported ' + result.atoms.length + ' atoms'; card.style.display = 'block'; }
         } else {
-            SIM.box = [boxSize, boxSize, boxSize];
-            const side = Math.ceil(Math.cbrt(n));
-            const sp = boxSize / side;
-            const info = ELEMENTS[preset.element] || ELEMENTS.A;
-            for (let i = 0; i < n; i++) {
-                const ix = i % side, iy = Math.floor(i / side) % side, iz = Math.floor(i / (side * side));
-                atoms.push({ x: (ix + 0.5) * sp - boxSize/2 + (Math.random()-0.5)*0.1, y: (iy + 0.5) * sp - boxSize/2 + (Math.random()-0.5)*0.1, z: (iz + 0.5) * sp - boxSize/2 + (Math.random()-0.5)*0.1, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, vz: (Math.random()-0.5)*2, element: preset.element, mass: info.mass, sig: preset.sig || info.sig || 1, eps: preset.eps || info.eps || 1 });
-            }
-        }
-        removeMomentum(atoms);
-        rescaleVelocities(atoms, initT);
-        computeForces(atoms, SIM.box, parseFloat(document.getElementById('ffCutoff').value) * (preset.sig || 1));
-        SIM.atoms = atoms;
-        document.getElementById('initProgressLabel').textContent = 'Initialized';
-        document.getElementById('initProgress').style.width = '100%';
-        updateStats(); updateHUD(); drawScene();
-        log('Initialized ' + SIM.atoms.length + ' particles, box ' + SIM.box.join('×') + ' Å');
-    }
-    function startSim() {
-        if (SIM.running || SIM.atoms.length === 0) return;
-        SIM.running = true; SIM.paused = false;
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('pauseBtn').disabled = false;
-        document.getElementById('statusBadge').className = 'badge-status running'; document.getElementById('statusBadge').textContent = 'running';
-        simLoop();
-    }
-    function pauseSim() {
-        SIM.paused = !SIM.paused;
-        document.getElementById('statusBadge').className = 'badge-status ' + (SIM.paused ? 'paused' : 'running');
-        document.getElementById('statusBadge').textContent = SIM.paused ? 'paused' : 'running';
-        if (!SIM.paused) simLoop();
-    }
-    function stopSim() {
-        SIM.running = false; SIM.paused = false;
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('pauseBtn').disabled = true;
-        document.getElementById('statusBadge').className = 'badge-status idle'; document.getElementById('statusBadge').textContent = 'idle';
-    }
-    function resetSim() { stopSim(); resetSimState(); updateStats(); updateHUD(); drawScene(); log('Simulation reset.'); }
-    function simLoop() {
-        if (!SIM.running || SIM.paused || SIM.atoms.length === 0) return;
-        const dt = parseFloat(document.getElementById('timestep').value) || 2;
-        const totalSteps = parseInt(document.getElementById('totalSteps').value, 10) || 20000;
-        const outEvery = parseInt(document.getElementById('outEvery').value, 10) || 20;
-        const cutoff = parseFloat(document.getElementById('ffCutoff').value) * (SIM.atoms[0].sig || 1);
-        const epot = velocityVerletStep(SIM.atoms, SIM.box, dt, cutoff);
-        SIM.step++;
-        SIM.time += dt * 1e-3;
-        if (SIM.step % outEvery === 0) {
-            const ekin = computeEkin(SIM.atoms);
-            const T = computeTemperature(SIM.atoms);
-            SIM.history.time.push(SIM.time);
-            SIM.history.ekin.push(ekin);
-            SIM.history.epot.push(epot);
-            SIM.history.etot.push(ekin + epot);
-            SIM.history.T.push(T);
-            SIM.history.P.push(0);
-            updateStats(); updateHUD(); updatePlots();
-        }
-        drawScene();
-        if (SIM.step < totalSteps) requestAnimationFrame(simLoop);
-        else stopSim();
-    }
-    function updateStats() {
-        const el = id => document.getElementById(id);
-        if (!el('sT')) return;
-        if (SIM.atoms.length === 0) {
-            el('sT').textContent = '0.0'; el('sEk').textContent = '0.000'; el('sEp').textContent = '0.000'; el('sEt').textContent = '0.000';
-            el('sPr').textContent = '–'; el('sDen').textContent = '–'; el('sTime').textContent = '0.000'; el('sN').textContent = '0';
-            el('stepCounter').textContent = '0'; el('simTimeLabel').textContent = '0.000';
-            return;
-        }
-        const ekin = computeEkin(SIM.atoms);
-        const T = computeTemperature(SIM.atoms);
-        let epot = SIM.history.epot.length ? SIM.history.epot[SIM.history.epot.length - 1] : computeForces(SIM.atoms, SIM.box, 4);
-        el('sT').textContent = T.toFixed(1);
-        el('sEk').textContent = ekin.toFixed(4);
-        el('sEp').textContent = epot.toFixed(4);
-        el('sEt').textContent = (ekin + epot).toFixed(4);
-        el('sPr').textContent = '–'; el('sDen').textContent = '–';
-        el('sTime').textContent = SIM.time.toFixed(3);
-        el('sN').textContent = String(SIM.atoms.length);
-        el('stepCounter').textContent = String(SIM.step);
-        el('simTimeLabel').textContent = SIM.time.toFixed(3);
-        const totalSteps = parseInt(document.getElementById('totalSteps').value, 10) || 20000;
-        el('simProgress').style.width = (100 * SIM.step / totalSteps) + '%';
-    }
-    function updateHUD() {
-        const el = id => document.getElementById(id);
-        if (SIM.atoms.length === 0) return;
-        const T = computeTemperature(SIM.atoms);
-        const ekin = computeEkin(SIM.atoms);
-        let epot = SIM.history.epot.length ? SIM.history.epot[SIM.history.epot.length - 1] : 0;
-        el('hudT').textContent = T.toFixed(1) + ' K';
-        el('hudP').textContent = '– bar';
-        el('hudRho').textContent = '–';
-        el('hudE').textContent = (ekin + epot).toFixed(4) + ' eV';
-        el('hudStep').textContent = String(SIM.step);
-        el('hudTime').textContent = SIM.time.toFixed(3) + ' ps';
-    }
-    function initCanvas() {
-        VIZ.canvas = document.getElementById('canvas3d');
-        if (!VIZ.canvas) return;
-        VIZ.ctx = VIZ.canvas.getContext('2d');
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        VIZ.canvas.addEventListener('mousedown', e => { VIZ.dragging = true; VIZ.lastX = e.clientX; VIZ.lastY = e.clientY; });
-        VIZ.canvas.addEventListener('mouseup', () => VIZ.dragging = false);
-        VIZ.canvas.addEventListener('mouseleave', () => VIZ.dragging = false);
-        VIZ.canvas.addEventListener('mousemove', e => {
-            if (!VIZ.dragging) return;
-            VIZ.rotY += (e.clientX - VIZ.lastX) * 0.01;
-            VIZ.rotX += (e.clientY - VIZ.lastY) * 0.01;
-            VIZ.lastX = e.clientX; VIZ.lastY = e.clientY;
-            drawScene();
-        });
-        VIZ.canvas.addEventListener('wheel', e => { e.preventDefault(); VIZ.zoom = Math.max(20, Math.min(300, VIZ.zoom - e.deltaY * 0.5)); drawScene(); }, { passive: false });
-    }
-    function resizeCanvas() {
-        if (!VIZ.canvas) return;
-        const wrap = VIZ.canvas.parentElement;
-        if (!wrap) return;
-        const w = wrap.clientWidth, h = wrap.clientHeight;
-        if (VIZ.canvas.width !== w || VIZ.canvas.height !== h) { VIZ.canvas.width = w; VIZ.canvas.height = h; drawScene(); }
-    }
-    function project(x, y, z) {
-        const cosX = Math.cos(VIZ.rotX), sinX = Math.sin(VIZ.rotX);
-        const cosY = Math.cos(VIZ.rotY), sinY = Math.sin(VIZ.rotY);
-        const x1 = x*cosY - z*sinY, z1 = x*sinY + z*cosY;
-        const y1 = y*cosX + z1*sinX, z2 = -y*sinX + z1*cosX;
-        return { x: x1 * VIZ.zoom + VIZ.canvas.width/2, y: -y1 * VIZ.zoom + VIZ.canvas.height/2, z: z2 };
-    }
-    function tempColor(T, Tmin, Tmax) {
-        const t = Math.max(0, Math.min(1, (T - Tmin) / (Tmax - Tmin || 1)));
-        return 'rgb(' + Math.round(79 + t * 176) + ',' + Math.round(143 + t * 112) + ',255)';
-    }
-    function drawScene() {
-        if (!VIZ.ctx || !VIZ.canvas) return;
-        const w = VIZ.canvas.width, h = VIZ.canvas.height;
-        VIZ.ctx.fillStyle = '#060810';
-        VIZ.ctx.fillRect(0, 0, w, h);
-        if (SIM.atoms.length === 0) return;
-        const box = SIM.box;
-        const colorBy = document.getElementById('colorBy').value;
-        const scale = parseFloat(document.getElementById('atomScale').value) || 1;
-        const showBox = document.getElementById('showBox').checked;
-        const colors = {};
-        SIM.atoms.forEach(a => { const key = a.element; if (!colors[key]) colors[key] = (ELEMENTS[key] || ELEMENTS.A).color; });
-        SIM.atoms.forEach(a => {
-            const p = project(a.x - box[0]/2, a.y - box[1]/2, a.z - box[2]/2);
-            if (p.z < -50) return;
-            const vel = Math.sqrt(a.vx*a.vx + a.vy*a.vy + a.vz*a.vz);
-            VIZ.ctx.fillStyle = colorBy === 'velocity' ? tempColor(vel, 0, 2) : (colors[a.element] || '#80d4ff');
-            VIZ.ctx.beginPath();
-            VIZ.ctx.arc(p.x, p.y, Math.max(1, 3 * scale), 0, Math.PI * 2);
-            VIZ.ctx.fill();
-        });
-        if (showBox) {
-            VIZ.ctx.strokeStyle = 'rgba(79, 143, 255, 0.6)';
-            VIZ.ctx.lineWidth = 1;
-            const corners = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1],[1,1,1],[1,1,-1],[-1,1,-1],[-1,1,1]];
-            for (let i = 0; i < corners.length - 1; i++) {
-                const c = corners[i], d = corners[i+1];
-                const p1 = project(c[0]*box[0]/2, c[1]*box[1]/2, c[2]*box[2]/2);
-                const p2 = project(d[0]*box[0]/2, d[1]*box[1]/2, d[2]*box[2]/2);
-                if (p1.z > -50 && p2.z > -50) { VIZ.ctx.beginPath(); VIZ.ctx.moveTo(p1.x, p1.y); VIZ.ctx.lineTo(p2.x, p2.y); VIZ.ctx.stroke(); }
-            }
+            if (fmtEl) fmtEl.textContent = MDStructure ? (MDStructure.detectFormat(text) || '?') : '?';
+            if (status) status.textContent = 'Parse failed.';
         }
     }
-    function initPlots() {
-        const layout = { margin: { t: 20, r: 10, b: 35, l: 50 }, paper_bgcolor: '#0c0f1a', plot_bgcolor: '#060810', font: { color: '#7a8bbf', size: 10 }, xaxis: { gridcolor: 'rgba(79,143,255,0.2)' }, yaxis: { gridcolor: 'rgba(79,143,255,0.2)' }, showlegend: true, legend: { x: 0, y: 1.05 } };
-        if (document.getElementById('plotEnergy') && typeof Plotly !== 'undefined')
-            Plotly.newPlot('plotEnergy', [{ x: [], y: [], name: 'E_kin', line: { color: '#4f8fff' } }, { x: [], y: [], name: 'E_pot', line: { color: '#ff4f6a' } }, { x: [], y: [], name: 'E_tot', line: { color: '#3de87a' } }], { ...layout, yaxis: { ...layout.yaxis, title: 'Energy (eV)' }, xaxis: { ...layout.xaxis, title: 'Time (ps)' } }, { responsive: true, displayModeBar: false });
-    }
-    function updatePlots() {
-        if (!SIM.history.time.length) return;
-        const t = SIM.history.time.slice(-500), ek = SIM.history.ekin.slice(-500), ep = SIM.history.epot.slice(-500), et = SIM.history.etot.slice(-500);
-        if (document.getElementById('plotEnergy') && typeof Plotly !== 'undefined') Plotly.restyle('plotEnergy', { x: [t, t, t], y: [ek, ep, et] });
-    }
-    function resetCamera() { VIZ.rotX = 0.3; VIZ.rotY = 0.5; VIZ.zoom = 120; drawScene(); }
-    function toggleAutoRot() { VIZ.autoRot = !VIZ.autoRot; log('Auto-rot ' + (VIZ.autoRot ? 'on' : 'off')); }
-    function captureFrame() { if (VIZ.canvas) { const a = document.createElement('a'); a.href = VIZ.canvas.toDataURL('image/png'); a.download = 'md_frame.png'; a.click(); } }
-    function exportXYZ() {
-        if (SIM.atoms.length === 0) { log('No atoms to export.'); return; }
-        let s = SIM.atoms.length + '\nSMAD MD export\n';
-        SIM.atoms.forEach(a => s += a.element + ' ' + a.x + ' ' + a.y + ' ' + a.z + '\n');
-        const a = document.createElement('a');
-        a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(s);
-        a.download = 'md_export.xyz';
-        a.click();
-        log('Exported XYZ.');
+    function captureFrame() {
+        const platform = window.smadMDPlatform && smadMDPlatform();
+        const viewer = platform && platform.getViewer && platform.getViewer();
+        const renderer = viewer && viewer.getRenderer && viewer.getRenderer();
+        if (renderer && renderer.domElement) {
+            const a = document.createElement('a');
+            a.href = renderer.domElement.toDataURL('image/png');
+            a.download = 'md_frame.png';
+            a.click();
+        }
     }
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('#setupTabBar .setup-tab').forEach(btn => { btn.addEventListener('click', () => showSetupTab(btn.getAttribute('data-target'))); });
-        document.querySelectorAll('#ffTabBar .setup-tab').forEach(btn => { btn.addEventListener('click', () => showFFTab(btn.getAttribute('data-ff'))); });
-        document.querySelectorAll('.plot-tab').forEach(btn => { btn.addEventListener('click', () => showPlot(btn.getAttribute('data-plot'))); });
-        document.getElementById('ensemble').addEventListener('change', updateEnsembleUI);
-        document.getElementById('initializeSystemBtn').addEventListener('click', initializeSystem);
-        document.getElementById('startBtn').addEventListener('click', startSim);
-        document.getElementById('pauseBtn').addEventListener('click', pauseSim);
-        document.getElementById('reset').addEventListener('click', resetSim);
-        document.getElementById('clearConsoleBtn').addEventListener('click', clearConsole);
-        document.getElementById('resetViewBtn').addEventListener('click', resetCamera);
-        document.getElementById('autoRotBtn').addEventListener('click', toggleAutoRot);
-        document.getElementById('snapshotBtn').addEventListener('click', captureFrame);
-        document.getElementById('exportXYZBtn').addEventListener('click', exportXYZ);
-        document.getElementById('parseBtn').addEventListener('click', parsePastedText);
-        document.getElementById('dropZone').addEventListener('click', () => document.getElementById('fileInput').click());
-        document.getElementById('dropZone').addEventListener('dragover', e => { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); });
-        document.getElementById('dropZone').addEventListener('dragleave', () => document.getElementById('dropZone').classList.remove('dragover'));
-        document.getElementById('dropZone').addEventListener('drop', handleFileDrop);
-        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
-        document.getElementById('loadFromStructureTab').addEventListener('click', loadFromStructureTab);
-        document.getElementById('loadFromLocalStorage').addEventListener('click', loadFromLocalStorage);
-        document.getElementById('presetN').addEventListener('input', e => { document.getElementById('presetNValue').textContent = e.target.value; });
-        document.getElementById('boxSize').addEventListener('input', e => { document.getElementById('boxSizeValue').textContent = e.target.value; });
-        document.getElementById('initTemp').addEventListener('input', e => { document.getElementById('initTempValue').textContent = e.target.value; });
-        document.getElementById('timestep').addEventListener('input', e => { document.getElementById('dtLabel').textContent = e.target.value; });
-        document.getElementById('ffCutoff').addEventListener('input', e => { document.getElementById('ffCutoffLabel').textContent = e.target.value; });
-        document.getElementById('atomScale').addEventListener('input', e => { document.getElementById('atomScaleLabel').textContent = e.target.value; });
+        const platform = window.MDUIControls && MDUIControls.initPlatform({
+            viewerContainer: document.getElementById('viewer-container'),
+            plotIds: { energy: 'plotEnergy', temperature: 'plotTemperature', pressure: 'plotPressure', rdf: 'plotRDF', msd: 'plotMSD', vacf: 'plotVACF', stress: 'plotStress' }
+        });
+        document.querySelectorAll('#setupTabBar .setup-tab').forEach(btn => { btn.addEventListener('click', function() { showSetupTab(btn.getAttribute('data-target')); }); });
+        document.querySelectorAll('#ffTabBar .setup-tab').forEach(btn => { btn.addEventListener('click', function() { showFFTab(btn.getAttribute('data-ff')); }); });
+        document.querySelectorAll('.plot-tab').forEach(btn => { btn.addEventListener('click', function() { showPlot(btn.getAttribute('data-plot')); }); });
+        document.getElementById('ensemble')?.addEventListener('change', updateEnsembleUI);
+        document.getElementById('initializeSystemBtn')?.addEventListener('click', function() { platform.initializeSystem(); });
+        document.getElementById('startBtn')?.addEventListener('click', function() { platform.startSim(); });
+        document.getElementById('pauseBtn')?.addEventListener('click', function() { platform.pauseSim(); });
+        document.getElementById('reset')?.addEventListener('click', function() { platform.resetSim(); });
+        document.getElementById('clearConsoleBtn')?.addEventListener('click', clearConsole);
+        document.getElementById('resetViewBtn')?.addEventListener('click', function() { const v = platform.getViewer(); if (v && v.resetView) v.resetView(); });
+        document.getElementById('snapshotBtn')?.addEventListener('click', captureFrame);
+        document.getElementById('exportXYZBtn')?.addEventListener('click', function() { platform.exportXYZ(); });
+        document.getElementById('parseBtn')?.addEventListener('click', parsePastedText);
+        document.getElementById('dropZone')?.addEventListener('click', function() { document.getElementById('fileInput').click(); });
+        document.getElementById('dropZone')?.addEventListener('dragover', function(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); });
+        document.getElementById('dropZone')?.addEventListener('dragleave', function() { document.getElementById('dropZone').classList.remove('dragover'); });
+        document.getElementById('dropZone')?.addEventListener('drop', handleFileDrop);
+        document.getElementById('fileInput')?.addEventListener('change', function(e) { const f = e.target.files?.[0]; if (f) readStructureFile(f); });
+        document.getElementById('loadFromStructureTab')?.addEventListener('click', function() { platform.log('Load from Structures tab – link in app.'); });
+        document.getElementById('loadFromLocalStorage')?.addEventListener('click', function() { platform.log('Load from localStorage – not linked.'); });
+        document.getElementById('presetN')?.addEventListener('input', function(e) { var v = document.getElementById('presetNValue'); if (v) v.textContent = e.target.value; });
+        document.getElementById('boxSize')?.addEventListener('input', function(e) { var v = document.getElementById('boxSizeValue'); if (v) v.textContent = e.target.value; });
+        document.getElementById('initTemp')?.addEventListener('input', function(e) { var v = document.getElementById('initTempValue'); if (v) v.textContent = e.target.value; });
+        document.getElementById('timestep')?.addEventListener('input', function(e) { var v = document.getElementById('dtLabel'); if (v) v.textContent = e.target.value; });
+        document.getElementById('ffCutoff')?.addEventListener('input', function(e) { var v = document.getElementById('ffCutoffLabel'); if (v) v.textContent = e.target.value; });
+        document.getElementById('atomScale')?.addEventListener('input', function(e) { var v = document.getElementById('atomScaleLabel'); if (v) v.textContent = e.target.value; });
         function updateScLabel() {
             var el = document.getElementById('scLabel');
             if (el) el.textContent = document.getElementById('scNx').value + ' × ' + document.getElementById('scNy').value + ' × ' + document.getElementById('scNz').value;
         }
-        document.getElementById('scNx').addEventListener('input', updateScLabel);
-        document.getElementById('scNy').addEventListener('input', updateScLabel);
-        document.getElementById('scNz').addEventListener('input', updateScLabel);
+        document.getElementById('scNx')?.addEventListener('input', updateScLabel);
+        document.getElementById('scNy')?.addEventListener('input', updateScLabel);
+        document.getElementById('scNz')?.addEventListener('input', updateScLabel);
         updateEnsembleUI();
-        initCanvas();
-        initPlots();
-        initializeSystem();
-        drawScene();
-        setTimeout(() => document.getElementById('loading').classList.add('hidden'), 400);
+        platform.initializeSystem();
+        window.addEventListener('resize', function() {
+            var v = platform.getViewer();
+            var c = document.getElementById('viewer-container');
+            if (v && v.setSize && c) v.setSize(c.clientWidth, c.clientHeight);
+        });
+        setTimeout(function() { document.getElementById('loading').classList.add('hidden'); }, 400);
     });
 })();
     </script>
