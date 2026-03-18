@@ -366,6 +366,10 @@ textarea.code-area{width:100%;background:#0d1020;border:0.5px solid rgba(255,255
     }
   };
   window.smadStructureUpdate = function(atoms, vecs){
+    try {
+      if (atoms && atoms.length)
+        localStorage.setItem('smad-structure-for-md', JSON.stringify({ atoms: atoms, vecs: vecs || [[1,0,0],[0,1,0],[0,0,1]] }));
+    } catch (e) {}
     if(platform && use3D && atoms && atoms.length)
       platform.setAtoms(vecs || [[1,0,0],[0,1,0],[0,0,1]], atoms.map(function(a,i){ return { x: a.x, y: a.y, z: a.z, role: a.role, sym: typeof getElSym === 'function' ? getElSym(a.role) : a.role, id: i }; }));
   };

@@ -303,6 +303,56 @@
       const totalSteps = parseInt(document.getElementById('totalSteps')?.value, 10) || 20000;
       const prog = document.getElementById('simProgress');
       if (prog) prog.style.width = (100 * step / totalSteps) + '%';
+
+      updatePropertiesAvg();
+    }
+
+    function updatePropertiesAvg() {
+      const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+      if (!sim) return;
+      const history = sim.getHistory();
+      const atoms = sim.getAtoms();
+      const n = history.time && history.time.length;
+      if (!n) {
+        set('propAvgT', '–'); set('propCv', '–'); set('propAvgP', '–'); set('propD', '–'); set('propRDF1', '–'); set('propCN', '–');
+        return;
+      }
+      const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+      const avgT = avg(history.T);
+      const avgP = history.P && history.P.length ? avg(history.P) : null;
+      set('propAvgT', avgT.toFixed(1));
+      set('propAvgP', avgP != null ? avgP.toFixed(2) : '–');
+      const etot = history.etot;
+      const varE = etot.length > 1 ? etot.reduce((s, e) => s + (e - avg(etot)) ** 2, 0) / etot.length : 0;
+      const T = avgT;
+      const cv = T > 0 && varE > 0 ? (varE / (T * T)) / (atoms.length * 8.617333e-5 * 8.617333e-5) : null;
+      set('propCv', cv != null && isFinite(cv) ? cv.toFixed(3) : '–');
+      const traj = sim.getTrajectory();
+      if (traj && traj.length > 20 && typeof Analysis.diffusionCoefficient === 'function') {
+        const msdRes = Analysis.meanSquaredDisplacement(traj, sim.getBox(), { tauMax: Math.min(80, Math.floor(traj.length / 2)), dt: parseFloat(document.getElementById('timestep')?.value) * 1e-3 });
+        const D = Analysis.diffusionCoefficient(msdRes, parseFloat(document.getElementById('timestep')?.value) * 1e-3);
+        set('propD', D != null && isFinite(D) ? D.toFixed(4) : '–');
+      } else {
+        set('propD', '–');
+      }
+      if (atoms.length && typeof Analysis.computeRDF === 'function') {
+        const rdfRes = Analysis.computeRDF(atoms, sim.getBox(), { nbins: 80, rMax: 10 });
+        const g = rdfRes.g;
+        const r = rdfRes.r;
+        let firstPeak = 0;
+        for (let i = 1; i < g.length - 1; i++) if (g[i] > g[i - 1] && g[i] > g[i + 1] && r[i] > 1) { firstPeak = g[i]; break; }
+        set('propRDF1', firstPeak > 0 ? firstPeak.toFixed(2) : (g[0] ? g[0].toFixed(2) : '–'));
+      } else {
+        set('propRDF1', '–');
+      }
+      if (atoms.length && typeof Analysis.coordinationNumbers === 'function') {
+        const cutoff = (atoms[0].sig || 1) * 1.5;
+        const cn = Analysis.coordinationNumbers(atoms, sim.getBox(), cutoff);
+        const meanCN = cn.reduce((a, b) => a + b, 0) / cn.length;
+        set('propCN', meanCN.toFixed(2));
+      } else {
+        set('propCN', '–');
+      }
     }
 
     function simLoop() {
@@ -367,12 +417,47 @@
       if (badge) { badge.className = 'badge-status idle'; badge.textContent = 'idle'; }
       updateStats();
       updateView();
+      updatePropertiesAvg();
       createDashboard(plotIds);
       log('Simulation reset.');
     }
 
     function setImported(data) {
       importedStructure = data;
+    }
+
+    function loadFromStructureTab() {
+      try {
+        const raw = global.localStorage && global.localStorage.getItem('smad-structure-for-md');
+        if (!raw) { log('No structure saved from Structures tab. Build a structure on the Structures page first.'); return; }
+        const data = JSON.parse(raw);
+        const atoms = data.atoms;
+        const vecs = data.vecs || [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+        if (!atoms || !atoms.length) { log('Saved structure has no atoms.'); return; }
+        const box = [
+          Math.sqrt(vecs[0][0] ** 2 + vecs[0][1] ** 2 + vecs[0][2] ** 2),
+          Math.sqrt(vecs[1][0] ** 2 + vecs[1][1] ** 2 + vecs[1][2] ** 2),
+          Math.sqrt(vecs[2][0] ** 2 + vecs[2][1] ** 2 + vecs[2][2] ** 2)
+        ];
+        const mdAtoms = atoms.map(a => {
+          const el = a.role || a.element || a.sym || 'A';
+          const info = Structure.getElement ? Structure.getElement(el) : { mass: 40, sig: 1, eps: 1 };
+          return {
+            x: a.x, y: a.y, z: a.z,
+            vx: 0, vy: 0, vz: 0,
+            element: el,
+            mass: info.mass,
+            sig: info.sig,
+            eps: info.eps
+          };
+        });
+        importedStructure = { atoms: mdAtoms, box };
+        const card = document.getElementById('structureTabPreview');
+        if (card) { card.textContent = 'Loaded ' + mdAtoms.length + ' atoms from Structures tab. Click Initialize to use.'; card.style.display = 'block'; }
+        log('Loaded structure from Structures tab (' + mdAtoms.length + ' atoms). Click Initialize to use.');
+      } catch (e) {
+        log('Load from Structures tab failed: ' + (e.message || e));
+      }
     }
 
     function exportXYZ() {
@@ -411,10 +496,12 @@
       updateView,
       updatePlots,
       updateStats,
+      updatePropertiesAvg,
       startSim,
       pauseSim,
       resetSim,
       setImported,
+      loadFromStructureTab,
       exportXYZ,
       exportCSV,
       getSim: () => sim,

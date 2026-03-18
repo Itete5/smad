@@ -38,7 +38,7 @@
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060810);
+    scene.background = new THREE.Color(0x0d1117);
     const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 10000);
     camera.position.set(80, 80, 80);
     camera.lookAt(0, 0, 0);
@@ -70,9 +70,14 @@
       }
     };
     renderer.domElement.addEventListener('mousedown', controls.onMouseDown);
+    renderer.domElement.addEventListener('wheel', controls.onWheel, { passive: false });
+    if (container && container !== renderer.domElement) {
+      container.style.cursor = 'grab';
+      container.addEventListener('mousedown', controls.onMouseDown);
+      container.addEventListener('wheel', controls.onWheel, { passive: false });
+    }
     global.addEventListener('mousemove', controls.onMouseMove);
     global.addEventListener('mouseup', controls.onMouseUp);
-    renderer.domElement.addEventListener('wheel', controls.onWheel, { passive: false });
 
     const state = {
       scene, camera, renderer, controls,
