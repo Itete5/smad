@@ -1,381 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Structure · Crystal Structure Builder · SMAD</title>
-<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0c14;font-family:system-ui,sans-serif;color:#c0c8e0;min-height:100vh;display:flex;flex-direction:column}
-.struct-fill{flex:1;min-height:0;display:flex;flex-direction:column}
-.struct-fill #app{min-height:0;flex:1;overflow:hidden;height:auto}
-#app{background:#0a0c14;display:flex;flex-direction:column;color:#c0c8e0;font-family:system-ui,sans-serif}
-
-#toolbar{background:#10131f;border-bottom:0.5px solid rgba(255,255,255,0.1);padding:6px 10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-.tb-label{font-size:11px;color:#6070a0;white-space:nowrap}
-select.tb-sel{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:5px;padding:3px 6px;font-size:11px;cursor:pointer}
-input.tb-num{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:5px;padding:3px 5px;font-size:11px;width:40px;text-align:center;font-family:monospace}
-.tb-btn{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;white-space:nowrap}
-.tb-btn:hover{background:rgba(255,255,255,0.13)}
-.tb-btn.active{background:rgba(90,140,255,0.22);border-color:rgba(90,140,255,0.5);color:#adc8ff}
-.sep{width:0.5px;height:20px;background:rgba(255,255,255,0.1);margin:0 2px;flex-shrink:0}
-#main-area{display:flex;gap:0;flex:1;min-height:0}
-#canvas-wrap{flex:1;position:relative}
-#mol-canvas{display:block;width:100%;height:100%;cursor:grab}
-#mol-canvas:active{cursor:grabbing}
-#side-panel{width:240px;background:#10131f;border-left:0.5px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;overflow:hidden}
-#info-box{padding:9px 11px;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0;font-family:monospace}
-.info-title{font-size:12px;font-weight:500;color:#e0e8ff;margin-bottom:5px;font-family:system-ui,sans-serif}
-.info-row{display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px}
-.info-lbl{color:#5060a0}.info-val{color:#a0b0d0}
-#tabs{display:flex;border-bottom:0.5px solid rgba(255,255,255,0.08);flex-shrink:0}
-.tab-btn{flex:1;padding:5px 3px;font-size:9px;background:transparent;border:none;color:#5060a0;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
-.tab-btn.active{color:#adc8ff;border-bottom-color:#5080ff}
-.tab-btn:hover{color:#c0c8e0}
-#tab-pt,#tab-export,#tab-import,#tab-formula,#tab-search{overflow-y:auto;flex:1;padding:6px;display:none;flex-direction:column}
-#tab-pt{display:flex}
-.pt-title{font-size:10px;color:#5060a0;margin-bottom:4px;font-weight:500}
-#assign-btns{display:flex;gap:3px;margin-bottom:5px}
-#assign-btns button{flex:1;font-size:10px;padding:3px 0}
-#pt-grid{display:grid;grid-template-columns:repeat(18,1fr);gap:1px;margin-bottom:3px}
-#pt-lan,#pt-act{display:grid;grid-template-columns:repeat(15,1fr);gap:1px;margin-bottom:2px}
-.el-cell{aspect-ratio:1;border-radius:2px;font-size:6.5px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:600;font-family:monospace;color:rgba(255,255,255,0.9);transition:transform .1s}
-.el-cell:hover{transform:scale(1.6);z-index:10;position:relative}
-.el-cell.selected{outline:2px solid #fff;z-index:20;position:relative;transform:scale(1.25)}
-.el-cell.empty{background:transparent;cursor:default;pointer-events:none}
-.ec-alkali{background:#8b2020}.ec-alkaline{background:#7a4010}.ec-transition{background:#1e4a6a}
-.ec-post{background:#2e4a5e}.ec-metalloid{background:#1a5535}.ec-nonmetal{background:#1a4545}
-.ec-halogen{background:#52304a}.ec-noble{background:#2a2a50}.ec-lanthanide{background:#3a3318}.ec-actinide{background:#3a2e10}
-.exp-btn{width:100%;background:rgba(90,140,255,0.12);border:0.5px solid rgba(90,140,255,0.35);color:#adc8ff;border-radius:4px;padding:4px 7px;font-size:10px;cursor:pointer;margin-bottom:3px;text-align:left;font-family:monospace;display:block;text-decoration:none}
-.exp-btn:hover{background:rgba(90,140,255,0.22)}
-.exp-group{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px;margin-bottom:5px}
-.exp-title{font-size:10px;color:#8090b8;margin-bottom:4px;font-weight:500}
-input.lat-inp{background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:4px;padding:2px 4px;font-size:10px;width:55px;font-family:monospace}
-.lat-row{display:flex;align-items:center;gap:4px;margin-bottom:3px}
-.lat-lbl{font-size:10px;color:#5060a0;width:18px;text-align:right;font-family:monospace}
-#charge-scale,#bond-scale{position:absolute;background:rgba(8,10,22,0.92);border:0.5px solid rgba(255,255,255,0.14);border-radius:7px;padding:6px 8px}
-#charge-scale{bottom:8px;left:8px}
-#bond-scale{bottom:8px;right:8px}
-.sc-title{font-size:9px;color:#8090b8;margin-bottom:2px;font-family:monospace}
-.sc-bar{display:block;border-radius:2px;margin-bottom:2px}
-.sc-labels{display:flex;justify-content:space-between;font-size:9px;color:#6070a0;font-family:monospace;gap:8px}
-#legend-bar{display:flex;flex-wrap:wrap;gap:4px;padding:4px 10px;background:#10131f;border-top:0.5px solid rgba(255,255,255,0.08);font-size:9px}
-.leg-item{display:flex;align-items:center;gap:3px;color:#4a5880}
-.leg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-#toast{position:absolute;top:8px;right:8px;background:rgba(40,180,90,0.92);color:#fff;font-size:11px;padding:5px 12px;border-radius:6px;display:none;font-family:monospace;z-index:100}
-textarea.code-area{width:100%;background:#0d1020;border:0.5px solid rgba(255,255,255,0.15);color:#a0d0ff;border-radius:4px;padding:5px;font-size:9px;font-family:monospace;resize:vertical;min-height:80px}
-.import-drop{border:1.5px dashed rgba(90,140,255,0.4);border-radius:6px;padding:12px 8px;text-align:center;color:#5868a0;font-size:10px;cursor:pointer;margin-bottom:5px;transition:all .2s}
-.import-drop:hover,.import-drop.over{border-color:rgba(90,140,255,0.8);background:rgba(90,140,255,0.08);color:#adc8ff}
-#formula-inp{width:100%;background:#0d1020;border:0.5px solid rgba(90,140,255,0.4);color:#e0e8ff;border-radius:5px;padding:5px 8px;font-size:13px;font-family:monospace;letter-spacing:1px;margin-bottom:5px}
-#formula-inp:focus{outline:none;border-color:rgba(90,140,255,0.8)}
-.role-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-family:monospace;font-weight:600;margin-right:3px}
-#viewer-container{position:absolute;top:0;left:0;width:100%;height:100%;display:none}
-#canvas-wrap.show-3d #mol-canvas{display:none}
-#canvas-wrap.show-3d #viewer-container{display:block}
-#canvas-wrap.show-3d #charge-scale,#canvas-wrap.show-3d #bond-scale{display:none}
-.dashboard-plots{background:#0d1018;border-top:1px solid rgba(255,255,255,0.08);padding:8px;max-height:280px;overflow:auto}
-.plot-row{display:flex;gap:8px;margin-bottom:8px}
-.plot-cell{flex:1;min-width:200px;height:160px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrystalForge · Crystal Structure Discovery · SMAD</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+  <link rel="stylesheet" href="/static/crystalforge.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/">SMAD</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarsExample">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/databases">Materials DB</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="/structures">Structures</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
-                </ul>
-            </div>
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="l-crystal"><div class="l-inner"></div></div>
+    <div class="l-txt" id="l-txt">Loading crystallography engine...</div>
+    <div class="l-bar"><div class="l-prog" id="l-prog"></div></div>
+  </div>
+
+  <div id="app">
+    <!-- ═══ NAVBAR ═══ -->
+    <nav id="nav">
+      <div class="nav-logo">
+        <div class="nav-logo-icon">⬡</div>
+        CrystalForge
+      </div>
+      <div class="nav-tabs">
+        <button class="ntab active" onclick="switchMainTab('build',this)">Build</button>
+        <button class="ntab" onclick="switchMainTab('optimize',this)">Predict</button>
+        <button class="ntab" onclick="switchMainTab('analyze',this)">Analyze</button>
+        <button class="ntab" onclick="switchMainTab('database',this)">Database</button>
+        <button class="ntab" onclick="switchMainTab('export',this)">Export</button>
+      </div>
+      <div class="nav-right">
+        <div class="nav-status">
+          <div class="status-dot"></div>
+          <span style="color:var(--text2)">Ready</span>
         </div>
+        <span id="navSG" class="bdg bdg-t">P1 (#1)</span>
+        <span id="navNAtoms" class="bdg bdg-a">0 atoms</span>
+        <span id="navGen" class="bdg" style="background:var(--bg3);color:var(--text3);border:1px solid var(--border)">Gen 0</span>
+      </div>
     </nav>
-<div class="struct-fill">
-<div id="app">
-<div id="toolbar">
-  <span class="tb-label">Structure:</span>
-  <select class="tb-sel" id="sel-struct" onchange="onStructChange()">
-    <option value="fcc">FCC</option><option value="bcc">BCC</option><option value="sc">Simple cubic</option>
-    <option value="hcp">HCP</option><option value="diamond">Diamond</option>
-    <option value="nacl">NaCl</option><option value="zincblende">Zinc blende</option><option value="perovskite">Perovskite ABO3</option><option value="spinel">Spinel</option>
-  </select>
-  <div class="sep"></div>
-  <button class="tb-btn active" id="btn-uc" onclick="setMode('unitcell')">Unit cell</button>
-  <button class="tb-btn" id="btn-ss" onclick="setMode('super')">Supercell</button>
-  <button class="tb-btn" id="btn-slab" onclick="setMode('slab')">Slab</button>
-  <div class="sep"></div>
-  <span class="tb-label">nx</span><input class="tb-num" id="inp-nx" type="number" value="2" min="1" max="5" onchange="rebuild()">
-  <span class="tb-label">ny</span><input class="tb-num" id="inp-ny" type="number" value="2" min="1" max="5" onchange="rebuild()">
-  <span class="tb-label">nz</span><input class="tb-num" id="inp-nz" type="number" value="2" min="1" max="5" onchange="rebuild()">
-  <div class="sep"></div>
-  <span class="tb-label">Surface:</span>
-  <select class="tb-sel" id="sel-surf" onchange="rebuild()">
-    <option value="100">(100)</option><option value="110">(110)</option><option value="111">(111)</option><option value="211">(211)</option>
-  </select>
-  <span class="tb-label">Layers:</span>
-  <input class="tb-num" id="inp-layers" type="number" value="4" min="2" max="8" onchange="rebuild()">
-  <div class="sep"></div>
-  <span class="tb-label">Charge:</span>
-  <select class="tb-sel" id="sel-cp" onchange="render()">
-    <option value="blue">Blue</option><option value="red">Red</option><option value="green">Green</option><option value="purple">Purple</option>
-  </select>
-  <span class="tb-label">Bond:</span>
-  <select class="tb-sel" id="sel-bp" onchange="render()">
-    <option value="orange">Orange</option><option value="teal">Teal</option><option value="pink">Pink</option><option value="gold">Gold</option>
-  </select>
-  <div class="sep"></div>
-  <button class="tb-btn active" id="btn-spin" onclick="toggleSpin()">&#x21BB; Spin</button>
-  <button class="tb-btn active" id="btn-bt" onclick="tog('showBonds','btn-bt')">Bonds</button>
-  <button class="tb-btn active" id="btn-lt" onclick="tog('showLabels','btn-lt')">Labels</button>
-  <button class="tb-btn active" id="btn-ct" onclick="tog('showCharges','btn-ct')">&#963; charges</button>
-  <button class="tb-btn active" id="btn-blt" onclick="tog('showBondLens','btn-blt')">Bond &#8491;</button>
-  <button class="tb-btn active" id="btn-ucb" onclick="tog('showUCBox','btn-ucb')">UC box</button>
-  <button class="tb-btn active" id="btn-axes" onclick="tog('showAxes','btn-axes')">XYZ</button>
-  <div class="sep"></div>
-  <button class="tb-btn" id="btn-3d" onclick="toggle3D()" title="WebGL 3D view">3D</button>
-  <button class="tb-btn" id="btn-plots" onclick="togglePlots()" title="Analysis &amp; plots">Plots</button>
-</div>
 
-<div id="main-area">
-<div id="canvas-wrap">
-  <canvas id="mol-canvas"></canvas>
-  <div id="viewer-container"></div>
-  <div id="toast"></div>
-  <div id="charge-scale" style="display:none">
-    <div class="sc-title">&#963; charge</div>
-    <canvas class="sc-bar" id="sc-c" width="110" height="9"></canvas>
-    <div class="sc-labels"><span id="sc-cmin"></span><span id="sc-cmax"></span></div>
-  </div>
-  <div id="bond-scale" style="display:none">
-    <div class="sc-title">bond length</div>
-    <canvas class="sc-bar" id="sc-b" width="110" height="9"></canvas>
-    <div class="sc-labels"><span id="sc-bmin"></span><span id="sc-bmax"></span></div>
-  </div>
-</div>
+    <div id="workspace">
+      <!-- ═══ LEFT SIDEBAR ═══ -->
+      <aside id="sidebar">
+        <!-- ── BUILD TAB ── -->
+        <div id="tab-build" class="main-tab-content active">
+          <div class="panel">
+            <div class="panel-title"><span class="icon">⬡</span>Crystal System</div>
+            <div class="field">
+              <label>Prototype / Lattice Type</label>
+              <select id="protoSelect" class="inp" onchange="applyPrototype(this.value)">
+                <optgroup label="Simple Lattices">
+                  <option value="sc">Simple Cubic (SC)</option>
+                  <option value="fcc" selected>Face-Centred Cubic (FCC)</option>
+                  <option value="bcc">Body-Centred Cubic (BCC)</option>
+                  <option value="hcp">Hexagonal Close-Packed (HCP)</option>
+                  <option value="diamond">Diamond Cubic</option>
+                </optgroup>
+                <optgroup label="Binary Compounds">
+                  <option value="nacl">NaCl (Rocksalt, B1)</option>
+                  <option value="zincblende">Zinc Blende (B3)</option>
+                </optgroup>
+                <optgroup label="Complex">
+                  <option value="perovskite">Perovskite (ABO₃)</option>
+                  <option value="spinel">Spinel (AB₂O₄)</option>
+                  <option value="custom">Custom / Empty</option>
+                </optgroup>
+              </select>
+            </div>
 
-<div id="side-panel">
-  <div id="info-box">
-    <div class="info-title" id="info-name">FCC &#8212; Unit cell</div>
-    <div class="info-row"><span class="info-lbl">Lattice</span><span class="info-val" id="info-latt">cubic</span></div>
-    <div class="info-row"><span class="info-lbl">a (&#8491;)</span><span class="info-val" id="info-a">3.52</span></div>
-    <div class="info-row"><span class="info-lbl">Space group</span><span class="info-val" id="info-sg">Fm3m</span></div>
-    <div class="info-row"><span class="info-lbl">Atoms total</span><span class="info-val" id="info-atoms">&#8212;</span></div>
-    <div class="info-row"><span class="info-lbl">Formula</span><span class="info-val" id="info-formula">&#8212;</span></div>
-    <div class="info-row"><span class="info-lbl">El A/B/X</span><span class="info-val" id="info-els">Ni/&#8212;/&#8212;</span></div>
-    <div style="border-top:0.5px solid rgba(255,255,255,0.07);margin:4px 0"></div>
-    <div class="info-row"><span class="info-lbl">Hovered</span><span class="info-val" id="info-hov">&#8212;</span></div>
-    <div class="info-row"><span class="info-lbl">&#963; charge</span><span class="info-val" id="info-hc">&#8212;</span></div>
-    <div class="info-row"><span class="info-lbl">Bonds</span><span class="info-val" id="info-hb">&#8212;</span></div>
-    <div class="info-row"><span class="info-lbl">Bond &#8491;</span><span class="info-val" id="info-hl">&#8212;</span></div>
-  </div>
-  <div id="tabs">
-    <button class="tab-btn active" id="tab-pt-btn" onclick="switchTab('pt')">Elements</button>
-    <button class="tab-btn" id="tab-formula-btn" onclick="switchTab('formula')">Formula</button>
-    <button class="tab-btn" id="tab-search-btn" onclick="switchTab('search')">Search</button>
-    <button class="tab-btn" id="tab-import-btn" onclick="switchTab('import')">Import</button>
-    <button class="tab-btn" id="tab-export-btn" onclick="switchTab('export')">Export</button>
-  </div>
+            <div class="field">
+              <label>Space Group</label>
+              <div class="srow">
+                <input id="sgInput" type="text" class="inp" value="Fm-3m (#225)" style="flex:1" readonly>
+                <button class="btn bo" style="font-size:10px;padding:4px 8px" disabled title="Space group browser coming soon">Browse</button>
+              </div>
+            </div>
 
-  <div id="tab-pt" style="display:flex;flex-direction:column">
-    <div class="pt-title">1. Click element &nbsp; 2. Assign role</div>
-    <div id="assign-btns">
-      <button class="tb-btn" onclick="setRole('A')">Set A</button>
-      <button class="tb-btn" onclick="setRole('B')">Set B</button>
-      <button class="tb-btn" onclick="setRole('O')">Set X</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">
-      <span class="pt-title" style="margin:0">Type symbol:</span>
-      <input id="el-input" style="background:#181c2e;border:0.5px solid rgba(255,255,255,0.18);color:#c0c8e0;border-radius:4px;padding:2px 5px;font-size:10px;width:40px;font-family:monospace" placeholder="Fe" oninput="onElInput(this.value)">
-      <span id="sel-badge" style="font-size:9px;color:#adc8ff;font-family:monospace">&#8212;</span>
-    </div>
-    <div id="el-assign-display" style="display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap"></div>
-    <div id="pt-grid"></div>
-    <div class="pt-title" style="margin-top:3px">Lanthanides</div><div id="pt-lan"></div>
-    <div class="pt-title" style="margin-top:2px">Actinides</div><div id="pt-act"></div>
-  </div>
+            <div style="margin-bottom:8px">
+              <div style="font-size:9.5px;color:var(--text2);font-family:var(--mono);margin-bottom:5px">Lattice Parameters</div>
+              <div class="r3" style="margin-bottom:4px">
+                <div class="field" style="margin:0"><label>a (Å)</label><input id="lpA" type="number" class="inp" value="4.046" step="0.01" oninput="updateLattice()"></div>
+                <div class="field" style="margin:0"><label>b (Å)</label><input id="lpB" type="number" class="inp" value="4.046" step="0.01" oninput="updateLattice()"></div>
+                <div class="field" style="margin:0"><label>c (Å)</label><input id="lpC" type="number" class="inp" value="4.046" step="0.01" oninput="updateLattice()"></div>
+              </div>
+              <div class="r3">
+                <div class="field" style="margin:0"><label>α (°)</label><input id="lpAlpha" type="number" class="inp" value="90" step="0.1" oninput="updateLattice()"></div>
+                <div class="field" style="margin:0"><label>β (°)</label><input id="lpBeta" type="number" class="inp" value="90" step="0.1" oninput="updateLattice()"></div>
+                <div class="field" style="margin:0"><label>γ (°)</label><input id="lpGamma" type="number" class="inp" value="90" step="0.1" oninput="updateLattice()"></div>
+              </div>
+            </div>
 
-  <div id="tab-search" style="flex-direction:column">
-    <div class="exp-group">
-      <div class="exp-title">Random structure</div>
-      <div class="lat-row"><span class="lat-lbl">Formula</span><input class="lat-inp" id="search-formula" placeholder="e.g. C4 O2" style="width:100%"></div>
-      <div class="lat-row"><span class="lat-lbl">Min dist (&#8491;)</span><input class="lat-inp" id="search-mindist" value="1.5" style="width:60px"></div>
-      <button class="exp-btn" onclick="runRandomStructure()">Generate random</button>
-    </div>
-    <div class="exp-group">
-      <div class="exp-title">Evolutionary optimization</div>
-      <div class="lat-row"><span class="lat-lbl">Gens</span><input class="lat-inp" id="opt-gens" value="30" style="width:50px"><span class="lat-lbl">Pop</span><input class="lat-inp" id="opt-pop" value="16" style="width:50px"></div>
-      <button class="exp-btn" id="btn-opt-run" onclick="runOptimization()">Start search</button>
-      <button class="exp-btn" id="btn-opt-stop" onclick="stopOptimization()" style="margin-top:2px">Stop</button>
-    </div>
-  </div>
-  <div id="tab-formula" style="flex-direction:column">
-    <div class="pt-title">Chemical formula &#8594; build structure</div>
-    <input id="formula-inp" placeholder="e.g. NiO  Fe3O4  BaTiO3  GaAs" oninput="onFormulaInput(this.value)" onkeydown="if(event.key==='Enter')applyFormula()">
-    <div id="formula-preview" style="font-size:10px;color:#8090b8;font-family:monospace;min-height:14px;margin-bottom:4px"></div>
-    <button class="exp-btn" onclick="applyFormula()" style="text-align:center;margin-bottom:6px">Apply formula &#8594; update structure</button>
-    <div class="exp-group">
-      <div class="exp-title">Quick formulas</div>
-      <div style="display:flex;flex-wrap:wrap;gap:3px">
-        <button class="tb-btn" onclick="quickFormula('NiAl')">NiAl</button>
-        <button class="tb-btn" onclick="quickFormula('Fe3O4')">Fe3O4</button>
-        <button class="tb-btn" onclick="quickFormula('BaTiO3')">BaTiO3</button>
-        <button class="tb-btn" onclick="quickFormula('GaAs')">GaAs</button>
-        <button class="tb-btn" onclick="quickFormula('NaCl')">NaCl</button>
-        <button class="tb-btn" onclick="quickFormula('CsPbI3')">CsPbI3</button>
-        <button class="tb-btn" onclick="quickFormula('MgO')">MgO</button>
-        <button class="tb-btn" onclick="quickFormula('TiN')">TiN</button>
-        <button class="tb-btn" onclick="quickFormula('ZnS')">ZnS</button>
-        <button class="tb-btn" onclick="quickFormula('AlN')">AlN</button>
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:6px" id="latticeInfo">Cubic · V = — Å³</div>
+
+            <div class="field">
+              <label>Element Assignment</label>
+              <div style="display:flex;gap:5px;flex-wrap:wrap" id="elemAssign">
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">A:</span>
+                  <input id="elA" type="text" class="inp" value="Al" style="width:42px;text-align:center;font-weight:700;font-size:12px" oninput="updateElementA()">
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;display:none" id="elBRow">
+                  <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">B:</span>
+                  <input id="elB" type="text" class="inp" value="O" style="width:42px;text-align:center;font-weight:700;font-size:12px" oninput="rebuildFromProto()">
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;display:none" id="elCRow">
+                  <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">C:</span>
+                  <input id="elC" type="text" class="inp" value="O" style="width:42px;text-align:center;font-weight:700;font-size:12px" oninput="rebuildFromProto()">
+                </div>
+              </div>
+            </div>
+
+            <div class="brow mt6">
+              <button class="btn bt" style="flex:1" onclick="buildStructure()">⬡ Build</button>
+              <button class="btn bo" style="flex:1" disabled title="Supercell tool coming soon">⊞ Supercell</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title"><span class="icon">⌖</span>Manual Atoms</div>
+            <div class="tbar">
+              <button class="tab active" onclick="showAtomTab('frac',this)">Fractional</button>
+              <button class="tab" onclick="showAtomTab('cart',this)">Cartesian</button>
+            </div>
+            <div id="atom-frac" class="tpane active">
+              <textarea id="fracCoords" class="inp" rows="5" style="font-size:10px" placeholder="El  x  y  z&#10;Al  0.0  0.0  0.0&#10;O   0.5  0.5  0.5"></textarea>
+            </div>
+            <div id="atom-cart" class="tpane">
+              <textarea id="cartCoords" class="inp" rows="5" style="font-size:10px" placeholder="El  x  y  z (Å)&#10;Al  0.0  0.0  0.0"></textarea>
+            </div>
+            <div class="brow mt4">
+              <button class="btn bo" style="flex:1;font-size:10px" onclick="addManualAtoms()">+ Add Atoms</button>
+              <button class="btn br" style="flex:1;font-size:10px" onclick="clearAtoms()">✕ Clear</button>
+            </div>
+            <div class="note">Tip: This page automatically saves the current structure for MD → “Load from CrystalForge”.</div>
+          </div>
+        </div>
+
+        <!-- ── OTHER TABS (placeholders) ── -->
+        <div id="tab-optimize" class="main-tab-content" style="display:none">
+          <div class="panel">
+            <div class="panel-title"><span class="icon">◎</span>Predict</div>
+            <div class="note">Predict/search UI will be wired next.</div>
+          </div>
+        </div>
+        <div id="tab-analyze" class="main-tab-content" style="display:none">
+          <div class="panel">
+            <div class="panel-title"><span class="icon">◈</span>Analyze</div>
+            <div class="note">Analysis UI will be wired next.</div>
+          </div>
+        </div>
+        <div id="tab-database" class="main-tab-content" style="display:none">
+          <div class="panel">
+            <div class="panel-title"><span class="icon">⊡</span>Database</div>
+            <div class="note">Database integration will be wired next.</div>
+          </div>
+        </div>
+        <div id="tab-export" class="main-tab-content" style="display:none">
+          <div class="panel">
+            <div class="panel-title"><span class="icon">↓</span>Export</div>
+            <div class="note">Export UI will be wired next.</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ═══ CENTER VIEWER ═══ -->
+      <div id="center">
+        <div id="threeWrap">
+          <canvas id="threeCanvas"></canvas>
+          <div class="viewer-hud">
+            <div class="hud-chip">
+              <span class="hl">SG</span><span class="hv" id="hudSG">—</span>
+              <span class="hvsep">|</span>
+              <span class="hl">N</span><span class="hv" id="hudN">0</span>
+              <span class="hvsep">|</span>
+              <span class="hl">V</span><span class="hv" id="hudV">— Å³</span>
+            </div>
+            <div class="hud-chip">
+              <span class="hl">a</span><span class="hv" id="hudA">—</span>
+              <span class="hvsep">·</span>
+              <span class="hl">b</span><span class="hv" id="hudB">—</span>
+              <span class="hvsep">·</span>
+              <span class="hl">c</span><span class="hv" id="hudC">—</span>
+            </div>
+          </div>
+          <div class="viewer-ctrls">
+            <button class="vcbtn" onclick="resetCam()">⊙ Reset</button>
+            <button class="vcbtn on" id="autoRotBtn" onclick="toggleAutoRot()">↻ Rot</button>
+            <button class="vcbtn on" id="cellBtn" onclick="toggleCell()" title="Toggle unit cell">⬡ Cell</button>
+            <button class="vcbtn" onclick="captureScene?.()">📷 Snap</button>
+          </div>
+          <div id="atomPopup"></div>
+        </div>
+
+        <div class="statsbar">
+          <div class="scell"><div class="slbl">Space Group</div><div class="sval tc" id="statSG">—</div></div>
+          <div class="scell"><div class="slbl">Formula</div><div class="sval" id="statFormula">—</div></div>
+          <div class="scell"><div class="slbl">Volume (Å³)</div><div class="sval" id="statV">—</div></div>
+        </div>
+
+        <div class="ptabs-bar">
+          <button class="ptab active" onclick="showPlot('energy',this)">E vs Gen</button>
+          <button class="ptab" onclick="showPlot('rdf',this)">g(r) RDF</button>
+          <button class="ptab" onclick="showPlot('xrd',this)">XRD Pattern</button>
+          <button class="ptab" onclick="showPlot('bonds',this)">Bond Lengths</button>
+          <button class="ptab" onclick="showPlot('coord',this)">Coord #</button>
+          <button class="ptab" onclick="showPlot('adf',this)">ADF Angles</button>
+        </div>
+        <div class="plotwrap">
+          <div id="pEnergy" class="ppane active"></div>
+          <div id="pRDF" class="ppane"></div>
+          <div id="pXRD" class="ppane"></div>
+          <div id="pBonds" class="ppane"></div>
+          <div id="pCoord" class="ppane"></div>
+          <div id="pADF" class="ppane"></div>
+        </div>
+      </div>
+
+      <!-- ═══ RIGHT PANEL ═══ -->
+      <div id="rpanel">
+        <div class="rpanel-section">
+          <div class="rpanel-title">Structure</div>
+          <div class="pgrid">
+            <div class="pc"><div class="pclbl">Atoms</div><div class="pcval tc" id="rpN">0</div></div>
+            <div class="pc"><div class="pclbl">Species</div><div class="pcval" id="rpSpec">—</div></div>
+            <div class="pc"><div class="pclbl">Symmetry</div><div class="pcval tc" id="rpSym">—</div></div>
+            <div class="pc"><div class="pclbl">Crystal sys.</div><div class="pcval" id="rpSys">—</div></div>
+          </div>
+        </div>
+
+        <div class="rpanel-section">
+          <div class="rpanel-title">Visualization</div>
+          <div class="field">
+            <label>Atom scale</label>
+            <div class="srow">
+              <input type="range" id="atomScale" class="slider" min="0.1" max="1.5" step="0.05" value="0.4"
+                oninput="document.getElementById('atomScaleV').textContent=parseFloat(this.value).toFixed(2);rebuildMeshes()">
+              <span class="sv" id="atomScaleV">0.40</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rpanel-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+          <div class="rpanel-title">Atom List</div>
+          <div class="atom-list" id="atomList"></div>
+        </div>
+
+        <div class="con-wrap">
+          <div class="con-hdr">
+            Log
+            <button class="btn bo" style="padding:1px 6px;font-size:9px" onclick="document.getElementById('con').textContent='> Log cleared.'">✕</button>
+          </div>
+          <div class="con" id="con">CrystalForge · Crystal Structure Discovery Platform
+Ready.</div>
+        </div>
       </div>
     </div>
-    <div class="exp-group" style="margin-top:4px">
-      <div class="exp-title">Role assignment</div>
-      <div id="formula-role-out" style="font-size:10px;color:#8090b8;font-family:monospace;min-height:18px"></div>
-    </div>
   </div>
 
-  <div id="tab-import" style="flex-direction:column">
-    <div class="exp-group">
-      <div class="exp-title">Import from computer</div>
-      <div class="import-drop" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="onFileDrop(event)">
-        Drop CIF / POSCAR / XYZ / PDB here<br>or click to browse
-      </div>
-      <input type="file" id="file-input" style="display:none" accept=".cif,.vasp,.poscar,.xyz,.pdb,.lammps,.gjf" onchange="onFileInput(this)">
-      <div id="import-status" style="font-size:10px;color:#8090b8;font-family:monospace;min-height:14px;margin-bottom:3px"></div>
-    </div>
-    <div class="exp-group">
-      <div class="exp-title">Paste structure text</div>
-      <textarea class="code-area" id="paste-area" placeholder="Paste CIF, POSCAR, or XYZ text here..." rows="5"></textarea>
-      <button class="exp-btn" onclick="parseFromText(document.getElementById('paste-area').value)">Parse &amp; load</button>
-    </div>
-    <div class="exp-group">
-      <div class="exp-title">Online databases</div>
-      <a class="exp-btn" href="https://materialsproject.org" target="_blank" rel="noopener">Materials Project &#8594;</a>
-      <a class="exp-btn" href="https://icsd.fiz-karlsruhe.de" target="_blank" rel="noopener">ICSD (FIZ Karlsruhe) &#8594;</a>
-      <a class="exp-btn" href="https://www.crystallography.net/cod/" target="_blank" rel="noopener">Crystallography Open DB &#8594;</a>
-      <a class="exp-btn" href="https://aflowlib.org" target="_blank" rel="noopener">AFLOW Library &#8594;</a>
-      <a class="exp-btn" href="https://www.ccdc.cam.ac.uk/structures/" target="_blank" rel="noopener">CCDC Cambridge &#8594;</a>
-      <div style="font-size:9px;color:#4a5880;margin-top:4px">Download CIF from any database, then import above</div>
-    </div>
-  </div>
-
-  <div id="tab-export" style="flex-direction:column">
-    <div class="exp-group">
-      <div class="exp-title">Lattice override (&#8491; / &#176;)</div>
-      <div class="lat-row"><span class="lat-lbl">a</span><input class="lat-inp" id="lat-a" placeholder="auto"><span class="lat-lbl">b</span><input class="lat-inp" id="lat-b" placeholder="=a"></div>
-      <div class="lat-row"><span class="lat-lbl">c</span><input class="lat-inp" id="lat-c" placeholder="=a"><span class="lat-lbl">&#945;</span><input class="lat-inp" id="lat-al" placeholder="90"></div>
-      <div class="lat-row"><span class="lat-lbl">&#946;</span><input class="lat-inp" id="lat-be" placeholder="90"><span class="lat-lbl">&#947;</span><input class="lat-inp" id="lat-ga" placeholder="90/120"></div>
-    </div>
-    <div class="exp-group">
-      <div class="exp-title">Download</div>
-      <button class="exp-btn" onclick="exportFile('cif')">CIF &#8212; VESTA, Mercury, CrystalMaker</button>
-      <button class="exp-btn" onclick="exportFile('poscar')">POSCAR &#8212; VASP, pymatgen, ASE</button>
-      <button class="exp-btn" onclick="exportFile('xyz')">XYZ &#8212; Avogadro, OVITO, Jmol</button>
-      <button class="exp-btn" onclick="exportFile('lammps')">LAMMPS data file</button>
-      <button class="exp-btn" onclick="exportFile('pdb')">PDB &#8212; VMD, PyMOL, Chimera</button>
-      <button class="exp-btn" onclick="exportFile('gjf')">GJF &#8212; Gaussian input</button>
-    </div>
-    <div class="exp-group">
-      <div class="exp-title">Copy to clipboard</div>
-      <button class="exp-btn" onclick="copyFormat('cif')">Copy CIF text</button>
-      <button class="exp-btn" onclick="copyFormat('poscar')">Copy POSCAR text</button>
-      <button class="exp-btn" onclick="copyFormat('xyz')">Copy XYZ text</button>
-    </div>
-  </div>
-</div>
-</div>
-
-<div id="dashboard-plots" class="dashboard-plots" aria-label="Analysis plots"></div>
-<div id="legend-bar">
-  <span class="leg-item"><span class="leg-dot" style="background:#8b2020"></span>Alkali</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#7a4010"></span>Alkaline</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#1e4a6a"></span>Transition</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#2e4a5e"></span>Post-trans</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#1a5535"></span>Metalloid</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#1a4545"></span>Nonmetal</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#52304a"></span>Halogen</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#2a2a50"></span>Noble gas</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#3a3318"></span>Lanthanide</span>
-  <span class="leg-item"><span class="leg-dot" style="background:#3a2e10"></span>Actinide</span>
-</div>
-</div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/static/crystal_engine.js"></script>
-<script src="/static/symmetry_engine.js"></script>
-<script src="/static/structure_generator.js"></script>
-<script src="/static/evolutionary_optimizer.js"></script>
-<script src="/static/analysis_tools.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<script src="/static/visualization_engine.js"></script>
-<script src="/static/plotting_dashboard.js"></script>
-<script src="/static/ui_controls.js"></script>
-<script src="/static/structure-builder.js"></script>
-<script>
-(function(){
-  var platform = null;
-  var use3D = false;
-  var plotsVisible = false;
-  window.toggle3D = function(){
-    use3D = !use3D;
-    document.getElementById('btn-3d').classList.toggle('active', use3D);
-    document.getElementById('canvas-wrap').classList.toggle('show-3d', use3D);
-    if(use3D && !platform){
-      platform = window.UIControls && UIControls.initPlatform({
-        viewerContainer: document.getElementById('viewer-container'),
-        dashboardContainer: document.getElementById('dashboard-plots')
-      });
-      if(platform && typeof currentAtoms !== 'undefined' && currentAtoms.length)
-        platform.setAtoms(ucVecs || [[1,0,0],[0,1,0],[0,0,1]], currentAtoms.map(function(a,i){ return { x: a.x, y: a.y, z: a.z, role: a.role, sym: getElSym ? getElSym(a.role) : a.role, id: i }; }));
-    }
-    if(platform && use3D && typeof currentAtoms !== 'undefined' && currentAtoms.length)
-      platform.setAtoms(ucVecs || [[1,0,0],[0,1,0],[0,0,1]], currentAtoms.map(function(a,i){ return { x: a.x, y: a.y, z: a.z, role: a.role, sym: getElSym ? getElSym(a.role) : a.role, id: i }; }));
-    if(typeof render === 'function' && !use3D) render();
-  };
-  window.togglePlots = function(){
-    plotsVisible = !plotsVisible;
-    document.getElementById('btn-plots').classList.toggle('active', plotsVisible);
-    var el = document.getElementById('dashboard-plots');
-    el.style.display = plotsVisible ? 'block' : 'none';
-    if(plotsVisible && platform && platform.getDashboard()) {
-      var atoms = platform.getAtoms && platform.getAtoms();
-      var bonds = platform.getBonds && platform.getBonds();
-      var vecs = platform.getVecs && platform.getVecs();
-      if(atoms && vecs && window.AnalysisTools){
-        if(bonds && bonds.length) platform.getDashboard().updateBondDistribution(bonds);
-        var cn = AnalysisTools.coordinationNumbers(atoms, vecs, bonds);
-        platform.getDashboard().updateCoordination(cn);
-        var rdf = AnalysisTools.radialDistributionFunction(atoms, vecs, 8, 0.1);
-        platform.getDashboard().updateRDF(rdf.r, rdf.g);
-        var peaks = AnalysisTools.xrdPattern(atoms, vecs, 1.5406, 80);
-        platform.getDashboard().updateXRD(peaks);
-      }
-    }
-  };
-  window.smadStructureUpdate = function(atoms, vecs){
-    try {
-      if (atoms && atoms.length)
-        localStorage.setItem('smad-structure-for-md', JSON.stringify({ atoms: atoms, vecs: vecs || [[1,0,0],[0,1,0],[0,0,1]] }));
-    } catch (e) {}
-    if(platform && use3D && atoms && atoms.length)
-      platform.setAtoms(vecs || [[1,0,0],[0,1,0],[0,0,1]], atoms.map(function(a,i){ return { x: a.x, y: a.y, z: a.z, role: a.role, sym: typeof getElSym === 'function' ? getElSym(a.role) : a.role, id: i }; }));
-  };
-  window.smadPlatform = function(){ return platform; };
-  window.smadUse3D = function(){ return use3D; };
-})();
-</script>
+  <script src="/static/crystalforge_app.js"></script>
 </body>
 </html>
