@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CrystalForge · Crystal Structure Discovery · SMAD</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
   <link rel="stylesheet" href="/static/crystalforge.css">
@@ -23,7 +23,10 @@
     <nav id="nav">
       <div class="nav-logo">
         <div class="nav-logo-icon">⬡</div>
-        CrystalForge
+        <div class="nav-logo-text">
+          <div class="nav-logo-name">CrystalForge</div>
+          <div class="nav-logo-sub">Structure Discovery</div>
+        </div>
       </div>
       <div class="nav-tabs">
         <button class="ntab active" onclick="switchMainTab('build',this)">Build</button>
@@ -33,13 +36,19 @@
         <button class="ntab" onclick="switchMainTab('export',this)">Export</button>
       </div>
       <div class="nav-right">
-        <div class="nav-status">
+        <div style="display:flex;align-items:center;gap:5px;color:var(--text2);font-size:11px">
           <div class="status-dot"></div>
-          <span style="color:var(--text2)">Ready</span>
+          <span>Ready</span>
         </div>
-        <span id="navSG" class="bdg bdg-t">P1 (#1)</span>
-        <span id="navNAtoms" class="bdg bdg-a">0 atoms</span>
-        <span id="navGen" class="bdg" style="background:var(--bg3);color:var(--text3);border:1px solid var(--border)">Gen 0</span>
+        <div class="nav-sep"></div>
+        <span id="navSG" class="bdg bdg-t nav-badge">P1 (#1)</span>
+        <span id="navNAtoms" class="bdg bdg-a nav-badge">0 atoms</span>
+        <span id="navGen" class="bdg bdg-n nav-badge">Gen 0</span>
+        <div class="nav-sep"></div>
+        <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" type="button">
+          <span class="theme-icon" id="themeIcon">🌙</span>
+          <span id="themeLabel">Dark</span>
+        </button>
       </div>
     </nav>
 

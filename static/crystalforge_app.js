@@ -5,6 +5,71 @@
  */
 'use strict';
 
+// ─────────────────────────────────────────────────────────────────────
+// Theme (light default + persistent toggle)
+// ─────────────────────────────────────────────────────────────────────
+function isDarkTheme(){
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+
+function getSavedTheme(){
+  return localStorage.getItem('cf-theme') || 'light';
+}
+
+function applyTheme(theme){
+  const t = (theme === 'dark') ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('cf-theme', t);
+
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon) icon.textContent = (t === 'dark') ? '☀️' : '🌙';
+  if (label) label.textContent = (t === 'dark') ? 'Light' : 'Dark';
+
+  refreshThreeTheme();
+  refreshPlotsTheme();
+}
+
+function toggleTheme(){
+  applyTheme(isDarkTheme() ? 'light' : 'dark');
+}
+
+function refreshThreeTheme(){
+  if (!VIZ || !VIZ.renderer) return;
+  VIZ.renderer.setClearColor(isDarkTheme() ? 0x010306 : 0x0d1117, 1);
+}
+
+function getPlotlyLayout(){
+  const dark=isDarkTheme();
+  return{
+    paper_bgcolor:'transparent',
+    plot_bgcolor:dark?'rgba(1,3,6,0.5)':'rgba(245,246,248,0.8)',
+    font:{color:dark?'#8b949e':'#52596e',size:9.5,family:'IBM Plex Mono'},
+    margin:{t:18,r:10,b:32,l:44},
+    xaxis:{gridcolor:dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)',zeroline:false,linecolor:dark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.1)'},
+    yaxis:{gridcolor:dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)',zeroline:false,linecolor:dark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.1)'},
+    legend:{bgcolor:'transparent',font:{size:9}},showlegend:true,
+  };
+}
+
+function refreshPlotsTheme(){
+  const base=getPlotlyLayout();
+  const ids=['pEnergy','pRDF','pXRD','pBonds','pCoord','pADF'];
+  ids.forEach(id=>{
+    try{
+      Plotly.relayout(id,{
+        paper_bgcolor:base.paper_bgcolor,
+        plot_bgcolor:base.plot_bgcolor,
+        'font.color':base.font.color,
+        'xaxis.gridcolor':base.xaxis.gridcolor,
+        'yaxis.gridcolor':base.yaxis.gridcolor,
+        'xaxis.linecolor':base.xaxis.linecolor,
+        'yaxis.linecolor':base.yaxis.linecolor,
+      });
+    }catch(_){}
+  });
+}
+
 // ══════════════════════════════════════════════════════════════════════
 // MODULE 1: ELEMENT DATABASE (subset + common; extendable)
 // ══════════════════════════════════════════════════════════════════════
@@ -302,7 +367,7 @@ function initThree(){
   const W=wrap.clientWidth||800,H=wrap.clientHeight||500;
   VIZ.renderer=new THREE.WebGLRenderer({canvas:document.getElementById('threeCanvas'),antialias:true,alpha:false,preserveDrawingBuffer:true});
   VIZ.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  VIZ.renderer.setClearColor(0x010306,1);
+  VIZ.renderer.setClearColor(isDarkTheme()?0x010306:0x0d1117,1);
   VIZ.renderer.setSize(W,H);
   VIZ.camera=new THREE.PerspectiveCamera(50,W/H,0.1,2000);
   VIZ.camera.position.z=60;
@@ -406,22 +471,18 @@ function toggleCell(){
 // MODULE 10: PLOTLY (minimal placeholders)
 // ══════════════════════════════════════════════════════════════════════
 const PL={
-  paper_bgcolor:'transparent',plot_bgcolor:'rgba(1,3,6,0.7)',
-  font:{color:'#4a6888',size:9,family:'DM Mono'},
-  margin:{t:18,r:10,b:32,l:44},
-  xaxis:{gridcolor:'rgba(0,150,140,0.12)',zeroline:false,linecolor:'rgba(0,150,140,0.2)'},
-  yaxis:{gridcolor:'rgba(0,150,140,0.12)',zeroline:false,linecolor:'rgba(0,150,140,0.2)'},
-  legend:{bgcolor:'transparent',font:{size:9}},showlegend:true,
+  ...getPlotlyLayout(),
 };
 const PC={responsive:true,displayModeBar:false};
 function initPlots(){
-  const L=(xl,yl)=>({...PL,xaxis:{...PL.xaxis,title:xl},yaxis:{...PL.yaxis,title:yl}});
-  Plotly.newPlot('pEnergy',[{x:[],y:[],name:'Best',mode:'lines+markers',line:{color:'#00d4c8',width:2},marker:{size:4,color:'#00d4c8'}}],L('Generation','Energy (eV/atom)'),PC);
-  Plotly.newPlot('pRDF',[{x:[],y:[],name:'g(r)',mode:'lines',line:{color:'#00ffe8',width:2}}],L('r (Å)','g(r)'),PC);
-  Plotly.newPlot('pXRD',[{x:[],y:[],name:'I',mode:'lines',line:{color:'#ffaa00',width:1.5}}],{...L('2θ (°)','Intensity (%)'),showlegend:false},PC);
-  Plotly.newPlot('pBonds',[{x:[],type:'histogram',name:'Bond lengths'}],{...L('Bond length (Å)','Count'),showlegend:false},PC);
-  Plotly.newPlot('pCoord',[{x:[],y:[],name:'CN',type:'bar'}],{...L('Coordination #','Count'),showlegend:false},PC);
-  Plotly.newPlot('pADF',[{x:[],y:[],name:'P(θ)',mode:'lines',line:{color:'#a060ff',width:2}}],L('Angle (°)','P(θ)'),PC);
+  const L=(xl,yl)=>{const b=getPlotlyLayout();return {...b,xaxis:{...b.xaxis,title:{text:xl,font:{size:9}}},yaxis:{...b.yaxis,title:{text:yl,font:{size:9}}}};};
+  Plotly.newPlot('pEnergy',[{x:[],y:[],name:'Best',mode:'lines+markers',line:{color:'#1a6fba',width:2},marker:{size:4,color:'#1a6fba'}}],L('Generation','Energy (eV/atom)'),PC);
+  Plotly.newPlot('pRDF',[{x:[],y:[],name:'g(r)',mode:'lines',line:{color:'#1a6fba',width:2},fill:'tozeroy',fillcolor:'rgba(26,111,186,0.08)'}],L('r (Å)','g(r)'),PC);
+  Plotly.newPlot('pXRD',[{x:[],y:[],name:'I',mode:'lines',line:{color:'#c47b00',width:1.5},fill:'tozeroy',fillcolor:'rgba(196,123,0,0.07)'}],{...L('2θ (°)','Intensity (%)'),showlegend:false},PC);
+  Plotly.newPlot('pBonds',[{x:[],type:'histogram',name:'Bond lengths',marker:{color:'rgba(26,111,186,0.6)',line:{color:'rgba(26,111,186,0.9)',width:1}}}],{...L('Bond length (Å)','Count'),showlegend:false},PC);
+  Plotly.newPlot('pCoord',[{x:[],y:[],name:'CN',type:'bar',marker:{color:'rgba(196,123,0,0.7)',line:{color:'rgba(196,123,0,1)',width:1}}}],{...L('Coordination #','Count'),showlegend:false},PC);
+  Plotly.newPlot('pADF',[{x:[],y:[],name:'P(θ)',mode:'lines',line:{color:'#6a3daa',width:2},fill:'tozeroy',fillcolor:'rgba(106,61,170,0.07)'}],L('Angle (°)','P(θ)'),PC);
+  refreshPlotsTheme();
 }
 function showPlot(name,btn){
   const map={energy:'pEnergy',rdf:'pRDF',xrd:'pXRD',bonds:'pBonds',coord:'pCoord',adf:'pADF'};
@@ -466,6 +527,7 @@ function loadTick(){
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
+  applyTheme(getSavedTheme());
   loadTick();
   setTimeout(()=>{
     updateMatrices();
@@ -478,6 +540,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 // Expose functions used by inline onclick handlers.
 Object.assign(window, {
+  toggleTheme,
   switchMainTab, showPlot,
   applyPrototype, updateLattice, buildStructure, rebuildFromProto, updateElementA,
   showAtomTab, showImportTab,
