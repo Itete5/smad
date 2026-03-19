@@ -32,10 +32,12 @@
         <button class="ntab active" onclick="switchMainTab('build',this)">Build</button>
         <button class="ntab" onclick="switchMainTab('optimize',this)">Predict</button>
         <button class="ntab" onclick="switchMainTab('analyze',this)">Analyze</button>
-        <button class="ntab" onclick="switchMainTab('database',this)">Database</button>
+        <button class="ntab" id="ntab-database" onclick="switchMainTab('database',this)">Database</button>
         <button class="ntab" onclick="switchMainTab('export',this)">Export</button>
       </div>
       <div class="nav-right">
+        <a href="/" class="nav-home-link" title="Back to SMAD home">SMAD Home</a>
+        <div class="nav-sep"></div>
         <div style="display:flex;align-items:center;gap:5px;color:var(--text2);font-size:11px">
           <div class="status-dot"></div>
           <span>Ready</span>
@@ -130,6 +132,22 @@
           </div>
 
           <div class="panel">
+            <div class="panel-title"><span class="icon">⊡</span>Database · Quick load</div>
+            <div class="small mb4" style="color:var(--text3)">Load common prototypes (Build tab)</div>
+            <div class="db-quick-btns">
+              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_Al')">Al (FCC)</button>
+              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_Fe')">Fe (BCC)</button>
+              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_Si')">Si (Diamond)</button>
+              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_NaCl')">NaCl</button>
+              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_TiO2')">TiO₂</button>
+              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_BaTiO3')">BaTiO₃</button>
+              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_MgAl2O4')">Spinel</button>
+              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_graphite')">Graphite</button>
+            </div>
+            <button type="button" class="btn bo bfull mt4" style="font-size:10px" onclick="switchMainTab('database', document.getElementById('ntab-database'))">Open Database tab →</button>
+          </div>
+
+          <div class="panel">
             <div class="panel-title"><span class="icon">⌖</span>Manual Atoms</div>
             <div class="tbar">
               <button class="tab active" onclick="showAtomTab('frac',this)">Fractional</button>
@@ -200,6 +218,7 @@
             <button class="vcbtn" onclick="resetCam()">⊙ Reset</button>
             <button class="vcbtn on" id="autoRotBtn" onclick="toggleAutoRot()">↻ Rot</button>
             <button class="vcbtn on" id="cellBtn" onclick="toggleCell()" title="Toggle unit cell">⬡ Cell</button>
+            <button class="vcbtn on" id="axesBtn" onclick="toggleAxes()" title="X=red, Y=green, Z=blue">XYZ</button>
             <button class="vcbtn" onclick="captureScene?.()">📷 Snap</button>
           </div>
           <div id="atomPopup"></div>

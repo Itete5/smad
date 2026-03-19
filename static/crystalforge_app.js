@@ -168,8 +168,41 @@ const PROTOTYPES = {
   perovskite:{ a:3.905, sg:221, sgSym:'Pm-3m', atoms:[{el:'A',x:.5,y:.5,z:.5},{el:'B',x:0,y:0,z:0},{el:'C',x:.5,y:0,z:0},{el:'C',x:0,y:.5,z:0},{el:'C',x:0,y:0,z:.5}], crystal:'Cubic', bElements:2 },
   spinel:{ a:8.09, sg:227, sgSym:'Fd-3m',
     atoms:[{el:'A',x:0,y:0,z:0},{el:'A',x:.25,y:.25,z:.25},{el:'B',x:.625,y:.625,z:.625},{el:'B',x:.875,y:.875,z:.875},{el:'C',x:.25,y:.25,z:.5},{el:'C',x:0,y:.5,z:.25}], crystal:'Cubic', bElements:2 },
+  rutile:{ a:4.59, b:4.59, c:2.96, sg:136, sgSym:'P4_2/mnm', atoms:[{el:'A',x:0,y:0,z:0},{el:'A',x:.5,y:.5,z:.5},{el:'B',x:.3,y:.3,z:0},{el:'B',x:.7,y:.7,z:0},{el:'B',x:.2,y:.8,z:.5},{el:'B',x:.8,y:.2,z:.5}], crystal:'Tetragonal', bElements:1 },
+  graphite:{ a:2.464, b:2.464, c:6.71, gamma:120, sg:194, sgSym:'P6_3/mmc', atoms:[{el:'A',x:0,y:0,z:.25},{el:'A',x:1/3,y:2/3,z:.25},{el:'A',x:0,y:0,z:.75},{el:'A',x:2/3,y:1/3,z:.75}], crystal:'Hexagonal', bElements:0 },
   custom:{ a:5.0, sg:1, sgSym:'P1', atoms:[], crystal:'Triclinic', bElements:0 },
 };
+
+// Database quick-load presets (Build + Database tab)
+const DB_PRESETS = {
+  mp_Al: { proto:'fcc', elA:'Al', a:4.046, note:'Al FCC' },
+  mp_Fe: { proto:'bcc', elA:'Fe', a:2.87, note:'Fe BCC' },
+  mp_Si: { proto:'diamond', elA:'Si', a:5.43, note:'Si Diamond' },
+  mp_NaCl: { proto:'nacl', elA:'Na', elB:'Cl', a:5.64, note:'NaCl' },
+  mp_TiO2: { proto:'rutile', elA:'Ti', elB:'O', a:4.59, c:2.96, note:'TiO₂ Rutile' },
+  mp_BaTiO3: { proto:'perovskite', elA:'Ba', elB:'Ti', elC:'O', a:3.99, note:'BaTiO₃' },
+  mp_MgAl2O4: { proto:'spinel', elA:'Mg', elB:'Al', elC:'O', a:8.09, note:'Spinel MgAl₂O₄' },
+  mp_graphite: { proto:'graphite', elA:'C', a:2.464, c:6.71, note:'Graphite' },
+};
+
+function quickLoad(name){
+  const p = DB_PRESETS[name];
+  if (!p) return;
+  const protoEl = document.getElementById('protoSelect');
+  if (protoEl) protoEl.value = p.proto;
+  const elA = document.getElementById('elA');
+  if (elA) elA.value = p.elA || 'Al';
+  const elB = document.getElementById('elB');
+  if (elB && p.elB) elB.value = p.elB;
+  const elC = document.getElementById('elC');
+  if (elC && p.elC) elC.value = p.elC;
+  const lpA = document.getElementById('lpA');
+  if (lpA && p.a) lpA.value = p.a;
+  const lpC = document.getElementById('lpC');
+  if (lpC && p.c) lpC.value = p.c;
+  applyPrototype(p.proto);
+  log('Quick load: ' + (p.note || name), 'info');
+}
 
 function crystalSystemFromSG(n){
   if(n>=1&&n<=2)return'triclinic';
@@ -190,6 +223,7 @@ function expandProtoAtoms(p, name, elA, elB, elC){
   let translations=[[0,0,0]];
   if(['fcc','nacl','zincblende','diamond','spinel'].includes(name)) translations=fccTrans;
   else if(['bcc'].includes(name)) translations=bccTrans;
+  // rutile, graphite: no extra translations
 
   p.atoms.forEach(base=>{
     const el=elMap[base.el]||base.el;
@@ -265,7 +299,7 @@ function applyPrototype(name){
   CRYSTAL.lattice.c=p.c||p.a||4.0;
   CRYSTAL.lattice.alpha=p.alpha||90;
   CRYSTAL.lattice.beta=p.beta||90;
-  CRYSTAL.lattice.gamma=p.gamma||(name==='hcp'?120:90);
+  CRYSTAL.lattice.gamma=p.gamma||(name==='hcp'||name==='graphite'?120:90);
 
   const lpA=document.getElementById('lpA'); const lpB=document.getElementById('lpB'); const lpC=document.getElementById('lpC');
   if(lpA) lpA.value=CRYSTAL.lattice.a.toFixed(3);
@@ -356,7 +390,7 @@ function showImportTab(id,btn){
 // ══════════════════════════════════════════════════════════════════════
 let VIZ = {
   renderer:null,scene:null,camera:null,
-  instanceMeshes:{},cellMesh:null,
+  instanceMeshes:{},cellMesh:null,axesHelper:null,
   rotX:0.3,rotY:0.5,zoom:1.0,
   mouse:{down:false,lastX:0,lastY:0},
   autoRot:true,
@@ -376,6 +410,10 @@ function initThree(){
   const d1=new THREE.DirectionalLight(0xffffff,0.8);d1.position.set(2,3,4);VIZ.scene.add(d1);
   const d2=new THREE.DirectionalLight(0x00aaff,0.35);d2.position.set(-3,-2,-2);VIZ.scene.add(d2);
   const d3=new THREE.DirectionalLight(0xffaa00,0.2);d3.position.set(1,-3,2);VIZ.scene.add(d3);
+  // X=red, Y=green, Z=blue axes at origin (center of cell)
+  VIZ.axesHelper = new THREE.AxesHelper(6);
+  VIZ.axesHelper.position.set(0, 0, 0);
+  VIZ.scene.add(VIZ.axesHelper);
   setupVizMouse();
   startVizLoop();
 }
@@ -466,6 +504,11 @@ function toggleCell(){
   const on=VIZ.cellMesh.visible=!VIZ.cellMesh.visible;
   document.getElementById('cellBtn')?.classList.toggle('on',on);
 }
+function toggleAxes(){
+  if(!VIZ.axesHelper) return;
+  VIZ.axesHelper.visible = !VIZ.axesHelper.visible;
+  document.getElementById('axesBtn')?.classList.toggle('on',VIZ.axesHelper.visible);
+}
 
 // ══════════════════════════════════════════════════════════════════════
 // MODULE 10: PLOTLY (minimal placeholders)
@@ -545,5 +588,6 @@ Object.assign(window, {
   applyPrototype, updateLattice, buildStructure, rebuildFromProto, updateElementA,
   showAtomTab, showImportTab,
   clearAtoms, addManualAtoms,
-  resetCam, toggleAutoRot, toggleCell,
+  quickLoad,
+  resetCam, toggleAutoRot, toggleCell, toggleAxes,
 });
