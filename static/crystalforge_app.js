@@ -391,7 +391,10 @@ function showImportTab(id,btn){
 let VIZ = {
   renderer:null,scene:null,camera:null,
   instanceMeshes:{},cellMesh:null,axesHelper:null,
+  bondMesh:null,polyMesh:null,
+  showBonds:false,showPoly:false,
   rotX:0.3,rotY:0.5,zoom:1.0,
+  baseZ:60,
   mouse:{down:false,lastX:0,lastY:0},
   autoRot:true,
 };
@@ -414,6 +417,7 @@ function initThree(){
   VIZ.axesHelper = new THREE.AxesHelper(6);
   VIZ.axesHelper.position.set(0, 0, 0);
   VIZ.scene.add(VIZ.axesHelper);
+  updateViewScale();
   setupVizMouse();
   startVizLoop();
 }
@@ -433,7 +437,7 @@ function rebuildMeshes(){
 
   Object.entries(byEl).forEach(([el,idxArr])=>{
     const elData=EL[el]||{r:0.4,color:'#aaaaaa'};
-    const baseR=elData.r*2.5*scale;
+    const baseR=elData.r*3.2*scale;
     const geo=new THREE.SphereGeometry(baseR,14,10);
     const mat=new THREE.MeshPhongMaterial({color:new THREE.Color(elData.color),shininess:80,specular:new THREE.Color(0.3,0.3,0.3)});
     const mesh=new THREE.InstancedMesh(geo,mat,idxArr.length);
@@ -449,6 +453,9 @@ function rebuildMeshes(){
     mesh.instanceMatrix.needsUpdate=true;
   });
   buildCellMesh(cx,cy,cz);
+  updateViewScale();
+  if(VIZ.showBonds) updateBonds();
+  if(VIZ.showPoly) updatePoly();
 }
 
 function buildCellMesh(cx,cy,cz){
@@ -465,6 +472,142 @@ function buildCellMesh(cx,cy,cz){
   geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
   VIZ.cellMesh=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:0x00d4c8,opacity:0.35,transparent:true}));
   VIZ.scene.add(VIZ.cellMesh);
+}
+
+function getMaxCellDim(){
+  // Lattice parameters are in Angstrom; this is an approximate "size" for camera fit.
+  const a=CRYSTAL.lattice.a || 1;
+  const b=CRYSTAL.lattice.b || a;
+  const c=CRYSTAL.lattice.c || a;
+  return Math.max(a,b,c);
+}
+
+function updateViewScale(){
+  if(!VIZ.camera || !VIZ.axesHelper) return;
+  const size=getMaxCellDim();
+  const safeSize=Math.max(size, 2.5);
+  // Camera distance: keep the unit cell comfortably visible.
+  VIZ.baseZ = Math.max(safeSize*2.6, 10);
+  // Axes length relative to the cell size.
+  const axesLen = safeSize*0.55;
+  VIZ.axesHelper.scale.setScalar(axesLen/6);
+}
+
+function minImgDist2Frac(a,b){
+  // Minimum-image distance using fractional coordinates (works for non-orthogonal too).
+  // d_frac in [-0.5,0.5)
+  let dx=a.x-b.x; dx-=Math.round(dx);
+  let dy=a.y-b.y; dy-=Math.round(dy);
+  let dz=a.z-b.z; dz-=Math.round(dz);
+  const [cx,cy,cz]=fracToCart(dx,dy,dz);
+  return cx*cx+cy*cy+cz*cz;
+}
+
+function getBondCutoff(){
+  const v=parseFloat(document.getElementById('bondCutoff')?.value);
+  return isFinite(v)?v:3.2;
+}
+
+function clearBondPoly(){
+  if(VIZ.bondMesh){
+    VIZ.scene.remove(VIZ.bondMesh);
+    VIZ.bondMesh.geometry.dispose();
+    if(VIZ.bondMesh.material) VIZ.bondMesh.material.dispose();
+    VIZ.bondMesh=null;
+  }
+  if(VIZ.polyMesh){
+    VIZ.scene.remove(VIZ.polyMesh);
+    VIZ.polyMesh.geometry.dispose();
+    if(VIZ.polyMesh.material) VIZ.polyMesh.material.dispose();
+    VIZ.polyMesh=null;
+  }
+}
+
+function updateBonds(){
+  if(!VIZ.renderer) return;
+  if(!VIZ.showBonds) return;
+  if(VIZ.bondMesh){
+    VIZ.scene.remove(VIZ.bondMesh);
+    VIZ.bondMesh.geometry.dispose();
+    if(VIZ.bondMesh.material) VIZ.bondMesh.material.dispose();
+  }
+  VIZ.bondMesh=null;
+
+  const atoms=CRYSTAL.atoms;
+  const n=Math.min(atoms.length, 300); // avoid O(N^2) explosion
+  if(n<2) return;
+  const cutoff=getBondCutoff();
+  const rmin=0.6;
+  const cutoff2=cutoff*cutoff;
+
+  const cx=CRYSTAL.lattice.a/2, cy=CRYSTAL.lattice.b/2, cz=CRYSTAL.lattice.c/2;
+  const positions=[];
+  const colors=[];
+  const maxBonds=9000;
+  let bondCount=0;
+
+  for(let i=0;i<n-1;i++){
+    for(let j=i+1;j<n;j++){
+      const d2=minImgDist2Frac(atoms[i], atoms[j]);
+      if(d2<rmin*rmin || d2>cutoff2) continue;
+      const a1=atoms[i], a2=atoms[j];
+      positions.push(a1.cx-cx, a1.cy-cy, a1.cz-cz);
+      positions.push(a2.cx-cx, a2.cy-cy, a2.cz-cz);
+      // Accent-ish bond color
+      colors.push(0.1, 0.6, 0.9, 0.1, 0.6, 0.9);
+      bondCount++;
+      if(bondCount>=maxBonds) break;
+    }
+    if(bondCount>=maxBonds) break;
+  }
+
+  if(!positions.length) return;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+  const mat=new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.65});
+  VIZ.bondMesh=new THREE.LineSegments(geo, mat);
+  VIZ.scene.add(VIZ.bondMesh);
+}
+
+function updatePoly(){
+  if(!VIZ.renderer) return;
+  if(!VIZ.showPoly) return;
+  if(VIZ.polyMesh){
+    VIZ.scene.remove(VIZ.polyMesh);
+    VIZ.polyMesh.geometry.dispose();
+    if(VIZ.polyMesh.material) VIZ.polyMesh.material.dispose();
+  }
+  VIZ.polyMesh=null;
+
+  const atoms=CRYSTAL.atoms;
+  if(atoms.length<2) return;
+  const cutoff=getBondCutoff();
+  const rmin=0.6;
+  const cutoff2=cutoff*cutoff;
+  const central=atoms[0]; // approximate; a full "polyhedra" tool would need per-atom selection
+
+  const cx=CRYSTAL.lattice.a/2, cy=CRYSTAL.lattice.b/2, cz=CRYSTAL.lattice.c/2;
+  const positions=[];
+  const colors=[];
+
+  for(let j=1;j<atoms.length;j++){
+    const d2=minImgDist2Frac(central, atoms[j]);
+    if(d2<rmin*rmin || d2>cutoff2) continue;
+    const aj=atoms[j];
+    positions.push(central.cx-cx, central.cy-cy, central.cz-cz);
+    positions.push(aj.cx-cx, aj.cy-cy, aj.cz-cz);
+    // Poly color (purple-ish)
+    colors.push(0.42, 0.23, 0.82, 0.42, 0.23, 0.82);
+  }
+
+  if(!positions.length) return;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+  const mat=new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.55});
+  VIZ.polyMesh=new THREE.LineSegments(geo, mat);
+  VIZ.scene.add(VIZ.polyMesh);
 }
 
 function setupVizMouse(){
@@ -492,7 +635,7 @@ function startVizLoop(){
     requestAnimationFrame(loop);
     if(VIZ.autoRot&&!VIZ.mouse.down)VIZ.rotY+=0.004;
     VIZ.scene.rotation.x=VIZ.rotX;VIZ.scene.rotation.y=VIZ.rotY;
-    VIZ.camera.position.z=60/VIZ.zoom;
+    VIZ.camera.position.z=VIZ.baseZ/VIZ.zoom;
     VIZ.renderer.render(VIZ.scene,VIZ.camera);
   };
   loop();
@@ -508,6 +651,30 @@ function toggleAxes(){
   if(!VIZ.axesHelper) return;
   VIZ.axesHelper.visible = !VIZ.axesHelper.visible;
   document.getElementById('axesBtn')?.classList.toggle('on',VIZ.axesHelper.visible);
+}
+
+function toggleBonds(){
+  VIZ.showBonds = !VIZ.showBonds;
+  document.getElementById('bondsBtn')?.classList.toggle('on', VIZ.showBonds);
+  if(VIZ.showBonds) updateBonds();
+  else if(VIZ.bondMesh){
+    VIZ.scene.remove(VIZ.bondMesh);
+    VIZ.bondMesh.geometry.dispose();
+    if(VIZ.bondMesh.material) VIZ.bondMesh.material.dispose();
+    VIZ.bondMesh=null;
+  }
+}
+
+function togglePoly(){
+  VIZ.showPoly = !VIZ.showPoly;
+  document.getElementById('polyBtn')?.classList.toggle('on', VIZ.showPoly);
+  if(VIZ.showPoly) updatePoly();
+  else if(VIZ.polyMesh){
+    VIZ.scene.remove(VIZ.polyMesh);
+    VIZ.polyMesh.geometry.dispose();
+    if(VIZ.polyMesh.material) VIZ.polyMesh.material.dispose();
+    VIZ.polyMesh=null;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -590,4 +757,6 @@ Object.assign(window, {
   clearAtoms, addManualAtoms,
   quickLoad,
   resetCam, toggleAutoRot, toggleCell, toggleAxes,
+  toggleBonds, togglePoly,
+  updateBonds, updatePoly,
 });

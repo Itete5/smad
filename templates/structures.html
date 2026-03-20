@@ -219,6 +219,8 @@
             <button class="vcbtn on" id="autoRotBtn" onclick="toggleAutoRot()">↻ Rot</button>
             <button class="vcbtn on" id="cellBtn" onclick="toggleCell()" title="Toggle unit cell">⬡ Cell</button>
             <button class="vcbtn on" id="axesBtn" onclick="toggleAxes()" title="X=red, Y=green, Z=blue">XYZ</button>
+            <button class="vcbtn" id="bondsBtn" onclick="toggleBonds()" title="Toggle bonds">⊸ Bonds</button>
+            <button class="vcbtn" id="polyBtn" onclick="togglePoly()" title="Toggle polygon/polyhedra (approx)">◈ Poly</button>
             <button class="vcbtn" onclick="captureScene?.()">📷 Snap</button>
           </div>
           <div id="atomPopup"></div>
@@ -268,6 +270,14 @@
               <input type="range" id="atomScale" class="slider" min="0.1" max="1.5" step="0.05" value="0.4"
                 oninput="document.getElementById('atomScaleV').textContent=parseFloat(this.value).toFixed(2);rebuildMeshes()">
               <span class="sv" id="atomScaleV">0.40</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Bond cutoff (Å)</label>
+            <div class="srow">
+              <input type="range" id="bondCutoff" class="slider" min="1" max="8" step="0.1" value="3.2"
+                oninput="document.getElementById('bondCutoffV').textContent=parseFloat(this.value).toFixed(1);updateBonds();updatePoly()">
+              <span class="sv" id="bondCutoffV">3.2</span>
             </div>
           </div>
         </div>
