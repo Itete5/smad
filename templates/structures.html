@@ -29,11 +29,11 @@
         </div>
       </div>
       <div class="nav-tabs">
-        <button class="ntab active" onclick="switchMainTab('build',this)">Build</button>
-        <button class="ntab" onclick="switchMainTab('optimize',this)">Predict</button>
-        <button class="ntab" onclick="switchMainTab('analyze',this)">Analyze</button>
-        <button class="ntab" id="ntab-database" onclick="switchMainTab('database',this)">Database</button>
-        <button class="ntab" onclick="switchMainTab('export',this)">Export</button>
+        <button class="ntab active" data-main-tab="build" type="button">Build</button>
+        <button class="ntab" data-main-tab="optimize" type="button">Predict</button>
+        <button class="ntab" data-main-tab="analyze" type="button">Analyze</button>
+        <button class="ntab" id="ntab-database" data-main-tab="database" type="button">Database</button>
+        <button class="ntab" data-main-tab="export" type="button">Export</button>
       </div>
       <div class="nav-right">
         <a href="/" class="nav-home-link" title="Back to SMAD home">SMAD Home</a>
@@ -47,7 +47,7 @@
         <span id="navNAtoms" class="bdg bdg-a nav-badge">0 atoms</span>
         <span id="navGen" class="bdg bdg-n nav-badge">Gen 0</span>
         <div class="nav-sep"></div>
-        <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" type="button">
+        <button class="theme-btn" id="themeBtn" type="button">
           <span class="theme-icon" id="themeIcon">🌙</span>
           <span id="themeLabel">Dark</span>
         </button>
@@ -63,7 +63,7 @@
             <div class="panel-title"><span class="icon">⬡</span>Crystal System</div>
             <div class="field">
               <label>Prototype / Lattice Type</label>
-              <select id="protoSelect" class="inp" onchange="applyPrototype(this.value)">
+              <select id="protoSelect" class="inp">
                 <optgroup label="Simple Lattices">
                   <option value="sc">Simple Cubic (SC)</option>
                   <option value="fcc" selected>Face-Centred Cubic (FCC)</option>
@@ -94,14 +94,14 @@
             <div style="margin-bottom:8px">
               <div style="font-size:9.5px;color:var(--text2);font-family:var(--mono);margin-bottom:5px">Lattice Parameters</div>
               <div class="r3" style="margin-bottom:4px">
-                <div class="field" style="margin:0"><label>a (Å)</label><input id="lpA" type="number" class="inp" value="4.046" step="0.01" oninput="updateLattice()"></div>
-                <div class="field" style="margin:0"><label>b (Å)</label><input id="lpB" type="number" class="inp" value="4.046" step="0.01" oninput="updateLattice()"></div>
-                <div class="field" style="margin:0"><label>c (Å)</label><input id="lpC" type="number" class="inp" value="4.046" step="0.01" oninput="updateLattice()"></div>
+                <div class="field" style="margin:0"><label>a (Å)</label><input id="lpA" type="number" class="inp" value="4.046" step="0.01"></div>
+                <div class="field" style="margin:0"><label>b (Å)</label><input id="lpB" type="number" class="inp" value="4.046" step="0.01"></div>
+                <div class="field" style="margin:0"><label>c (Å)</label><input id="lpC" type="number" class="inp" value="4.046" step="0.01"></div>
               </div>
               <div class="r3">
-                <div class="field" style="margin:0"><label>α (°)</label><input id="lpAlpha" type="number" class="inp" value="90" step="0.1" oninput="updateLattice()"></div>
-                <div class="field" style="margin:0"><label>β (°)</label><input id="lpBeta" type="number" class="inp" value="90" step="0.1" oninput="updateLattice()"></div>
-                <div class="field" style="margin:0"><label>γ (°)</label><input id="lpGamma" type="number" class="inp" value="90" step="0.1" oninput="updateLattice()"></div>
+                <div class="field" style="margin:0"><label>α (°)</label><input id="lpAlpha" type="number" class="inp" value="90" step="0.1"></div>
+                <div class="field" style="margin:0"><label>β (°)</label><input id="lpBeta" type="number" class="inp" value="90" step="0.1"></div>
+                <div class="field" style="margin:0"><label>γ (°)</label><input id="lpGamma" type="number" class="inp" value="90" step="0.1"></div>
               </div>
             </div>
 
@@ -112,21 +112,21 @@
               <div style="display:flex;gap:5px;flex-wrap:wrap" id="elemAssign">
                 <div style="display:flex;align-items:center;gap:4px">
                   <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">A:</span>
-                  <input id="elA" type="text" class="inp" value="Al" style="width:42px;text-align:center;font-weight:700;font-size:12px" oninput="updateElementA()">
+                  <input id="elA" type="text" class="inp" value="Al" style="width:42px;text-align:center;font-weight:700;font-size:12px">
                 </div>
                 <div style="display:flex;align-items:center;gap:4px;display:none" id="elBRow">
                   <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">B:</span>
-                  <input id="elB" type="text" class="inp" value="O" style="width:42px;text-align:center;font-weight:700;font-size:12px" oninput="rebuildFromProto()">
+                  <input id="elB" type="text" class="inp" value="O" style="width:42px;text-align:center;font-weight:700;font-size:12px">
                 </div>
                 <div style="display:flex;align-items:center;gap:4px;display:none" id="elCRow">
                   <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">C:</span>
-                  <input id="elC" type="text" class="inp" value="O" style="width:42px;text-align:center;font-weight:700;font-size:12px" oninput="rebuildFromProto()">
+                  <input id="elC" type="text" class="inp" value="O" style="width:42px;text-align:center;font-weight:700;font-size:12px">
                 </div>
               </div>
             </div>
 
             <div class="brow mt6">
-              <button class="btn bt" style="flex:1" onclick="buildStructure()">⬡ Build</button>
+              <button class="btn bt" id="buildBtn" style="flex:1" type="button">⬡ Build</button>
               <button class="btn bo" style="flex:1" disabled title="Supercell tool coming soon">⊞ Supercell</button>
             </div>
           </div>
@@ -135,23 +135,23 @@
             <div class="panel-title"><span class="icon">⊡</span>Database · Quick load</div>
             <div class="small mb4" style="color:var(--text3)">Load common prototypes (Build tab)</div>
             <div class="db-quick-btns">
-              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_Al')">Al (FCC)</button>
-              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_Fe')">Fe (BCC)</button>
-              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_Si')">Si (Diamond)</button>
-              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_NaCl')">NaCl</button>
-              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_TiO2')">TiO₂</button>
-              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_BaTiO3')">BaTiO₃</button>
-              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_MgAl2O4')">Spinel</button>
-              <button type="button" class="btn bo db-qbtn" onclick="quickLoad('mp_graphite')">Graphite</button>
+              <button type="button" class="btn bo db-qbtn" data-quickload="mp_Al">Al (FCC)</button>
+              <button type="button" class="btn bo db-qbtn" data-quickload="mp_Fe">Fe (BCC)</button>
+              <button type="button" class="btn bo db-qbtn" data-quickload="mp_Si">Si (Diamond)</button>
+              <button type="button" class="btn bo db-qbtn" data-quickload="mp_NaCl">NaCl</button>
+              <button type="button" class="btn bo db-qbtn" data-quickload="mp_TiO2">TiO₂</button>
+              <button type="button" class="btn bo db-qbtn" data-quickload="mp_BaTiO3">BaTiO₃</button>
+              <button type="button" class="btn bo db-qbtn" data-quickload="mp_MgAl2O4">Spinel</button>
+              <button type="button" class="btn bo db-qbtn" data-quickload="mp_graphite">Graphite</button>
             </div>
-            <button type="button" class="btn bo bfull mt4" style="font-size:10px" onclick="switchMainTab('database', document.getElementById('ntab-database'))">Open Database tab →</button>
+            <button type="button" class="btn bo bfull mt4" id="openDatabaseTabBtn" style="font-size:10px">Open Database tab →</button>
           </div>
 
           <div class="panel">
             <div class="panel-title"><span class="icon">⌖</span>Manual Atoms</div>
             <div class="tbar">
-              <button class="tab active" onclick="showAtomTab('frac',this)">Fractional</button>
-              <button class="tab" onclick="showAtomTab('cart',this)">Cartesian</button>
+              <button class="tab active" data-atom-tab="frac" type="button">Fractional</button>
+              <button class="tab" data-atom-tab="cart" type="button">Cartesian</button>
             </div>
             <div id="atom-frac" class="tpane active">
               <textarea id="fracCoords" class="inp" rows="5" style="font-size:10px" placeholder="El  x  y  z&#10;Al  0.0  0.0  0.0&#10;O   0.5  0.5  0.5"></textarea>
@@ -160,8 +160,8 @@
               <textarea id="cartCoords" class="inp" rows="5" style="font-size:10px" placeholder="El  x  y  z (Å)&#10;Al  0.0  0.0  0.0"></textarea>
             </div>
             <div class="brow mt4">
-              <button class="btn bo" style="flex:1;font-size:10px" onclick="addManualAtoms()">+ Add Atoms</button>
-              <button class="btn br" style="flex:1;font-size:10px" onclick="clearAtoms()">✕ Clear</button>
+              <button class="btn bo" id="addManualAtomsBtn" style="flex:1;font-size:10px" type="button">+ Add Atoms</button>
+              <button class="btn br" id="clearAtomsBtn" style="flex:1;font-size:10px" type="button">✕ Clear</button>
             </div>
             <div class="note">Tip: This page automatically saves the current structure for MD → “Load from CrystalForge”.</div>
           </div>
@@ -215,13 +215,13 @@
             </div>
           </div>
           <div class="viewer-ctrls">
-            <button class="vcbtn" onclick="resetCam()">⊙ Reset</button>
-            <button class="vcbtn on" id="autoRotBtn" onclick="toggleAutoRot()">↻ Rot</button>
-            <button class="vcbtn on" id="cellBtn" onclick="toggleCell()" title="Toggle unit cell">⬡ Cell</button>
-            <button class="vcbtn on" id="axesBtn" onclick="toggleAxes()" title="X=red, Y=green, Z=blue">XYZ</button>
-            <button class="vcbtn" id="bondsBtn" onclick="toggleBonds()" title="Toggle bonds">⊸ Bonds</button>
-            <button class="vcbtn" id="polyBtn" onclick="togglePoly()" title="Toggle polygon/polyhedra (approx)">◈ Poly</button>
-            <button class="vcbtn" onclick="captureScene?.()">📷 Snap</button>
+            <button class="vcbtn" id="resetCamBtn" type="button">⊙ Reset</button>
+            <button class="vcbtn on" id="autoRotBtn" type="button">↻ Rot</button>
+            <button class="vcbtn on" id="cellBtn" type="button" title="Toggle unit cell">⬡ Cell</button>
+            <button class="vcbtn on" id="axesBtn" type="button" title="X=red, Y=green, Z=blue">XYZ</button>
+            <button class="vcbtn" id="bondsBtn" type="button" title="Toggle bonds">⊸ Bonds</button>
+            <button class="vcbtn" id="polyBtn" type="button" title="Toggle polygon/polyhedra (approx)">◈ Poly</button>
+            <button class="vcbtn" id="snapBtn" type="button">📷 Snap</button>
           </div>
           <div id="atomPopup"></div>
         </div>
@@ -233,12 +233,12 @@
         </div>
 
         <div class="ptabs-bar">
-          <button class="ptab active" onclick="showPlot('energy',this)">E vs Gen</button>
-          <button class="ptab" onclick="showPlot('rdf',this)">g(r) RDF</button>
-          <button class="ptab" onclick="showPlot('xrd',this)">XRD Pattern</button>
-          <button class="ptab" onclick="showPlot('bonds',this)">Bond Lengths</button>
-          <button class="ptab" onclick="showPlot('coord',this)">Coord #</button>
-          <button class="ptab" onclick="showPlot('adf',this)">ADF Angles</button>
+          <button class="ptab active" data-plot="energy" type="button">E vs Gen</button>
+          <button class="ptab" data-plot="rdf" type="button">g(r) RDF</button>
+          <button class="ptab" data-plot="xrd" type="button">XRD Pattern</button>
+          <button class="ptab" data-plot="bonds" type="button">Bond Lengths</button>
+          <button class="ptab" data-plot="coord" type="button">Coord #</button>
+          <button class="ptab" data-plot="adf" type="button">ADF Angles</button>
         </div>
         <div class="plotwrap">
           <div id="pEnergy" class="ppane active"></div>
@@ -267,16 +267,14 @@
           <div class="field">
             <label>Atom scale</label>
             <div class="srow">
-              <input type="range" id="atomScale" class="slider" min="0.1" max="1.5" step="0.05" value="0.4"
-                oninput="document.getElementById('atomScaleV').textContent=parseFloat(this.value).toFixed(2);rebuildMeshes()">
+              <input type="range" id="atomScale" class="slider" min="0.1" max="1.5" step="0.05" value="0.4">
               <span class="sv" id="atomScaleV">0.40</span>
             </div>
           </div>
           <div class="field">
             <label>Bond cutoff (Å)</label>
             <div class="srow">
-              <input type="range" id="bondCutoff" class="slider" min="1" max="8" step="0.1" value="3.2"
-                oninput="document.getElementById('bondCutoffV').textContent=parseFloat(this.value).toFixed(1);updateBonds();updatePoly()">
+              <input type="range" id="bondCutoff" class="slider" min="1" max="8" step="0.1" value="3.2">
               <span class="sv" id="bondCutoffV">3.2</span>
             </div>
           </div>
@@ -290,7 +288,7 @@
         <div class="con-wrap">
           <div class="con-hdr">
             Log
-            <button class="btn bo" style="padding:1px 6px;font-size:9px" onclick="document.getElementById('con').textContent='> Log cleared.'">✕</button>
+            <button class="btn bo" id="clearLogBtn" style="padding:1px 6px;font-size:9px" type="button">✕</button>
           </div>
           <div class="con" id="con">CrystalForge · Crystal Structure Discovery Platform
 Ready.</div>
@@ -299,6 +297,7 @@ Ready.</div>
     </div>
   </div>
 
-  <script src="/static/crystalforge_app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+  <script type="module" src="/static/crystalforge_app/app.js"></script>
 </body>
 </html>
