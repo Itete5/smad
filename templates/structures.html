@@ -146,6 +146,16 @@ a{text-decoration:none;color:inherit}
   transition:all var(--t);
 }
 .theme-toggle:hover{border-color:var(--border2);color:var(--text0)}
+.nav-home-link{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 11px;border-radius:var(--r);
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--text1);font-size:11px;font-weight:600;
+  font-family:var(--display);letter-spacing:.15px;
+  transition:all var(--t);text-decoration:none;flex-shrink:0;
+  white-space:nowrap;
+}
+.nav-home-link:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
 .help-btn{
   width:28px;height:28px;border-radius:50%;
   background:var(--bg3);border:1px solid var(--border);
@@ -685,6 +695,8 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
       <div class="logo-name">CrystalForge</div>
       <div class="logo-sub">Structure Discovery</div>
     </div>
+    <div class="nav-divider"></div>
+    <a href="/" class="nav-home-link" title="Back to SMAD home" aria-label="Back to SMAD home">⌂ SMAD Home</a>
     <div class="nav-divider"></div>
 
     <!-- main tabs -->
