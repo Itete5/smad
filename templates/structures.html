@@ -1,303 +1,1646 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CrystalForge · Crystal Structure Discovery · SMAD</title>
+  <title>CrystalForge · Crystal Structure Discovery</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-  <link rel="stylesheet" href="/static/crystalforge.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+/* ══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════════════════════ */
+:root {
+  --bg0:#080c14; --bg1:#0d1520; --bg2:#111d2e; --bg3:#172236;
+  --bg4:#1e2d44; --bg5:#253550;
+  --border:rgba(80,130,200,0.13); --border2:rgba(80,130,200,0.28);
+  --text0:#ddeeff; --text1:#99b8d8; --text2:#5a7a9a; --text3:#334a62;
+  --accent:#3d9fff; --accent-glow:rgba(61,159,255,0.18);
+  --green:#2dd9a0; --green-glow:rgba(45,217,160,0.15);
+  --amber:#f5a623; --amber-glow:rgba(245,166,35,0.15);
+  --rose:#f06080; --rose-glow:rgba(240,96,128,0.15);
+  --violet:#9d7fff;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Instrument Sans',sans-serif;
+  --display:'Syne',sans-serif;
+  --r:8px; --r2:12px;
+  --nav-h:56px; --sb-w:300px; --rp-w:236px;
+  --shadow:0 8px 32px rgba(0,0,0,0.5);
+  --t:.17s ease;
+}
+[data-theme="light"] {
+  --bg0:#edf1f7; --bg1:#ffffff; --bg2:#f3f6fb; --bg3:#e6ecf5;
+  --bg4:#d8e2f0; --bg5:#ccd8eb;
+  --border:rgba(60,100,160,0.12); --border2:rgba(60,100,160,0.28);
+  --text0:#0d1828; --text1:#2a4060; --text2:#607090; --text3:#90a8c0;
+  --shadow:0 8px 32px rgba(0,0,0,0.12);
+}
+
+/* ══ RESET ══ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);background:var(--bg0);color:var(--text0);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{cursor:pointer;font-family:inherit;border:none}
+input,select,textarea{font-family:inherit}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px}
+::-webkit-scrollbar-track{background:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+
+/* ══════════════════════════════════════════════════════════
+   WELCOME SCREEN
+══════════════════════════════════════════════════════════ */
+#welcome{
+  position:fixed;inset:0;z-index:9000;background:var(--bg0);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  gap:0;
+  transition:opacity .6s ease,visibility .6s ease;
+}
+#welcome.gone{opacity:0;visibility:hidden;pointer-events:none}
+.wlc-hex{
+  width:80px;height:80px;position:relative;margin-bottom:28px;
+}
+.wlc-hex svg{animation:hexSpin 10s linear infinite}
+@keyframes hexSpin{to{transform:rotate(360deg)}}
+.wlc-rings{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.wlc-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.wlc-title{
+  font-family:var(--display);font-size:42px;font-weight:800;
+  color:var(--text0);letter-spacing:-1px;line-height:1;
+  margin-bottom:10px;
+}
+.wlc-title span{color:var(--accent)}
+.wlc-sub{font-size:13px;color:var(--text2);margin-bottom:32px;letter-spacing:.3px}
+.wlc-bar{width:220px;height:2px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.wlc-prog{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:2px;animation:wProg 2.6s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes wProg{from{width:0}to{width:100%}}
+.wlc-label{margin-top:14px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.8px;animation:fadeIn .5s .4s both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT SHELL
+══════════════════════════════════════════════════════════ */
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+#workspace{display:flex;flex:1;overflow:hidden}
+
+/* ══════════════════════════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════════════════════════ */
+#nav{
+  height:var(--nav-h);background:var(--bg1);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:10px;
+  position:relative;z-index:200;flex-shrink:0;
+}
+/* hexagonal logo mark */
+.logo-mark{
+  width:36px;height:36px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:16px;font-weight:800;font-family:var(--display);
+}
+.logo-text{margin-right:auto}
+.logo-name{font-family:var(--display);font-size:17px;font-weight:800;color:var(--text0);letter-spacing:-.3px;line-height:1}
+.logo-sub{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.6px}
+.nav-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
+
+/* nav tabs */
+.nav-tabs{display:flex;gap:2px}
+.ntab{
+  padding:6px 13px;border-radius:var(--r);background:none;
+  color:var(--text2);font-size:11.5px;font-weight:600;
+  font-family:var(--display);letter-spacing:.2px;
+  transition:all var(--t);display:flex;align-items:center;gap:5px;
+  position:relative;
+}
+.ntab:hover{color:var(--text0);background:var(--bg3)}
+.ntab.active{color:var(--accent);background:var(--accent-glow)}
+.ntab-pip{
+  font-size:8px;padding:1px 5px;border-radius:10px;
+  background:rgba(245,166,35,.18);color:var(--amber);
+  font-family:var(--mono);letter-spacing:.3px;
+}
+
+/* nav right chips */
+.nav-chips{display:flex;align-items:center;gap:6px}
+.nchip{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 9px;border-radius:var(--r);
+  background:var(--bg3);border:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;
+  transition:border-color var(--t);
+}
+.nchip:hover{border-color:var(--border2)}
+.nchip-lbl{color:var(--text3)}
+.nchip-val{color:var(--text1);font-weight:500}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:statusPulse 2.5s ease infinite}
+@keyframes statusPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.theme-toggle{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 11px;border-radius:var(--r);
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--text1);font-size:11px;font-weight:500;
+  transition:all var(--t);
+}
+.theme-toggle:hover{border-color:var(--border2);color:var(--text0)}
+.help-btn{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--text2);font-size:12px;font-weight:700;
+  transition:all var(--t);display:flex;align-items:center;justify-content:center;
+}
+.help-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ══════════════════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════════════════ */
+#sidebar{
+  width:var(--sb-w);flex-shrink:0;
+  background:var(--bg1);border-right:1px solid var(--border);
+  overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;scrollbar-color:var(--bg5) transparent;
+}
+.main-tab{display:none}
+.main-tab.active{display:block}
+
+/* Onboarding banner */
+.onboard{
+  margin:12px;padding:14px;
+  background:linear-gradient(135deg,rgba(61,159,255,.08),rgba(45,217,160,.05));
+  border:1px solid rgba(61,159,255,.2);border-radius:var(--r2);
+}
+.onboard-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.onboard-icon{font-size:18px}
+.onboard-title{font-family:var(--display);font-size:12px;font-weight:700;color:var(--accent)}
+.onboard-close{margin-left:auto;background:none;border:none;color:var(--text3);font-size:16px;line-height:1;padding:2px 5px;border-radius:4px;cursor:pointer;transition:color var(--t)}
+.onboard-close:hover{color:var(--text0)}
+.onboard-body{font-size:11px;color:var(--text2);line-height:1.55;margin-bottom:10px}
+.onboard-steps{display:flex;flex-direction:column;gap:5px}
+.ostep{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--text1)}
+.ostep-n{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--accent);color:#fff;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+
+/* panels */
+.panel{padding:14px;border-bottom:1px solid var(--border)}
+.panel-hd{
+  display:flex;align-items:center;gap:7px;
+  font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--text3);margin-bottom:13px;font-family:var(--display);
+}
+.panel-hd-icon{font-size:14px;opacity:.7}
+
+/* fields */
+.field{margin-bottom:11px}
+.field:last-child{margin-bottom:0}
+label{
+  display:flex;align-items:center;gap:5px;
+  font-size:10.5px;color:var(--text2);margin-bottom:5px;font-weight:500;
+}
+/* tooltip badge */
+.tip-badge{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--bg4);border:1px solid var(--border2);
+  color:var(--text3);font-size:8.5px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:help;position:relative;flex-shrink:0;
+}
+.tip-badge .tip-box{
+  position:absolute;left:50%;bottom:calc(100% + 8px);
+  transform:translateX(-50%) translateY(4px);
+  background:var(--bg0);border:1px solid var(--border2);
+  border-radius:var(--r);padding:9px 11px;
+  font-size:10.5px;color:var(--text1);line-height:1.5;
+  width:210px;z-index:500;opacity:0;pointer-events:none;
+  transition:all .15s ease;box-shadow:var(--shadow);
+  font-weight:400;text-align:left;white-space:normal;
+}
+.tip-badge .tip-box::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--border2);
+}
+.tip-badge:hover .tip-box,.tip-badge:focus .tip-box{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.inp{
+  width:100%;padding:7px 10px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text0);
+  font-size:12px;font-family:var(--mono);
+  outline:none;transition:border-color var(--t),box-shadow var(--t);
+}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.inp::placeholder{color:var(--text3)}
+select.inp{cursor:pointer}
+textarea.inp{resize:vertical;min-height:78px}
+
+/* grid layouts */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.srow{display:flex;gap:6px;align-items:center}
+
+/* buttons */
+.btn{
+  padding:7px 13px;border-radius:var(--r);
+  font-size:11px;font-weight:600;border:none;
+  transition:all var(--t);display:inline-flex;align-items:center;gap:6px;
+  white-space:nowrap;font-family:var(--display);letter-spacing:.1px;
+}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:not(:disabled):hover{background:#2d8ff5;transform:translateY(-1px);box-shadow:0 4px 18px rgba(61,159,255,.35)}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text1)}
+.btn-secondary:not(:disabled):hover{border-color:var(--border2);color:var(--text0);background:var(--bg4)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text0)}
+.btn-danger{background:rgba(240,96,128,.1);border:1px solid rgba(240,96,128,.2);color:var(--rose)}
+.btn-danger:hover{background:rgba(240,96,128,.18)}
+.brow{display:flex;gap:6px;margin-top:10px}
+.bfull{width:100%;justify-content:center}
+/* disabled tooltip */
+[data-soon]{position:relative}
+[data-soon]::after{
+  content:'Coming soon';position:absolute;bottom:calc(100% + 6px);left:50%;
+  transform:translateX(-50%);background:var(--bg0);border:1px solid var(--border);
+  padding:4px 8px;border-radius:4px;font-size:9px;color:var(--text2);
+  white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:10;
+}
+[data-soon]:hover::after{opacity:1}
+
+/* ── Lattice info bar ── */
+.latt-info{
+  font-size:10px;color:var(--text2);font-family:var(--mono);
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:5px 9px;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.latt-sys{
+  padding:1px 7px;border-radius:10px;font-size:9px;font-weight:600;
+  background:var(--accent-glow);color:var(--accent);
+}
+
+/* ── element slot ── */
+.elem-row{display:flex;flex-wrap:wrap;gap:6px}
+.elem-slot{display:flex;align-items:center;gap:5px}
+.elem-lbl{font-size:10px;color:var(--text3);font-family:var(--mono);font-weight:600;min-width:18px}
+.elem-inp-wrap{position:relative;display:flex;align-items:center}
+.elem-inp{
+  width:52px;text-align:center;font-weight:700;font-size:13px;padding:5px 4px;
+  cursor:pointer;
+}
+.elem-inp:hover{border-color:var(--accent)}
+.elem-pick-btn{
+  position:absolute;right:-2px;top:50%;transform:translateY(-50%);
+  width:18px;height:18px;border-radius:4px;
+  background:var(--accent);border:none;color:#fff;
+  font-size:9px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;opacity:0;transition:opacity var(--t);
+}
+.elem-inp-wrap:hover .elem-pick-btn,.elem-inp:focus + .elem-pick-btn{opacity:1}
+
+/* quick-load grid */
+.db-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.db-btn{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 9px;border-radius:var(--r);
+  background:var(--bg2);border:1px solid var(--border);
+  color:var(--text1);font-size:11px;font-weight:500;
+  transition:all var(--t);cursor:pointer;text-align:left;
+}
+.db-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.db-btn-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* coord tabs */
+.ctab-bar{display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-bottom:9px}
+.ctab{flex:1;padding:5px;border-radius:5px;background:none;border:none;color:var(--text2);font-size:10.5px;font-weight:600;font-family:var(--display);transition:all var(--t)}
+.ctab.active{background:var(--bg5);color:var(--text0)}
+.ctab:hover:not(.active){color:var(--text1)}
+.tpane{display:none}.tpane.active{display:block}
+
+/* note */
+.note{font-size:10px;color:var(--text3);line-height:1.5;padding:7px 10px;background:var(--bg2);border-left:2px solid var(--accent);border-radius:0 var(--r) var(--r) 0;margin-top:9px}
+
+/* coming soon panel */
+.coming-panel{padding:32px 20px;text-align:center}
+.coming-panel-ico{font-size:40px;margin-bottom:14px;opacity:.3}
+.coming-panel h3{font-family:var(--display);font-size:14px;color:var(--text1);margin-bottom:7px}
+.coming-panel p{font-size:11px;color:var(--text3);line-height:1.6;max-width:220px;margin:0 auto}
+.soon-tag{display:inline-block;margin-top:13px;padding:3px 12px;border-radius:20px;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.25);color:var(--amber);font-size:9.5px;font-weight:600;font-family:var(--mono)}
+
+/* ══════════════════════════════════════════════════════════
+   PERIODIC TABLE MODAL
+══════════════════════════════════════════════════════════ */
+#pt-modal-bg{
+  position:fixed;inset:0;z-index:800;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;
+  padding:16px;
+}
+#pt-modal-bg.open{display:flex;animation:ptFadeIn .2s ease}
+@keyframes ptFadeIn{from{opacity:0}to{opacity:1}}
+#pt-modal{
+  background:var(--bg1);border:1px solid var(--border2);
+  border-radius:var(--r2);box-shadow:var(--shadow);
+  padding:20px;max-width:920px;width:100%;
+  max-height:90vh;overflow-y:auto;
+  animation:ptSlideIn .2s cubic-bezier(.16,1,.3,1)
+}
+@keyframes ptSlideIn{from{transform:translateY(16px) scale(.97)}to{transform:none}}
+.pt-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+.pt-header h2{font-family:var(--display);font-size:18px;font-weight:800;color:var(--text0)}
+.pt-header p{font-size:11px;color:var(--text2);margin-top:3px}
+.pt-close{
+  width:30px;height:30px;border-radius:50%;background:var(--bg3);
+  border:1px solid var(--border);color:var(--text2);font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all var(--t);flex-shrink:0;
+}
+.pt-close:hover{border-color:var(--rose);color:var(--rose)}
+
+/* category legend */
+.pt-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pt-leg-item{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--text2)}
+.pt-leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* PT grid */
+.pt-grid{
+  display:grid;
+  grid-template-columns:repeat(18,1fr);
+  grid-template-rows:auto;
+  gap:3px;
+  user-select:none;
+}
+.el-cell{
+  aspect-ratio:1;min-width:0;
+  border-radius:5px;border:1px solid transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all var(--t);position:relative;
+  padding:2px 1px;
+}
+.el-cell:hover{transform:scale(1.12);z-index:10;border-color:var(--text0) !important;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.el-cell.selected{transform:scale(1.1);box-shadow:0 0 0 2px #fff,0 4px 16px rgba(0,0,0,.5);z-index:15}
+.el-num{font-family:var(--mono);font-size:6px;color:rgba(255,255,255,.5);line-height:1;align-self:flex-start;padding-left:3px}
+.el-sym{font-family:var(--display);font-size:clamp(8px,1.2vw,14px);font-weight:700;color:#fff;line-height:1.1}
+.el-name{font-size:clamp(4px,.7vw,7px);color:rgba(255,255,255,.55);line-height:1;text-align:center}
+.el-mass{font-family:var(--mono);font-size:clamp(4px,.55vw,6px);color:rgba(255,255,255,.4)}
+/* spacer cells */
+.el-space{aspect-ratio:1;min-width:0}
+/* lanthanide/actinide row spacer */
+.pt-la-gap{grid-column:1/-1;height:6px}
+/* info card in modal */
+.pt-info-card{
+  margin-top:14px;padding:14px;background:var(--bg2);
+  border:1px solid var(--border2);border-radius:var(--r2);
+  display:none;
+}
+.pt-info-card.show{display:flex;gap:16px;flex-wrap:wrap}
+.pt-info-sym{
+  font-family:var(--display);font-size:48px;font-weight:800;
+  color:var(--accent);line-height:1;min-width:60px;
+}
+.pt-info-body{flex:1}
+.pt-info-name{font-family:var(--display);font-size:16px;font-weight:700;color:var(--text0);margin-bottom:4px}
+.pt-info-row{font-size:11px;color:var(--text2);margin-bottom:2px}
+.pt-info-row span{color:var(--text0);font-family:var(--mono);font-size:11px}
+.pt-select-btn{margin-top:10px}
+
+/* ══════════════════════════════════════════════════════════
+   CENTER VIEWER
+══════════════════════════════════════════════════════════ */
+#main-content{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#threeWrap{flex:1;position:relative;background:var(--bg0);overflow:hidden;min-height:0}
+#threeCanvas{width:100%;height:100%;display:block}
+
+/* empty state */
+#canvas-empty{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.ce-hex{font-size:64px;opacity:.06;margin-bottom:18px;animation:ceFloat 3s ease-in-out infinite}
+@keyframes ceFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ce-title{font-family:var(--display);font-size:15px;color:var(--text3);margin-bottom:6px;font-weight:600}
+.ce-sub{font-size:11px;color:var(--text3);opacity:.6;text-align:center;max-width:260px;line-height:1.5}
+
+/* viewer HUD */
+.hud{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.hud-chip{
+  background:rgba(8,12,20,.8);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:5px 10px;font-family:var(--mono);font-size:10px;
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+}
+.hv{color:var(--text0);font-weight:500}
+.hl{color:var(--text3)}
+.hsep{color:var(--border2);margin:0 2px}
+
+/* viewer controls — redesigned as grouped pill buttons */
+.viewer-ctrls{
+  position:absolute;top:12px;right:12px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.vcgroup{
+  background:rgba(8,12,20,.82);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:var(--r2);
+  overflow:hidden;
+}
+.vcbtn{
+  width:100%;padding:8px 13px;background:none;border:none;
+  color:var(--text2);font-size:10.5px;font-weight:600;
+  font-family:var(--display);letter-spacing:.2px;
+  transition:all var(--t);display:flex;align-items:center;gap:7px;
+  border-bottom:1px solid var(--border);text-align:left;
+}
+.vcbtn:last-child{border-bottom:none}
+.vcbtn:hover{color:var(--text0);background:rgba(61,159,255,.07)}
+.vcbtn.on{color:var(--accent)}
+.vcbtn-icon{font-size:12px;width:16px;text-align:center}
+
+/* interaction hint */
+#hint-bar{
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  background:rgba(8,12,20,.8);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:20px;
+  padding:7px 18px;display:flex;gap:16px;align-items:center;
+  pointer-events:none;animation:hintOut 1s ease 5s forwards;
+}
+@keyframes hintOut{to{opacity:0}}
+.hint-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text2)}
+.kbdkey{
+  background:var(--bg4);border:1px solid var(--border2);
+  border-radius:4px;padding:1px 6px;font-family:var(--mono);
+  font-size:9.5px;color:var(--text1);
+}
+
+/* atom popup */
+#atom-popup{
+  position:absolute;background:var(--bg1);
+  border:1px solid var(--border2);border-radius:var(--r2);
+  padding:11px 14px;pointer-events:none;display:none;
+  box-shadow:var(--shadow);min-width:150px;z-index:50;
+}
+#atom-popup h4{font-family:var(--display);font-size:15px;font-weight:800;color:var(--accent);margin-bottom:7px}
+#atom-popup .pop-row{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:var(--text2);margin-bottom:3px}
+#atom-popup .pop-v{color:var(--text0);font-family:var(--mono)}
+
+/* stats bar */
+.statsbar{
+  background:var(--bg1);border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  display:flex;flex-shrink:0;
+}
+.sc{flex:1;padding:7px 13px;border-right:1px solid var(--border)}
+.sc:last-child{border-right:none}
+.slbl{font-size:8.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:2px}
+.sval{font-size:12px;font-family:var(--mono);color:var(--text1);font-weight:500}
+.sval.dash{color:var(--text3);font-size:11px}
+
+/* plot tabs */
+.ptab-bar{
+  display:flex;background:var(--bg1);border-bottom:1px solid var(--border);
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+}
+.ptab-bar::-webkit-scrollbar{display:none}
+.ptab{
+  padding:8px 15px;border:none;background:none;
+  color:var(--text2);font-size:10.5px;font-weight:600;
+  white-space:nowrap;border-bottom:2px solid transparent;
+  transition:all var(--t);font-family:var(--display);letter-spacing:.2px;
+  cursor:pointer;
+}
+.ptab:hover{color:var(--text1)}
+.ptab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.plotwrap{height:176px;background:var(--bg0);position:relative;flex-shrink:0}
+.ppane{display:none;height:100%;width:100%;align-items:center;justify-content:center}
+.ppane.active{display:flex}
+.plot-ph{text-align:center}
+.ph-ico{font-size:26px;opacity:.18;margin-bottom:8px}
+.ph-title{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:3px}
+.ph-desc{font-size:9.5px;color:var(--text3);opacity:.65;max-width:200px;line-height:1.5}
+
+/* ══════════════════════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════════════════════ */
+#rpanel{
+  width:var(--rp-w);flex-shrink:0;
+  background:var(--bg1);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.rp-sec{padding:13px;border-bottom:1px solid var(--border)}
+.rp-title{font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--text3);margin-bottom:11px;font-family:var(--display)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:8px 9px}
+.pc-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px}
+.pc-val{font-size:12px;font-family:var(--mono);color:var(--text1);font-weight:500}
+.pc-val.empty{color:var(--text3);font-size:11px}
+
+.sl-field{margin-bottom:11px}
+.sl-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.sl-name{font-size:10.5px;color:var(--text2)}
+.sl-val{font-size:10px;font-family:var(--mono);color:var(--accent)}
+input[type=range]{width:100%;height:3px;border-radius:2px;background:var(--bg4);outline:none;appearance:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(61,159,255,.45)}
+
+/* atom list */
+.atom-list-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.atom-list{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.atom-item{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 7px;border-radius:var(--r);cursor:pointer;
+  transition:background var(--t);margin-bottom:2px;
+}
+.atom-item:hover{background:var(--bg3)}
+.atom-item.sel{background:var(--accent-glow);border:1px solid rgba(61,159,255,.2)}
+.at-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.at-el{font-size:11.5px;font-weight:700;font-family:var(--mono);color:var(--text0);width:24px}
+.at-pos{font-size:9px;color:var(--text3);font-family:var(--mono);flex:1}
+.at-idx{font-size:9px;color:var(--text3);font-family:var(--mono)}
+.atom-empty{text-align:center;padding:20px 10px;color:var(--text3);font-size:10.5px;line-height:1.6}
+
+/* log */
+.con-wrap{border-top:1px solid var(--border);flex-shrink:0}
+.con-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:5px 11px;background:var(--bg2);border-bottom:1px solid var(--border);
+  font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;
+}
+.con{height:78px;overflow-y:auto;padding:7px 11px;font-family:var(--mono);font-size:9.5px;color:var(--text2);line-height:1.65;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.cl{margin-bottom:1px}.cl.ok{color:var(--green)}.cl.err{color:var(--rose)}.cl.inf{color:var(--accent)}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE
+══════════════════════════════════════════════════════════ */
+#mob-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg1);border-top:1px solid var(--border);z-index:300;padding:5px 0 calc(5px + env(safe-area-inset-bottom))}
+.mob-tabs{display:flex;justify-content:space-around}
+.mob-tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 12px;background:none;border:none;color:var(--text2);font-size:9px;font-weight:600;font-family:var(--display);transition:color var(--t)}
+.mob-tab.active{color:var(--accent)}
+.mob-tab-ico{font-size:20px}
+#mob-panel{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:290;
+  background:var(--bg1);border-top:1px solid var(--border2);
+  border-radius:16px 16px 0 0;max-height:75vh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);
+  padding-bottom:calc(60px + env(safe-area-inset-bottom));
+}
+#mob-panel.open{transform:translateY(0)}
+#mob-drag{width:40px;height:4px;border-radius:2px;background:var(--bg5);margin:10px auto 4px}
+@media(max-width:860px){
+  #sidebar,#rpanel{display:none}
+  #mob-bar,#mob-panel{display:block}
+  .nav-tabs{display:none}
+  .nav-chips .nchip:not(:first-child){display:none}
+  #main-content{flex:1}
+  .viewer-ctrls{gap:4px}
+  #pt-modal{padding:14px}
+  .pt-grid{gap:2px}
+  .el-sym{font-size:9px}
+}
+@media(max-width:480px){
+  .statsbar{display:none}
+  .plotwrap{height:130px}
+  :root{--nav-h:50px}
+  .logo-sub{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+
+/* skip link */
+.skip{position:absolute;top:-40px;left:14px;background:var(--accent);color:#fff;padding:8px 16px;border-radius:var(--r);font-weight:600;z-index:9999;transition:top .15s}
+.skip:focus{top:12px}
+  </style>
 </head>
 <body>
-  <!-- LOADING -->
-  <div id="loading">
-    <div class="l-crystal"><div class="l-inner"></div></div>
-    <div class="l-txt" id="l-txt">Loading crystallography engine...</div>
-    <div class="l-bar"><div class="l-prog" id="l-prog"></div></div>
+
+<!-- Skip nav -->
+<a href="#main-content" class="skip">Skip to main content</a>
+
+<!-- ══════════════════════════════════════════════════════
+     WELCOME SCREEN
+══════════════════════════════════════════════════════════ -->
+<div id="welcome" role="status" aria-label="Loading CrystalForge">
+  <div class="wlc-hex">
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+      <polygon points="40,5 72,22 72,58 40,75 8,58 8,22" fill="none" stroke="rgba(61,159,255,0.5)" stroke-width="1.5"/>
+      <polygon points="40,14 63,27 63,53 40,66 17,53 17,27" fill="none" stroke="rgba(45,217,160,0.35)" stroke-width="1"/>
+      <polygon points="40,23 55,32 55,48 40,57 25,48 25,32" fill="rgba(61,159,255,0.08)" stroke="#3d9fff" stroke-width="1.5"/>
+    </svg>
+    <div class="wlc-rings"><div class="wlc-dot"></div></div>
   </div>
+  <div class="wlc-title">Crystal<span>Forge</span></div>
+  <div class="wlc-sub">Crystal Structure Discovery Platform</div>
+  <div class="wlc-bar"><div class="wlc-prog"></div></div>
+  <div class="wlc-label">Initializing crystallography engine…</div>
+</div>
 
-  <div id="app">
-    <!-- ═══ NAVBAR ═══ -->
-    <nav id="nav">
-      <div class="nav-logo">
-        <div class="nav-logo-icon">⬡</div>
-        <div class="nav-logo-text">
-          <div class="nav-logo-name">CrystalForge</div>
-          <div class="nav-logo-sub">Structure Discovery</div>
-        </div>
+<!-- ══════════════════════════════════════════════════════
+     PERIODIC TABLE MODAL
+══════════════════════════════════════════════════════════ -->
+<div id="pt-modal-bg" role="dialog" aria-modal="true" aria-labelledby="pt-title">
+  <div id="pt-modal">
+    <div class="pt-header">
+      <div>
+        <h2 id="pt-title">⚛ Periodic Table — Select Element</h2>
+        <p>Click any element to select it for the active site (<span id="pt-slot-label">A</span>)</p>
       </div>
-      <div class="nav-tabs">
-        <button class="ntab active" data-main-tab="build" type="button">Build</button>
-        <button class="ntab" data-main-tab="optimize" type="button">Predict</button>
-        <button class="ntab" data-main-tab="analyze" type="button">Analyze</button>
-        <button class="ntab" id="ntab-database" data-main-tab="database" type="button">Database</button>
-        <button class="ntab" data-main-tab="export" type="button">Export</button>
-      </div>
-      <div class="nav-right">
-        <a href="/" class="nav-home-link" title="Back to SMAD home">SMAD Home</a>
-        <div class="nav-sep"></div>
-        <div style="display:flex;align-items:center;gap:5px;color:var(--text2);font-size:11px">
-          <div class="status-dot"></div>
-          <span>Ready</span>
-        </div>
-        <div class="nav-sep"></div>
-        <span id="navSG" class="bdg bdg-t nav-badge">P1 (#1)</span>
-        <span id="navNAtoms" class="bdg bdg-a nav-badge">0 atoms</span>
-        <span id="navGen" class="bdg bdg-n nav-badge">Gen 0</span>
-        <div class="nav-sep"></div>
-        <button class="theme-btn" id="themeBtn" type="button">
-          <span class="theme-icon" id="themeIcon">🌙</span>
-          <span id="themeLabel">Dark</span>
-        </button>
-      </div>
-    </nav>
+      <button class="pt-close" id="ptClose" aria-label="Close periodic table">×</button>
+    </div>
 
-    <div id="workspace">
-      <!-- ═══ LEFT SIDEBAR ═══ -->
-      <aside id="sidebar">
-        <!-- ── BUILD TAB ── -->
-        <div id="tab-build" class="main-tab-content active">
-          <div class="panel">
-            <div class="panel-title"><span class="icon">⬡</span>Crystal System</div>
-            <div class="field">
-              <label>Prototype / Lattice Type</label>
-              <select id="protoSelect" class="inp">
-                <optgroup label="Simple Lattices">
-                  <option value="sc">Simple Cubic (SC)</option>
-                  <option value="fcc" selected>Face-Centred Cubic (FCC)</option>
-                  <option value="bcc">Body-Centred Cubic (BCC)</option>
-                  <option value="hcp">Hexagonal Close-Packed (HCP)</option>
-                  <option value="diamond">Diamond Cubic</option>
-                </optgroup>
-                <optgroup label="Binary Compounds">
-                  <option value="nacl">NaCl (Rocksalt, B1)</option>
-                  <option value="zincblende">Zinc Blende (B3)</option>
-                </optgroup>
-                <optgroup label="Complex">
-                  <option value="perovskite">Perovskite (ABO₃)</option>
-                  <option value="spinel">Spinel (AB₂O₄)</option>
-                  <option value="custom">Custom / Empty</option>
-                </optgroup>
-              </select>
-            </div>
+    <!-- legend -->
+    <div class="pt-legend" id="pt-legend"></div>
 
-            <div class="field">
-              <label>Space Group</label>
-              <div class="srow">
-                <input id="sgInput" type="text" class="inp" value="Fm-3m (#225)" style="flex:1" readonly>
-                <button class="btn bo" style="font-size:10px;padding:4px 8px" disabled title="Space group browser coming soon">Browse</button>
-              </div>
-            </div>
+    <!-- grid -->
+    <div class="pt-grid" id="pt-grid" role="grid" aria-label="Periodic table of elements"></div>
 
-            <div style="margin-bottom:8px">
-              <div style="font-size:9.5px;color:var(--text2);font-family:var(--mono);margin-bottom:5px">Lattice Parameters</div>
-              <div class="r3" style="margin-bottom:4px">
-                <div class="field" style="margin:0"><label>a (Å)</label><input id="lpA" type="number" class="inp" value="4.046" step="0.01"></div>
-                <div class="field" style="margin:0"><label>b (Å)</label><input id="lpB" type="number" class="inp" value="4.046" step="0.01"></div>
-                <div class="field" style="margin:0"><label>c (Å)</label><input id="lpC" type="number" class="inp" value="4.046" step="0.01"></div>
-              </div>
-              <div class="r3">
-                <div class="field" style="margin:0"><label>α (°)</label><input id="lpAlpha" type="number" class="inp" value="90" step="0.1"></div>
-                <div class="field" style="margin:0"><label>β (°)</label><input id="lpBeta" type="number" class="inp" value="90" step="0.1"></div>
-                <div class="field" style="margin:0"><label>γ (°)</label><input id="lpGamma" type="number" class="inp" value="90" step="0.1"></div>
-              </div>
-            </div>
-
-            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:6px" id="latticeInfo">Cubic · V = — Å³</div>
-
-            <div class="field">
-              <label>Element Assignment</label>
-              <div style="display:flex;gap:5px;flex-wrap:wrap" id="elemAssign">
-                <div style="display:flex;align-items:center;gap:4px">
-                  <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">A:</span>
-                  <input id="elA" type="text" class="inp" value="Al" style="width:42px;text-align:center;font-weight:700;font-size:12px">
-                </div>
-                <div style="display:flex;align-items:center;gap:4px;display:none" id="elBRow">
-                  <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">B:</span>
-                  <input id="elB" type="text" class="inp" value="O" style="width:42px;text-align:center;font-weight:700;font-size:12px">
-                </div>
-                <div style="display:flex;align-items:center;gap:4px;display:none" id="elCRow">
-                  <span style="font-size:9.5px;color:var(--text2);font-family:var(--mono)">C:</span>
-                  <input id="elC" type="text" class="inp" value="O" style="width:42px;text-align:center;font-weight:700;font-size:12px">
-                </div>
-              </div>
-            </div>
-
-            <div class="brow mt6">
-              <button class="btn bt" id="buildBtn" style="flex:1" type="button">⬡ Build</button>
-              <button class="btn bo" style="flex:1" disabled title="Supercell tool coming soon">⊞ Supercell</button>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-title"><span class="icon">⊡</span>Database · Quick load</div>
-            <div class="small mb4" style="color:var(--text3)">Load common prototypes (Build tab)</div>
-            <div class="db-quick-btns">
-              <button type="button" class="btn bo db-qbtn" data-quickload="mp_Al">Al (FCC)</button>
-              <button type="button" class="btn bo db-qbtn" data-quickload="mp_Fe">Fe (BCC)</button>
-              <button type="button" class="btn bo db-qbtn" data-quickload="mp_Si">Si (Diamond)</button>
-              <button type="button" class="btn bo db-qbtn" data-quickload="mp_NaCl">NaCl</button>
-              <button type="button" class="btn bo db-qbtn" data-quickload="mp_TiO2">TiO₂</button>
-              <button type="button" class="btn bo db-qbtn" data-quickload="mp_BaTiO3">BaTiO₃</button>
-              <button type="button" class="btn bo db-qbtn" data-quickload="mp_MgAl2O4">Spinel</button>
-              <button type="button" class="btn bo db-qbtn" data-quickload="mp_graphite">Graphite</button>
-            </div>
-            <button type="button" class="btn bo bfull mt4" id="openDatabaseTabBtn" style="font-size:10px">Open Database tab →</button>
-          </div>
-
-          <div class="panel">
-            <div class="panel-title"><span class="icon">⌖</span>Manual Atoms</div>
-            <div class="tbar">
-              <button class="tab active" data-atom-tab="frac" type="button">Fractional</button>
-              <button class="tab" data-atom-tab="cart" type="button">Cartesian</button>
-            </div>
-            <div id="atom-frac" class="tpane active">
-              <textarea id="fracCoords" class="inp" rows="5" style="font-size:10px" placeholder="El  x  y  z&#10;Al  0.0  0.0  0.0&#10;O   0.5  0.5  0.5"></textarea>
-            </div>
-            <div id="atom-cart" class="tpane">
-              <textarea id="cartCoords" class="inp" rows="5" style="font-size:10px" placeholder="El  x  y  z (Å)&#10;Al  0.0  0.0  0.0"></textarea>
-            </div>
-            <div class="brow mt4">
-              <button class="btn bo" id="addManualAtomsBtn" style="flex:1;font-size:10px" type="button">+ Add Atoms</button>
-              <button class="btn br" id="clearAtomsBtn" style="flex:1;font-size:10px" type="button">✕ Clear</button>
-            </div>
-            <div class="note">Tip: This page automatically saves the current structure for MD → “Load from CrystalForge”.</div>
-          </div>
-        </div>
-
-        <!-- ── OTHER TABS (placeholders) ── -->
-        <div id="tab-optimize" class="main-tab-content" style="display:none">
-          <div class="panel">
-            <div class="panel-title"><span class="icon">◎</span>Predict</div>
-            <div class="note">Predict/search UI will be wired next.</div>
-          </div>
-        </div>
-        <div id="tab-analyze" class="main-tab-content" style="display:none">
-          <div class="panel">
-            <div class="panel-title"><span class="icon">◈</span>Analyze</div>
-            <div class="note">Analysis UI will be wired next.</div>
-          </div>
-        </div>
-        <div id="tab-database" class="main-tab-content" style="display:none">
-          <div class="panel">
-            <div class="panel-title"><span class="icon">⊡</span>Database</div>
-            <div class="note">Database integration will be wired next.</div>
-          </div>
-        </div>
-        <div id="tab-export" class="main-tab-content" style="display:none">
-          <div class="panel">
-            <div class="panel-title"><span class="icon">↓</span>Export</div>
-            <div class="note">Export UI will be wired next.</div>
-          </div>
-        </div>
-      </aside>
-
-      <!-- ═══ CENTER VIEWER ═══ -->
-      <div id="center">
-        <div id="threeWrap">
-          <canvas id="threeCanvas"></canvas>
-          <div class="viewer-hud">
-            <div class="hud-chip">
-              <span class="hl">SG</span><span class="hv" id="hudSG">—</span>
-              <span class="hvsep">|</span>
-              <span class="hl">N</span><span class="hv" id="hudN">0</span>
-              <span class="hvsep">|</span>
-              <span class="hl">V</span><span class="hv" id="hudV">— Å³</span>
-            </div>
-            <div class="hud-chip">
-              <span class="hl">a</span><span class="hv" id="hudA">—</span>
-              <span class="hvsep">·</span>
-              <span class="hl">b</span><span class="hv" id="hudB">—</span>
-              <span class="hvsep">·</span>
-              <span class="hl">c</span><span class="hv" id="hudC">—</span>
-            </div>
-          </div>
-          <div class="viewer-ctrls">
-            <button class="vcbtn" id="resetCamBtn" type="button">⊙ Reset</button>
-            <button class="vcbtn on" id="autoRotBtn" type="button">↻ Rot</button>
-            <button class="vcbtn on" id="cellBtn" type="button" title="Toggle unit cell">⬡ Cell</button>
-            <button class="vcbtn on" id="axesBtn" type="button" title="X=red, Y=green, Z=blue">XYZ</button>
-            <button class="vcbtn" id="bondsBtn" type="button" title="Toggle bonds">⊸ Bonds</button>
-            <button class="vcbtn" id="polyBtn" type="button" title="Toggle polygon/polyhedra (approx)">◈ Poly</button>
-            <button class="vcbtn" id="snapBtn" type="button">📷 Snap</button>
-          </div>
-          <div id="atomPopup"></div>
-        </div>
-
-        <div class="statsbar">
-          <div class="scell"><div class="slbl">Space Group</div><div class="sval tc" id="statSG">—</div></div>
-          <div class="scell"><div class="slbl">Formula</div><div class="sval" id="statFormula">—</div></div>
-          <div class="scell"><div class="slbl">Volume (Å³)</div><div class="sval" id="statV">—</div></div>
-        </div>
-
-        <div class="ptabs-bar">
-          <button class="ptab active" data-plot="energy" type="button">E vs Gen</button>
-          <button class="ptab" data-plot="rdf" type="button">g(r) RDF</button>
-          <button class="ptab" data-plot="xrd" type="button">XRD Pattern</button>
-          <button class="ptab" data-plot="bonds" type="button">Bond Lengths</button>
-          <button class="ptab" data-plot="coord" type="button">Coord #</button>
-          <button class="ptab" data-plot="adf" type="button">ADF Angles</button>
-        </div>
-        <div class="plotwrap">
-          <div id="pEnergy" class="ppane active"></div>
-          <div id="pRDF" class="ppane"></div>
-          <div id="pXRD" class="ppane"></div>
-          <div id="pBonds" class="ppane"></div>
-          <div id="pCoord" class="ppane"></div>
-          <div id="pADF" class="ppane"></div>
-        </div>
-      </div>
-
-      <!-- ═══ RIGHT PANEL ═══ -->
-      <div id="rpanel">
-        <div class="rpanel-section">
-          <div class="rpanel-title">Structure</div>
-          <div class="pgrid">
-            <div class="pc"><div class="pclbl">Atoms</div><div class="pcval tc" id="rpN">0</div></div>
-            <div class="pc"><div class="pclbl">Species</div><div class="pcval" id="rpSpec">—</div></div>
-            <div class="pc"><div class="pclbl">Symmetry</div><div class="pcval tc" id="rpSym">—</div></div>
-            <div class="pc"><div class="pclbl">Crystal sys.</div><div class="pcval" id="rpSys">—</div></div>
-          </div>
-        </div>
-
-        <div class="rpanel-section">
-          <div class="rpanel-title">Visualization</div>
-          <div class="field">
-            <label>Atom scale</label>
-            <div class="srow">
-              <input type="range" id="atomScale" class="slider" min="0.1" max="1.5" step="0.05" value="0.4">
-              <span class="sv" id="atomScaleV">0.40</span>
-            </div>
-          </div>
-          <div class="field">
-            <label>Bond cutoff (Å)</label>
-            <div class="srow">
-              <input type="range" id="bondCutoff" class="slider" min="1" max="8" step="0.1" value="3.2">
-              <span class="sv" id="bondCutoffV">3.2</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="rpanel-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
-          <div class="rpanel-title">Atom List</div>
-          <div class="atom-list" id="atomList"></div>
-        </div>
-
-        <div class="con-wrap">
-          <div class="con-hdr">
-            Log
-            <button class="btn bo" id="clearLogBtn" style="padding:1px 6px;font-size:9px" type="button">✕</button>
-          </div>
-          <div class="con" id="con">CrystalForge · Crystal Structure Discovery Platform
-Ready.</div>
-        </div>
+    <!-- info card -->
+    <div class="pt-info-card" id="pt-info-card" aria-live="polite">
+      <div class="pt-info-sym" id="pt-info-sym">—</div>
+      <div class="pt-info-body">
+        <div class="pt-info-name" id="pt-info-name">Select an element</div>
+        <div class="pt-info-row">Number: <span id="pt-info-num">—</span></div>
+        <div class="pt-info-row">Mass: <span id="pt-info-mass">—</span> u</div>
+        <div class="pt-info-row">Category: <span id="pt-info-cat">—</span></div>
+        <div class="pt-info-row">Radius: <span id="pt-info-r">—</span> pm</div>
+        <div class="pt-info-row">Electronegativity: <span id="pt-info-en">—</span></div>
+        <button class="btn btn-primary pt-select-btn" id="ptSelectBtn" type="button">✓ Select for site <span id="ptSelectSite">A</span></button>
       </div>
     </div>
   </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
-  <script type="module" src="/static/crystalforge_app/app.js"></script>
+<!-- ══════════════════════════════════════════════════════
+     APP
+══════════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- NAVBAR -->
+  <nav id="nav" aria-label="Main navigation">
+    <!-- logo -->
+    <div class="logo-mark" aria-hidden="true">⬡</div>
+    <div class="logo-text">
+      <div class="logo-name">CrystalForge</div>
+      <div class="logo-sub">Structure Discovery</div>
+    </div>
+    <div class="nav-divider"></div>
+
+    <!-- main tabs -->
+    <div class="nav-tabs" role="tablist">
+      <button class="ntab active" data-main="build" role="tab" aria-selected="true" type="button">⬡ Build</button>
+      <button class="ntab" data-main="predict" role="tab" aria-selected="false" type="button">◎ Predict <span class="ntab-pip">Soon</span></button>
+      <button class="ntab" data-main="analyze" role="tab" aria-selected="false" type="button">◈ Analyze <span class="ntab-pip">Soon</span></button>
+      <button class="ntab" data-main="database" role="tab" aria-selected="false" type="button">⊡ Database <span class="ntab-pip">Soon</span></button>
+      <button class="ntab" data-main="export" role="tab" aria-selected="false" type="button">↓ Export</button>
+    </div>
+
+    <!-- right chips -->
+    <div class="nav-chips" style="margin-left:auto">
+      <div class="nchip" title="Space group of loaded structure">
+        <span class="nchip-lbl">SG</span><span class="nchip-val" id="navSG">—</span>
+      </div>
+      <div class="nchip" title="Number of atoms in unit cell">
+        <span class="nchip-lbl">N</span><span class="nchip-val" id="navN">0</span>
+      </div>
+      <div class="nchip" title="System status">
+        <div class="status-dot" aria-label="System ready"></div>
+        <span class="nchip-lbl" id="navStatus">Ready</span>
+      </div>
+    </div>
+    <div class="nav-divider"></div>
+    <button class="theme-toggle" id="themeBtn" type="button" aria-label="Toggle light/dark theme">
+      <span id="themeIco">🌙</span><span id="themeLbl">Dark</span>
+    </button>
+    <button class="help-btn" id="helpBtn" title="Show getting-started guide" aria-label="Show help">?</button>
+  </nav>
+
+  <!-- WORKSPACE -->
+  <div id="workspace">
+
+    <!-- ══ SIDEBAR ══ -->
+    <aside id="sidebar" aria-label="Crystal builder controls">
+
+      <!-- BUILD -->
+      <div class="main-tab active" id="tab-build">
+
+        <!-- Onboarding -->
+        <div class="onboard" id="onboard" role="note">
+          <div class="onboard-head">
+            <span class="onboard-icon">🔬</span>
+            <span class="onboard-title">Getting Started</span>
+            <button class="onboard-close" id="onboardClose" aria-label="Dismiss guide" type="button">×</button>
+          </div>
+          <div class="onboard-body">Build your first crystal in 3 steps. Click the <strong>⚛ element button</strong> next to any site to open the periodic table picker.</div>
+          <div class="onboard-steps">
+            <div class="ostep"><div class="ostep-n">1</div>Choose lattice type &amp; space group</div>
+            <div class="ostep"><div class="ostep-n">2</div>Pick elements via periodic table</div>
+            <div class="ostep"><div class="ostep-n">3</div>Click <strong>⬡ Build Structure</strong></div>
+          </div>
+        </div>
+
+        <!-- Crystal System -->
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">⬡</span>Crystal System</div>
+
+          <div class="field">
+            <label for="protoSelect">Lattice Type
+              <span class="tip-badge" tabindex="0">?<span class="tip-box">The lattice type (Bravais lattice) defines how atoms periodically tile 3D space. FCC &amp; BCC are most common for metals. Diamond is typical for semiconductors.</span></span>
+            </label>
+            <select id="protoSelect" class="inp">
+              <optgroup label="Simple Lattices">
+                <option value="sc">Simple Cubic (SC)</option>
+                <option value="fcc" selected>Face-Centred Cubic (FCC)</option>
+                <option value="bcc">Body-Centred Cubic (BCC)</option>
+                <option value="hcp">Hexagonal Close-Packed (HCP)</option>
+                <option value="diamond">Diamond Cubic</option>
+              </optgroup>
+              <optgroup label="Binary Compounds">
+                <option value="nacl">NaCl (Rocksalt, B1)</option>
+                <option value="zincblende">Zinc Blende (B3)</option>
+              </optgroup>
+              <optgroup label="Complex">
+                <option value="perovskite">Perovskite (ABO₃)</option>
+                <option value="spinel">Spinel (AB₂O₄)</option>
+                <option value="custom">Custom / Empty</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="sgInput">Space Group
+              <span class="tip-badge" tabindex="0">?<span class="tip-box">One of 230 unique crystallographic space groups describing all symmetry operations. Fm-3m (#225) is face-centred cubic with full octahedral symmetry.</span></span>
+            </label>
+            <div class="srow">
+              <input id="sgInput" type="text" class="inp" value="Fm-3m (#225)" readonly style="flex:1">
+              <button class="btn btn-secondary" disabled data-soon type="button">Browse</button>
+            </div>
+          </div>
+
+          <!-- Lattice parameters -->
+          <div class="field">
+            <label>Lattice Parameters
+              <span class="tip-badge" tabindex="0">?<span class="tip-box">a, b, c = unit cell edge lengths in Ångströms (1 Å = 0.1 nm). α, β, γ = angles between edges. All 90° → cubic system.</span></span>
+            </label>
+            <div class="g3">
+              <div><label for="lpA" style="font-size:9px">a (Å)</label><input id="lpA" type="number" class="inp" value="4.046" step="0.01" min=".5" max="50"></div>
+              <div><label for="lpB" style="font-size:9px">b (Å)</label><input id="lpB" type="number" class="inp" value="4.046" step="0.01" min=".5" max="50"></div>
+              <div><label for="lpC" style="font-size:9px">c (Å)</label><input id="lpC" type="number" class="inp" value="4.046" step="0.01" min=".5" max="50"></div>
+            </div>
+            <div class="g3">
+              <div><label for="lpAl" style="font-size:9px">α (°)</label><input id="lpAl" type="number" class="inp" value="90" step=".1"></div>
+              <div><label for="lpBe" style="font-size:9px">β (°)</label><input id="lpBe" type="number" class="inp" value="90" step=".1"></div>
+              <div><label for="lpGa" style="font-size:9px">γ (°)</label><input id="lpGa" type="number" class="inp" value="90" step=".1"></div>
+            </div>
+          </div>
+
+          <div class="latt-info" id="lattInfo" aria-live="polite">
+            <span class="latt-sys" id="lattSys">Cubic</span>
+            <span id="lattVol">V = 66.30 Å³</span>
+          </div>
+
+          <!-- Element assignment with PT picker -->
+          <div class="field">
+            <label>Element Assignment
+              <span class="tip-badge" tabindex="0">?<span class="tip-box">A = primary Wyckoff site. B/C = additional sites for binary/ternary compounds. Click ⚛ to open the interactive periodic table picker.</span></span>
+            </label>
+            <div class="elem-row" id="elemRow">
+              <div class="elem-slot">
+                <span class="elem-lbl">A:</span>
+                <div class="elem-inp-wrap">
+                  <input id="elA" type="text" class="inp elem-inp" value="Al" maxlength="3" autocomplete="off" aria-label="Element A — click to open periodic table" readonly>
+                  <button class="elem-pick-btn" data-slot="A" title="Open periodic table to pick element A" type="button">⚛</button>
+                </div>
+              </div>
+              <div class="elem-slot" id="slotB" style="display:none">
+                <span class="elem-lbl">B:</span>
+                <div class="elem-inp-wrap">
+                  <input id="elB" type="text" class="inp elem-inp" value="O" maxlength="3" autocomplete="off" aria-label="Element B" readonly>
+                  <button class="elem-pick-btn" data-slot="B" title="Open periodic table to pick element B" type="button">⚛</button>
+                </div>
+              </div>
+              <div class="elem-slot" id="slotC" style="display:none">
+                <span class="elem-lbl">C:</span>
+                <div class="elem-inp-wrap">
+                  <input id="elC" type="text" class="inp elem-inp" value="O" maxlength="3" autocomplete="off" aria-label="Element C" readonly>
+                  <button class="elem-pick-btn" data-slot="C" title="Open periodic table to pick element C" type="button">⚛</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="brow">
+            <button class="btn btn-primary bfull" id="buildBtn" type="button">⬡ Build Structure</button>
+          </div>
+          <div class="brow">
+            <button class="btn btn-secondary" style="flex:1" disabled data-soon type="button">⊞ Supercell</button>
+            <button class="btn btn-secondary" style="flex:1" disabled data-soon type="button">⚬ Defects</button>
+            <button class="btn btn-secondary" style="flex:1" disabled data-soon type="button">↯ Strain</button>
+          </div>
+        </div>
+
+        <!-- Quick Load -->
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">⊡</span>Quick Load Prototypes</div>
+          <div style="font-size:10.5px;color:var(--text2);margin-bottom:10px">Instantly load a common crystal structure:</div>
+          <div class="db-grid">
+            <button class="db-btn" data-ql="mp_Al" type="button"><div class="db-btn-dot" style="background:#6fb8f7"></div>Al (FCC)</button>
+            <button class="db-btn" data-ql="mp_Cu" type="button"><div class="db-btn-dot" style="background:#e08840"></div>Cu (FCC)</button>
+            <button class="db-btn" data-ql="mp_Fe" type="button"><div class="db-btn-dot" style="background:#c87060"></div>Fe (BCC)</button>
+            <button class="db-btn" data-ql="mp_W"  type="button"><div class="db-btn-dot" style="background:#8090a0"></div>W (BCC)</button>
+            <button class="db-btn" data-ql="mp_Si" type="button"><div class="db-btn-dot" style="background:#a274d0"></div>Si (Diamond)</button>
+            <button class="db-btn" data-ql="mp_Ge" type="button"><div class="db-btn-dot" style="background:#9060b0"></div>Ge (Diamond)</button>
+            <button class="db-btn" data-ql="mp_NaCl" type="button"><div class="db-btn-dot" style="background:#eeeef0"></div>NaCl</button>
+            <button class="db-btn" data-ql="mp_TiO2" type="button"><div class="db-btn-dot" style="background:#f0e860"></div>TiO₂</button>
+            <button class="db-btn" data-ql="mp_BaTiO3" type="button"><div class="db-btn-dot" style="background:#60d090"></div>BaTiO₃</button>
+            <button class="db-btn" data-ql="mp_MgO" type="button"><div class="db-btn-dot" style="background:#ffffff"></div>MgO</button>
+            <button class="db-btn" data-ql="mp_Spinel" type="button"><div class="db-btn-dot" style="background:#f06080"></div>Spinel</button>
+            <button class="db-btn" data-ql="mp_graphite" type="button"><div class="db-btn-dot" style="background:#404050"></div>Graphite</button>
+          </div>
+        </div>
+
+        <!-- Manual Atoms -->
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">⌖</span>Manual Atom Entry</div>
+          <div class="ctab-bar" role="tablist">
+            <button class="ctab active" data-ctab="frac" role="tab" type="button">Fractional</button>
+            <button class="ctab" data-ctab="cart" role="tab" type="button">Cartesian (Å)</button>
+          </div>
+          <div id="ct-frac" class="tpane active">
+            <textarea id="fracCoords" class="inp" rows="5" placeholder="El  x  y  z&#10;Al  0.0  0.0  0.0&#10;O   0.5  0.5  0.5" aria-label="Enter fractional coordinates, one atom per line"></textarea>
+            <div class="note">Format: <code>Symbol x y z</code> with values 0 – 1</div>
+          </div>
+          <div id="ct-cart" class="tpane">
+            <textarea id="cartCoords" class="inp" rows="5" placeholder="El  x  y  z (Å)&#10;Al  0.0  0.0  0.0" aria-label="Enter Cartesian coordinates in Angstroms, one atom per line"></textarea>
+            <div class="note">Format: <code>Symbol x y z</code> in Ångströms</div>
+          </div>
+          <div class="brow">
+            <button class="btn btn-secondary" id="addAtomsBtn" style="flex:1" type="button">+ Add Atoms</button>
+            <button class="btn btn-danger" id="clearBtn" style="flex:1" type="button">✕ Clear All</button>
+          </div>
+        </div>
+      </div><!-- /tab-build -->
+
+      <!-- PREDICT -->
+      <div class="main-tab" id="tab-predict">
+        <div class="coming-panel">
+          <div class="coming-panel-ico">◎</div>
+          <h3>AI Structure Prediction</h3>
+          <p>Discover stable crystal phases from composition using machine-learning interatomic potentials and evolutionary algorithms.</p>
+          <div class="soon-tag">In Development</div>
+        </div>
+      </div>
+
+      <!-- ANALYZE -->
+      <div class="main-tab" id="tab-analyze">
+        <div class="coming-panel">
+          <div class="coming-panel-ico">◈</div>
+          <h3>Structure Analysis</h3>
+          <p>Automated symmetry analysis, bonding environment detection, Voronoi tessellation, and electronic structure properties.</p>
+          <div class="soon-tag">In Development</div>
+        </div>
+      </div>
+
+      <!-- DATABASE -->
+      <div class="main-tab" id="tab-database">
+        <div class="coming-panel">
+          <div class="coming-panel-ico">⊡</div>
+          <h3>Materials Database</h3>
+          <p>Search &amp; import from Materials Project, ICSD, and COD — over 150,000 validated crystal structures.</p>
+          <div class="soon-tag">In Development</div>
+        </div>
+      </div>
+
+      <!-- EXPORT -->
+      <div class="main-tab" id="tab-export">
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">↓</span>Export Structure</div>
+          <div class="field">
+            <label for="exportFmt">File Format
+              <span class="tip-badge" tabindex="0">?<span class="tip-box">CIF is the universal crystallography format. POSCAR is used by VASP DFT code. XYZ is compatible with most MD and visualization software.</span></span>
+            </label>
+            <select id="exportFmt" class="inp">
+              <option value="cif">CIF — Crystallographic Info File</option>
+              <option value="poscar">POSCAR — VASP</option>
+              <option value="xyz">XYZ — Generic</option>
+              <option value="lammps">LAMMPS Data</option>
+              <option value="json">JSON</option>
+            </select>
+          </div>
+          <div class="brow">
+            <button class="btn btn-primary bfull" id="exportBtn" type="button">↓ Download</button>
+          </div>
+          <div class="note">Use exported files with VASP, Quantum ESPRESSO, LAMMPS, or VESTA for visualization.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">📷</span>Screenshot</div>
+          <div class="field">
+            <label>Background</label>
+            <div class="g2">
+              <button class="btn btn-secondary" id="snapDarkBtn" type="button">Dark BG</button>
+              <button class="btn btn-secondary" id="snapLightBtn" type="button">Light BG</button>
+            </div>
+          </div>
+          <div class="note">Downloads a 2× resolution PNG of the current 3D view.</div>
+        </div>
+      </div>
+
+    </aside><!-- /sidebar -->
+
+    <!-- ══ CENTER ══ -->
+    <div id="main-content" role="main">
+      <div id="threeWrap">
+        <canvas id="threeCanvas" aria-label="Interactive 3D crystal structure viewer. Drag to rotate, scroll to zoom, click atoms to inspect." role="img"></canvas>
+
+        <!-- empty state -->
+        <div id="canvas-empty" aria-live="polite">
+          <div class="ce-hex">⬡</div>
+          <div class="ce-title">No structure loaded</div>
+          <div class="ce-sub">Choose a lattice, assign elements, and click ⬡ Build — or quick-load a preset from the sidebar</div>
+        </div>
+
+        <!-- HUD -->
+        <div class="hud" aria-hidden="true">
+          <div class="hud-chip">
+            <span class="hl">SG</span><span class="hv" id="hudSG">—</span>
+            <span class="hsep">·</span><span class="hl">N</span><span class="hv" id="hudN">0</span>
+            <span class="hsep">·</span><span class="hl">V</span><span class="hv" id="hudV">— Å³</span>
+          </div>
+          <div class="hud-chip">
+            <span class="hl">a</span><span class="hv" id="hudA">—</span>
+            <span class="hsep">·</span><span class="hl">b</span><span class="hv" id="hudB">—</span>
+            <span class="hsep">·</span><span class="hl">c</span><span class="hv" id="hudC">—</span>
+          </div>
+        </div>
+
+        <!-- Viewer controls -->
+        <div class="viewer-ctrls" aria-label="3D viewer controls">
+          <div class="vcgroup">
+            <button class="vcbtn" id="resetCamBtn" type="button"><span class="vcbtn-icon">⊙</span>Reset view</button>
+            <button class="vcbtn on" id="autoRotBtn" type="button"><span class="vcbtn-icon">↻</span>Auto-rotate</button>
+          </div>
+          <div class="vcgroup">
+            <button class="vcbtn on" id="cellBtn" type="button" title="Show/hide unit cell edges"><span class="vcbtn-icon">⬡</span>Unit cell</button>
+            <button class="vcbtn on" id="axesBtn" type="button" title="X=red Y=green Z=blue"><span class="vcbtn-icon">xyz</span>Axes</button>
+            <button class="vcbtn" id="bondsBtn" type="button" title="Draw bonds between nearby atoms"><span class="vcbtn-icon">⊸</span>Bonds</button>
+            <button class="vcbtn" id="polyBtn" type="button" title="Show coordination polyhedra"><span class="vcbtn-icon">◈</span>Polyhedra</button>
+          </div>
+          <div class="vcgroup">
+            <button class="vcbtn" id="bgBtn" type="button"><span class="vcbtn-icon">◑</span>Toggle BG</button>
+            <button class="vcbtn" id="snapViewBtn" type="button"><span class="vcbtn-icon">📷</span>Screenshot</button>
+          </div>
+        </div>
+
+        <!-- Interaction hint -->
+        <div id="hint-bar" aria-hidden="true">
+          <div class="hint-item"><span class="kbdkey">Drag</span> Rotate</div>
+          <div class="hint-item"><span class="kbdkey">Scroll</span> Zoom</div>
+          <div class="hint-item"><span class="kbdkey">Right-drag</span> Pan</div>
+          <div class="hint-item"><span class="kbdkey">Click atom</span> Inspect</div>
+        </div>
+
+        <!-- atom popup -->
+        <div id="atom-popup" role="tooltip" aria-live="polite"></div>
+      </div>
+
+      <!-- stats bar -->
+      <div class="statsbar" aria-label="Structure statistics">
+        <div class="sc"><div class="slbl">Space Group</div><div class="sval dash" id="stSG">—</div></div>
+        <div class="sc"><div class="slbl">Formula</div><div class="sval dash" id="stF">—</div></div>
+        <div class="sc"><div class="slbl">Volume (Å³)</div><div class="sval dash" id="stV">—</div></div>
+        <div class="sc"><div class="slbl">Density g/cm³</div><div class="sval dash" id="stD">—</div></div>
+        <div class="sc"><div class="slbl">Crystal System</div><div class="sval dash" id="stSys">—</div></div>
+      </div>
+
+      <!-- plot tabs -->
+      <div class="ptab-bar" role="tablist" aria-label="Analysis charts">
+        <button class="ptab active" data-plot="energy" role="tab" type="button" title="Energy vs generation — optimization trajectory">E vs Gen</button>
+        <button class="ptab" data-plot="rdf" role="tab" type="button" title="Radial Distribution Function — atomic density vs distance">g(r) RDF</button>
+        <button class="ptab" data-plot="xrd" role="tab" type="button" title="Simulated X-ray diffraction pattern (Cu Kα)">XRD</button>
+        <button class="ptab" data-plot="bonds" role="tab" type="button" title="Bond length distribution histogram">Bond Lengths</button>
+        <button class="ptab" data-plot="coord" role="tab" type="button" title="Coordination number per atom">Coord #</button>
+        <button class="ptab" data-plot="adf" role="tab" type="button" title="Angular distribution function — bond angle statistics">ADF</button>
+      </div>
+      <div class="plotwrap">
+        <div id="pEnergy" class="ppane active"><div class="plot-ph"><div class="ph-ico">📈</div><div class="ph-title">No optimization data</div><div class="ph-desc">Energy trajectory appears after running a structure search or MD simulation</div></div></div>
+        <div id="pRdf" class="ppane"><div class="plot-ph"><div class="ph-ico">〰️</div><div class="ph-title">Radial Distribution Function</div><div class="ph-desc">g(r) shows how atom density varies with distance. Build a structure to compute.</div></div></div>
+        <div id="pXrd" class="ppane"><div class="plot-ph"><div class="ph-ico">📡</div><div class="ph-title">XRD Pattern</div><div class="ph-desc">Simulated diffraction peaks (Cu Kα radiation). Build a structure first.</div></div></div>
+        <div id="pBonds" class="ppane"><div class="plot-ph"><div class="ph-ico">⊸</div><div class="ph-title">Bond Length Distribution</div><div class="ph-desc">Nearest-neighbour distance histogram. Build a structure first.</div></div></div>
+        <div id="pCoord" class="ppane"><div class="plot-ph"><div class="ph-ico">🔢</div><div class="ph-title">Coordination Numbers</div><div class="ph-desc">Number of neighbours per site within the bond cutoff.</div></div></div>
+        <div id="pAdf" class="ppane"><div class="plot-ph"><div class="ph-ico">📐</div><div class="ph-title">Angular Distribution Function</div><div class="ph-desc">Bond-angle (A-B-A) statistics across the structure.</div></div></div>
+      </div>
+    </div><!-- /center -->
+
+    <!-- ══ RIGHT PANEL ══ -->
+    <aside id="rpanel" aria-label="Structure properties and visualization settings">
+
+      <div class="rp-sec">
+        <div class="rp-title">Structure</div>
+        <div class="pgrid">
+          <div class="pc"><div class="pc-lbl">Atoms</div><div class="pc-val empty" id="rpN">—</div></div>
+          <div class="pc"><div class="pc-lbl">Species</div><div class="pc-val empty" id="rpSp">—</div></div>
+          <div class="pc"><div class="pc-lbl">Symmetry</div><div class="pc-val empty" id="rpSym">—</div></div>
+          <div class="pc"><div class="pc-lbl">System</div><div class="pc-val empty" id="rpSys">—</div></div>
+        </div>
+      </div>
+
+      <div class="rp-sec">
+        <div class="rp-title">Visualization</div>
+        <div class="sl-field">
+          <div class="sl-head"><span class="sl-name">Atom scale</span><span class="sl-val" id="atomScaleV">0.40</span></div>
+          <input type="range" id="atomScale" min=".1" max="1.5" step=".05" value=".4" aria-label="Atom display size scale factor">
+        </div>
+        <div class="sl-field">
+          <div class="sl-head">
+            <span class="sl-name">Bond cutoff (Å)
+              <span class="tip-badge" tabindex="0" style="margin-left:4px">?<span class="tip-box" style="width:180px">Maximum distance (in Ångströms) between two atoms to be considered bonded. Typical values: metals 3–4 Å, oxides 2.5–3.5 Å.</span></span>
+            </span>
+            <span class="sl-val" id="bondCutoffV">3.2</span>
+          </div>
+          <input type="range" id="bondCutoff" min="1" max="8" step=".1" value="3.2" aria-label="Bond detection cutoff distance in Angstroms">
+        </div>
+      </div>
+
+      <div class="rp-sec atom-list-wrap">
+        <div class="rp-title">Atom List</div>
+        <div class="atom-list" id="atomList" role="list" aria-label="Atoms in the current structure" aria-live="polite">
+          <div class="atom-empty">No atoms loaded.<br>Build a structure to see the list.</div>
+        </div>
+      </div>
+
+      <div class="con-wrap">
+        <div class="con-hd">Activity Log
+          <button class="btn btn-ghost" id="clearLogBtn" style="padding:2px 7px;font-size:9px" type="button">✕ Clear</button>
+        </div>
+        <div class="con" id="con" role="log" aria-live="polite">
+          <div class="cl inf">CrystalForge · Structure Discovery Platform</div>
+          <div class="cl">Ready. Choose a lattice and click Build.</div>
+        </div>
+      </div>
+    </aside>
+
+  </div><!-- /workspace -->
+</div><!-- /app -->
+
+<!-- Mobile bottom bar -->
+<nav id="mob-bar" aria-label="Mobile navigation">
+  <div class="mob-tabs">
+    <button class="mob-tab active" data-mob="build" type="button"><span class="mob-tab-ico">⬡</span>Build</button>
+    <button class="mob-tab" data-mob="viewer" type="button"><span class="mob-tab-ico">👁</span>Viewer</button>
+    <button class="mob-tab" data-mob="props" type="button"><span class="mob-tab-ico">◈</span>Props</button>
+    <button class="mob-tab" data-mob="table" type="button"><span class="mob-tab-ico">⚛</span>Table</button>
+    <button class="mob-tab" data-mob="export" type="button"><span class="mob-tab-ico">↓</span>Export</button>
+  </div>
+</nav>
+<div id="mob-panel" aria-label="Mobile content panel">
+  <div id="mob-drag"></div>
+  <div id="mob-content"></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   ELEMENT DATA (subset — 108 elements)
+══════════════════════════════════════════════════════════ */
+const ELEMENTS = [
+  // Z, sym, name, mass, category, row, col, radius, en
+  [1,'H','Hydrogen',1.008,'nonmetal',1,1,53,2.20],
+  [2,'He','Helium',4.003,'noble-gas',1,18,31,null],
+  [3,'Li','Lithium',6.941,'alkali',2,1,167,.98],
+  [4,'Be','Beryllium',9.012,'alkaline',2,2,112,1.57],
+  [5,'B','Boron',10.811,'metalloid',2,13,87,2.04],
+  [6,'C','Carbon',12.011,'nonmetal',2,14,67,2.55],
+  [7,'N','Nitrogen',14.007,'nonmetal',2,15,56,3.04],
+  [8,'O','Oxygen',15.999,'nonmetal',2,16,48,3.44],
+  [9,'F','Fluorine',18.998,'nonmetal',2,17,42,3.98],
+  [10,'Ne','Neon',20.180,'noble-gas',2,18,38,null],
+  [11,'Na','Sodium',22.990,'alkali',3,1,190,.93],
+  [12,'Mg','Magnesium',24.305,'alkaline',3,2,160,1.31],
+  [13,'Al','Aluminium',26.982,'post-transition',3,13,143,1.61],
+  [14,'Si','Silicon',28.086,'metalloid',3,14,117,1.90],
+  [15,'P','Phosphorus',30.974,'nonmetal',3,15,98,2.19],
+  [16,'S','Sulfur',32.065,'nonmetal',3,16,88,2.58],
+  [17,'Cl','Chlorine',35.453,'nonmetal',3,17,79,3.16],
+  [18,'Ar','Argon',39.948,'noble-gas',3,18,71,null],
+  [19,'K','Potassium',39.098,'alkali',4,1,243,.82],
+  [20,'Ca','Calcium',40.078,'alkaline',4,2,194,1.00],
+  [21,'Sc','Scandium',44.956,'transition',4,3,184,1.36],
+  [22,'Ti','Titanium',47.867,'transition',4,4,176,1.54],
+  [23,'V','Vanadium',50.942,'transition',4,5,171,1.63],
+  [24,'Cr','Chromium',51.996,'transition',4,6,166,1.66],
+  [25,'Mn','Manganese',54.938,'transition',4,7,161,1.55],
+  [26,'Fe','Iron',55.845,'transition',4,8,156,1.83],
+  [27,'Co','Cobalt',58.933,'transition',4,9,152,1.88],
+  [28,'Ni','Nickel',58.693,'transition',4,10,149,1.91],
+  [29,'Cu','Copper',63.546,'transition',4,11,145,1.90],
+  [30,'Zn','Zinc',65.38,'transition',4,12,142,1.65],
+  [31,'Ga','Gallium',69.723,'post-transition',4,13,136,1.81],
+  [32,'Ge','Germanium',72.631,'metalloid',4,14,125,2.01],
+  [33,'As','Arsenic',74.922,'metalloid',4,15,114,2.18],
+  [34,'Se','Selenium',78.971,'nonmetal',4,16,103,2.55],
+  [35,'Br','Bromine',79.904,'nonmetal',4,17,94,2.96],
+  [36,'Kr','Krypton',83.798,'noble-gas',4,18,87,3.00],
+  [37,'Rb','Rubidium',85.468,'alkali',5,1,265,.82],
+  [38,'Sr','Strontium',87.62,'alkaline',5,2,219,.95],
+  [39,'Y','Yttrium',88.906,'transition',5,3,212,1.22],
+  [40,'Zr','Zirconium',91.224,'transition',5,4,206,1.33],
+  [41,'Nb','Niobium',92.906,'transition',5,5,198,1.60],
+  [42,'Mo','Molybdenum',95.96,'transition',5,6,190,2.16],
+  [43,'Tc','Technetium',98,'transition',5,7,183,1.90],
+  [44,'Ru','Ruthenium',101.07,'transition',5,8,178,2.20],
+  [45,'Rh','Rhodium',102.906,'transition',5,9,173,2.28],
+  [46,'Pd','Palladium',106.42,'transition',5,10,169,2.20],
+  [47,'Ag','Silver',107.868,'transition',5,11,165,1.93],
+  [48,'Cd','Cadmium',112.414,'transition',5,12,161,1.69],
+  [49,'In','Indium',114.818,'post-transition',5,13,156,1.78],
+  [50,'Sn','Tin',118.711,'post-transition',5,14,145,1.96],
+  [51,'Sb','Antimony',121.760,'metalloid',5,15,133,2.05],
+  [52,'Te','Tellurium',127.60,'metalloid',5,16,123,2.10],
+  [53,'I','Iodine',126.904,'nonmetal',5,17,115,2.66],
+  [54,'Xe','Xenon',131.293,'noble-gas',5,18,108,2.60],
+  [55,'Cs','Caesium',132.905,'alkali',6,1,298,.79],
+  [56,'Ba','Barium',137.327,'alkaline',6,2,253,.89],
+  [57,'La','Lanthanum',138.905,'lanthanide',8,3,195,1.10],
+  [58,'Ce','Cerium',140.116,'lanthanide',8,4,185,1.12],
+  [59,'Pr','Praseodymium',140.908,'lanthanide',8,5,247,1.13],
+  [60,'Nd','Neodymium',144.242,'lanthanide',8,6,206,1.14],
+  [62,'Sm','Samarium',150.36,'lanthanide',8,8,238,1.17],
+  [63,'Eu','Europium',151.964,'lanthanide',8,9,231,null],
+  [64,'Gd','Gadolinium',157.25,'lanthanide',8,10,233,1.20],
+  [66,'Dy','Dysprosium',162.500,'lanthanide',8,12,228,1.22],
+  [68,'Er','Erbium',167.259,'lanthanide',8,14,226,1.24],
+  [70,'Yb','Ytterbium',173.045,'lanthanide',8,16,222,null],
+  [71,'Lu','Lutetium',174.967,'lanthanide',8,17,217,1.27],
+  [72,'Hf','Hafnium',178.486,'transition',6,4,208,1.30],
+  [73,'Ta','Tantalum',180.948,'transition',6,5,200,1.50],
+  [74,'W','Tungsten',183.84,'transition',6,6,193,2.36],
+  [75,'Re','Rhenium',186.207,'transition',6,7,188,1.90],
+  [76,'Os','Osmium',190.23,'transition',6,8,185,2.20],
+  [77,'Ir','Iridium',192.217,'transition',6,9,180,2.20],
+  [78,'Pt','Platinum',195.085,'transition',6,10,177,2.28],
+  [79,'Au','Gold',196.967,'transition',6,11,174,2.54],
+  [80,'Hg','Mercury',200.592,'transition',6,12,171,2.00],
+  [81,'Tl','Thallium',204.383,'post-transition',6,13,156,1.62],
+  [82,'Pb','Lead',207.2,'post-transition',6,14,154,2.33],
+  [83,'Bi','Bismuth',208.980,'post-transition',6,15,143,2.02],
+  [89,'Ac','Actinium',227,'actinide',9,3,195,1.10],
+  [90,'Th','Thorium',232.038,'actinide',9,4,179,1.30],
+  [92,'U','Uranium',238.029,'actinide',9,6,186,1.38],
+];
+
+const CAT_COLORS = {
+  'alkali':       '#e05050',
+  'alkaline':     '#e09040',
+  'transition':   '#4a90d9',
+  'post-transition':'#50b080',
+  'metalloid':    '#8870d0',
+  'nonmetal':     '#40b8c0',
+  'noble-gas':    '#706080',
+  'lanthanide':   '#d07050',
+  'actinide':     '#c06040',
+};
+const CAT_LABELS = {
+  'alkali':'Alkali Metal','alkaline':'Alkaline Earth',
+  'transition':'Transition Metal','post-transition':'Post-transition',
+  'metalloid':'Metalloid','nonmetal':'Non-metal',
+  'noble-gas':'Noble Gas','lanthanide':'Lanthanide','actinide':'Actinide',
+};
+
+/* ══════════════════════════════════════════════════════════
+   BUILD PERIODIC TABLE
+══════════════════════════════════════════════════════════ */
+function buildPT() {
+  // Legend
+  const legend = document.getElementById('pt-legend');
+  Object.entries(CAT_COLORS).forEach(([k,c])=>{
+    const item = document.createElement('div');
+    item.className='pt-leg-item';
+    item.innerHTML=`<div class="pt-leg-dot" style="background:${c}"></div>${CAT_LABELS[k]}`;
+    legend.appendChild(item);
+  });
+
+  // Grid — 18 cols, rows 1-7 for main table, gap rows, rows 8-9 for La/Ac
+  const grid = document.getElementById('pt-grid');
+  // Create a sparse position map
+  const posMap = {};
+  ELEMENTS.forEach(el=>{
+    let row = el[5], col = el[6];
+    posMap[`${row}-${col}`] = el;
+  });
+
+  // Main table rows 1-7
+  for(let r=1;r<=7;r++){
+    for(let c=1;c<=18;c++){
+      const el = posMap[`${r}-${c}`];
+      if(el){
+        const cell = makeElCell(el);
+        grid.appendChild(cell);
+      } else {
+        const sp = document.createElement('div');
+        sp.className='el-space';
+        if(r>=6 && c>=3 && c<=3){ // lanthanide/actinide placeholder
+          sp.innerHTML='<div style="font-size:6px;color:var(--text3);text-align:center;padding-top:4px">57-71</div>';
+        }
+        grid.appendChild(sp);
+      }
+    }
+  }
+
+  // Gap row
+  const gap = document.createElement('div');
+  gap.className='pt-la-gap';
+  gap.style.gridColumn='1/-1';
+  grid.appendChild(gap);
+
+  // La/Ac rows (rows 8-9)
+  for(let r=8;r<=9;r++){
+    // label cell
+    const lbl = document.createElement('div');
+    lbl.className='el-space';
+    lbl.style.gridColumn='1/3';
+    lbl.innerHTML=`<div style="font-size:8px;color:var(--text3);text-align:right;padding-right:4px;padding-top:8px">${r===8?'La':'Ac'}</div>`;
+    grid.appendChild(lbl);
+    for(let c=3;c<=17;c++){
+      const el = posMap[`${r}-${c}`];
+      if(el){ grid.appendChild(makeElCell(el)); }
+      else { const sp=document.createElement('div'); sp.className='el-space'; grid.appendChild(sp); }
+    }
+    // end spacer
+    const sp2=document.createElement('div'); sp2.className='el-space'; grid.appendChild(sp2);
+  }
+}
+
+function makeElCell(el){
+  const [z,sym,name,mass,cat] = el;
+  const col = CAT_COLORS[cat]||'#888';
+  const cell = document.createElement('div');
+  cell.className='el-cell';
+  cell.setAttribute('role','gridcell');
+  cell.setAttribute('tabindex','0');
+  cell.setAttribute('aria-label',`${name} (${sym}), atomic number ${z}`);
+  cell.style.background = col+'22';
+  cell.style.borderColor = col+'44';
+  cell.dataset.z = z;
+  cell.dataset.sym = sym;
+  cell.innerHTML=`
+    <div class="el-num">${z}</div>
+    <div class="el-sym">${sym}</div>
+    <div class="el-name">${name.length>10?name.slice(0,8)+'…':name}</div>
+    <div class="el-mass">${mass}</div>
+  `;
+  cell.addEventListener('click',()=>selectPTCell(cell,el));
+  cell.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')selectPTCell(cell,el)});
+  return cell;
+}
+
+let ptActiveSlot = 'A';
+let ptSelectedCell = null;
+let ptSelectedEl = null;
+
+function selectPTCell(cell, el){
+  if(ptSelectedCell) ptSelectedCell.classList.remove('selected');
+  ptSelectedCell = cell;
+  ptSelectedEl = el;
+  cell.classList.add('selected');
+  const [z,sym,name,mass,cat,,,,r,en] = el;
+  document.getElementById('pt-info-card').classList.add('show');
+  document.getElementById('pt-info-sym').textContent = sym;
+  document.getElementById('pt-info-name').textContent = name;
+  document.getElementById('pt-info-num').textContent = z;
+  document.getElementById('pt-info-mass').textContent = mass;
+  document.getElementById('pt-info-cat').textContent = CAT_LABELS[cat]||cat;
+  document.getElementById('pt-info-r').textContent = r||'—';
+  document.getElementById('pt-info-en').textContent = en||'—';
+}
+
+/* ══════════════════════════════════════════════════════════
+   PT MODAL OPEN/CLOSE
+══════════════════════════════════════════════════════════ */
+function openPT(slot){
+  ptActiveSlot = slot;
+  document.getElementById('pt-slot-label').textContent = slot;
+  document.getElementById('ptSelectSite').textContent = slot;
+  // clear previous selection
+  if(ptSelectedCell){ ptSelectedCell.classList.remove('selected'); ptSelectedCell=null; ptSelectedEl=null; }
+  document.getElementById('pt-info-card').classList.remove('show');
+  document.getElementById('pt-modal-bg').classList.add('open');
+  document.getElementById('pt-modal-bg').setAttribute('aria-hidden','false');
+  document.getElementById('ptClose').focus();
+}
+function closePT(){ document.getElementById('pt-modal-bg').classList.remove('open'); }
+
+document.getElementById('ptClose').addEventListener('click',closePT);
+document.getElementById('pt-modal-bg').addEventListener('click',e=>{if(e.target===document.getElementById('pt-modal-bg'))closePT()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePT()});
+
+document.getElementById('ptSelectBtn').addEventListener('click',()=>{
+  if(!ptSelectedEl) return;
+  const sym = ptSelectedEl[1];
+  const inp = document.getElementById('el'+ptActiveSlot);
+  if(inp){ inp.value=sym; }
+  logLine(`Element ${sym} assigned to site ${ptActiveSlot}`, 'inf');
+  closePT();
+  // flash input
+  if(inp){ inp.style.borderColor='var(--green)'; setTimeout(()=>inp.style.borderColor='',800); }
+});
+
+// wire all ⚛ buttons — including elem-inp click
+document.querySelectorAll('.elem-pick-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>openPT(btn.dataset.slot));
+});
+document.querySelectorAll('.elem-inp').forEach(inp=>{
+  inp.addEventListener('click',()=>{
+    const slot = inp.id.replace('el','');
+    openPT(slot);
+  });
+});
+
+// Mobile ⚛ tab
+document.querySelectorAll('[data-mob]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(btn.dataset.mob==='table'){ openPT(ptActiveSlot||'A'); return; }
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   THEME
+══════════════════════════════════════════════════════════ */
+let isDark = true;
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  document.getElementById('themeIco').textContent=isDark?'🌙':'☀️';
+  document.getElementById('themeLbl').textContent=isDark?'Dark':'Light';
+});
+
+/* ══════════════════════════════════════════════════════════
+   MAIN TABS
+══════════════════════════════════════════════════════════ */
+document.querySelectorAll('[data-main]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-main]').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-selected','false')});
+    document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+    document.getElementById('tab-'+btn.dataset.main).classList.add('active');
+  });
+});
+
+/* coord tabs */
+document.querySelectorAll('[data-ctab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-ctab]').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tpane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('ct-'+btn.dataset.ctab).classList.add('active');
+  });
+});
+
+/* plot tabs */
+const plotMap={energy:'Energy',rdf:'Rdf',xrd:'Xrd',bonds:'Bonds',coord:'Coord',adf:'Adf'};
+document.querySelectorAll('[data-plot]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-plot]').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.ppane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('p'+plotMap[btn.dataset.plot]).classList.add('active');
+  });
+});
+
+/* viewer toggles */
+['autoRotBtn','cellBtn','axesBtn','bondsBtn','polyBtn'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(){this.classList.toggle('on')});
+});
+
+/* sliders */
+document.getElementById('atomScale').addEventListener('input',function(){
+  document.getElementById('atomScaleV').textContent=parseFloat(this.value).toFixed(2);
+});
+document.getElementById('bondCutoff').addEventListener('input',function(){
+  document.getElementById('bondCutoffV').textContent=parseFloat(this.value).toFixed(1);
+});
+
+/* ══════════════════════════════════════════════════════════
+   LATTICE INFO
+══════════════════════════════════════════════════════════ */
+function calcLatt(){
+  const a=+document.getElementById('lpA').value||4;
+  const b=+document.getElementById('lpB').value||4;
+  const c=+document.getElementById('lpC').value||4;
+  const al=+document.getElementById('lpAl').value||90;
+  const be=+document.getElementById('lpBe').value||90;
+  const ga=+document.getElementById('lpGa').value||90;
+  const r=d=>d*Math.PI/180;
+  const V=a*b*c*Math.sqrt(1-Math.cos(r(al))**2-Math.cos(r(be))**2-Math.cos(r(ga))**2+2*Math.cos(r(al))*Math.cos(r(be))*Math.cos(r(ga)));
+  let sys='Triclinic';
+  if(a===b&&b===c&&al===90&&be===90&&ga===90) sys='Cubic';
+  else if(a===b&&al===90&&be===90&&ga===120) sys='Hexagonal';
+  else if(a===b&&b===c) sys='Rhombohedral';
+  else if(a===b&&al===90&&be===90&&ga===90) sys='Tetragonal';
+  else if(al===90&&be===90&&ga===90) sys='Orthorhombic';
+  else if(al===90&&ga===90) sys='Monoclinic';
+  document.getElementById('lattSys').textContent=sys;
+  document.getElementById('lattVol').textContent=`V = ${isNaN(V)?'—':V.toFixed(2)} Å³`;
+  return {a,b,c,al,be,ga,V,sys};
+}
+['lpA','lpB','lpC','lpAl','lpBe','lpGa'].forEach(id=>document.getElementById(id).addEventListener('input',calcLatt));
+calcLatt();
+
+/* ══════════════════════════════════════════════════════════
+   PROTO SELECT — defaults
+══════════════════════════════════════════════════════════ */
+const protoDefaults={
+  sc:{a:3.52,b:'none',c:'none',sg:'Pm-3m (#221)',el:{A:'Fe'}},
+  fcc:{a:4.046,b:'none',c:'none',sg:'Fm-3m (#225)',el:{A:'Al'}},
+  bcc:{a:2.867,b:'none',c:'none',sg:'Im-3m (#229)',el:{A:'Fe'}},
+  hcp:{a:3.21,c_ratio:1.633,b:'none',sg:'P6₃/mmc (#194)',el:{A:'Mg'}},
+  diamond:{a:5.431,b:'none',c:'none',sg:'Fd-3m (#227)',el:{A:'Si'}},
+  nacl:{a:5.640,b:'need',c:'none',sg:'Fm-3m (#225)',el:{A:'Na',B:'Cl'}},
+  zincblende:{a:5.410,b:'need',c:'none',sg:'F-43m (#216)',el:{A:'Zn',B:'S'}},
+  perovskite:{a:4.000,b:'need',c:'need',sg:'Pm-3m (#221)',el:{A:'Ba',B:'Ti',C:'O'}},
+  spinel:{a:8.083,b:'need',c:'need',sg:'Fd-3m (#227)',el:{A:'Mg',B:'Al',C:'O'}},
+  custom:{a:4.0,b:'none',c:'none',sg:'P1 (#1)',el:{A:'X'}},
+};
+document.getElementById('protoSelect').addEventListener('change',function(){
+  const d=protoDefaults[this.value]||protoDefaults.custom;
+  document.getElementById('lpA').value=d.a;
+  document.getElementById('lpB').value=d.a;
+  document.getElementById('lpC').value=d.c_ratio?+(d.a*d.c_ratio).toFixed(3):d.a;
+  document.getElementById('sgInput').value=d.sg;
+  document.getElementById('slotB').style.display=d.b==='need'?'flex':'none';
+  document.getElementById('slotC').style.display=d.c==='need'?'flex':'none';
+  Object.entries(d.el).forEach(([site,sym])=>{
+    const inp=document.getElementById('el'+site);
+    if(inp) inp.value=sym;
+  });
+  calcLatt();
+  logLine(`Preset loaded: ${this.options[this.selectedIndex].text}`,'inf');
+});
+
+/* ══════════════════════════════════════════════════════════
+   QUICK LOAD
+══════════════════════════════════════════════════════════ */
+const QL={
+  mp_Al:{proto:'fcc',a:4.046,sg:'Fm-3m (#225)',el:{A:'Al'},n:4,sys:'Cubic',dens:2.70},
+  mp_Cu:{proto:'fcc',a:3.615,sg:'Fm-3m (#225)',el:{A:'Cu'},n:4,sys:'Cubic',dens:8.96},
+  mp_Fe:{proto:'bcc',a:2.867,sg:'Im-3m (#229)',el:{A:'Fe'},n:2,sys:'Cubic',dens:7.87},
+  mp_W: {proto:'bcc',a:3.165,sg:'Im-3m (#229)',el:{A:'W'}, n:2,sys:'Cubic',dens:19.25},
+  mp_Si:{proto:'diamond',a:5.431,sg:'Fd-3m (#227)',el:{A:'Si'},n:8,sys:'Cubic',dens:2.33},
+  mp_Ge:{proto:'diamond',a:5.658,sg:'Fd-3m (#227)',el:{A:'Ge'},n:8,sys:'Cubic',dens:5.32},
+  mp_NaCl:{proto:'nacl',a:5.640,sg:'Fm-3m (#225)',el:{A:'Na',B:'Cl'},n:8,sys:'Cubic',dens:2.16},
+  mp_TiO2:{proto:'custom',a:4.594,c:2.958,sg:'P4₂/mnm (#136)',el:{A:'Ti',B:'O'},n:6,sys:'Tetragonal',dens:4.23},
+  mp_BaTiO3:{proto:'perovskite',a:4.000,sg:'Pm-3m (#221)',el:{A:'Ba',B:'Ti',C:'O'},n:5,sys:'Cubic',dens:6.02},
+  mp_MgO:{proto:'nacl',a:4.211,sg:'Fm-3m (#225)',el:{A:'Mg',B:'O'},n:8,sys:'Cubic',dens:3.58},
+  mp_Spinel:{proto:'spinel',a:8.083,sg:'Fd-3m (#227)',el:{A:'Mg',B:'Al',C:'O'},n:56,sys:'Cubic',dens:3.55},
+  mp_graphite:{proto:'custom',a:2.461,c:6.708,sg:'P6₃/mmc (#194)',el:{A:'C'},n:4,sys:'Hexagonal',dens:2.26},
+};
+const EL_COLORS={Al:'#6fb8f7',Fe:'#c87060',Cu:'#e08840',W:'#8090a8',Si:'#a274d0',Ge:'#9060b0',Na:'#f5d060',Cl:'#60d090',Ti:'#50a0d0',O:'#f06070',Ba:'#e07040',Mg:'#60c080',Bi:'#80a0c0',C:'#606060',Zn:'#90b0c0',S:'#d0c040',default:'#7fb8f7'};
+function elColor(sym){return EL_COLORS[sym]||EL_COLORS.default}
+
+document.querySelectorAll('[data-ql]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const key=btn.dataset.ql, d=QL[key]; if(!d) return;
+    // set proto
+    document.getElementById('protoSelect').value=d.proto;
+    document.getElementById('lpA').value=d.a;
+    document.getElementById('lpB').value=d.a;
+    document.getElementById('lpC').value=d.c||d.a;
+    document.getElementById('sgInput').value=d.sg;
+    document.getElementById('slotB').style.display=d.el.B?'flex':'none';
+    document.getElementById('slotC').style.display=d.el.C?'flex':'none';
+    Object.entries(d.el).forEach(([site,sym])=>{const inp=document.getElementById('el'+site);if(inp)inp.value=sym;});
+    calcLatt();
+    simulateBuild(d);
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   BUILD
+══════════════════════════════════════════════════════════ */
+document.getElementById('buildBtn').addEventListener('click',()=>{
+  const a=+document.getElementById('lpA').value||4;
+  const c=+document.getElementById('lpC').value||a;
+  const sg=document.getElementById('sgInput').value;
+  const elA=document.getElementById('elA').value||'X';
+  const elB=document.getElementById('elB').value||'';
+  const elC=document.getElementById('elC').value||'';
+  const proto=document.getElementById('protoSelect').value;
+  const {sys,V}=calcLatt();
+  const formula=elA+(elB?elB:'')+(elC?elC:'');
+  const nMap={sc:1,fcc:4,bcc:2,hcp:2,diamond:8,nacl:8,zincblende:8,perovskite:5,spinel:56,custom:1};
+  const n=nMap[proto]||4;
+  simulateBuild({a,c,sg,el:{A:elA,B:elB,C:elC},n,sys,formula,V,dens:null});
+});
+
+function simulateBuild(d){
+  const btn=document.getElementById('buildBtn');
+  btn.textContent='⏳ Building…'; btn.disabled=true;
+  navStatus('Building…');
+  const elA=d.el.A||'X';
+  const formula=d.formula||Object.values(d.el).filter(Boolean).join('');
+  setTimeout(()=>{
+    btn.textContent='⬡ Build Structure'; btn.disabled=false;
+    navStatus('Ready');
+    document.getElementById('canvas-empty').style.display='none';
+
+    // stats bar
+    setVal('stSG',d.sg||'Fm-3m (#225)');
+    setVal('stF',formula);
+    setVal('stV',(d.V||(d.a**3)).toFixed(2));
+    setVal('stD',d.dens?d.dens.toFixed(2):'—');
+    setVal('stSys',d.sys||'Cubic');
+
+    // HUD
+    document.getElementById('hudSG').textContent=(d.sg||'Fm-3m').split(' ')[0];
+    document.getElementById('hudN').textContent=d.n;
+    document.getElementById('hudV').textContent=(d.V||(d.a**3)).toFixed(1)+' Å³';
+    document.getElementById('hudA').textContent=(d.a||4).toFixed(3)+' Å';
+    document.getElementById('hudB').textContent=(d.b||d.a||4).toFixed(3)+' Å';
+    document.getElementById('hudC').textContent=(d.c||d.a||4).toFixed(3)+' Å';
+
+    // nav
+    document.getElementById('navSG').textContent=(d.sg||'Fm-3m').split(' ')[0];
+    document.getElementById('navN').textContent=d.n;
+
+    // right panel
+    setPC('rpN',d.n);
+    setPC('rpSp',Object.values(d.el).filter(Boolean).join(', '));
+    setPC('rpSym','Oh');
+    setPC('rpSys',d.sys||'Cubic');
+
+    // atom list
+    buildAtomList(d);
+
+    logLine(`Built ${formula} · ${d.n} atoms · ${d.sg||'Fm-3m (#225)'}`, 'ok');
+  }, 700);
+  logLine(`Building ${formula}…`,'inf');
+}
+
+function setVal(id,val){
+  const el=document.getElementById(id);
+  el.textContent=val; el.classList.remove('dash');
+}
+function setPC(id,val){
+  const el=document.getElementById(id);
+  el.textContent=val; el.classList.remove('empty');
+}
+
+function buildAtomList(d){
+  const list=document.getElementById('atomList');
+  list.innerHTML='';
+  const positions=[[0,0,0],[.5,.5,0],[.5,0,.5],[0,.5,.5]].slice(0,d.n>16?4:Math.min(d.n,4));
+  const elA=d.el.A||'X';
+  positions.forEach((pos,i)=>{
+    const item=document.createElement('div');
+    item.className='atom-item'; item.setAttribute('role','listitem');
+    item.innerHTML=`<div class="at-dot" style="background:${elColor(elA)}"></div><span class="at-el">${elA}</span><span class="at-pos">${pos.map(v=>v.toFixed(3)).join('  ')}</span><span class="at-idx">#${i+1}</span>`;
+    item.addEventListener('click',()=>{document.querySelectorAll('.atom-item').forEach(a=>a.classList.remove('sel'));item.classList.add('sel')});
+    list.appendChild(item);
+  });
+  if(d.n>4){
+    const more=document.createElement('div');
+    more.style.cssText='text-align:center;font-size:10px;color:var(--text3);padding:8px';
+    more.textContent=`… and ${d.n-4} more atoms`;
+    list.appendChild(more);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MISC CONTROLS
+══════════════════════════════════════════════════════════ */
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  document.getElementById('fracCoords').value='';
+  document.getElementById('cartCoords').value='';
+});
+document.getElementById('clearLogBtn').addEventListener('click',()=>{
+  document.getElementById('con').innerHTML='';
+  logLine('Log cleared.');
+});
+document.getElementById('onboardClose').addEventListener('click',()=>{
+  document.getElementById('onboard').style.display='none';
+  localStorage.setItem('cf_ob','1');
+});
+document.getElementById('helpBtn').addEventListener('click',()=>{
+  document.getElementById('onboard').style.display='';
+  document.querySelector('#tab-build').scrollTop=0;
+});
+if(localStorage.getItem('cf_ob')) document.getElementById('onboard').style.display='none';
+
+function navStatus(msg){ document.getElementById('navStatus').textContent=msg; }
+
+function logLine(msg,type=''){
+  const con=document.getElementById('con');
+  const line=document.createElement('div');
+  line.className='cl'+(type?' '+type:'');
+  const ts=new Date().toLocaleTimeString('en',{hour12:false});
+  line.textContent=`[${ts}] ${msg}`;
+  con.appendChild(line); con.scrollTop=con.scrollHeight;
+}
+
+/* Welcome screen */
+setTimeout(()=>document.getElementById('welcome').classList.add('gone'),3200);
+
+/* Build PT on load */
+buildPT();
+</script>
 </body>
 </html>
