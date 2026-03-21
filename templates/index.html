@@ -236,7 +236,8 @@
                 <div class="col-md-8">
                     <h2 class="section-title text-white">Superconducting materials workspace</h2>
                     <p class="section-subtitle text-muted">
-                        Browse and filter materials stored in your SMAD database. Data is served directly from
+                        Search external materials databases (OPTIMADE) with the Materials Explorer below, and browse
+                        your <strong class="text-light">local SMAD database</strong> in the table — data is served from
                         the FastAPI backend and can be linked to your HPC runs.
                     </p>
                 </div>
@@ -247,23 +248,24 @@
                 </div>
             </div>
 
-            <!-- Materials DB (external / OPTIMADE explorer) — entry point from home workspace -->
+            <!-- Materials DB: full explorer UI (same as /databases, embedded) -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card border border-secondary border-opacity-50 bg-dark bg-opacity-75 shadow-sm">
-                        <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 py-4">
-                            <div class="flex-grow-1">
-                                <h3 class="h5 text-white mb-2">Materials DB</h3>
-                                <p class="text-muted small mb-0">
-                                    Open the <strong class="text-light">Materials Explorer</strong> to search Materials Project,
-                                    Materials Cloud, and other OPTIMADE databases by element, formula, or composition — then
-                                    inspect structures and connect results to your SMAD workflows.
-                                </p>
-                            </div>
-                            <a href="/databases" class="btn btn-primary btn-lg px-4 flex-shrink-0">
-                                Open Materials DB
-                            </a>
-                        </div>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                        <h3 class="h6 text-uppercase text-muted mb-0">Materials DB — Explorer</h3>
+                        <a href="/databases" class="btn btn-sm btn-outline-light">Open Materials DB in full page</a>
+                    </div>
+                    <p class="small text-muted mb-2">
+                        Periodic table filters, OPTIMADE search, 3D structure viewer, and CrystalForge handoff — same experience as the standalone page.
+                    </p>
+                    <div class="rounded overflow-hidden border border-secondary" style="background:#1a1d21;">
+                        <iframe
+                            src="/databases?embed=1"
+                            title="Materials Explorer — search OPTIMADE databases"
+                            class="w-100 d-block"
+                            style="height:min(85vh,920px); min-height:520px; border:0;"
+                            loading="lazy"
+                        ></iframe>
                     </div>
                 </div>
             </div>

@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materials Explorer · SMAD</title>
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <meta name="description" content="Search for materials information by chemistry, composition, or property using SMAD Materials Explorer.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/3dmol/build/3Dmol-min.js"></script>
+    <style>
+        :root {
+            --smad-dark: #1a1d21;
+            --smad-panel: #22262c;
+            --smad-card: #2a2f36;
+            --smad-border: #3a3f47;
+            --smad-text: #e1e4e8;
+            --smad-muted: #8b929a;
+            --smad-accent: #58a6ff;
+            --smad-success: #3fb950;
+            --smad-warning: #d29922;
+        }
+        body.theme-light {
+            --smad-dark: #f0f2f5;
+            --smad-panel: #ffffff;
+            --smad-card: #ffffff;
+            --smad-border: #e1e4e8;
+            --smad-text: #1a1d21;
+            --smad-muted: #57606a;
+            --smad-accent: #0969da;
+        }
+        .theme-toggle { background: var(--smad-card); border: 1px solid var(--smad-border); color: var(--smad-text); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+        .theme-toggle:hover { border-color: var(--smad-accent); }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--smad-dark); color: var(--smad-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+        .app-container { display: flex; flex-direction: column; min-height: 100vh; }
+
+        .top-nav {
+            background: var(--smad-panel);
+            border-bottom: 1px solid var(--smad-border);
+            padding: 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .top-nav-brand { font-weight: 700; font-size: 1.1rem; color: var(--smad-text); text-decoration: none; }
+        .top-nav-brand:hover { color: var(--smad-accent); }
+        .top-nav-links { display: flex; gap: 1.25rem; }
+        .top-nav-links a { color: var(--smad-muted); text-decoration: none; font-size: 0.85rem; transition: color 0.15s; }
+        .top-nav-links a:hover, .top-nav-links a.active { color: var(--smad-accent); }
+
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+
+        .left-panel {
+            width: 380px;
+            background: var(--smad-panel);
+            border-right: 1px solid var(--smad-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .left-panel-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--smad-border);
+        }
+        .left-panel-header h1 { font-size: 1.15rem; margin: 0 0 0.25rem 0; }
+        .left-panel-header p { font-size: 0.8rem; color: var(--smad-muted); margin: 0; }
+
+        .search-box {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--smad-border);
+        }
+        .search-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .search-input {
+            flex: 1;
+            background: var(--smad-card);
+            border: 1px solid var(--smad-border);
+            color: var(--smad-text);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .search-input:focus { outline: none; border-color: var(--smad-accent); }
+        .search-input::placeholder { color: var(--smad-muted); }
+        .search-btn {
+            background: var(--smad-accent);
+            border: none;
+            color: #fff;
+            padding: 0.6rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .search-btn:hover { background: #4393e6; }
+        .search-btn:disabled { background: var(--smad-muted); cursor: not-allowed; }
+
+        .filter-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--smad-border);
+        }
+        .filter-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 0.6rem 0.5rem;
+            color: var(--smad-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .filter-tab:hover { color: var(--smad-text); }
+        .filter-tab.active { color: var(--smad-accent); border-bottom-color: var(--smad-accent); }
+
+        .filter-content { flex: 1; overflow-y: auto; padding: 1rem 1.25rem; }
+        .filter-section { display: none; }
+        .filter-section.active { display: block; }
+
+        .filter-group { margin-bottom: 1rem; }
+        .filter-label { display: block; font-size: 0.75rem; color: var(--smad-muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.03em; }
+        .filter-select, .filter-input {
+            width: 100%;
+            background: var(--smad-card);
+            border: 1px solid var(--smad-border);
+            color: var(--smad-text);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .filter-select:focus, .filter-input:focus { outline: none; border-color: var(--smad-accent); }
+        .filter-row { display: flex; gap: 0.75rem; }
+        .filter-row > * { flex: 1; }
+
+        .periodic-table-container {
+            background: var(--smad-dark);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            overflow: visible;
+        }
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 18px);
+            gap: 1px;
+            width: fit-content;
+        }
+        .pt-element {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            min-height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5rem;
+            font-weight: 600;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.1s;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+        }
+        .pt-element:hover { transform: scale(1.25); z-index: 10; }
+        .pt-element.selected { border-color: var(--smad-accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.4); }
+        .pt-element.alkali { background: #ff6b6b; color: #fff; }
+        .pt-element.alkaline { background: #ffa94d; color: #000; }
+        .pt-element.transition { background: #74c0fc; color: #000; }
+        .pt-element.post-transition { background: #69db7c; color: #000; }
+        .pt-element.metalloid { background: #b197fc; color: #000; }
+        .pt-element.nonmetal { background: #ffd43b; color: #000; }
+        .pt-element.halogen { background: #a9e34b; color: #000; }
+        .pt-element.noble { background: #66d9e8; color: #000; }
+        .pt-element.lanthanide { background: #f783ac; color: #000; }
+        .pt-element.actinide { background: #da77f2; color: #fff; }
+        .pt-element.unknown { background: #868e96; color: #fff; }
+        .pt-spacer { visibility: hidden; pointer-events: none; }
+
+        .selected-elements {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            min-height: 28px;
+        }
+        .selected-el-tag {
+            background: var(--smad-accent);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .selected-el-tag .remove { cursor: pointer; font-weight: bold; }
+
+        .property-slider {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .property-slider input[type="range"] { flex: 1; accent-color: var(--smad-accent); }
+        .property-slider .val { width: 50px; text-align: right; font-size: 0.8rem; font-family: monospace; }
+
+        .center-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .results-header {
+            padding: 0.75rem 1.25rem;
+            background: var(--smad-panel);
+            border-bottom: 1px solid var(--smad-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .results-header h2 { font-size: 0.9rem; margin: 0; }
+        .results-count { background: var(--smad-card); padding: 2px 10px; border-radius: 10px; font-size: 0.8rem; margin-left: 0.5rem; }
+        .results-actions { display: flex; gap: 0.5rem; }
+        .results-btn {
+            background: var(--smad-card);
+            border: 1px solid var(--smad-border);
+            color: var(--smad-text);
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .results-btn:hover { border-color: var(--smad-accent); }
+        .results-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .results-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+            align-content: start;
+        }
+        .material-card {
+            background: var(--smad-card);
+            border: 1px solid var(--smad-border);
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .material-card:hover { border-color: var(--smad-muted); transform: translateY(-2px); }
+        .material-card.selected { border-color: var(--smad-accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.25); }
+        .material-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+        .material-formula { font-size: 1.1rem; font-weight: 600; }
+        .material-id { font-size: 0.7rem; color: var(--smad-muted); }
+        .material-props { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .material-prop { font-size: 0.7rem; background: var(--smad-dark); padding: 2px 6px; border-radius: 3px; }
+        .material-prop-val { color: var(--smad-accent); font-weight: 500; }
+        .material-elements { display: flex; flex-wrap: wrap; gap: 3px; }
+        .material-el-tag { padding: 1px 5px; border-radius: 2px; font-size: 0.65rem; font-weight: 600; }
+
+        .right-panel {
+            width: 360px;
+            background: var(--smad-panel);
+            border-left: 1px solid var(--smad-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .detail-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--smad-border);
+        }
+        .detail-header h3 { font-size: 0.85rem; margin: 0; color: var(--smad-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+        .detail-tabs { display: flex; border-bottom: 1px solid var(--smad-border); }
+        .detail-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 0.5rem;
+            color: var(--smad-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .detail-tab:hover { color: var(--smad-text); }
+        .detail-tab.active { color: var(--smad-accent); border-bottom-color: var(--smad-accent); }
+
+        .detail-content { flex: 1; overflow-y: auto; padding: 1rem; }
+        .detail-section { display: none; }
+        .detail-section.active { display: block; }
+
+        .viewer-container {
+            background: #000;
+            border-radius: 6px;
+            height: 220px;
+            margin-bottom: 1rem;
+        }
+        #structure-viewer { width: 100%; height: 100%; }
+
+        .info-table { width: 100%; font-size: 0.8rem; }
+        .info-table td { padding: 0.35rem 0; border-bottom: 1px solid var(--smad-border); }
+        .info-table td:first-child { color: var(--smad-muted); width: 45%; }
+        .info-table td:last-child { font-weight: 500; }
+
+        .lattice-matrix { font-family: monospace; font-size: 0.75rem; background: var(--smad-dark); padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem; }
+        .lattice-matrix div { display: flex; gap: 1rem; justify-content: space-between; }
+
+        .action-buttons { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .action-btn {
+            flex: 1;
+            background: var(--smad-card);
+            border: 1px solid var(--smad-border);
+            color: var(--smad-text);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .action-btn:hover { border-color: var(--smad-accent); color: var(--smad-accent); }
+        .action-btn.primary { background: var(--smad-accent); border-color: var(--smad-accent); color: #fff; }
+        .action-btn.primary:hover { background: #4393e6; }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--smad-muted);
+        }
+        .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--smad-border);
+            border-top-color: var(--smad-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .db-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            background: var(--smad-warning);
+            color: #000;
+        }
+
+        @media (max-width: 1200px) { .right-panel { width: 300px; } }
+        @media (max-width: 992px) { .right-panel { display: none; } .left-panel { width: 320px; } }
+        @media (max-width: 768px) { .left-panel { display: none; } }
+    
+        .databases-embed { margin: 0; }
+        .databases-embed .app-container { min-height: 100vh; }
+
+    </style>
+</head>
+<body class="databases-embed">
+    <div class="app-container">
+        <div class="main-content">
+            <aside class="left-panel">
+                <div class="left-panel-header">
+                    <h1>Materials Explorer</h1>
+                    <p>Search materials by chemistry, composition, or properties across multiple databases</p>
+                </div>
+
+                <div class="search-box">
+                    <div class="search-input-wrapper">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Formula, elements, or OPTIMADE query...">
+                        <button class="search-btn" id="searchBtn">Search</button>
+                    </div>
+                </div>
+
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-tab="elements">Elements</button>
+                    <button class="filter-tab" data-tab="properties">Properties</button>
+                    <button class="filter-tab" data-tab="database">Database</button>
+                </div>
+
+                <div class="filter-content">
+                    <div class="filter-section active" id="tab-elements">
+                        <div class="filter-group">
+                            <label class="filter-label">Select Elements (click to toggle)</label>
+                            <div class="periodic-table-container" id="ptContainer">
+                                <div class="periodic-table" id="periodicTable"></div>
+                            </div>
+                            <div class="selected-elements" id="selectedElements">
+                                <span style="color:var(--smad-muted);font-size:0.75rem;">No elements selected</span>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Element Matching</label>
+                            <select class="filter-select" id="elementMatch">
+                                <option value="HAS_ALL">Contains ALL selected elements</option>
+                                <option value="HAS_ANY">Contains ANY of selected elements</option>
+                                <option value="HAS_ONLY">Contains ONLY selected elements</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Number of Elements</label>
+                            <div class="filter-row">
+                                <input type="number" class="filter-input" id="nelementsMin" placeholder="Min" min="1">
+                                <input type="number" class="filter-input" id="nelementsMax" placeholder="Max" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-section" id="tab-properties">
+                        <div class="filter-group">
+                            <label class="filter-label">Number of Sites</label>
+                            <div class="filter-row">
+                                <input type="number" class="filter-input" id="nsitesMin" placeholder="Min" min="1">
+                                <input type="number" class="filter-input" id="nsitesMax" placeholder="Max" min="1">
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Space Group</label>
+                            <input type="text" class="filter-input" id="spaceGroup" placeholder="e.g., Fm-3m or 225">
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Crystal System</label>
+                            <select class="filter-select" id="crystalSystem">
+                                <option value="">Any</option>
+                                <option value="cubic">Cubic</option>
+                                <option value="hexagonal">Hexagonal</option>
+                                <option value="trigonal">Trigonal</option>
+                                <option value="tetragonal">Tetragonal</option>
+                                <option value="orthorhombic">Orthorhombic</option>
+                                <option value="monoclinic">Monoclinic</option>
+                                <option value="triclinic">Triclinic</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Dimensionality</label>
+                            <select class="filter-select" id="dimensionality">
+                                <option value="">Any</option>
+                                <option value="3D">3D (bulk)</option>
+                                <option value="2D">2D (layered)</option>
+                                <option value="1D">1D (chain)</option>
+                                <option value="0D">0D (molecular)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filter-section" id="tab-database">
+                        <div class="filter-group">
+                            <label class="filter-label">Database Provider</label>
+                            <select class="filter-select" id="providerSelect">
+                                <option value="">Loading providers...</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Results per Page</label>
+                            <select class="filter-select" id="pageLimit">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Custom OPTIMADE Filter</label>
+                            <textarea class="filter-input" id="customFilter" rows="3" placeholder='e.g., elements HAS "Fe" AND nsites < 20'></textarea>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Quick Filters</label>
+                            <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
+                                <button class="results-btn" onclick="setQuickFilter('elements HAS \"Fe\"')">Fe-based</button>
+                                <button class="results-btn" onclick="setQuickFilter('nelements = 2')">Binary</button>
+                                <button class="results-btn" onclick="setQuickFilter('nelements = 3')">Ternary</button>
+                                <button class="results-btn" onclick="setQuickFilter('nsites < 10')">Small cells</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="center-panel">
+                <div class="results-header">
+                    <div style="display:flex;align-items:center;">
+                        <h2>Results</h2>
+                        <span class="results-count" id="resultCount">0</span>
+                    </div>
+                    <div class="results-actions">
+                        <button class="results-btn" id="prevBtn" disabled>← Prev</button>
+                        <button class="results-btn" id="nextBtn" disabled>Next →</button>
+                    </div>
+                </div>
+                <div class="results-grid" id="resultsGrid">
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <div class="empty-state-icon">🔬</div>
+                        <h4>Search for Materials</h4>
+                        <p>Select elements from the periodic table or enter a formula to search across materials databases.</p>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="right-panel">
+                <div class="detail-header">
+                    <h3>Material Details</h3>
+                </div>
+                <div class="detail-tabs">
+                    <button class="detail-tab active" data-dtab="structure">Structure</button>
+                    <button class="detail-tab" data-dtab="properties">Properties</button>
+                    <button class="detail-tab" data-dtab="lattice">Lattice</button>
+                </div>
+                <div class="detail-content">
+                    <div class="detail-section active" id="dtab-structure">
+                        <div class="viewer-container">
+                            <div id="structure-viewer"></div>
+                        </div>
+                        <div id="structureInfo">
+                            <p style="color:var(--smad-muted);text-align:center;font-size:0.85rem;">Select a material to view its structure</p>
+                        </div>
+                    </div>
+                    <div class="detail-section" id="dtab-properties">
+                        <div id="propertiesInfo">
+                            <p style="color:var(--smad-muted);text-align:center;font-size:0.85rem;">Select a material to view properties</p>
+                        </div>
+                    </div>
+                    <div class="detail-section" id="dtab-lattice">
+                        <div id="latticeInfo">
+                            <p style="color:var(--smad-muted);text-align:center;font-size:0.85rem;">Select a material to view lattice data</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        const elements = [
+            { sym: 'H', num: 1, row: 1, col: 1, cat: 'nonmetal' },
+            { sym: 'He', num: 2, row: 1, col: 18, cat: 'noble' },
+            { sym: 'Li', num: 3, row: 2, col: 1, cat: 'alkali' },
+            { sym: 'Be', num: 4, row: 2, col: 2, cat: 'alkaline' },
+            { sym: 'B', num: 5, row: 2, col: 13, cat: 'metalloid' },
+            { sym: 'C', num: 6, row: 2, col: 14, cat: 'nonmetal' },
+            { sym: 'N', num: 7, row: 2, col: 15, cat: 'nonmetal' },
+            { sym: 'O', num: 8, row: 2, col: 16, cat: 'nonmetal' },
+            { sym: 'F', num: 9, row: 2, col: 17, cat: 'halogen' },
+            { sym: 'Ne', num: 10, row: 2, col: 18, cat: 'noble' },
+            { sym: 'Na', num: 11, row: 3, col: 1, cat: 'alkali' },
+            { sym: 'Mg', num: 12, row: 3, col: 2, cat: 'alkaline' },
+            { sym: 'Al', num: 13, row: 3, col: 13, cat: 'post-transition' },
+            { sym: 'Si', num: 14, row: 3, col: 14, cat: 'metalloid' },
+            { sym: 'P', num: 15, row: 3, col: 15, cat: 'nonmetal' },
+            { sym: 'S', num: 16, row: 3, col: 16, cat: 'nonmetal' },
+            { sym: 'Cl', num: 17, row: 3, col: 17, cat: 'halogen' },
+            { sym: 'Ar', num: 18, row: 3, col: 18, cat: 'noble' },
+            { sym: 'K', num: 19, row: 4, col: 1, cat: 'alkali' },
+            { sym: 'Ca', num: 20, row: 4, col: 2, cat: 'alkaline' },
+            { sym: 'Sc', num: 21, row: 4, col: 3, cat: 'transition' },
+            { sym: 'Ti', num: 22, row: 4, col: 4, cat: 'transition' },
+            { sym: 'V', num: 23, row: 4, col: 5, cat: 'transition' },
+            { sym: 'Cr', num: 24, row: 4, col: 6, cat: 'transition' },
+            { sym: 'Mn', num: 25, row: 4, col: 7, cat: 'transition' },
+            { sym: 'Fe', num: 26, row: 4, col: 8, cat: 'transition' },
+            { sym: 'Co', num: 27, row: 4, col: 9, cat: 'transition' },
+            { sym: 'Ni', num: 28, row: 4, col: 10, cat: 'transition' },
+            { sym: 'Cu', num: 29, row: 4, col: 11, cat: 'transition' },
+            { sym: 'Zn', num: 30, row: 4, col: 12, cat: 'transition' },
+            { sym: 'Ga', num: 31, row: 4, col: 13, cat: 'post-transition' },
+            { sym: 'Ge', num: 32, row: 4, col: 14, cat: 'metalloid' },
+            { sym: 'As', num: 33, row: 4, col: 15, cat: 'metalloid' },
+            { sym: 'Se', num: 34, row: 4, col: 16, cat: 'nonmetal' },
+            { sym: 'Br', num: 35, row: 4, col: 17, cat: 'halogen' },
+            { sym: 'Kr', num: 36, row: 4, col: 18, cat: 'noble' },
+            { sym: 'Rb', num: 37, row: 5, col: 1, cat: 'alkali' },
+            { sym: 'Sr', num: 38, row: 5, col: 2, cat: 'alkaline' },
+            { sym: 'Y', num: 39, row: 5, col: 3, cat: 'transition' },
+            { sym: 'Zr', num: 40, row: 5, col: 4, cat: 'transition' },
+            { sym: 'Nb', num: 41, row: 5, col: 5, cat: 'transition' },
+            { sym: 'Mo', num: 42, row: 5, col: 6, cat: 'transition' },
+            { sym: 'Tc', num: 43, row: 5, col: 7, cat: 'transition' },
+            { sym: 'Ru', num: 44, row: 5, col: 8, cat: 'transition' },
+            { sym: 'Rh', num: 45, row: 5, col: 9, cat: 'transition' },
+            { sym: 'Pd', num: 46, row: 5, col: 10, cat: 'transition' },
+            { sym: 'Ag', num: 47, row: 5, col: 11, cat: 'transition' },
+            { sym: 'Cd', num: 48, row: 5, col: 12, cat: 'transition' },
+            { sym: 'In', num: 49, row: 5, col: 13, cat: 'post-transition' },
+            { sym: 'Sn', num: 50, row: 5, col: 14, cat: 'post-transition' },
+            { sym: 'Sb', num: 51, row: 5, col: 15, cat: 'metalloid' },
+            { sym: 'Te', num: 52, row: 5, col: 16, cat: 'metalloid' },
+            { sym: 'I', num: 53, row: 5, col: 17, cat: 'halogen' },
+            { sym: 'Xe', num: 54, row: 5, col: 18, cat: 'noble' },
+            { sym: 'Cs', num: 55, row: 6, col: 1, cat: 'alkali' },
+            { sym: 'Ba', num: 56, row: 6, col: 2, cat: 'alkaline' },
+            { sym: 'La', num: 57, row: 9, col: 3, cat: 'lanthanide' },
+            { sym: 'Ce', num: 58, row: 9, col: 4, cat: 'lanthanide' },
+            { sym: 'Pr', num: 59, row: 9, col: 5, cat: 'lanthanide' },
+            { sym: 'Nd', num: 60, row: 9, col: 6, cat: 'lanthanide' },
+            { sym: 'Pm', num: 61, row: 9, col: 7, cat: 'lanthanide' },
+            { sym: 'Sm', num: 62, row: 9, col: 8, cat: 'lanthanide' },
+            { sym: 'Eu', num: 63, row: 9, col: 9, cat: 'lanthanide' },
+            { sym: 'Gd', num: 64, row: 9, col: 10, cat: 'lanthanide' },
+            { sym: 'Tb', num: 65, row: 9, col: 11, cat: 'lanthanide' },
+            { sym: 'Dy', num: 66, row: 9, col: 12, cat: 'lanthanide' },
+            { sym: 'Ho', num: 67, row: 9, col: 13, cat: 'lanthanide' },
+            { sym: 'Er', num: 68, row: 9, col: 14, cat: 'lanthanide' },
+            { sym: 'Tm', num: 69, row: 9, col: 15, cat: 'lanthanide' },
+            { sym: 'Yb', num: 70, row: 9, col: 16, cat: 'lanthanide' },
+            { sym: 'Lu', num: 71, row: 9, col: 17, cat: 'lanthanide' },
+            { sym: 'Hf', num: 72, row: 6, col: 4, cat: 'transition' },
+            { sym: 'Ta', num: 73, row: 6, col: 5, cat: 'transition' },
+            { sym: 'W', num: 74, row: 6, col: 6, cat: 'transition' },
+            { sym: 'Re', num: 75, row: 6, col: 7, cat: 'transition' },
+            { sym: 'Os', num: 76, row: 6, col: 8, cat: 'transition' },
+            { sym: 'Ir', num: 77, row: 6, col: 9, cat: 'transition' },
+            { sym: 'Pt', num: 78, row: 6, col: 10, cat: 'transition' },
+            { sym: 'Au', num: 79, row: 6, col: 11, cat: 'transition' },
+            { sym: 'Hg', num: 80, row: 6, col: 12, cat: 'transition' },
+            { sym: 'Tl', num: 81, row: 6, col: 13, cat: 'post-transition' },
+            { sym: 'Pb', num: 82, row: 6, col: 14, cat: 'post-transition' },
+            { sym: 'Bi', num: 83, row: 6, col: 15, cat: 'post-transition' },
+            { sym: 'Po', num: 84, row: 6, col: 16, cat: 'metalloid' },
+            { sym: 'At', num: 85, row: 6, col: 17, cat: 'halogen' },
+            { sym: 'Rn', num: 86, row: 6, col: 18, cat: 'noble' },
+            { sym: 'Fr', num: 87, row: 7, col: 1, cat: 'alkali' },
+            { sym: 'Ra', num: 88, row: 7, col: 2, cat: 'alkaline' },
+            { sym: 'Ac', num: 89, row: 10, col: 3, cat: 'actinide' },
+            { sym: 'Th', num: 90, row: 10, col: 4, cat: 'actinide' },
+            { sym: 'Pa', num: 91, row: 10, col: 5, cat: 'actinide' },
+            { sym: 'U', num: 92, row: 10, col: 6, cat: 'actinide' },
+            { sym: 'Np', num: 93, row: 10, col: 7, cat: 'actinide' },
+            { sym: 'Pu', num: 94, row: 10, col: 8, cat: 'actinide' },
+            { sym: 'Am', num: 95, row: 10, col: 9, cat: 'actinide' },
+            { sym: 'Cm', num: 96, row: 10, col: 10, cat: 'actinide' },
+            { sym: 'Bk', num: 97, row: 10, col: 11, cat: 'actinide' },
+            { sym: 'Cf', num: 98, row: 10, col: 12, cat: 'actinide' },
+            { sym: 'Es', num: 99, row: 10, col: 13, cat: 'actinide' },
+            { sym: 'Fm', num: 100, row: 10, col: 14, cat: 'actinide' },
+            { sym: 'Md', num: 101, row: 10, col: 15, cat: 'actinide' },
+            { sym: 'No', num: 102, row: 10, col: 16, cat: 'actinide' },
+            { sym: 'Lr', num: 103, row: 10, col: 17, cat: 'actinide' },
+            { sym: 'Rf', num: 104, row: 7, col: 4, cat: 'transition' },
+            { sym: 'Db', num: 105, row: 7, col: 5, cat: 'transition' },
+            { sym: 'Sg', num: 106, row: 7, col: 6, cat: 'transition' },
+            { sym: 'Bh', num: 107, row: 7, col: 7, cat: 'transition' },
+            { sym: 'Hs', num: 108, row: 7, col: 8, cat: 'transition' },
+            { sym: 'Mt', num: 109, row: 7, col: 9, cat: 'unknown' },
+            { sym: 'Ds', num: 110, row: 7, col: 10, cat: 'unknown' },
+            { sym: 'Rg', num: 111, row: 7, col: 11, cat: 'unknown' },
+            { sym: 'Cn', num: 112, row: 7, col: 12, cat: 'transition' },
+            { sym: 'Nh', num: 113, row: 7, col: 13, cat: 'unknown' },
+            { sym: 'Fl', num: 114, row: 7, col: 14, cat: 'unknown' },
+            { sym: 'Mc', num: 115, row: 7, col: 15, cat: 'unknown' },
+            { sym: 'Lv', num: 116, row: 7, col: 16, cat: 'unknown' },
+            { sym: 'Ts', num: 117, row: 7, col: 17, cat: 'unknown' },
+            { sym: 'Og', num: 118, row: 7, col: 18, cat: 'unknown' },
+        ];
+
+        const elementColors = {
+            H: '#ffffff', C: '#909090', N: '#3050f8', O: '#ff0d0d', F: '#90e050', S: '#ffff30',
+            Si: '#f0c8a0', Fe: '#e06633', Cu: '#c88033', Zn: '#7d80b0', Na: '#ab5cf2', Cl: '#1ff01f',
+        };
+
+        let providers = [];
+        let selectedElements = new Set();
+        let currentResults = [];
+        let selectedMaterial = null;
+        let currentOffset = 0;
+        let viewer = null;
+
+        function buildPeriodicTable() {
+            const table = document.getElementById('periodicTable');
+            const grid = [];
+            for (let r = 1; r <= 10; r++) {
+                for (let c = 1; c <= 18; c++) {
+                    grid.push({ row: r, col: c, el: null });
+                }
+            }
+            elements.forEach(el => {
+                const idx = (el.row - 1) * 18 + (el.col - 1);
+                if (grid[idx]) grid[idx].el = el;
+            });
+
+            table.innerHTML = grid.map(cell => {
+                if (!cell.el) return '<div class="pt-element pt-spacer"></div>';
+                return `<div class="pt-element ${cell.el.cat}" data-sym="${cell.el.sym}" title="${cell.el.sym}">${cell.el.sym}</div>`;
+            }).join('');
+
+            table.querySelectorAll('.pt-element[data-sym]').forEach(el => {
+                el.addEventListener('click', () => toggleElement(el.dataset.sym, el));
+            });
+        }
+
+        function toggleElement(sym, el) {
+            if (selectedElements.has(sym)) {
+                selectedElements.delete(sym);
+                el.classList.remove('selected');
+            } else {
+                selectedElements.add(sym);
+                el.classList.add('selected');
+            }
+            updateSelectedElementsDisplay();
+        }
+
+        function updateSelectedElementsDisplay() {
+            const container = document.getElementById('selectedElements');
+            if (selectedElements.size === 0) {
+                container.innerHTML = '<span style="color:var(--smad-muted);font-size:0.75rem;">No elements selected</span>';
+            } else {
+                container.innerHTML = Array.from(selectedElements).map(sym => 
+                    `<span class="selected-el-tag">${sym}<span class="remove" onclick="removeElement('${sym}')">×</span></span>`
+                ).join('');
+            }
+        }
+
+        function removeElement(sym) {
+            selectedElements.delete(sym);
+            document.querySelector(`.pt-element[data-sym="${sym}"]`)?.classList.remove('selected');
+            updateSelectedElementsDisplay();
+        }
+
+        function setQuickFilter(query) {
+            document.getElementById('customFilter').value = query;
+        }
+
+        async function loadProviders() {
+            try {
+                const resp = await fetch('/api/optimade/providers');
+                providers = await resp.json();
+                const select = document.getElementById('providerSelect');
+                select.innerHTML = providers.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            } catch (err) {
+                console.error('Failed to load providers:', err);
+                document.getElementById('providerSelect').innerHTML = '<option value="mp">Materials Project</option>';
+            }
+        }
+
+        function buildFilterQuery() {
+            const parts = [];
+            const customFilter = document.getElementById('customFilter').value.trim();
+            if (customFilter) {
+                parts.push(customFilter);
+            }
+
+            if (selectedElements.size > 0) {
+                const els = Array.from(selectedElements).map(e => `"${e}"`).join(',');
+                const match = document.getElementById('elementMatch').value;
+                if (match === 'HAS_ALL') parts.push(`elements HAS ALL ${els}`);
+                else if (match === 'HAS_ANY') parts.push(`elements HAS ANY ${els}`);
+                else if (match === 'HAS_ONLY') parts.push(`elements HAS ONLY ${els}`);
+            }
+
+            const neMin = document.getElementById('nelementsMin').value;
+            const neMax = document.getElementById('nelementsMax').value;
+            if (neMin) parts.push(`nelements >= ${neMin}`);
+            if (neMax) parts.push(`nelements <= ${neMax}`);
+
+            const nsMin = document.getElementById('nsitesMin').value;
+            const nsMax = document.getElementById('nsitesMax').value;
+            if (nsMin) parts.push(`nsites >= ${nsMin}`);
+            if (nsMax) parts.push(`nsites <= ${nsMax}`);
+
+            const searchInput = document.getElementById('searchInput').value.trim();
+            if (searchInput && !customFilter) {
+                if (/^[A-Z][a-z]?(\d*[A-Z][a-z]?\d*)*$/.test(searchInput)) {
+                    parts.push(`chemical_formula_reduced = "${searchInput}"`);
+                }
+            }
+
+            return parts.join(' AND ');
+        }
+
+        async function search(offset = 0) {
+            currentOffset = offset;
+            const grid = document.getElementById('resultsGrid');
+
+            grid.innerHTML = `
+                <div class="empty-state" style="grid-column:1/-1;">
+                    <div class="loading-spinner"></div>
+                    <p>Searching databases...</p>
+                </div>
+            `;
+
+            const filterQuery = buildFilterQuery();
+            const payload = {
+                provider_id: document.getElementById('providerSelect').value || 'mp',
+                filter_query: filterQuery,
+                page_limit: parseInt(document.getElementById('pageLimit').value),
+                page_offset: offset,
+            };
+
+            try {
+                const resp = await fetch('/api/optimade/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await resp.json();
+
+                if (data.error) {
+                    grid.innerHTML = `
+                        <div class="empty-state" style="grid-column:1/-1;">
+                            <div class="empty-state-icon">⚠️</div>
+                            <h4>Search Error</h4>
+                            <p>${data.error}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                currentResults = data.structures || [];
+                displayResults(data);
+
+                document.getElementById('prevBtn').disabled = offset === 0;
+                document.getElementById('nextBtn').disabled = !data.more_data_available;
+            } catch (err) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <div class="empty-state-icon">❌</div>
+                        <h4>Request Failed</h4>
+                        <p>${err}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayResults(data) {
+            const grid = document.getElementById('resultsGrid');
+            document.getElementById('resultCount').textContent = data.data_returned || currentResults.length;
+
+            if (currentResults.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <div class="empty-state-icon">🔍</div>
+                        <h4>No Materials Found</h4>
+                        <p>Try adjusting your search criteria or select different elements.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = currentResults.map((m, i) => `
+                <div class="material-card" onclick="selectMaterial(${i})" id="mat-${i}">
+                    <div class="material-card-header">
+                        <span class="material-formula">${m.chemical_formula_reduced || m.chemical_formula_descriptive || '—'}</span>
+                        <span class="material-id">${m.id || ''}</span>
+                    </div>
+                    <div class="material-props">
+                        <span class="material-prop">Sites: <span class="material-prop-val">${m.nsites || '?'}</span></span>
+                        <span class="material-prop">Elements: <span class="material-prop-val">${m.nelements || '?'}</span></span>
+                    </div>
+                    <div class="material-elements">
+                        ${(m.elements || []).map(el => `<span class="material-el-tag" style="background:${getElColor(el)};color:${needsDark(el)?'#000':'#fff'}">${el}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getElColor(el) {
+            const colors = {
+                H: '#ffffff', C: '#909090', N: '#3050f8', O: '#ff0d0d', F: '#90e050', S: '#ffff30',
+                Si: '#f0c8a0', Fe: '#e06633', Cu: '#c88033', Zn: '#7d80b0', Na: '#ab5cf2', Cl: '#1ff01f',
+                Ca: '#3dff00', Ti: '#bfc2c7', Mn: '#9c7ac7', Co: '#f090a0', Ni: '#50d050',
+            };
+            return colors[el] || '#6c757d';
+        }
+
+        function needsDark(el) {
+            return ['H', 'F', 'S', 'Si', 'Ca', 'Y', 'Ag'].includes(el);
+        }
+
+        function selectMaterial(idx) {
+            document.querySelectorAll('.material-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(`mat-${idx}`).classList.add('selected');
+            selectedMaterial = currentResults[idx];
+            updateDetailPanel(selectedMaterial);
+        }
+
+        function updateDetailPanel(m) {
+            if (!m) return;
+
+            document.getElementById('structureInfo').innerHTML = `
+                <table class="info-table">
+                    <tr><td>ID</td><td>${m.id || '—'}</td></tr>
+                    <tr><td>Formula</td><td>${m.chemical_formula_reduced || '—'}</td></tr>
+                    <tr><td>Elements</td><td>${(m.elements || []).join(', ')}</td></tr>
+                    <tr><td>Sites</td><td>${m.nsites || '—'}</td></tr>
+                </table>
+                <div class="action-buttons">
+                    <button class="action-btn primary" onclick="openInStructures()">Open in CrystalForge</button>
+                    <button class="action-btn" onclick="exportCIF()">Export CIF</button>
+                </div>
+            `;
+
+            document.getElementById('propertiesInfo').innerHTML = `
+                <table class="info-table">
+                    <tr><td>Dimensionality</td><td>${(m.dimension_types || []).filter(d=>d===1).length}D</td></tr>
+                    <tr><td>N Elements</td><td>${m.nelements || '—'}</td></tr>
+                    <tr><td>N Sites</td><td>${m.nsites || '—'}</td></tr>
+                </table>
+            `;
+
+            if (m.lattice_vectors) {
+                const lv = m.lattice_vectors;
+                document.getElementById('latticeInfo').innerHTML = `
+                    <h6 style="font-size:0.8rem;color:var(--smad-muted);margin-bottom:0.5rem;">Lattice Vectors (Å)</h6>
+                    <div class="lattice-matrix">
+                        <div><span>a:</span><span>${lv[0]?.map(v => v?.toFixed(4)).join(', ') || '—'}</span></div>
+                        <div><span>b:</span><span>${lv[1]?.map(v => v?.toFixed(4)).join(', ') || '—'}</span></div>
+                        <div><span>c:</span><span>${lv[2]?.map(v => v?.toFixed(4)).join(', ') || '—'}</span></div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('latticeInfo').innerHTML = '<p style="color:var(--smad-muted);font-size:0.85rem;">No lattice data available</p>';
+            }
+
+            visualizeStructure(m);
+        }
+
+        function visualizeStructure(m) {
+            if (!viewer) {
+                viewer = $3Dmol.createViewer('structure-viewer', {
+                    backgroundColor: '#000000',
+                    antialias: true,
+                });
+            }
+            viewer.removeAllModels();
+
+            if (m.cartesian_site_positions && m.species_at_sites) {
+                const species = {};
+                if (m.species) {
+                    m.species.forEach(s => {
+                        species[s.name] = s.chemical_symbols ? s.chemical_symbols[0] : s.name;
+                    });
+                }
+
+                const atoms = m.cartesian_site_positions.map((pos, i) => {
+                    const specName = m.species_at_sites[i];
+                    const el = species[specName] || specName;
+                    return { elem: el, x: pos[0], y: pos[1], z: pos[2] };
+                });
+
+                const model = viewer.addModel();
+                atoms.forEach(a => {
+                    model.addAtom({ elem: a.elem, x: a.x, y: a.y, z: a.z });
+                });
+
+                viewer.setStyle({}, { sphere: { radius: 0.4 } });
+                viewer.zoomTo();
+                viewer.render();
+            }
+        }
+
+        function openInStructures() {
+            if (!selectedMaterial) return;
+            sessionStorage.setItem('importStructure', JSON.stringify(selectedMaterial));
+            window.location.href = '/structures';
+        }
+
+        function exportCIF() {
+            if (!selectedMaterial) return;
+            alert('CIF export would generate a CIF file from the structure data. (Placeholder)');
+        }
+
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.filter-section').forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.detail-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.detail-section').forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`dtab-${tab.dataset.dtab}`).classList.add('active');
+            });
+        });
+
+        document.getElementById('searchBtn').addEventListener('click', () => search(0));
+        document.getElementById('searchInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') search(0);
+        });
+        document.getElementById('prevBtn').addEventListener('click', () => search(Math.max(0, currentOffset - parseInt(document.getElementById('pageLimit').value))));
+        document.getElementById('nextBtn').addEventListener('click', () => search(currentOffset + parseInt(document.getElementById('pageLimit').value)));
+
+        function toggleTheme() {
+            document.body.classList.toggle('theme-light');
+            const isLight = document.body.classList.contains('theme-light');
+            localStorage.setItem('smad-theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeToggle').textContent = isLight ? '☀ Light' : '🌙 Dark';
+        }
+        function applySavedTheme() {
+            const saved = localStorage.getItem('smad-theme');
+            if (saved === 'light') {
+                document.body.classList.add('theme-light');
+                document.getElementById('themeToggle').textContent = '☀ Light';
+            } else {
+                document.body.classList.remove('theme-light');
+                document.getElementById('themeToggle').textContent = '🌙 Dark';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            applySavedTheme();
+            buildPeriodicTable();
+            loadProviders();
+        });
+    </script>
+</body>
+</html>

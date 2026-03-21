@@ -133,9 +133,15 @@ async def phonons_page(request: Request):
 
 @app.get("/databases", response_class=HTMLResponse)
 async def databases_page(request: Request):
+    # Embedded on home: full explorer UI without duplicate navbar
+    if request.query_params.get("embed") in ("1", "true", "yes"):
+        return templates.TemplateResponse(
+            "databases_embed.html",
+            {"request": request},
+        )
     return templates.TemplateResponse(
         "databases.html",
-        {"request": request}
+        {"request": request},
     )
 
 
