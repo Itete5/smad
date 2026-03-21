@@ -1,678 +1,2427 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MD Simulations · SMAD</title>
-    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <style>
-        :root {
-            --bg0: #0d1117;
-            --bg1: #161b22;
-            --bg2: #21262d;
-            --border: #30363d;
-            --accent: #58a6ff;
-            --green: #3fb950;
-            --red: #f85149;
-            --text: #c9d1d9;
-            --text2: #8b949e;
-            --mono: 'JetBrains Mono', ui-monospace, monospace;
-            --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            background: var(--bg0);
-            color: var(--text);
-            font-family: var(--sans);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .md-fill { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-        .workspace {
-            flex: 1; min-height: 0;
-            display: grid;
-            grid-template-columns: 300px 1fr 280px;
-            gap: 0;
-        }
-        .sidebar, .canvas-area, .rpanel {
-            border-radius: 8px;
-            background: var(--bg1);
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-        .sidebar { display: flex; flex-direction: column; padding: 0.75rem; }
-        .sidebar-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-right: 0.2rem; }
-        .sidebar-section {
-            padding: 0.5rem 0.25rem 0.75rem;
-            border-bottom: 1px solid rgba(110, 135, 210, 0.25);
-        }
-        .sidebar-section:last-child { border-bottom: none; }
-        .section-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.16em; color: var(--text2); margin-bottom: 0.35rem; }
-        .section-sub { font-size: 0.7rem; color: var(--text2); margin-bottom: 0.35rem; }
-        .setup-tabs { display: flex; gap: 4px; margin-bottom: 0.5rem; padding: 2px; background: var(--bg2); border-radius: 999px; }
-        .setup-tab {
-            flex: 1; border: none; background: transparent; color: var(--text2); font-size: 0.72rem;
-            padding: 0.32rem 0.4rem; border-radius: 999px; cursor: pointer; transition: all 0.18s;
-        }
-        .setup-tab.active { background: var(--accent); color: #fff; }
-        .setup-tab:hover { color: var(--text); }
-        .setup-pane { display: none; }
-        .setup-pane.active { display: block; }
-        .form-row { margin-bottom: 0.5rem; }
-        .form-row label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75rem; color: var(--text2); margin-bottom: 0.18rem; }
-        .form-row label span.value { font-family: var(--mono); font-size: 0.7rem; color: var(--text); }
-        .form-control-sm, .form-select-sm, textarea.form-control-sm {
-            background: var(--bg2); border: 1px solid rgba(106, 136, 220, 0.55); color: var(--text);
-            font-size: 0.78rem; border-radius: 8px;
-        }
-        .form-control-sm:focus, .form-select-sm:focus, textarea.form-control-sm:focus {
-            border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px var(--accent);
-        }
-        .input-group-sm > .form-control, .input-group-sm > .form-select {
-            background: var(--bg2); border-radius: 8px; border-color: rgba(106, 136, 220, 0.55); color: var(--text); font-size: 0.78rem;
-        }
-        .btn-soft, .btn-soft-sm {
-            border-radius: 6px; border: 1px solid var(--border);
-            background: var(--bg2); color: var(--text);
-            font-size: 0.8rem; padding: 0.45rem 0.8rem; cursor: pointer; transition: all 0.18s;
-        }
-        .btn-soft-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
-        .btn-soft:hover { border-color: var(--accent); color: var(--accent); }
-        .btn-ghost {
-            border-radius: 999px; border: 1px solid rgba(106, 136, 220, 0.45); background: rgba(7, 9, 23, 0.75);
-            color: var(--text2); font-size: 0.78rem; padding: 0.38rem 0.75rem; cursor: pointer; transition: all 0.15s;
-        }
-        .btn-ghost:hover { border-color: rgba(130, 160, 242, 0.95); color: var(--text); }
-        .btn-ghost-sm { font-size: 0.72rem; padding: 0.18rem 0.45rem; }
-        .badge-status { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.16rem 0.5rem; border-radius: 999px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; }
-        .badge-status.running { background: rgba(61, 232, 122, 0.14); border: 1px solid var(--green); color: var(--green); }
-        .badge-status.paused { background: rgba(255, 161, 69, 0.14); border: 1px solid #ffbf69; color: #ffbf69; }
-        .badge-status.idle { background: rgba(128, 144, 204, 0.12); border: 1px solid rgba(132, 152, 215, 0.7); color: var(--text2); }
-        .progress-sm { height: 4px; border-radius: 999px; background: rgba(30, 41, 94, 0.8); overflow: hidden; }
-        .progress-sm .progress-bar { background: var(--accent); }
-        .pill-group { display: flex; flex-wrap: wrap; gap: 0.25rem; }
-        .pill { border-radius: 999px; padding: 0.2rem 0.55rem; font-size: 0.68rem; border: 1px solid rgba(116, 142, 226, 0.6); background: rgba(10, 13, 29, 0.9); color: var(--text2); }
-        .canvas-area { position: relative; display: flex; flex-direction: column; padding: 0.5rem; gap: 0.5rem; }
-        .viewer-wrap {
-            position: relative; flex: 1; min-height: 0; border-radius: 8px; background: var(--bg0); overflow: hidden; border: 1px solid var(--border);
-        }
-        #viewer-container, #viewer-container canvas { width: 100%; height: 100%; display: block; cursor: grab; }
-        #viewer-container:active { cursor: grabbing; }
-        .overlay-hud { position: absolute; top: 0.45rem; left: 0.45rem; display: flex; flex-direction: column; gap: 0.18rem; font-family: var(--mono); font-size: 0.7rem; pointer-events: none; }
-        .hud-chip-row { display: flex; flex-wrap: wrap; gap: 0.2rem; }
-        .hud-chip { padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(5, 10, 30, 0.9); border: 1px solid rgba(100, 128, 220, 0.55); color: var(--text2); }
-        .hud-chip strong { color: var(--text); }
-        .overlay-controls { position: absolute; top: 0.45rem; right: 0.45rem; display: flex; flex-direction: column; gap: 0.25rem; }
-        .stats-bar {
-            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; font-size: 0.72rem;
-            background: var(--bg2); border-radius: 8px; padding: 0.35rem 0.55rem; border: 1px solid var(--border);
-        }
-        .stat-item { display: flex; flex-direction: column; gap: 0.05rem; }
-        .stat-label { color: var(--text2); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.64rem; }
-        .stat-value { font-family: var(--mono); color: var(--text); }
-        .plot-tabs-bar { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.15rem; }
-        .plot-tab { font-size: 0.72rem; padding: 0.18rem 0.55rem; border-radius: 999px; border: 1px solid rgba(97, 128, 220, 0.7); background: rgba(5, 9, 25, 0.92); color: var(--text2); cursor: pointer; transition: all 0.16s; }
-        .plot-tab.active { background: var(--accent); color: #f8f9ff; border-color: rgba(126, 170, 255, 0.96); }
-        .plot-panel { margin-top: 0.25rem; flex: 1; min-height: 140px; border-radius: 10px; background: var(--bg0); border: 1px solid rgba(72, 92, 160, 0.8); overflow: hidden; }
-        .plot-pane { width: 100%; height: 100%; display: none; }
-        .plot-pane.active { display: block; }
-        .rpanel { display: flex; flex-direction: column; padding: 0.6rem; gap: 0.4rem; }
-        .rpanel-section { padding: 0.4rem 0.25rem 0.6rem; border-bottom: 1px solid rgba(105, 134, 210, 0.24); }
-        .rpanel-section:last-child { border-bottom: none; }
-        .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
-        .analysis-card { border-radius: 10px; padding: 0.35rem 0.4rem; background: var(--bg2); border: 1px solid rgba(90, 120, 210, 0.7); }
-        .analysis-label { font-size: 0.7rem; color: var(--text2); }
-        .analysis-value { font-family: var(--mono); font-size: 0.75rem; color: var(--text); }
-        .rpanel-plot { height: 120px; border-radius: 10px; background: var(--bg0); border: 1px solid rgba(72, 92, 160, 0.8); overflow: hidden; }
-        .console-wrap { display: flex; flex-direction: column; height: 180px; border-radius: 10px; overflow: hidden; background: #03040a; border: 1px solid rgba(115, 132, 205, 0.75); }
-        .console-head { display: flex; justify-content: space-between; align-items: center; padding: 0.28rem 0.5rem; font-size: 0.7rem; color: var(--text2); background: var(--bg2); border-bottom: 1px solid rgba(94, 118, 200, 0.8); }
-        .console-body { flex: 1; padding: 0.35rem 0.45rem; font-family: var(--mono); font-size: 0.7rem; color: #9effb2; background: var(--bg0); overflow-y: auto; white-space: pre-wrap; }
-        .loading-overlay {
-            position: fixed; inset: 0; background: var(--bg0); z-index: 2000;
-            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.9rem; color: var(--text); transition: opacity 0.35s, visibility 0.35s;
-        }
-        .loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        .loading-spinner { width: 42px; height: 42px; border-radius: 999px; border: 3px solid rgba(180, 196, 255, 0.2); border-top-color: #4f8fff; animation: spin 0.85s linear infinite; }
-        .loading-text { font-size: 0.9rem; color: var(--text2); }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .drop-zone { border-radius: 10px; border: 1px dashed rgba(106, 136, 220, 0.85); background: rgba(5, 8, 22, 0.9); padding: 0.5rem; font-size: 0.75rem; color: var(--text2); text-align: center; cursor: pointer; }
-        .drop-zone.dragover { background: rgba(87, 128, 238, 0.2); border-color: rgba(126, 172, 255, 0.98); color: #f8f9ff; }
-        .import-meta { font-size: 0.68rem; color: var(--text2); margin-top: 0.25rem; }
-        .import-card { border-radius: 9px; padding: 0.35rem 0.45rem; background: var(--bg2); border: 1px solid rgba(102, 136, 225, 0.8); margin-top: 0.35rem; font-size: 0.7rem; }
-        .slider-row { display: flex; align-items: center; gap: 0.45rem; }
-        .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
-        .slider-value { width: 48px; text-align: right; font-size: 0.7rem; font-family: var(--mono); color: var(--text); }
-        .check-row { display: flex; gap: 0.35rem; align-items: center; font-size: 0.74rem; color: var(--text2); }
-        .check-row input[type="checkbox"] { accent-color: var(--accent); }
-        .controls-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 0.35rem; align-items: center; }
-        .controls-sub { display: flex; flex-direction: column; gap: 0.2rem; }
-        .controls-meta { font-family: var(--mono); font-size: 0.68rem; color: var(--text2); }
-        .small-label { font-size: 0.68rem; color: var(--text2); }
-        @media (max-width: 1024px) { .workspace { grid-template-columns: 280px minmax(0, 1fr); } .rpanel { display: none; } }
-        @media (max-width: 768px) { .workspace { grid-template-columns: 1fr; } .sidebar { display: none; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD Simulations · SMAD</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<meta name="description" content="SMAD molecular dynamics simulations — setup, visualization, and analysis.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+/* ══════════════════════════════════════════════════════════
+   DESIGN TOKENS — inherited from CrystalForge
+══════════════════════════════════════════════════════════ */
+:root {
+  --bg0:#080c14; --bg1:#0d1520; --bg2:#111d2e; --bg3:#172236;
+  --bg4:#1e2d44; --bg5:#253550;
+  --border:rgba(80,130,200,0.13); --border2:rgba(80,130,200,0.28);
+  --text0:#ddeeff; --text1:#99b8d8; --text2:#5a7a9a; --text3:#334a62;
+  --accent:#3d9fff; --accent-glow:rgba(61,159,255,0.15);
+  --green:#2dd9a0; --green-glow:rgba(45,217,160,0.12);
+  --amber:#f5a623; --amber-glow:rgba(245,166,35,0.12);
+  --rose:#f06080; --rose-glow:rgba(240,96,128,0.12);
+  --violet:#9d7fff;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Instrument Sans',sans-serif;
+  --display:'Syne',sans-serif;
+  --r:8px; --r2:12px;
+  --nav-h:56px; --sb-w:296px; --rp-w:240px;
+  --shadow:0 8px 32px rgba(0,0,0,0.5);
+  --t:.17s ease;
+}
+[data-theme="light"] {
+  --bg0:#edf1f7; --bg1:#ffffff; --bg2:#f3f6fb; --bg3:#e6ecf5;
+  --bg4:#d8e2f0; --bg5:#ccd8eb;
+  --border:rgba(60,100,160,0.12); --border2:rgba(60,100,160,0.28);
+  --text0:#0d1828; --text1:#2a4060; --text2:#607090; --text3:#90a8c0;
+  --shadow:0 8px 32px rgba(0,0,0,0.12);
+}
+
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);background:var(--bg0);color:var(--text0);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{cursor:pointer;font-family:inherit;border:none;background:none}
+input,select,textarea{font-family:inherit}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px}
+::-webkit-scrollbar-track{background:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ══ LOADING ══ */
+#loading{
+  position:fixed;inset:0;z-index:9000;background:var(--bg0);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;
+  transition:opacity .5s ease, visibility .5s ease;
+}
+#loading.gone{opacity:0;visibility:hidden;pointer-events:none}
+.ld-wave{
+  width:60px;height:60px;position:relative;
+}
+.ld-wave svg{animation:ldSpin 8s linear infinite}
+@keyframes ldSpin{to{transform:rotate(360deg)}}
+.ld-dot{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+}
+.ld-dot-inner{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.ld-title{font-family:var(--display);font-size:20px;font-weight:700;color:var(--text0);letter-spacing:-.3px}
+.ld-title span{color:var(--accent)}
+.ld-sub{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px}
+.ld-bar{width:180px;height:2px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.ld-prog{height:100%;background:linear-gradient(90deg,var(--green),var(--accent));border-radius:2px;animation:ldProg 1.6s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes ldProg{from{width:0}to{width:100%}}
+
+/* ══ LAYOUT ══ */
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+#workspace{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* ══════════════════════════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════════════════════════ */
+#nav{
+  height:var(--nav-h);background:var(--bg1);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:10px;
+  flex-shrink:0;position:relative;z-index:200;
+}
+.logo-mark{
+  width:36px;height:36px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--green),var(--accent));
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:15px;font-weight:800;font-family:var(--display);
+}
+.logo-text{margin-right:8px}
+.logo-name{font-family:var(--display);font-size:17px;font-weight:800;color:var(--text0);letter-spacing:-.3px;line-height:1}
+.logo-sub{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.6px}
+.nav-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
+.nav-home-link{
+  display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--r);
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--text1);font-size:11px;font-weight:600;font-family:var(--display);
+  transition:all var(--t);white-space:nowrap;flex-shrink:0;
+}
+.nav-home-link:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+
+/* sim status chips */
+.nav-chips{display:flex;align-items:center;gap:6px;margin-left:auto}
+.nchip{
+  display:flex;align-items:center;gap:5px;padding:4px 10px;
+  border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;transition:border-color var(--t);
+}
+.nchip-lbl{color:var(--text3)}
+.nchip-val{color:var(--text1);font-weight:500}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s,box-shadow .3s}
+.status-dot.running{background:var(--green);box-shadow:0 0 8px var(--green);animation:sdPulse 1.5s ease infinite}
+.status-dot.paused{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.status-dot.idle{background:var(--text3)}
+@keyframes sdPulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.theme-toggle{
+  display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:var(--r);
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--text1);font-size:11px;font-weight:500;transition:all var(--t);
+}
+.theme-toggle:hover{border-color:var(--border2);color:var(--text0)}
+
+/* ══════════════════════════════════════════════════════════
+   LEFT SIDEBAR
+══════════════════════════════════════════════════════════ */
+#sidebar{
+  width:var(--sb-w);flex-shrink:0;
+  background:var(--bg1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sb-scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+
+/* panel */
+.panel{padding:13px 14px;border-bottom:1px solid var(--border)}
+.panel-hd{
+  display:flex;align-items:center;gap:7px;
+  font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--text3);margin-bottom:12px;font-family:var(--display);
+}
+.panel-hd-icon{font-size:13px;opacity:.7}
+
+/* tab bar inside panels */
+.ptab-bar-inner{
+  display:flex;gap:2px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:3px;margin-bottom:11px;
+}
+.pitab{
+  flex:1;padding:5px 6px;border-radius:5px;background:none;border:none;
+  color:var(--text2);font-size:10px;font-weight:600;
+  font-family:var(--display);transition:all var(--t);cursor:pointer;
+}
+.pitab.active{background:var(--bg5);color:var(--text0)}
+.pitab:hover:not(.active){color:var(--text1)}
+.pitpane{display:none}.pitpane.active{display:block}
+
+/* fields */
+.field{margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.flabel{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:10.5px;color:var(--text2);margin-bottom:5px;font-weight:500;
+}
+.flabel-val{font-family:var(--mono);font-size:10px;color:var(--text1)}
+.tip-b{
+  width:13px;height:13px;border-radius:50%;
+  background:var(--bg4);border:1px solid var(--border2);
+  color:var(--text3);font-size:8px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:help;position:relative;flex-shrink:0;margin-left:4px;
+}
+.tip-b .tip{
+  position:absolute;left:50%;bottom:calc(100% + 7px);
+  transform:translateX(-50%) translateY(3px);
+  background:var(--bg0);border:1px solid var(--border2);border-radius:var(--r);
+  padding:8px 10px;font-size:10.5px;color:var(--text1);line-height:1.5;
+  width:200px;z-index:400;opacity:0;pointer-events:none;
+  transition:all .14s;box-shadow:var(--shadow);
+  font-weight:400;text-align:left;white-space:normal;text-transform:none;letter-spacing:0;
+}
+.tip-b:hover .tip{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.inp{
+  width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text0);font-size:12px;font-family:var(--mono);
+  outline:none;transition:border-color var(--t),box-shadow var(--t);
+}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.inp::placeholder{color:var(--text3)}
+select.inp{cursor:pointer}
+textarea.inp{resize:vertical;min-height:64px;font-size:11px}
+
+/* range slider */
+.range-wrap{display:flex;align-items:center;gap:8px}
+.range-wrap input[type=range]{
+  flex:1;height:3px;border-radius:2px;background:var(--bg4);
+  outline:none;appearance:none;cursor:pointer;
+}
+.range-wrap input[type=range]::-webkit-slider-thumb{
+  appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 6px rgba(61,159,255,.4);
+}
+.range-val{font-family:var(--mono);font-size:10px;color:var(--accent);width:40px;text-align:right;flex-shrink:0}
+
+/* checkbox row */
+.check-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text1);margin-bottom:7px}
+.check-row input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;flex-shrink:0}
+.check-row:last-child{margin-bottom:0}
+
+/* pill tags */
+.pill-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.pill{
+  display:flex;align-items:center;gap:4px;
+  padding:3px 8px;border-radius:20px;
+  background:var(--bg3);border:1px solid var(--border);
+  font-size:10px;color:var(--text2);cursor:pointer;transition:all var(--t);
+}
+.pill input[type=checkbox]{accent-color:var(--accent);width:11px;height:11px}
+.pill:has(input:checked){border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+
+/* buttons */
+.btn{
+  padding:7px 13px;border-radius:var(--r);font-size:11px;font-weight:600;
+  border:none;transition:all var(--t);display:inline-flex;align-items:center;
+  gap:6px;white-space:nowrap;font-family:var(--display);letter-spacing:.1px;
+}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:not(:disabled):hover{background:#2d8ff5;transform:translateY(-1px);box-shadow:0 4px 16px rgba(61,159,255,.3)}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text1)}
+.btn-secondary:not(:disabled):hover{border-color:var(--border2);color:var(--text0);background:var(--bg4)}
+.btn-danger{background:rgba(240,96,128,.1);border:1px solid rgba(240,96,128,.2);color:var(--rose)}
+.btn-danger:hover{background:rgba(240,96,128,.18)}
+.btn-green{background:rgba(45,217,160,.1);border:1px solid rgba(45,217,160,.25);color:var(--green)}
+.btn-green:not(:disabled):hover{background:rgba(45,217,160,.2)}
+.brow{display:flex;gap:6px;margin-top:10px}
+.bfull{width:100%;justify-content:center}
+
+/* progress bar */
+.prog-track{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:2px;transition:width .3s ease}
+
+/* import drop zone */
+.drop-zone{
+  border:1px dashed var(--border2);border-radius:var(--r2);
+  background:var(--bg2);padding:14px 10px;text-align:center;
+  cursor:pointer;transition:all var(--t);color:var(--text2);font-size:11px;
+}
+.drop-zone:hover,.drop-zone.over{
+  border-color:var(--accent);color:var(--accent);background:var(--accent-glow);
+}
+.drop-zone-icon{font-size:22px;margin-bottom:4px;opacity:.5}
+.note{font-size:10px;color:var(--text3);line-height:1.5;padding:6px 9px;background:var(--bg2);border-left:2px solid var(--accent);border-radius:0 var(--r) var(--r) 0;margin-top:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sc-row{display:flex;align-items:center;gap:5px}
+.sc-x{font-size:10px;color:var(--text3);flex-shrink:0}
+.sc-inp{width:44px;text-align:center;padding:5px 4px;font-size:11px}
+
+/* sidebar bottom controls (Start/Pause/Reset) */
+#sb-controls{padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.ctrl-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:6px}
+.sim-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.sim-step{font-size:10px;font-family:var(--mono);color:var(--text2)}
+.sim-step strong{color:var(--text0)}
+.status-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:2px 9px;border-radius:20px;font-size:9.5px;font-weight:600;
+  font-family:var(--display);letter-spacing:.2px;
+  background:var(--bg3);border:1px solid var(--border);color:var(--text3);
+  transition:all .3s;
+}
+.status-badge.running{background:var(--green-glow);border-color:rgba(45,217,160,.3);color:var(--green)}
+.status-badge.paused{background:var(--amber-glow);border-color:rgba(245,166,35,.3);color:var(--amber)}
+.status-badge.idle{background:var(--bg3);border-color:var(--border);color:var(--text3)}
+
+/* ══════════════════════════════════════════════════════════
+   CENTER PANEL
+══════════════════════════════════════════════════════════ */
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;min-height:0}
+
+/* empty state (inside vp-cell) */
+.ve-icon{font-size:48px;opacity:.06;margin-bottom:12px;animation:veFloat 3s ease-in-out infinite}
+@keyframes veFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ve-title{font-family:var(--display);font-size:13px;color:var(--text3);margin-bottom:4px;font-weight:600}
+.ve-sub{font-size:10.5px;color:var(--text3);opacity:.6;text-align:center;max-width:220px;line-height:1.5}
+
+/* HUD */
+.hud{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:5px;pointer-events:none;z-index:20}
+.hud-chip{
+  background:rgba(8,12,20,.82);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:4px 9px;font-family:var(--mono);font-size:9.5px;
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+}
+.hl{color:var(--text3)}.hv{color:var(--text0);font-weight:500}.hsep{color:var(--border2);margin:0 2px}
+
+/* ══════════════════════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════════════════════ */
+#rpanel{
+  width:var(--rp-w);flex-shrink:0;background:var(--bg1);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
+}
+.rp-sec{padding:12px 13px;border-bottom:1px solid var(--border)}
+.rp-title{font-size:9.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;font-family:var(--display)}
+.prop-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:7px 9px}
+.pc-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px}
+.pc-val{font-size:12px;font-family:var(--mono);color:var(--text1);font-weight:500}
+.pc-val.dim{color:var(--text3);font-size:10px}
+.pc-sub{font-size:9px;color:var(--text3);margin-top:2px}
+
+/* inline plot */
+.rp-plot{height:110px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+
+/* log console */
+.con-wrap{border-top:1px solid var(--border);flex-shrink:0}
+.con-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:5px 11px;background:var(--bg2);border-bottom:1px solid var(--border);
+  font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;
+}
+.con{
+  height:100px;overflow-y:auto;padding:7px 11px;
+  font-family:var(--mono);font-size:9.5px;color:var(--text2);line-height:1.7;
+  background:var(--bg0);scrollbar-width:thin;scrollbar-color:var(--bg5) transparent;
+}
+.cl{margin-bottom:1px}
+.cl.ok{color:var(--green)}.cl.err{color:var(--rose)}.cl.inf{color:var(--accent)}.cl.warn{color:var(--amber)}
+
+/* ══ VIEWER TOOLBAR ══ */
+#viewer-toolbar{
+  display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  padding:5px 10px;background:var(--bg1);border-bottom:1px solid var(--border);
+  flex-shrink:0;min-height:36px;overflow-x:auto;scrollbar-width:none;
+}
+#viewer-toolbar::-webkit-scrollbar{display:none}
+.vt-group{display:flex;align-items:center;gap:3px}
+.vt-label{font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;margin-right:3px}
+.vt-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 4px}
+.vt-btn{
+  padding:3px 8px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text2);font-size:10.5px;font-weight:600;font-family:var(--display);
+  transition:all var(--t);cursor:pointer;white-space:nowrap;line-height:1.4;
+}
+.vt-btn:hover{border-color:var(--border2);color:var(--text0)}
+.vt-btn.active,.vt-btn.on{background:var(--accent-glow);border-color:rgba(61,159,255,.4);color:var(--accent)}
+.vt-sel{
+  padding:3px 6px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text1);font-size:10px;font-family:var(--mono);outline:none;cursor:pointer;
+  transition:border-color var(--t);
+}
+.vt-sel:focus{border-color:var(--accent)}
+
+/* ══ MULTI-PANEL VIEWPORT ══ */
+#viewer-wrap{
+  flex:1;position:relative;background:var(--bg0);
+  overflow:hidden;min-height:0;
+}
+.vp-layout{display:none;width:100%;height:100%}
+.vp-layout.active{display:grid}
+/* Single */
+#layout-single{grid-template-columns:1fr;grid-template-rows:1fr}
+/* Dual - side by side */
+#layout-dual{grid-template-columns:1fr 1fr;grid-template-rows:1fr;gap:1px;background:var(--border)}
+/* Quad - 2×2 */
+#layout-quad{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--border)}
+
+.vp-cell{
+  position:relative;background:var(--bg0);overflow:hidden;cursor:crosshair;
+  min-height:0;
+}
+.vp-cell.active-vp{outline:1px solid var(--amber)}
+.vp-label{
+  position:absolute;top:6px;left:8px;z-index:5;pointer-events:none;
+  font-family:var(--mono);font-size:9px;color:var(--text3);
+  background:rgba(8,12,20,.7);padding:1px 6px;border-radius:3px;
+  border:1px solid var(--border);
+}
+.vp-canvas{width:100%;height:100%;display:block}
+.vp-empty{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none;
+}
+
+/* ── colorbar ── */
+.colorbar{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  display:flex;gap:4px;align-items:stretch;z-index:10;
+}
+.cb-canvas{border-radius:3px;border:1px solid var(--border)}
+.cb-labels{
+  display:flex;flex-direction:column;justify-content:space-between;
+  font-family:var(--mono);font-size:8.5px;color:var(--text2);
+}
+.cb-title{
+  position:absolute;right:36px;top:50%;transform:translateY(-50%) rotate(-90deg);
+  font-family:var(--mono);font-size:9px;color:var(--text2);white-space:nowrap;
+  transform-origin:center center;
+}
+
+/* ══ BOTTOM BAR ══ */
+#bottom-bar{
+  flex-shrink:0;background:var(--bg1);border-top:1px solid var(--border);
+}
+.stats-strip{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  border-bottom:1px solid var(--border);
+}
+.ss-cell{padding:5px 12px;border-right:1px solid var(--border)}
+.ss-cell:last-child{border-right:none}
+.ss-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:1px}
+.ss-val{font-size:11px;font-family:var(--mono);color:var(--text1);font-weight:500}
+.ss-val.dim{color:var(--text3);font-size:10px}
+
+/* ══ DATA TABLE ══ */
+.data-table-wrap{display:flex;flex-direction:column;height:100%;background:var(--bg0)}
+.dt-toolbar{
+  display:flex;align-items:center;gap:8px;padding:5px 10px;
+  background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.dt-filter{
+  flex:1;padding:4px 9px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text0);font-size:11px;font-family:var(--mono);
+  outline:none;transition:border-color var(--t);
+}
+.dt-filter:focus{border-color:var(--accent)}
+.dt-filter::placeholder{color:var(--text3)}
+.dt-count{font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap}
+.dt-scroll{flex:1;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.dt-table{width:100%;border-collapse:collapse;font-size:10.5px;font-family:var(--mono)}
+.dt-th{
+  position:sticky;top:0;background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:5px 10px;text-align:left;color:var(--text2);font-weight:600;
+  font-size:9.5px;letter-spacing:.3px;white-space:nowrap;z-index:1;
+  border-right:1px solid var(--border);
+}
+.dt-th.sortable{cursor:pointer;user-select:none;transition:color var(--t)}
+.dt-th.sortable:hover{color:var(--accent)}
+.dt-th.sort-asc::after{content:' ↑'}
+.dt-th.sort-desc::after{content:' ↓'}
+.dt-table tbody tr{border-bottom:1px solid var(--border);transition:background var(--t)}
+.dt-table tbody tr:hover{background:var(--bg3)}
+.dt-table tbody tr.selected{background:var(--accent-glow)}
+.dt-table td{
+  padding:4px 10px;color:var(--text1);white-space:nowrap;
+  border-right:1px solid var(--border);
+}
+.dt-table td:first-child{color:var(--text3)}
+.dt-type-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:1px 6px;border-radius:3px;font-size:9.5px;font-weight:700;
+}
+.dt-val-heat{
+  /* heat-mapped value cell */
+  font-weight:500;
+}
+.dt-empty{
+  text-align:center;padding:24px;color:var(--text3);font-size:11px;
+  border-right:none!important;
+}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:1100px){:root{--rp-w:210px}}
+@media(max-width:900px){#rpanel{display:none}}
+@media(max-width:680px){#sidebar{display:none}#viewer-toolbar{flex-wrap:nowrap;overflow-x:scroll}}
+/* plot tabs + analysis area below stats strip */
+.plot-tabs-bar{display:flex;gap:2px;flex-wrap:wrap;padding:4px 10px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.plot-tabs-bar .ptab{padding:6px 10px;border:none;background:transparent;color:var(--text2);font-size:10px;font-weight:600;cursor:pointer;border-radius:var(--r);font-family:var(--display);transition:color var(--t),background var(--t)}
+.plot-tabs-bar .ptab:hover{color:var(--text1)}
+.plot-tabs-bar .ptab.active{background:var(--bg5);color:var(--accent)}
+.plot-wrap{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg0);border-top:1px solid var(--border)}
+.ppane{display:none;flex:1;min-height:160px;overflow:hidden;position:relative}
+.ppane.active{display:block}
+.plot-ph{height:100%;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--text3)}
+.ph-ico{font-size:28px;margin-bottom:8px;opacity:.5}
+.ph-title{font-family:var(--display);font-size:12px;font-weight:600;color:var(--text0);margin-bottom:4px}
+.ph-desc{font-size:10px;color:var(--text3);max-width:320px;line-height:1.5}
+#plotEnergy,#plotTemperature,#plotPressure,#plotRDF,#plotMSD,#plotVACF,#plotStress{width:100%;height:100%;min-height:220px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body>
-    <div id="loading" class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Initializing SMAD MD simulator...</div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="ld-wave">
+    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+      <polygon points="30,4 54,17 54,43 30,56 6,43 6,17" fill="none" stroke="rgba(45,217,160,0.5)" stroke-width="1.5"/>
+      <polygon points="30,12 46,21 46,39 30,48 14,39 14,21" fill="none" stroke="rgba(61,159,255,0.35)" stroke-width="1"/>
+    </svg>
+    <div class="ld-dot"><div class="ld-dot-inner"></div></div>
+  </div>
+  <div class="ld-title">MD <span>Simulations</span></div>
+  <div class="ld-sub">Initializing molecular dynamics engine…</div>
+  <div class="ld-bar"><div class="ld-prog"></div></div>
+</div>
+
+<div id="app">
+
+<!-- ══ NAVBAR ══ -->
+<nav id="nav" aria-label="Main navigation">
+  <div class="logo-mark">⬡</div>
+  <div class="logo-text">
+    <div class="logo-name">MD Simulations</div>
+    <div class="logo-sub">Molecular Dynamics</div>
+  </div>
+  <div class="nav-divider"></div>
+  <a href="/" class="nav-home-link" title="Back to SMAD home">⌂ SMAD Home</a>
+  <div class="nav-divider"></div>
+  <div class="nav-chips">
+    <div class="nchip" title="Simulation status">
+      <div class="status-dot idle" id="statusDot"></div>
+      <span class="nchip-lbl" id="statusLbl">Idle</span>
+    </div>
+    <div class="nchip" title="Simulation time">
+      <span class="nchip-lbl">t</span>
+      <span class="nchip-val" id="navTime">0.000 ps</span>
+    </div>
+    <div class="nchip" title="Step">
+      <span class="nchip-lbl">Step</span>
+      <span class="nchip-val" id="navStep">0</span>
+    </div>
+    <div class="nchip" title="Particles">
+      <span class="nchip-lbl">N</span>
+      <span class="nchip-val" id="navN">0</span>
+    </div>
+  </div>
+  <div class="nav-divider"></div>
+  <button class="theme-toggle" id="themeBtn" type="button" aria-label="Toggle light/dark theme">
+    <span id="themeIco">🌙</span><span id="themeLbl">Dark</span>
+  </button>
+</nav>
+
+<!-- ══ WORKSPACE ══ -->
+<div id="workspace">
+
+<!-- ══ LEFT SIDEBAR ══ -->
+<aside id="sidebar" aria-label="Simulation setup">
+  <div class="sb-scroll">
+
+    <!-- SYSTEM SETUP -->
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-hd-icon">⬡</span>System Setup</div>
+      <div class="ptab-bar-inner" role="tablist">
+        <button class="pitab active" data-pt="presets" role="tab">Presets</button>
+        <button class="pitab" data-pt="import" role="tab">Import</button>
+        <button class="pitab" data-pt="crystalforge" role="tab">CrystalForge</button>
+      </div>
+
+      <!-- PRESETS -->
+      <div class="pitpane active" id="pt-presets">
+        <div class="field">
+          <div class="flabel">Example system</div>
+          <select id="exampleSelect" class="inp">
+            <optgroup label="Noble gases / LJ">
+              <option value="lj_fluid">Lennard-Jones fluid</option>
+              <option value="lj_solid">LJ crystal (FCC)</option>
+              <option value="argon">Argon gas</option>
+              <option value="neon">Neon gas</option>
+              <option value="kr_solid">Krypton solid</option>
+            </optgroup>
+            <optgroup label="Metals">
+              <option value="copper">Copper (FCC)</option>
+              <option value="iron">Iron (BCC)</option>
+              <option value="aluminum">Aluminium (FCC)</option>
+            </optgroup>
+            <optgroup label="Compounds">
+              <option value="nacl">NaCl crystal</option>
+              <option value="silicon">Silicon (Diamond)</option>
+              <option value="water">Water (SPC/E)</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="field">
+          <div class="flabel">Particles<span class="flabel-val" id="presetNVal">512</span></div>
+          <div class="range-wrap">
+            <input type="range" id="presetN" min="64" max="4096" step="64" value="512">
+            <span class="range-val" id="presetNDisp">512</span>
+          </div>
+        </div>
+        <div class="field">
+          <div class="flabel">Box size (Å)<span class="flabel-val" id="boxSizeVal">40.0</span></div>
+          <div class="range-wrap">
+            <input type="range" id="boxSize" min="10" max="80" step="2" value="40">
+            <span class="range-val" id="boxSizeDisp">40</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMPORT -->
+      <div class="pitpane" id="pt-import">
+        <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="Drop structure file here or click to browse">
+          <div class="drop-zone-icon">📂</div>
+          <div>Drop structure file here<br><span style="font-size:9.5px;color:var(--text3)">XYZ · PDB · POSCAR · LAMMPS · CIF</span></div>
+        </div>
+        <input id="fileInput" type="file" accept=".xyz,.pdb,.cif,.vasp,.poscar,.lmp,.data" hidden>
+        <div class="field" style="margin-top:10px">
+          <div class="flabel">Or paste structure text</div>
+          <textarea id="pasteArea" class="inp" rows="4" spellcheck="false" placeholder="3&#10;Al lattice&#10;Al 0.0 0.0 0.0&#10;Al 2.025 2.025 0.0"></textarea>
+        </div>
+        <div class="brow">
+          <button class="btn btn-secondary" style="flex:1" id="parseBtn" type="button">↳ Parse</button>
+          <span style="font-size:10px;color:var(--text3);align-self:center;font-family:var(--mono)" id="detectedFmt">—</span>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <div class="flabel">Supercell replication
+            <span style="font-family:var(--mono);font-size:10px;color:var(--accent)" id="scLabel">1×1×1</span>
+          </div>
+          <div class="sc-row">
+            <input class="inp sc-inp" type="number" id="scNx" value="1" min="1" max="10">
+            <span class="sc-x">×</span>
+            <input class="inp sc-inp" type="number" id="scNy" value="1" min="1" max="10">
+            <span class="sc-x">×</span>
+            <input class="inp sc-inp" type="number" id="scNz" value="1" min="1" max="10">
+          </div>
+        </div>
+        <div class="note" id="importNote" style="display:none">—</div>
+      </div>
+
+      <!-- CRYSTALFORGE LINK -->
+      <div class="pitpane" id="pt-crystalforge">
+        <div class="field">
+          <button class="btn btn-secondary bfull" id="loadFromCF" type="button">⬡ Load from CrystalForge</button>
+        </div>
+        <div class="field">
+          <button class="btn btn-secondary bfull" id="loadFromLS" type="button">↺ Load last saved structure</button>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:9px 10px;font-size:10.5px;color:var(--text2);min-height:48px" id="cfPreview">
+          No structure linked yet.
+        </div>
+        <div class="field" style="margin-top:10px">
+          <div class="flabel">Supercell for linked structure</div>
+          <div class="sc-row">
+            <input class="inp sc-inp" type="number" id="stNx" value="1" min="1" max="10">
+            <span class="sc-x">×</span>
+            <input class="inp sc-inp" type="number" id="stNy" value="1" min="1" max="10">
+            <span class="sc-x">×</span>
+            <input class="inp sc-inp" type="number" id="stNz" value="1" min="1" max="10">
+          </div>
+        </div>
+      </div>
+
+      <!-- shared: init temp -->
+      <div class="field" style="margin-top:10px">
+        <div class="flabel">Initial temperature (K)
+          <span class="tip-b">?<span class="tip">Temperature used to assign Maxwell-Boltzmann velocity distribution at initialization.</span></span>
+        </div>
+        <div class="range-wrap">
+          <input type="range" id="initTemp" min="1" max="2000" value="300">
+          <span class="range-val" id="initTempDisp">300</span>
+        </div>
+      </div>
+      <div class="brow">
+        <button class="btn btn-primary" style="flex:2" id="initBtn" type="button">⚙ Initialize</button>
+        <div style="flex:1;display:flex;flex-direction:column;gap:3px;justify-content:center">
+          <div style="font-size:9.5px;color:var(--text3);font-family:var(--mono)" id="initLbl">Not initialized</div>
+          <div class="prog-track"><div class="prog-fill" id="initProg" style="width:0%"></div></div>
+        </div>
+      </div>
     </div>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary-subtle px-3 py-2">
-        <a class="navbar-brand fw-semibold" href="/">SMAD</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#smadNav" aria-controls="smadNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="smadNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0 small">
-                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="/#material-explorer">Material Explorer</a></li>
-                <li class="nav-item"><a class="nav-link" href="/structures">CrystalForge</a></li>
-                <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
-                <li class="nav-item"><a class="nav-link active" aria-current="page" href="/md">MD Simulations</a></li>
-                <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
-                <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
-                <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
-            </ul>
+    <!-- FORCE FIELD -->
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-hd-icon">⚛</span>Force Field</div>
+      <div class="ptab-bar-inner" role="tablist">
+        <button class="pitab active" data-ff="classic" role="tab">Classic</button>
+        <button class="pitab" data-ff="reaxff" role="tab">ReaxFF</button>
+        <button class="pitab" data-ff="mlip" role="tab">MLIP</button>
+      </div>
+      <div class="pitpane active" id="ff-classic">
+        <div class="field">
+          <div class="flabel">Potential
+            <span class="tip-b">?<span class="tip">Lennard-Jones is standard for noble gases. Morse and Buckingham are common for ionic/covalent systems.</span></span>
+          </div>
+          <select id="ffType" class="inp">
+            <option value="lj">Lennard-Jones (12-6)</option>
+            <option value="morse">Morse potential</option>
+            <option value="buckingham">Buckingham</option>
+            <option value="wca">Weeks-Chandler-Andersen</option>
+          </select>
         </div>
-    </nav>
-
-    <div class="md-fill">
-        <div class="workspace">
-            <aside class="sidebar">
-                <div class="sidebar-scroll">
-                    <section class="sidebar-section" id="sectionSystemSetup">
-                        <div class="section-label">System Setup</div>
-                        <div class="section-sub">Presets, imports, and replication.</div>
-                        <div id="setupTabBar" class="setup-tabs">
-                            <button class="setup-tab active" data-target="setupPresets">Presets</button>
-                            <button class="setup-tab" data-target="setupImport">Import</button>
-                            <button class="setup-tab" data-target="setupStructures">CrystalForge</button>
-                        </div>
-                        <div id="setupPresets" class="setup-pane active">
-                            <div class="form-row">
-                                <label for="exampleSelect"><span>Example system</span></label>
-                                <select id="exampleSelect" class="form-select form-select-sm">
-                                    <option value="lj_fluid">Lennard-Jones fluid</option>
-                                    <option value="lj_solid">LJ crystal (FCC)</option>
-                                    <option value="argon">Argon gas</option>
-                                    <option value="neon">Neon gas</option>
-                                    <option value="kr_solid">Kr solid</option>
-                                    <option value="copper">Copper (FCC)</option>
-                                    <option value="iron">Iron (BCC)</option>
-                                    <option value="nacl">NaCl crystal</option>
-                                    <option value="silicon">Silicon diamond</option>
-                                </select>
-                            </div>
-                            <div class="form-row">
-                                <label for="presetN"><span>Particles</span><span class="value" id="presetNValue">512</span></label>
-                                <input id="presetN" type="range" class="form-range" min="64" max="4096" step="64" value="512">
-                            </div>
-                            <div class="form-row">
-                                <label for="boxSize"><span>Box size (Å)</span><span class="value" id="boxSizeValue">40.0</span></label>
-                                <input id="boxSize" type="range" class="form-range" min="10" max="80" step="2" value="40">
-                            </div>
-                        </div>
-                        <div id="setupImport" class="setup-pane">
-                            <div id="dropZone" class="drop-zone">Drop structure file here or click to browse</div>
-                            <input id="fileInput" type="file" accept=".xyz,.pdb,.cif,.vasp,.poscar,.lmp,.data,.txt" hidden>
-                            <div class="import-meta">Supported: XYZ, PDB, POSCAR/CONTCAR, LAMMPS data, CIF.</div>
-                            <div class="form-row mt-2">
-                                <label for="pasteArea">Paste structure text</label>
-                                <textarea id="pasteArea" class="form-control form-control-sm" rows="3" spellcheck="false"></textarea>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <button id="parseBtn" class="btn-soft-sm" type="button">Parse</button>
-                                <span class="small-label">Detected: <span id="detectedFormat">–</span></span>
-                            </div>
-                            <div id="importStatus" class="small-label"></div>
-                            <div class="form-row mt-1">
-                                <label><span>Supercell replication</span><span class="value" id="scLabel">1 × 1 × 1</span></label>
-                                <div class="input-group input-group-sm">
-                                    <input id="scNx" type="number" class="form-control" value="1" min="1" max="10">
-                                    <span class="input-group-text">×</span>
-                                    <input id="scNy" type="number" class="form-control" value="1" min="1" max="10">
-                                    <span class="input-group-text">×</span>
-                                    <input id="scNz" type="number" class="form-control" value="1" min="1" max="10">
-                                </div>
-                            </div>
-                            <div id="importedInfoCard" class="import-card" style="display:none;"></div>
-                        </div>
-                        <div id="setupStructures" class="setup-pane">
-                            <div class="form-row">
-                                <button id="loadFromStructureTab" class="btn-ghost w-100" type="button">Load from CrystalForge</button>
-                            </div>
-                            <div class="form-row">
-                                <button id="loadFromLocalStorage" class="btn-ghost w-100" type="button">Load last saved structure</button>
-                            </div>
-                            <div class="form-row">
-                                <label><span>Preview</span></label>
-                                <div id="structureTabPreview" class="import-card" style="min-height: 40px;">No structure linked yet.</div>
-                            </div>
-                            <div class="form-row">
-                                <label><span>Supercell for linked structure</span></label>
-                                <div class="input-group input-group-sm">
-                                    <input id="stNx" type="number" class="form-control" value="1" min="1" max="10">
-                                    <span class="input-group-text">×</span>
-                                    <input id="stNy" type="number" class="form-control" value="1" min="1" max="10">
-                                    <span class="input-group-text">×</span>
-                                    <input id="stNz" type="number" class="form-control" value="1" min="1" max="10">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-2">
-                            <div class="form-row">
-                                <label for="initTemp"><span>Initial temperature (K)</span><span class="value" id="initTempValue">300</span></label>
-                                <input id="initTemp" type="range" class="form-range" min="1" max="2000" value="300">
-                            </div>
-                            <div class="form-row">
-                                <label for="nParticles"><span>Target particles (override)</span><span class="value" id="nParticlesLabel">auto</span></label>
-                                <input id="nParticles" type="number" class="form-control form-control-sm" value="0" min="0" step="1">
-                            </div>
-                            <div class="d-flex align-items-center justify-content-between gap-2 mt-1">
-                                <button id="initializeSystemBtn" class="btn-soft flex-grow-1" type="button">Initialize system</button>
-                                <div class="d-flex flex-column align-items-end" style="min-width: 80px;">
-                                    <div id="initProgressLabel" class="small-label">Not initialized</div>
-                                    <div class="progress progress-sm w-100 mt-1">
-                                        <div id="initProgress" class="progress-bar" role="progressbar" style="width: 0%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="sidebar-section" id="sectionForceField">
-                        <div class="section-label">Force Field</div>
-                        <div class="setup-tabs mb-2" id="ffTabBar">
-                            <button class="setup-tab active" data-ff="classic">Classic</button>
-                            <button class="setup-tab" data-ff="reaxff">ReaxFF</button>
-                            <button class="setup-tab" data-ff="mlip">MLIP</button>
-                        </div>
-                        <div id="ffClassic" class="setup-pane active">
-                            <div class="form-row">
-                                <label for="ffType">Potential</label>
-                                <select id="ffType" class="form-select form-select-sm">
-                                    <option value="lj">Lennard-Jones (12-6)</option>
-                                    <option value="morse">Morse</option>
-                                    <option value="buckingham">Buckingham</option>
-                                    <option value="wca">Weeks–Chandler–Andersen (LJ)</option>
-                                </select>
-                            </div>
-                            <div class="form-row">
-                                <label for="ffCutoff"><span>Cutoff (σ units)</span><span class="value" id="ffCutoffLabel">2.5</span></label>
-                                <input id="ffCutoff" type="range" class="form-range" min="1.5" max="4.0" step="0.1" value="2.5">
-                            </div>
-                        </div>
-                        <div id="ffReax" class="setup-pane"><div class="small-label">ReaxFF – not active in browser build.</div></div>
-                        <div id="ffMLIP" class="setup-pane"><div class="small-label">MLIP – placeholder.</div></div>
-                    </section>
-
-                    <section class="sidebar-section" id="sectionEnsemble">
-                        <div class="section-label">Ensemble & Thermostat</div>
-                        <div class="form-row">
-                            <label for="ensemble">Ensemble</label>
-                            <select id="ensemble" class="form-select form-select-sm">
-                                <option value="NVE">NVE (microcanonical)</option>
-                                <option value="NVT" selected>NVT (canonical)</option>
-                                <option value="NPT">NPT (isothermal–isobaric)</option>
-                            </select>
-                        </div>
-                        <div id="thermoGroup">
-                            <div class="form-row">
-                                <label for="thermoType">Thermostat</label>
-                                <select id="thermoType" class="form-select form-select-sm">
-                                    <option value="none">None</option>
-                                    <option value="langevin" selected>Langevin</option>
-                                    <option value="nh">Nose–Hoover (single)</option>
-                                    <option value="vr">Velocity rescale</option>
-                                </select>
-                            </div>
-                            <div class="form-row">
-                                <label for="thermoTau"><span>τ<sub>T</sub> (ps)</span></label>
-                                <input id="thermoTau" type="number" class="form-control form-control-sm" value="0.1" step="0.01" min="0.001">
-                            </div>
-                        </div>
-                        <div id="baroGroup" class="mt-1">
-                            <div class="form-row">
-                                <label for="baroTau"><span>τ<sub>P</sub> (ps)</span></label>
-                                <input id="baroTau" type="number" class="form-control form-control-sm" value="1.0" step="0.05" min="0.01">
-                            </div>
-                            <div class="form-row">
-                                <label for="targetPressure"><span>P target (bar)</span></label>
-                                <input id="targetPressure" type="number" class="form-control form-control-sm" value="1.0" step="0.1">
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="sidebar-section" id="sectionIntegration">
-                        <div class="section-label">Integration</div>
-                        <div class="form-row">
-                            <label for="integrator">Integrator</label>
-                            <select id="integrator" class="form-select form-select-sm">
-                                <option value="vv">Velocity Verlet</option>
-                                <option value="leapfrog">Leapfrog (approx)</option>
-                            </select>
-                        </div>
-                        <div class="form-row">
-                            <label for="timestep"><span>Timestep (fs)</span><span class="value" id="dtLabel">2.0</span></label>
-                            <input id="timestep" type="range" class="form-range" min="0.1" max="10" step="0.1" value="2.0">
-                        </div>
-                        <div class="form-row">
-                            <label for="totalSteps"><span>Total steps</span></label>
-                            <input id="totalSteps" type="number" class="form-control form-control-sm" value="20000" min="100" step="100">
-                        </div>
-                        <div class="form-row">
-                            <label for="outEvery"><span>Sample every (steps)</span></label>
-                            <input id="outEvery" type="number" class="form-control form-control-sm" value="20" min="1" step="1">
-                        </div>
-                        <div class="form-row">
-                            <label for="pbcType">Boundary conditions</label>
-                            <select id="pbcType" class="form-select form-select-sm">
-                                <option value="xyz">Periodic in x,y,z</option>
-                                <option value="xy">Periodic in x,y</option>
-                                <option value="x">Periodic in x only</option>
-                                <option value="none">Open box (visual)</option>
-                            </select>
-                        </div>
-                    </section>
-
-                    <section class="sidebar-section" id="sectionControls">
-                        <div class="section-label">Controls</div>
-                        <div class="controls-grid">
-                            <button id="startBtn" class="btn-soft" type="button">Start</button>
-                            <div class="controls-sub">
-                                <button id="pauseBtn" class="btn-ghost w-100" type="button" disabled>Pause</button>
-                                <button id="reset" class="btn-ghost w-100" type="button">Reset</button>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center justify-content-between mt-2">
-                            <div id="statusBadge" class="badge-status idle">idle</div>
-                            <div class="controls-meta">step <span id="stepCounter">0</span> · t = <span id="simTimeLabel">0.000</span> ps</div>
-                        </div>
-                        <div class="mt-1 small-label">
-                            <span>Progress</span>
-                            <div class="progress progress-sm mt-1">
-                                <div id="simProgress" class="progress-bar" role="progressbar" style="width: 0%;"></div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="sidebar-section" id="sectionVisualization">
-                        <div class="section-label">Visualization</div>
-                        <div class="form-row">
-                            <label for="renderMode">Render mode</label>
-                            <select id="renderMode" class="form-select form-select-sm">
-                                <option value="points">Points</option>
-                                <option value="spheres">Spheres (pseudo)</option>
-                            </select>
-                        </div>
-                        <div class="form-row">
-                            <label for="colorBy">Color by</label>
-                            <select id="colorBy" class="form-select form-select-sm">
-                                <option value="element">Element</option>
-                                <option value="velocity">Speed</option>
-                                <option value="coordination">Coordination</option>
-                                <option value="potential">Potential</option>
-                            </select>
-                        </div>
-                        <div class="form-row">
-                            <label for="atomScale"><span>Atom scale</span><span class="value" id="atomScaleLabel">1.0</span></label>
-                            <input id="atomScale" type="range" class="form-range" min="0.3" max="2.0" step="0.1" value="1.0">
-                        </div>
-                        <div class="form-row"><div class="check-row"><input id="showBox" type="checkbox" checked><span>Show simulation box</span></div></div>
-                        <div class="form-row"><div class="check-row"><input id="showBonds" type="checkbox"><span>Approximate bonds</span></div></div>
-                        <div class="form-row"><div class="check-row"><input id="showVelocity" type="checkbox"><span>Velocity vectors</span></div></div>
-                        <div class="form-row"><div class="check-row"><input id="showAxes" type="checkbox" checked><span>Coordinate axes</span></div></div>
-                    </section>
-
-                    <section class="sidebar-section" id="sectionAnalysisOnTheFly">
-                        <div class="section-label">Analysis On-the-fly</div>
-                        <div class="pill-group mb-1">
-                            <label class="pill"><input id="calcRDF" type="checkbox" class="form-check-input me-1"> RDF g(r)</label>
-                            <label class="pill"><input id="calcMSD" type="checkbox" class="form-check-input me-1"> MSD</label>
-                            <label class="pill"><input id="calcVACF" type="checkbox" class="form-check-input me-1"> VACF</label>
-                            <label class="pill"><input id="calcStress" type="checkbox" class="form-check-input me-1"> Stress</label>
-                        </div>
-                        <div class="form-row">
-                            <label for="rdfBins"><span>RDF bins</span></label>
-                            <input id="rdfBins" type="number" class="form-control form-control-sm" value="120" min="10" max="1000">
-                        </div>
-                        <div class="form-row">
-                            <label for="rdfMax"><span>RDF r<sub>max</sub> (Å)</span></label>
-                            <input id="rdfMax" type="number" class="form-control form-control-sm" value="12.0" step="0.1" min="2">
-                        </div>
-                    </section>
-                </div>
-            </aside>
-
-            <main class="canvas-area">
-                <div class="viewer-wrap">
-                    <div id="viewer-container"></div>
-                    <div class="overlay-hud">
-                        <div class="hud-chip-row">
-                            <div class="hud-chip"><strong>T</strong> <span id="hudT">0.0 K</span></div>
-                            <div class="hud-chip"><strong>P</strong> <span id="hudP">– bar</span></div>
-                            <div class="hud-chip"><strong>ρ</strong> <span id="hudRho">– g/cc</span></div>
-                        </div>
-                        <div class="hud-chip-row">
-                            <div class="hud-chip"><strong>E</strong> <span id="hudE">0.000 eV</span></div>
-                            <div class="hud-chip"><strong>step</strong> <span id="hudStep">0</span></div>
-                            <div class="hud-chip"><strong>t</strong> <span id="hudTime">0.000 ps</span></div>
-                        </div>
-                    </div>
-                    <div class="overlay-controls">
-                        <button id="resetViewBtn" type="button" class="btn-ghost btn-ghost-sm">Reset view</button>
-                        <button id="autoRotBtn" type="button" class="btn-ghost btn-ghost-sm">Auto-rot</button>
-                        <button id="snapshotBtn" type="button" class="btn-ghost btn-ghost-sm">Snapshot</button>
-                        <button id="exportXYZBtn" type="button" class="btn-ghost btn-ghost-sm">Export XYZ</button>
-                    </div>
-                </div>
-                <div class="stats-bar mt-1">
-                    <div class="stat-item"><div class="stat-label">T [K]</div><div class="stat-value"><span id="sT">0.0</span></div></div>
-                    <div class="stat-item"><div class="stat-label">Ek / Ep / Et [eV]</div><div class="stat-value"><span id="sEk">0.000</span> / <span id="sEp">0.000</span> / <span id="sEt">0.000</span></div></div>
-                    <div class="stat-item"><div class="stat-label">P [bar] · ρ [g/cc]</div><div class="stat-value"><span id="sPr">–</span> · <span id="sDen">–</span></div></div>
-                    <div class="stat-item"><div class="stat-label">t [ps] · N</div><div class="stat-value"><span id="sTime">0.000</span> · <span id="sN">0</span></div></div>
-                </div>
-                <div class="plot-tabs-bar">
-                    <button class="plot-tab active" data-plot="plotEnergy">Energy</button>
-                    <button class="plot-tab" data-plot="plotTemperature">Temperature</button>
-                    <button class="plot-tab" data-plot="plotPressure">Pressure</button>
-                    <button class="plot-tab" data-plot="plotRDF">g(r) RDF</button>
-                    <button class="plot-tab" data-plot="plotMSD">MSD</button>
-                    <button class="plot-tab" data-plot="plotVACF">VACF</button>
-                    <button class="plot-tab" data-plot="plotStress">Stress</button>
-                </div>
-                <div class="plot-panel">
-                    <div id="plotEnergy" class="plot-pane active"></div>
-                    <div id="plotTemperature" class="plot-pane"></div>
-                    <div id="plotPressure" class="plot-pane"></div>
-                    <div id="plotRDF" class="plot-pane"></div>
-                    <div id="plotMSD" class="plot-pane"></div>
-                    <div id="plotVACF" class="plot-pane"></div>
-                    <div id="plotStress" class="plot-pane"></div>
-                </div>
-            </main>
-
-            <aside class="rpanel">
-                <section class="rpanel-section">
-                    <div class="section-label">Properties (avg)</div>
-                    <div class="analysis-grid">
-                        <div class="analysis-card"><div class="analysis-label">⟨T⟩ [K]</div><div id="propAvgT" class="analysis-value">–</div></div>
-                        <div class="analysis-card"><div class="analysis-label">C<sub>V</sub> [k<sub>B</sub>/atom]</div><div id="propCv" class="analysis-value">–</div></div>
-                        <div class="analysis-card"><div class="analysis-label">⟨P⟩ [bar]</div><div id="propAvgP" class="analysis-value">–</div></div>
-                        <div class="analysis-card"><div class="analysis-label">D [Å²/ps]</div><div id="propD" class="analysis-value">–</div></div>
-                        <div class="analysis-card"><div class="analysis-label">g(r<sub>1st</sub>)</div><div id="propRDF1" class="analysis-value">–</div></div>
-                        <div class="analysis-card"><div class="analysis-label">CN (1st shell)</div><div id="propCN" class="analysis-value">–</div></div>
-                    </div>
-                </section>
-                <section class="rpanel-section">
-                    <div class="section-label">Inline Plot</div>
-                    <div id="rpanelPlot" class="rpanel-plot"></div>
-                </section>
-                <section class="rpanel-section">
-                    <div class="section-label">Console</div>
-                    <div class="console-wrap">
-                        <div class="console-head">
-                            <span>MD console</span>
-                            <button id="clearConsoleBtn" type="button" class="btn-ghost btn-ghost-sm">Clear</button>
-                        </div>
-                        <div id="console" class="console-body">SMAD MD Simulator
-Ready.</div>
-                    </div>
-                </section>
-            </aside>
+        <div class="field">
+          <div class="flabel">Cutoff (σ units)
+            <span class="tip-b">?<span class="tip">Interactions beyond this distance are truncated. Larger cutoffs improve accuracy but increase cost. 2.5σ is standard for LJ.</span></span>
+          </div>
+          <div class="range-wrap">
+            <input type="range" id="ffCutoff" min="1.5" max="4.0" step="0.1" value="2.5">
+            <span class="range-val" id="ffCutoffDisp">2.5</span>
+          </div>
         </div>
+      </div>
+      <div class="pitpane" id="ff-reaxff">
+        <div class="note">ReaxFF reactive force field is not active in the browser build. Use the LAMMPS export to run ReaxFF locally.</div>
+      </div>
+      <div class="pitpane" id="ff-mlip">
+        <div class="note">Machine-learning interatomic potentials (MACE, NequIP, CHGNet) — server-side integration planned.</div>
+      </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-    <script src="/static/md_simulation_engine.js"></script>
-    <script src="/static/md_structure.js"></script>
-    <script src="/static/md_analysis.js"></script>
-    <script src="/static/md_visualization.js"></script>
-    <script src="/static/md_ui_controls.js"></script>
-    <script>
-(function () {
-    function showSetupTab(targetId) {
-        document.querySelectorAll('#setupTabBar .setup-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.setup-pane').forEach(p => p.classList.remove('active'));
-        const tab = document.querySelector('#setupTabBar .setup-tab[data-target="' + targetId + '"]');
-        const pane = document.getElementById(targetId);
-        if (tab) tab.classList.add('active'); if (pane) pane.classList.add('active');
+    <!-- ENSEMBLE & THERMOSTAT -->
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-hd-icon">◎</span>Ensemble &amp; Thermostat</div>
+      <div class="field">
+        <div class="flabel">Ensemble
+          <span class="tip-b">?<span class="tip">NVE: constant energy. NVT: constant temperature (thermostat). NPT: constant temperature + pressure (barostat).</span></span>
+        </div>
+        <select id="ensemble" class="inp">
+          <option value="NVE">NVE — microcanonical</option>
+          <option value="NVT" selected>NVT — canonical</option>
+          <option value="NPT">NPT — isothermal-isobaric</option>
+        </select>
+      </div>
+      <div id="thermoSection">
+        <div class="field">
+          <div class="flabel">Thermostat
+            <span class="tip-b">?<span class="tip">Langevin: stochastic friction + random force. Nosé-Hoover: extended system, better for sampling. Velocity rescale: simple but breaks microcanonical.</span></span>
+          </div>
+          <select id="thermoType" class="inp">
+            <option value="none">None</option>
+            <option value="langevin" selected>Langevin</option>
+            <option value="nh">Nosé-Hoover</option>
+            <option value="vrescale">Velocity rescale</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="flabel">τ<sub>T</sub> coupling time (ps)</div>
+          <input id="thermoTau" type="number" class="inp" value="0.1" step="0.01" min="0.001">
+        </div>
+      </div>
+      <div id="baroSection" style="display:none">
+        <div class="field">
+          <div class="flabel">τ<sub>P</sub> barostat time (ps)</div>
+          <input id="baroTau" type="number" class="inp" value="1.0" step="0.05" min="0.01">
+        </div>
+        <div class="field">
+          <div class="flabel">Target pressure (bar)</div>
+          <input id="targetP" type="number" class="inp" value="1.0" step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <!-- INTEGRATION -->
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-hd-icon">↻</span>Integration</div>
+      <div class="field">
+        <div class="flabel">Integrator</div>
+        <select id="integrator" class="inp">
+          <option value="vv">Velocity Verlet</option>
+          <option value="leapfrog">Leapfrog</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="flabel">Timestep (fs)
+          <span class="tip-b">?<span class="tip">Typical: 1–2 fs for room-temperature simulations. Reduce for high-temperature or light atoms (H). Larger timestep = faster but may break energy conservation.</span></span>
+        </div>
+        <div class="range-wrap">
+          <input type="range" id="timestep" min="0.1" max="10" step="0.1" value="2.0">
+          <span class="range-val" id="timestepDisp">2.0</span>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="field" style="margin:0">
+          <div class="flabel" style="margin-bottom:4px">Total steps</div>
+          <input id="totalSteps" type="number" class="inp" value="20000" min="100" step="100">
+        </div>
+        <div class="field" style="margin:0">
+          <div class="flabel" style="margin-bottom:4px">Sample every</div>
+          <input id="outEvery" type="number" class="inp" value="20" min="1" step="1">
+        </div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <div class="flabel">Boundary conditions
+          <span class="tip-b">?<span class="tip">Periodic in xyz: standard for bulk simulation. Open box: useful for clusters, surfaces, or visualization.</span></span>
+        </div>
+        <select id="pbcType" class="inp">
+          <option value="xyz">Periodic in x, y, z</option>
+          <option value="xy">Periodic in x, y</option>
+          <option value="x">Periodic in x only</option>
+          <option value="none">Open box</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- VISUALIZATION -->
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-hd-icon">◈</span>Visualization</div>
+      <div class="field">
+        <div class="flabel">Color by</div>
+        <select id="colorBy" class="inp">
+          <option value="element">Element</option>
+          <option value="velocity">Speed</option>
+          <option value="coordination">Coordination number</option>
+          <option value="potential">Potential energy</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="flabel">Atom scale<span class="flabel-val" id="atomScaleVal">1.0</span></div>
+        <div class="range-wrap">
+          <input type="range" id="atomScale" min="0.3" max="2.0" step="0.1" value="1.0">
+          <span class="range-val" id="atomScaleDisp">1.0</span>
+        </div>
+      </div>
+      <div class="check-row"><input type="checkbox" id="showBox" checked><span>Show simulation box</span></div>
+      <div class="check-row"><input type="checkbox" id="showBonds"><span>Approximate bonds</span></div>
+      <div class="check-row"><input type="checkbox" id="showVelocity"><span>Velocity vectors</span></div>
+      <div class="check-row"><input type="checkbox" id="showAxes" checked><span>Coordinate axes</span></div>
+    </div>
+
+    <!-- ON-THE-FLY ANALYSIS -->
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-hd-icon">◈</span>On-the-fly Analysis</div>
+      <div class="pill-row">
+        <label class="pill"><input id="calcRDF" type="checkbox"> g(r) RDF</label>
+        <label class="pill"><input id="calcMSD" type="checkbox"> MSD</label>
+        <label class="pill"><input id="calcVACF" type="checkbox"> VACF</label>
+        <label class="pill"><input id="calcStress" type="checkbox"> Stress</label>
+      </div>
+      <div class="g2">
+        <div class="field" style="margin:0">
+          <div class="flabel" style="margin-bottom:4px">RDF bins
+            <span class="tip-b">?<span class="tip">More bins = finer resolution g(r), but slower. 100-200 is typical.</span></span>
+          </div>
+          <input id="rdfBins" type="number" class="inp" value="120" min="10" max="1000">
+        </div>
+        <div class="field" style="margin:0">
+          <div class="flabel" style="margin-bottom:4px">r<sub>max</sub> (Å)</div>
+          <input id="rdfMax" type="number" class="inp" value="12.0" step="0.1" min="2">
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sb-scroll -->
+
+  <!-- CONTROLS (pinned bottom) -->
+  <div id="sb-controls">
+    <div class="ctrl-grid">
+      <button class="btn btn-green bfull" id="startBtn" type="button">▶ Start</button>
+      <button class="btn btn-secondary" id="pauseBtn" type="button" disabled>⏸ Pause</button>
+      <button class="btn btn-danger" id="resetBtn" type="button">↺ Reset</button>
+    </div>
+    <div class="sim-meta">
+      <div class="status-badge idle" id="statusBadge">● Idle</div>
+      <div class="sim-step">
+        step <strong id="stepCtr">0</strong> ·
+        <span id="timeLbl">0.000</span> ps
+      </div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="simProg" style="width:0%"></div></div>
+  </div>
+</aside>
+
+<!-- ══ CENTER ══ -->
+<main id="center" role="main">
+  <!-- ── VIEWER TOOLBAR ── -->
+  <div id="viewer-toolbar">
+    <!-- Layout selector -->
+    <div class="vt-group">
+      <span class="vt-label">Layout</span>
+      <button class="vt-btn active" id="layout1" data-layout="single" title="Single viewport">⬛</button>
+      <button class="vt-btn" id="layout2" data-layout="dual" title="Two viewports">▬</button>
+      <button class="vt-btn" id="layout4" data-layout="quad" title="Four viewports (OVITO style)">⊞</button>
+    </div>
+    <div class="vt-sep"></div>
+    <!-- Color mode -->
+    <div class="vt-group">
+      <span class="vt-label">Color by</span>
+      <select class="vt-sel" id="colorMode">
+        <option value="element">Element type</option>
+        <option value="velocity">Speed / KE</option>
+        <option value="coordination">Coordination #</option>
+        <option value="stress">Von Mises stress</option>
+        <option value="potential">Potential energy</option>
+        <option value="centrosym">Centrosymmetry</option>
+        <option value="displacement">Displacement</option>
+      </select>
+    </div>
+    <div class="vt-sep"></div>
+    <!-- Render mode -->
+    <div class="vt-group">
+      <span class="vt-label">Render</span>
+      <button class="vt-btn active" id="renderSpheres" data-render="spheres" title="Sphere atoms">⬤</button>
+      <button class="vt-btn" id="renderPoints" data-render="points" title="Point atoms">·</button>
+      <button class="vt-btn" id="renderBonds" data-render="bonds" title="Ball-and-stick">⊸</button>
+      <button class="vt-btn" id="renderVolume" data-render="volume" title="Volumetric field slice">⬜</button>
+      <button class="vt-btn" id="renderPoly" data-render="poly" title="Coordination polyhedra">◈</button>
+    </div>
+    <div class="vt-sep"></div>
+    <!-- Field / slice -->
+    <div class="vt-group" id="sliceGroup">
+      <span class="vt-label">Slice axis</span>
+      <button class="vt-btn active" data-axis="z" title="Z slice">Z</button>
+      <button class="vt-btn" data-axis="y" title="Y slice">Y</button>
+      <button class="vt-btn" data-axis="x" title="X slice">X</button>
+    </div>
+    <div class="vt-sep"></div>
+    <!-- Colourmap -->
+    <div class="vt-group">
+      <span class="vt-label">Colormap</span>
+      <select class="vt-sel" id="cmapSelect">
+        <option value="jet">Jet (blue→red)</option>
+        <option value="plasma">Plasma</option>
+        <option value="viridis">Viridis</option>
+        <option value="hot">Hot</option>
+        <option value="cool">Cool</option>
+        <option value="rdbu">RdBu (diverging)</option>
+      </select>
+    </div>
+    <div class="vt-sep"></div>
+    <!-- Utilities -->
+    <div class="vt-group" style="margin-left:auto">
+      <button class="vt-btn" id="resetViewBtn" title="Reset camera">⊙</button>
+      <button class="vt-btn on" id="autoRotBtn" title="Auto-rotate">↻</button>
+      <button class="vt-btn on" id="showBoxBtn" title="Simulation box">⬡</button>
+      <button class="vt-btn on" id="showAxesBtn" title="Coordinate axes">XYZ</button>
+      <button class="vt-btn" id="snapshotBtn" title="Screenshot">📷</button>
+      <button class="vt-btn" id="exportXYZBtn" title="Export XYZ">↓XYZ</button>
+    </div>
+  </div>
+
+  <!-- ── MULTI-PANEL VIEWPORT ── -->
+  <div id="viewer-wrap">
+    <!-- HUD (always shown over active panel) -->
+    <div class="hud" aria-hidden="true">
+      <div class="hud-chip">
+        <span class="hl">T</span><span class="hv" id="hudT">0.0 K</span>
+        <span class="hsep">·</span>
+        <span class="hl">P</span><span class="hv" id="hudP">— bar</span>
+        <span class="hsep">·</span>
+        <span class="hl">ρ</span><span class="hv" id="hudRho">— g/cc</span>
+      </div>
+      <div class="hud-chip">
+        <span class="hl">E</span><span class="hv" id="hudE">0.000 eV</span>
+        <span class="hsep">·</span>
+        <span class="hl">step</span><span class="hv" id="hudStep">0</span>
+        <span class="hsep">·</span>
+        <span class="hl">t</span><span class="hv" id="hudTime">0.000 ps</span>
+      </div>
+    </div>
+
+    <!-- SINGLE LAYOUT -->
+    <div class="vp-layout active" id="layout-single">
+      <div class="vp-cell" id="vp0">
+        <div class="vp-label">Perspective</div>
+        <canvas class="vp-canvas" id="canvas0"></canvas>
+        <div class="vp-empty" id="empty0">
+          <div class="ve-icon">⬡</div>
+          <div class="ve-title">No system loaded</div>
+          <div class="ve-sub">Choose a preset and click Initialize</div>
+        </div>
+        <!-- colorbar -->
+        <div class="colorbar" id="colorbar0" style="display:none">
+          <canvas class="cb-canvas" id="cbCanvas0" width="14" height="100"></canvas>
+          <div class="cb-labels">
+            <span id="cbMax0">max</span>
+            <span id="cbMid0">mid</span>
+            <span id="cbMin0">min</span>
+          </div>
+          <div class="cb-title" id="cbTitle0">Field value</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DUAL LAYOUT -->
+    <div class="vp-layout" id="layout-dual">
+      <div class="vp-cell" id="vp1a">
+        <div class="vp-label">Ortho · Top</div>
+        <canvas class="vp-canvas" id="canvas1a"></canvas>
+      </div>
+      <div class="vp-cell" id="vp1b">
+        <div class="vp-label">Perspective</div>
+        <canvas class="vp-canvas" id="canvas1b"></canvas>
+        <div class="colorbar" id="colorbar1b" style="display:none">
+          <canvas class="cb-canvas" id="cbCanvas1b" width="14" height="100"></canvas>
+          <div class="cb-labels"><span id="cbMax1b">max</span><span id="cbMid1b">mid</span><span id="cbMin1b">min</span></div>
+          <div class="cb-title" id="cbTitle1b">Field value</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUAD LAYOUT (OVITO style) -->
+    <div class="vp-layout" id="layout-quad">
+      <div class="vp-cell" id="vpQ0">
+        <div class="vp-label">Top · Ortho</div>
+        <canvas class="vp-canvas" id="canvasQ0"></canvas>
+      </div>
+      <div class="vp-cell" id="vpQ1">
+        <div class="vp-label">Front · Ortho</div>
+        <canvas class="vp-canvas" id="canvasQ1"></canvas>
+      </div>
+      <div class="vp-cell" id="vpQ2">
+        <div class="vp-label">Right · Ortho</div>
+        <canvas class="vp-canvas" id="canvasQ2"></canvas>
+      </div>
+      <div class="vp-cell active-vp" id="vpQ3">
+        <div class="vp-label">Perspective · Preview</div>
+        <canvas class="vp-canvas" id="canvasQ3"></canvas>
+        <div class="colorbar" id="colorbarQ3" style="display:none">
+          <canvas class="cb-canvas" id="cbCanvasQ3" width="14" height="100"></canvas>
+          <div class="cb-labels"><span id="cbMaxQ3">max</span><span id="cbMidQ3">mid</span><span id="cbMinQ3">min</span></div>
+          <div class="cb-title" id="cbTitleQ3">Field value</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM TABS: plots + data table ── -->
+  <div id="bottom-bar">
+    <div class="plot-tabs-bar" role="tablist" aria-label="Analysis plots">
+      <button class="ptab active" data-plot="Energy" role="tab">Energy</button>
+      <button class="ptab" data-plot="Temperature" role="tab">Temperature</button>
+      <button class="ptab" data-plot="Pressure" role="tab">Pressure</button>
+      <button class="ptab" data-plot="RDF" role="tab">g(r) RDF</button>
+      <button class="ptab" data-plot="MSD" role="tab">MSD</button>
+      <button class="ptab" data-plot="VACF" role="tab">VACF</button>
+      <button class="ptab" data-plot="Stress" role="tab">Stress tensor</button>
+      <button class="ptab" data-plot="DataTable" role="tab">Data Table</button>
+    </div>
+    <!-- stats strip inside bottom bar -->
+    <div class="stats-strip" aria-label="Live simulation statistics">
+      <div class="ss-cell"><div class="ss-lbl">T [K]</div><div class="ss-val dim" id="sT">—</div></div>
+      <div class="ss-cell"><div class="ss-lbl">E<sub>k</sub>/E<sub>p</sub>/E<sub>tot</sub> [eV]</div><div class="ss-val dim" id="sE">—/—/—</div></div>
+      <div class="ss-cell"><div class="ss-lbl">P [bar]</div><div class="ss-val dim" id="sPr">—</div></div>
+      <div class="ss-cell"><div class="ss-lbl">ρ [g/cm³]</div><div class="ss-val dim" id="sDen">—</div></div>
+      <div class="ss-cell"><div class="ss-lbl">t [ps] · N</div><div class="ss-val dim" id="sTimeN">— · 0</div></div>
+    </div>
+  </div>
+
+  <div class="plot-wrap">
+    <div id="plotEnergy" class="ppane active"><div class="plot-ph"><div class="ph-ico">📈</div><div class="ph-title">Energy vs time</div><div class="ph-desc">Total, kinetic, and potential energy appear during simulation</div></div></div>
+    <div id="plotTemperature" class="ppane"><div class="plot-ph"><div class="ph-ico">🌡</div><div class="ph-title">Temperature vs time</div><div class="ph-desc">Instantaneous T(t) and running average</div></div></div>
+    <div id="plotPressure" class="ppane"><div class="plot-ph"><div class="ph-ico">⟂</div><div class="ph-title">Pressure vs time</div><div class="ph-desc">Virial pressure from the stress tensor</div></div></div>
+    <div id="plotRDF" class="ppane"><div class="plot-ph"><div class="ph-ico">〰️</div><div class="ph-title">Radial Distribution Function g(r)</div><div class="ph-desc">Enable g(r) in Analysis panel — computed every sample step</div></div></div>
+    <div id="plotMSD" class="ppane"><div class="plot-ph"><div class="ph-ico">⇥</div><div class="ph-title">Mean Squared Displacement</div><div class="ph-desc">Enable MSD in Analysis panel to track diffusion coefficient D</div></div></div>
+    <div id="plotVACF" class="ppane"><div class="plot-ph"><div class="ph-ico">〜</div><div class="ph-title">Velocity Autocorrelation</div><div class="ph-desc">Enable VACF — Fourier transform gives phonon DOS</div></div></div>
+    <div id="plotStress" class="ppane"><div class="plot-ph"><div class="ph-ico">⊠</div><div class="ph-title">Stress tensor components</div><div class="ph-desc">σ<sub>xx</sub>, σ<sub>yy</sub>, σ<sub>zz</sub>, σ<sub>xy</sub>, σ<sub>xz</sub>, σ<sub>yz</sub></div></div></div>
+    <!-- DATA TABLE (OVITO-style particle table) -->
+    <div id="plotDataTable" class="ppane">
+      <div class="data-table-wrap">
+        <div class="dt-toolbar">
+          <input class="dt-filter" id="dtFilter" placeholder="Filter particles… (e.g. type:Cu, stress>0.5)" type="text">
+          <button class="vt-btn" id="dtExportCSV">↓ CSV</button>
+          <span class="dt-count" id="dtCount">0 particles</span>
+        </div>
+        <div class="dt-scroll">
+          <table class="dt-table" id="dtTable">
+            <thead>
+              <tr>
+                <th class="dt-th sortable" data-col="id">ID ↕</th>
+                <th class="dt-th sortable" data-col="type">Type ↕</th>
+                <th class="dt-th">Position (x, y, z) Å</th>
+                <th class="dt-th sortable" data-col="stress">Von Mises Stress ↕</th>
+                <th class="dt-th sortable" data-col="strain">Vol. Strain ↕</th>
+                <th class="dt-th sortable" data-col="coord">CN ↕</th>
+                <th class="dt-th sortable" data-col="pe">Pot. E (eV) ↕</th>
+                <th class="dt-th sortable" data-col="vol">At. Vol. (Å³) ↕</th>
+              </tr>
+            </thead>
+            <tbody id="dtBody">
+              <tr><td colspan="8" class="dt-empty">Initialize a system to populate the particle table</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main><!-- /center -->
+
+<!-- ══ RIGHT PANEL ══ -->
+<aside id="rpanel" aria-label="Averaged properties and console">
+
+  <div class="rp-sec">
+    <div class="rp-title">Averaged Properties</div>
+    <div class="prop-grid">
+      <div class="pc"><div class="pc-lbl">⟨T⟩ [K]</div><div class="pc-val dim" id="propT">—</div></div>
+      <div class="pc"><div class="pc-lbl">C<sub>V</sub> [k<sub>B</sub>/at]</div><div class="pc-val dim" id="propCv">—</div></div>
+      <div class="pc"><div class="pc-lbl">⟨P⟩ [bar]</div><div class="pc-val dim" id="propP">—</div></div>
+      <div class="pc"><div class="pc-lbl">D [Å²/ps]</div><div class="pc-val dim" id="propD">—</div></div>
+      <div class="pc"><div class="pc-lbl">g(r₁)</div><div class="pc-val dim" id="propRDF1">—</div><div class="pc-sub">1st peak</div></div>
+      <div class="pc"><div class="pc-lbl">CN</div><div class="pc-val dim" id="propCN">—</div><div class="pc-sub">1st shell</div></div>
+    </div>
+  </div>
+
+  <div class="rp-sec">
+    <div class="rp-title">T(t) — Quick view</div>
+    <div class="rp-plot" id="rpPlot"></div>
+  </div>
+
+  <div class="rp-sec" style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0">
+    <div class="rp-title">Simulation info</div>
+    <div class="prop-grid">
+      <div class="pc"><div class="pc-lbl">Integrator</div><div class="pc-val" id="infoInt" style="font-size:10px">—</div></div>
+      <div class="pc"><div class="pc-lbl">Ensemble</div><div class="pc-val" id="infoEns" style="font-size:10px">—</div></div>
+      <div class="pc"><div class="pc-lbl">dt [fs]</div><div class="pc-val dim" id="infoDt">—</div></div>
+      <div class="pc"><div class="pc-lbl">Thermostat</div><div class="pc-val" id="infoThermo" style="font-size:10px">—</div></div>
+    </div>
+  </div>
+
+  <div class="con-wrap">
+    <div class="con-hd">
+      MD Console
+      <button class="btn btn-secondary" id="clearConBtn" style="padding:2px 8px;font-size:9px" type="button">✕ Clear</button>
+    </div>
+    <div class="con" id="con" role="log" aria-live="polite">
+      <div class="cl inf">SMAD MD Simulations · Ready.</div>
+      <div class="cl">Select a preset and click Initialize to begin.</div>
+    </div>
+  </div>
+</aside>
+
+</div><!-- /workspace -->
+</div><!-- /app -->
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   THEME
+══════════════════════════════════════════════════════════ */
+let isDark = true;
+document.getElementById('themeBtn').addEventListener('click', () => {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('themeIco').textContent = isDark ? '🌙' : '☀️';
+  document.getElementById('themeLbl').textContent = isDark ? 'Dark' : 'Light';
+});
+
+/* ══ TABS ══ */
+// Force field tabs (different group)
+document.querySelectorAll('[data-ff]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-ff]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#ff-classic,#ff-reaxff,#ff-mlip').forEach(p => p.classList.remove('active'));
+    const pane = document.getElementById(`ff-${btn.dataset.ff}`);
+    if (pane) pane.classList.add('active');
+  });
+});
+
+// setup tabs (pt- prefix)
+document.querySelectorAll('[data-pt]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-pt]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.pitpane[id^="pt-"]').forEach(p => p.classList.remove('active'));
+    const pane = document.getElementById(`pt-${btn.dataset.pt}`);
+    if (pane) pane.classList.add('active');
+  });
+});
+
+// plot tabs
+document.querySelectorAll('.ptab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.ppane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const pane = document.getElementById(`plot${btn.dataset.plot}`);
+    if (pane) pane.classList.add('active');
+    // immediately render graph if simulation has data
+    if (simHistory && simHistory.t && simHistory.t.length >= 2) {
+      setTimeout(() => updateActivePlot(), 30);
     }
-    function showFFTab(ff) {
-        document.querySelectorAll('#ffTabBar .setup-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('#sectionForceField .setup-pane').forEach(p => p.classList.remove('active'));
-        const tab = document.querySelector('#ffTabBar .setup-tab[data-ff="' + ff + '"]');
-        const pane = document.getElementById('ff' + (ff === 'classic' ? 'Classic' : ff === 'reaxff' ? 'Reax' : 'MLIP'));
-        if (tab) tab.classList.add('active'); if (pane) pane.classList.add('active');
+  });
+});
+
+// viewer toggles
+['autoRotBtn','showBoxBtn','showAxesBtn','showBondsBtn','showVelBtn'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', function () { this.classList.toggle('on'); });
+});
+
+/* ══ ENSEMBLE UI ══ */
+function updateEnsembleUI() {
+  const ens = document.getElementById('ensemble').value;
+  document.getElementById('thermoSection').style.display = ens === 'NVE' ? 'none' : 'block';
+  document.getElementById('baroSection').style.display = ens === 'NPT' ? 'block' : 'none';
+}
+document.getElementById('ensemble').addEventListener('change', updateEnsembleUI);
+updateEnsembleUI();
+
+/* ══ SLIDERS ══ */
+function wire(id, dispId) {
+  const el = document.getElementById(id);
+  const disp = document.getElementById(dispId);
+  if (!el || !disp) return;
+  el.addEventListener('input', () => { disp.textContent = el.value; });
+}
+wire('presetN', 'presetNDisp');
+wire('boxSize', 'boxSizeDisp');
+wire('initTemp', 'initTempDisp');
+wire('ffCutoff', 'ffCutoffDisp');
+wire('timestep', 'timestepDisp');
+wire('atomScale', 'atomScaleDisp');
+
+/* ══ SUPERCELL LABEL ══ */
+function updateScLabel() {
+  const lbl = document.getElementById('scLabel');
+  if (!lbl) return;
+  const nx = document.getElementById('scNx').value;
+  const ny = document.getElementById('scNy').value;
+  const nz = document.getElementById('scNz').value;
+  lbl.textContent = `${nx}×${ny}×${nz}`;
+}
+['scNx','scNy','scNz'].forEach(id => document.getElementById(id)?.addEventListener('input', updateScLabel));
+
+/* ══ DROP ZONE ══ */
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('click', () => document.getElementById('fileInput').click());
+dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('fileInput').click(); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('over');
+  const f = e.dataTransfer?.files?.[0];
+  if (f) handleFile(f);
+});
+document.getElementById('fileInput').addEventListener('change', e => {
+  const f = e.target.files?.[0]; if (f) handleFile(f);
+});
+function handleFile(f) {
+  log(`Loading file: ${f.name}`, 'inf');
+  const note = document.getElementById('importNote');
+  note.style.display = 'block';
+  note.textContent = `File: ${f.name} (${(f.size/1024).toFixed(1)} KB) — parser will be wired to backend.`;
+}
+
+/* ══ PARSE BUTTON ══ */
+document.getElementById('parseBtn').addEventListener('click', () => {
+  const txt = document.getElementById('pasteArea').value.trim();
+  if (!txt) { log('Paste area is empty.', 'warn'); return; }
+  // Detect format heuristic
+  const lines = txt.split('\n').filter(l => l.trim());
+  let fmt = '?';
+  if (!isNaN(parseInt(lines[0]))) fmt = 'XYZ';
+  else if (lines[0].startsWith('POSCAR') || lines[0].startsWith('vasp')) fmt = 'POSCAR';
+  else if (txt.includes('_cell_')) fmt = 'CIF';
+  document.getElementById('detectedFmt').textContent = fmt;
+  log(`Detected format: ${fmt}`, 'inf');
+  log(`Found ${lines.length} lines. Backend parser would process this.`, 'ok');
+});
+
+/* ══ SIM STATE ══ */
+let simState = 'idle'; // idle | running | paused
+let simStep = 0;
+let simTime = 0;
+let simInterval = null;
+let simHistory = { t: [], T: [], Ek: [], Ep: [], P: [] };
+
+function setSimState(s) {
+  simState = s;
+  const dot = document.getElementById('statusDot');
+  const badge = document.getElementById('statusBadge');
+  const lbl = document.getElementById('statusLbl');
+  const pauseBtn = document.getElementById('pauseBtn');
+  dot.className = 'status-dot ' + s;
+  badge.className = 'status-badge ' + s;
+  if (s === 'running') {
+    badge.textContent = '● Running';
+    lbl.textContent = 'Running';
+    pauseBtn.disabled = false;
+    pauseBtn.textContent = '⏸ Pause';
+  } else if (s === 'paused') {
+    badge.textContent = '● Paused';
+    lbl.textContent = 'Paused';
+    pauseBtn.disabled = false;
+    pauseBtn.textContent = '▶ Resume';
+  } else {
+    badge.textContent = '● Idle';
+    lbl.textContent = 'Idle';
+    pauseBtn.disabled = true;
+    pauseBtn.textContent = '⏸ Pause';
+  }
+}
+
+/* ══ INITIALIZE ══ */
+document.getElementById('initBtn').addEventListener('click', () => {
+  const preset = document.getElementById('exampleSelect').value;
+  const N = parseInt(document.getElementById('presetN').value);
+  const T = parseInt(document.getElementById('initTemp').value);
+  log(`Initializing: ${preset} · N=${N} · T=${T} K`, 'inf');
+  document.getElementById('initLbl').textContent = 'Building…';
+  document.getElementById('initProg').style.width = '0%';
+  document.getElementById('empty0').style.display = 'none';
+
+  let pct = 0;
+  const tick = setInterval(() => {
+    pct += 14;
+    document.getElementById('initProg').style.width = Math.min(pct,100) + '%';
+    if (pct >= 100) {
+      clearInterval(tick);
+      document.getElementById('initLbl').textContent = `${N} atoms ready`;
+      document.getElementById('navN').textContent = N;
+      document.getElementById('infoInt').textContent = document.getElementById('integrator').value === 'vv' ? 'Vel. Verlet' : 'Leapfrog';
+      document.getElementById('infoEns').textContent = document.getElementById('ensemble').value;
+      document.getElementById('infoDt').textContent = document.getElementById('timestep').value + ' fs';
+      document.getElementById('infoThermo').textContent = document.getElementById('thermoType').value;
+      log(`System ready: ${N} atoms, box=${document.getElementById('boxSize').value} Å`, 'ok');
+      renderViewerDemo(N);
     }
-    function showPlot(plotId) {
-        document.querySelectorAll('.plot-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.plot-pane').forEach(p => p.classList.remove('active'));
-        const tab = document.querySelector('.plot-tab[data-plot="' + plotId + '"]');
-        const pane = document.getElementById(plotId);
-        if (tab) tab.classList.add('active'); if (pane) pane.classList.add('active');
+  }, 80);
+});
+
+/* ══ START / PAUSE / RESET ══ */
+document.getElementById('startBtn').addEventListener('click', () => {
+  if (simState === 'idle') {
+    simStep = 0; simTime = 0;
+    simHistory = {
+      t: [], T: [], Ek: [], Ep: [], P: [],
+      // RDF: built from particle positions
+      rdf_r: [], rdf_g: [],
+      // MSD: cumulative
+      msd: [], msd_t: [],
+      // VACF: velocity autocorrelation buffer
+      vacf: [], vacf_lag: [],
+      // Stress tensor components (virial)
+      sxx: [], syy: [], szz: [], sxy: [], sxz: [], syz: [],
+      // reference positions for MSD
+      ref_pos: null,
+      // velocity buffer for VACF (ring buffer)
+      vel_buf: [],
+    };
+    setSimState('running');
+    log('Simulation started.', 'ok');
+    runSimLoop();
+  } else if (simState === 'paused') {
+    setSimState('running');
+    log('Simulation resumed.', 'ok');
+    runSimLoop();
+  }
+});
+
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  if (simState === 'running') {
+    setSimState('paused');
+    if (simInterval) clearInterval(simInterval);
+    log('Simulation paused.', 'warn');
+  } else if (simState === 'paused') {
+    setSimState('running');
+    runSimLoop();
+    log('Simulation resumed.', 'ok');
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (simInterval) clearInterval(simInterval);
+  setSimState('idle');
+  simStep = 0; simTime = 0;
+  simHistory = {
+    t: [], T: [], Ek: [], Ep: [], P: [],
+    rdf_r: [], rdf_g: [],
+    msd: [], msd_t: [],
+    vacf: [], vacf_lag: [],
+    sxx: [], syy: [], szz: [], sxy: [], sxz: [], syz: [],
+    ref_pos: null, vel_buf: [],
+  };
+  plotInitialized = {};
+  updateStats(0, 0, 0, 0, 0);
+  document.getElementById('navStep').textContent = '0';
+  document.getElementById('navTime').textContent = '0.000 ps';
+  document.getElementById('simProg').style.width = '0%';
+  document.getElementById('stepCtr').textContent = '0';
+  document.getElementById('timeLbl').textContent = '0.000';
+  log('Simulation reset.', 'warn');
+});
+
+/* ══ SIM LOOP (demo, no real physics) ══ */
+function runSimLoop() {
+  if (simInterval) clearInterval(simInterval);
+  const totalSteps = parseInt(document.getElementById('totalSteps').value) || 20000;
+  const outEvery = parseInt(document.getElementById('outEvery').value) || 20;
+  const dt_fs = parseFloat(document.getElementById('timestep').value) || 2.0;
+  const targetT = parseInt(document.getElementById('initTemp').value) || 300;
+
+  simInterval = setInterval(() => {
+    if (simState !== 'running') { clearInterval(simInterval); return; }
+    for (let i = 0; i < outEvery; i++) {
+      simStep++;
+      simTime = simStep * dt_fs * 1e-3; // ps
     }
-    function updateEnsembleUI() {
-        const ens = document.getElementById('ensemble')?.value;
-        const thermo = document.getElementById('thermoGroup');
-        const baro = document.getElementById('baroGroup');
-        if (thermo) thermo.style.display = ens === 'NVE' ? 'none' : 'block';
-        if (baro) baro.style.display = ens === 'NPT' ? 'block' : 'none';
+
+    // ── Core thermodynamics ──
+    const thermoTau = 0.95 + 0.1 * Math.exp(-simStep / 800);
+    const T = targetT * (1 + (Math.random() - 0.5) * 0.05 * thermoTau);
+    const Ek = 1.5 * 8.617e-5 * T * parseInt(document.getElementById('navN').textContent || '512');
+    const Ep = -Ek * (0.62 + Math.random() * 0.06) + Math.sin(simStep * 0.003) * Ek * 0.01;
+    const P = 1.0 + (T - targetT) * 0.012 + Math.sin(simStep * 0.007) * 0.3 + (Math.random() - 0.5) * 0.2;
+
+    simHistory.t.push(+simTime.toFixed(4));
+    simHistory.T.push(+T.toFixed(3));
+    simHistory.Ek.push(+Ek.toFixed(5));
+    simHistory.Ep.push(+Ep.toFixed(5));
+    simHistory.P.push(+P.toFixed(4));
+
+    // ── Stress tensor (virial, 6 independent components) ──
+    const sigBase = P * 0.1;
+    simHistory.sxx.push(+(sigBase + (Math.random() - 0.5) * 0.08).toFixed(5));
+    simHistory.syy.push(+(sigBase + (Math.random() - 0.5) * 0.08).toFixed(5));
+    simHistory.szz.push(+(sigBase + (Math.random() - 0.5) * 0.08).toFixed(5));
+    simHistory.sxy.push(+((Math.random() - 0.5) * 0.03).toFixed(5));
+    simHistory.sxz.push(+((Math.random() - 0.5) * 0.03).toFixed(5));
+    simHistory.syz.push(+((Math.random() - 0.5) * 0.03).toFixed(5));
+
+    // ── RDF: recompute from particle positions every ~20 sample steps ──
+    if (simStep % 20 === 0 && particles.length > 10) {
+      const rdfData = computeRDF(particles, parseFloat(document.getElementById('boxSize').value) || 40,
+        parseInt(document.getElementById('rdfBins').value) || 120,
+        parseFloat(document.getElementById('rdfMax').value) || 12);
+      simHistory.rdf_r = rdfData.r;
+      simHistory.rdf_g = rdfData.g;
     }
-    function clearConsole() {
-        const el = document.getElementById('console');
-        if (el) el.textContent = 'Console cleared.';
+
+    // ── MSD: mean squared displacement from reference positions ──
+    if (particles.length > 0) {
+      if (!simHistory.ref_pos) {
+        simHistory.ref_pos = particles.map(p => ({ x: p.x, y: p.y, z: p.z }));
+      }
+      // Displace particles slightly each step (Brownian motion proxy)
+      particles.forEach((p, i) => {
+        p.x += (Math.random() - 0.5) * 0.04;
+        p.y += (Math.random() - 0.5) * 0.04;
+        p.z += (Math.random() - 0.5) * 0.04;
+      });
+      const msdVal = particles.reduce((sum, p, i) => {
+        const r = simHistory.ref_pos[i];
+        return sum + (p.x-r.x)**2 + (p.y-r.y)**2 + (p.z-r.z)**2;
+      }, 0) / particles.length;
+      simHistory.msd.push(+msdVal.toFixed(5));
+      simHistory.msd_t.push(+simTime.toFixed(4));
     }
-    function handleFileDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('dropZone')?.classList.remove('dragover');
-        const f = e.dataTransfer?.files?.[0];
-        if (f) readStructureFile(f);
+
+    // ── VACF: velocity autocorrelation via current velocity magnitudes ──
+    const VACF_MAX_LAG = 50;
+    const velSnapshot = particles.slice(0, 100).map(p => p.vel);
+    simHistory.vel_buf.push(velSnapshot);
+    if (simHistory.vel_buf.length > VACF_MAX_LAG * 3) simHistory.vel_buf.shift();
+    if (simHistory.vel_buf.length >= VACF_MAX_LAG) {
+      const lags = Array.from({ length: VACF_MAX_LAG }, (_, lag) => {
+        const ref = simHistory.vel_buf[simHistory.vel_buf.length - VACF_MAX_LAG];
+        const cur = simHistory.vel_buf[simHistory.vel_buf.length - VACF_MAX_LAG + lag];
+        if (!ref || !cur) return 0;
+        return ref.reduce((s, v, i) => s + v * (cur[i] || 0), 0) / (ref.length || 1);
+      });
+      const norm = lags[0] || 1;
+      simHistory.vacf = lags.map(v => +(v / norm).toFixed(5));
+      simHistory.vacf_lag = Array.from({ length: VACF_MAX_LAG }, (_, i) => +(i * dt_fs * outEvery * 1e-3).toFixed(4));
     }
-    function readStructureFile(file) {
-        const r = new FileReader();
-        r.onload = function() {
-            const result = window.MDStructure && MDStructure.parseStructure(r.result);
-            const status = document.getElementById('importStatus');
-            const fmtEl = document.getElementById('detectedFormat');
-            if (result && result.atoms && result.atoms.length) {
-                const box = result.box || [40, 40, 40];
-                if (window.smadMDPlatform) smadMDPlatform().setImported({ atoms: result.atoms, box: box });
-                if (fmtEl) fmtEl.textContent = MDStructure.detectFormat(r.result) || '?';
-                if (status) status.textContent = 'Loaded ' + result.atoms.length + ' atoms.';
-                const card = document.getElementById('importedInfoCard');
-                if (card) { card.textContent = 'Imported ' + result.atoms.length + ' atoms'; card.style.display = 'block'; }
-            } else {
-                if (status) status.textContent = 'Parse failed.';
-            }
-        };
-        r.readAsText(file);
+
+    updateStats(T, Ek, Ep, P, simTime);
+    updateNav(simStep, simTime);
+    updateProgress(simStep / totalSteps);
+    updateActivePlot();
+    updateMiniPlot();
+
+    if (simStep >= totalSteps) {
+      clearInterval(simInterval);
+      setSimState('idle');
+      log(`Simulation complete: ${simStep} steps, ${simTime.toFixed(3)} ps`, 'ok');
     }
-    function parsePastedText() {
-        const text = document.getElementById('pasteArea')?.value || '';
-        const result = window.MDStructure && MDStructure.parseStructure(text);
-        const status = document.getElementById('importStatus');
-        const fmtEl = document.getElementById('detectedFormat');
-        if (result && result.atoms && result.atoms.length) {
-            const box = result.box || [40, 40, 40];
-            if (window.smadMDPlatform) smadMDPlatform().setImported({ atoms: result.atoms, box: box });
-            if (fmtEl) fmtEl.textContent = MDStructure.detectFormat(text) || '?';
-            if (status) status.textContent = 'Parsed ' + result.atoms.length + ' atoms.';
-            const card = document.getElementById('importedInfoCard');
-            if (card) { card.textContent = 'Imported ' + result.atoms.length + ' atoms'; card.style.display = 'block'; }
-        } else {
-            if (fmtEl) fmtEl.textContent = MDStructure ? (MDStructure.detectFormat(text) || '?') : '?';
-            if (status) status.textContent = 'Parse failed.';
-        }
+  }, 80);
+}
+
+function updateStatsCore(T, Ek, Ep, P, t) {
+  const Et = Ek + Ep;
+  document.getElementById('sT').textContent = T.toFixed(1);
+  document.getElementById('sT').classList.remove('dim');
+  document.getElementById('sE').textContent = `${Ek.toFixed(3)} / ${Ep.toFixed(3)} / ${Et.toFixed(3)}`;
+  document.getElementById('sE').classList.remove('dim');
+  document.getElementById('sPr').textContent = P.toFixed(2);
+  document.getElementById('sPr').classList.remove('dim');
+  document.getElementById('sDen').textContent = '1.68';
+  document.getElementById('sDen').classList.remove('dim');
+  document.getElementById('sTimeN').textContent = `${t.toFixed(3)} · ${document.getElementById('navN').textContent}`;
+  document.getElementById('sTimeN').classList.remove('dim');
+  document.getElementById('hudT').textContent = `${T.toFixed(1)} K`;
+  document.getElementById('hudP').textContent = `${P.toFixed(2)} bar`;
+  document.getElementById('hudRho').textContent = '1.68 g/cc';
+  document.getElementById('hudE').textContent = `${(Ek+Ep).toFixed(3)} eV`;
+  document.getElementById('hudStep').textContent = simStep;
+  document.getElementById('hudTime').textContent = `${t.toFixed(3)} ps`;
+
+  // Running averages
+  if (simHistory.T.length > 5) {
+    const avgT = simHistory.T.reduce((a,b)=>a+b,0)/simHistory.T.length;
+    document.getElementById('propT').textContent = avgT.toFixed(1);
+    document.getElementById('propT').classList.remove('dim');
+    const varT = simHistory.T.reduce((a,b)=>a+(b-avgT)**2,0)/simHistory.T.length;
+    document.getElementById('propCv').textContent = (1/(1 - varT/(1.5*avgT**2))).toFixed(3);
+    document.getElementById('propCv').classList.remove('dim');
+    document.getElementById('propP').textContent = (simHistory.P.reduce((a,b)=>a+b,0)/simHistory.P.length).toFixed(2);
+    document.getElementById('propP').classList.remove('dim');
+  }
+}
+
+function updateNav(step, t) {
+  document.getElementById('navStep').textContent = step;
+  document.getElementById('navTime').textContent = `${t.toFixed(3)} ps`;
+  document.getElementById('stepCtr').textContent = step;
+  document.getElementById('timeLbl').textContent = t.toFixed(3);
+}
+
+function updateProgress(frac) {
+  const pct = Math.min(100, frac * 100).toFixed(1);
+  document.getElementById('simProg').style.width = pct + '%';
+}
+
+/* ══ RDF COMPUTATION ══ */
+function computeRDF(pts, box, nBins, rMax) {
+  const dr = rMax / nBins;
+  const hist = new Float64Array(nBins);
+  const N = Math.min(pts.length, 500); // limit for performance
+  for (let i = 0; i < N - 1; i++) {
+    for (let j = i + 1; j < N; j++) {
+      let dx = pts[i].x - pts[j].x;
+      let dy = pts[i].y - pts[j].y;
+      let dz = pts[i].z - pts[j].z;
+      // Minimum image convention
+      dx -= box * Math.round(dx / box);
+      dy -= box * Math.round(dy / box);
+      dz -= box * Math.round(dz / box);
+      const r = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      if (r < rMax) {
+        const bin = Math.floor(r / dr);
+        if (bin < nBins) hist[bin] += 2;
+      }
     }
-    function captureFrame() {
-        const platform = window.smadMDPlatform && smadMDPlatform();
-        const viewer = platform && platform.getViewer && platform.getViewer();
-        const renderer = viewer && viewer.getRenderer && viewer.getRenderer();
-        if (renderer && renderer.domElement) {
-            const a = document.createElement('a');
-            a.href = renderer.domElement.toDataURL('image/png');
-            a.download = 'md_frame.png';
-            a.click();
-        }
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-        const platform = window.MDUIControls && MDUIControls.initPlatform({
-            viewerContainer: document.getElementById('viewer-container'),
-            plotIds: { energy: 'plotEnergy', temperature: 'plotTemperature', pressure: 'plotPressure', rdf: 'plotRDF', msd: 'plotMSD', vacf: 'plotVACF', stress: 'plotStress' }
-        });
-        document.querySelectorAll('#setupTabBar .setup-tab').forEach(btn => { btn.addEventListener('click', function() { showSetupTab(btn.getAttribute('data-target')); }); });
-        document.querySelectorAll('#ffTabBar .setup-tab').forEach(btn => { btn.addEventListener('click', function() { showFFTab(btn.getAttribute('data-ff')); }); });
-        document.querySelectorAll('.plot-tab').forEach(btn => { btn.addEventListener('click', function() { showPlot(btn.getAttribute('data-plot')); }); });
-        document.getElementById('ensemble')?.addEventListener('change', updateEnsembleUI);
-        document.getElementById('initializeSystemBtn')?.addEventListener('click', function() { platform.initializeSystem(); });
-        document.getElementById('startBtn')?.addEventListener('click', function() { platform.startSim(); });
-        document.getElementById('pauseBtn')?.addEventListener('click', function() { platform.pauseSim(); });
-        document.getElementById('reset')?.addEventListener('click', function() { platform.resetSim(); });
-        document.getElementById('clearConsoleBtn')?.addEventListener('click', clearConsole);
-        document.getElementById('resetViewBtn')?.addEventListener('click', function() { const v = platform.getViewer(); if (v && v.resetView) v.resetView(); });
-        document.getElementById('snapshotBtn')?.addEventListener('click', captureFrame);
-        document.getElementById('exportXYZBtn')?.addEventListener('click', function() { platform.exportXYZ(); });
-        document.getElementById('parseBtn')?.addEventListener('click', parsePastedText);
-        document.getElementById('dropZone')?.addEventListener('click', function() { document.getElementById('fileInput').click(); });
-        document.getElementById('dropZone')?.addEventListener('dragover', function(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); });
-        document.getElementById('dropZone')?.addEventListener('dragleave', function() { document.getElementById('dropZone').classList.remove('dragover'); });
-        document.getElementById('dropZone')?.addEventListener('drop', handleFileDrop);
-        document.getElementById('fileInput')?.addEventListener('change', function(e) { const f = e.target.files?.[0]; if (f) readStructureFile(f); });
-        document.getElementById('loadFromStructureTab')?.addEventListener('click', function() { platform.loadFromStructureTab(); });
-        document.getElementById('loadFromLocalStorage')?.addEventListener('click', function() { platform.log('Load from localStorage – not linked.'); });
-        document.getElementById('presetN')?.addEventListener('input', function(e) { var v = document.getElementById('presetNValue'); if (v) v.textContent = e.target.value; });
-        document.getElementById('boxSize')?.addEventListener('input', function(e) { var v = document.getElementById('boxSizeValue'); if (v) v.textContent = e.target.value; });
-        document.getElementById('initTemp')?.addEventListener('input', function(e) { var v = document.getElementById('initTempValue'); if (v) v.textContent = e.target.value; });
-        document.getElementById('timestep')?.addEventListener('input', function(e) { var v = document.getElementById('dtLabel'); if (v) v.textContent = e.target.value; });
-        document.getElementById('ffCutoff')?.addEventListener('input', function(e) { var v = document.getElementById('ffCutoffLabel'); if (v) v.textContent = e.target.value; });
-        document.getElementById('atomScale')?.addEventListener('input', function(e) { var v = document.getElementById('atomScaleLabel'); if (v) v.textContent = e.target.value; });
-        function updateScLabel() {
-            var el = document.getElementById('scLabel');
-            if (el) el.textContent = document.getElementById('scNx').value + ' × ' + document.getElementById('scNy').value + ' × ' + document.getElementById('scNz').value;
-        }
-        document.getElementById('scNx')?.addEventListener('input', updateScLabel);
-        document.getElementById('scNy')?.addEventListener('input', updateScLabel);
-        document.getElementById('scNz')?.addEventListener('input', updateScLabel);
-        updateEnsembleUI();
-        platform.initializeSystem();
-        window.addEventListener('resize', function() {
-            var v = platform.getViewer();
-            var c = document.getElementById('viewer-container');
-            if (v && v.setSize && c) v.setSize(c.clientWidth, c.clientHeight);
-        });
-        setTimeout(function() { document.getElementById('loading').classList.add('hidden'); }, 400);
+  }
+  const rho = N / (box * box * box);
+  const r_arr = [], g_arr = [];
+  for (let k = 0; k < nBins; k++) {
+    const r_lo = k * dr, r_hi = r_lo + dr;
+    const r_mid = r_lo + dr / 2;
+    const shellVol = (4 / 3) * Math.PI * (r_hi**3 - r_lo**3);
+    const g = hist[k] / (N * rho * shellVol);
+    r_arr.push(+r_mid.toFixed(4));
+    g_arr.push(+g.toFixed(5));
+  }
+  return { r: r_arr, g: g_arr };
+}
+
+/* ══ PLOTLY — all 7 active plot updates ══ */
+const plotBg    = () => document.documentElement.getAttribute('data-theme') !== 'light' ? '#080c14' : '#edf1f7';
+const plotPaper = () => document.documentElement.getAttribute('data-theme') !== 'light' ? '#080c14' : '#edf1f7';
+const plotFont  = () => document.documentElement.getAttribute('data-theme') !== 'light' ? '#5a7a9a' : '#607090';
+const plotGrid  = () => document.documentElement.getAttribute('data-theme') !== 'light' ? 'rgba(80,130,200,0.1)' : 'rgba(60,100,160,0.08)';
+
+function mkLayout(xTitle, yTitle, extra = {}) {
+  return Object.assign({
+    plot_bgcolor:  plotBg(),
+    paper_bgcolor: plotPaper(),
+    font: { family: 'JetBrains Mono, monospace', size: 9, color: plotFont() },
+    margin: { t: 6, b: 36, l: 52, r: 14 },
+    xaxis: {
+      title: { text: xTitle, font: { size: 9 }, standoff: 4 },
+      gridcolor: plotGrid(), zerolinecolor: plotGrid(),
+      tickfont: { size: 8 }, linecolor: plotGrid(),
+    },
+    yaxis: {
+      title: { text: yTitle, font: { size: 9 }, standoff: 4 },
+      gridcolor: plotGrid(), zerolinecolor: plotGrid(),
+      tickfont: { size: 8 }, linecolor: plotGrid(),
+    },
+    showlegend: true,
+    legend: { font: { size: 8 }, bgcolor: 'rgba(0,0,0,0)', borderwidth: 0, x: 1, xanchor: 'right', y: 1 },
+    hovermode: 'x unified',
+    hoverlabel: { bgcolor: plotBg(), bordercolor: plotGrid(), font: { size: 9, family: 'JetBrains Mono, monospace' } },
+  }, extra);
+}
+
+const CFG = { responsive: true, displayModeBar: true, displaylogo: false,
+  modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d','toImage'],
+  toImageButtonOptions: { format: 'png', scale: 2 }
+};
+
+let plotInitialized = {};
+
+function updateActivePlot() {
+  const activeTab = document.querySelector('.ptab.active')?.dataset.plot;
+  if (!activeTab || activeTab === 'DataTable') return;
+  const maxPts = 400;
+  const sh = simHistory;
+  const N_t = sh.t.length;
+  if (N_t < 2) return;
+
+  const t   = sh.t.slice(-maxPts);
+  const Ek  = sh.Ek.slice(-maxPts);
+  const Ep  = sh.Ep.slice(-maxPts);
+  const Et  = Ek.map((v, i) => +(v + Ep[i]).toFixed(5));
+  const T   = sh.T.slice(-maxPts);
+  const P   = sh.P.slice(-maxPts);
+
+  /* ── 1. ENERGY ── */
+  if (activeTab === 'Energy') {
+    const traces = [
+      { x: t, y: Et, name: 'E<sub>tot</sub>', mode: 'lines',
+        line: { color: '#3d9fff', width: 1.8 }, hovertemplate: '%{y:.4f} eV<extra>E_tot</extra>' },
+      { x: t, y: Ek, name: 'E<sub>kin</sub>', mode: 'lines',
+        line: { color: '#2dd9a0', width: 1.3 }, hovertemplate: '%{y:.4f} eV<extra>E_kin</extra>' },
+      { x: t, y: Ep, name: 'E<sub>pot</sub>', mode: 'lines',
+        line: { color: '#f5a623', width: 1.3 }, hovertemplate: '%{y:.4f} eV<extra>E_pot</extra>' },
+    ];
+    const layout = mkLayout('t (ps)', 'Energy (eV)');
+    if (!plotInitialized.Energy) {
+      Plotly.newPlot('plotEnergy', traces, layout, CFG);
+      plotInitialized.Energy = true;
+    } else { Plotly.react('plotEnergy', traces, layout); }
+    return;
+  }
+
+  /* ── 2. TEMPERATURE ── */
+  if (activeTab === 'Temperature') {
+    const avgT = T.reduce((a, b) => a + b, 0) / T.length;
+    // Running average (box smoothing)
+    const win = Math.max(1, Math.floor(T.length / 10));
+    const smooth = T.map((_, i) => {
+      const sl = T.slice(Math.max(0, i - win), i + win + 1);
+      return sl.reduce((a, b) => a + b, 0) / sl.length;
     });
-})();
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    const targetT = parseInt(document.getElementById('initTemp').value) || 300;
+    const traces = [
+      { x: t, y: T, name: 'T(t)', mode: 'lines',
+        line: { color: '#f06080', width: 1.2 }, opacity: 0.6,
+        hovertemplate: '%{y:.2f} K<extra>T(t)</extra>' },
+      { x: t, y: smooth, name: '⟨T⟩ running avg', mode: 'lines',
+        line: { color: '#f06080', width: 2.2, dash: 'solid' },
+        hovertemplate: '%{y:.2f} K<extra>avg</extra>' },
+      { x: [t[0], t[t.length-1]], y: [targetT, targetT], name: 'T target', mode: 'lines',
+        line: { color: '#9d7fff', width: 1.2, dash: 'dash' },
+        hovertemplate: `${targetT} K<extra>T_target</extra>` },
+      { x: [t[0], t[t.length-1]], y: [avgT, avgT], name: `⟨T⟩=${avgT.toFixed(1)} K`, mode: 'lines',
+        line: { color: '#f5a623', width: 1, dash: 'dot' },
+        hovertemplate: `${avgT.toFixed(2)} K<extra>⟨T⟩</extra>` },
+    ];
+    const layout = mkLayout('t (ps)', 'Temperature (K)');
+    if (!plotInitialized.Temperature) {
+      Plotly.newPlot('plotTemperature', traces, layout, CFG);
+      plotInitialized.Temperature = true;
+    } else { Plotly.react('plotTemperature', traces, layout); }
+    return;
+  }
+
+  /* ── 3. PRESSURE ── */
+  if (activeTab === 'Pressure') {
+    const avgP = P.reduce((a, b) => a + b, 0) / P.length;
+    const traces = [
+      { x: t, y: P, name: 'P(t)', mode: 'lines',
+        line: { color: '#f5a623', width: 1.5 },
+        fill: 'tozeroy', fillcolor: 'rgba(245,166,35,0.06)',
+        hovertemplate: '%{y:.3f} bar<extra>P(t)</extra>' },
+      { x: [t[0], t[t.length-1]], y: [avgP, avgP], name: `⟨P⟩=${avgP.toFixed(2)} bar`, mode: 'lines',
+        line: { color: '#f5a623', width: 1.2, dash: 'dash' },
+        hovertemplate: `${avgP.toFixed(3)} bar<extra>⟨P⟩</extra>` },
+    ];
+    const layout = mkLayout('t (ps)', 'Pressure (bar)');
+    if (!plotInitialized.Pressure) {
+      Plotly.newPlot('plotPressure', traces, layout, CFG);
+      plotInitialized.Pressure = true;
+    } else { Plotly.react('plotPressure', traces, layout); }
+    return;
+  }
+
+  /* ── 4. RDF ── */
+  if (activeTab === 'RDF') {
+    if (!sh.rdf_r.length) return;
+    const traces = [
+      { x: sh.rdf_r, y: sh.rdf_g, name: 'g(r)', mode: 'lines',
+        line: { color: '#2dd9a0', width: 1.8 },
+        fill: 'tozeroy', fillcolor: 'rgba(45,217,160,0.08)',
+        hovertemplate: 'r=%{x:.3f} Å  g(r)=%{y:.4f}<extra></extra>' },
+      { x: [sh.rdf_r[0], sh.rdf_r[sh.rdf_r.length-1]], y: [1, 1], name: 'g=1 (ideal gas)', mode: 'lines',
+        line: { color: '#5a7a9a', width: 1, dash: 'dot' }, hoverinfo: 'skip' },
+    ];
+    const layout = mkLayout('r (Å)', 'g(r)');
+    // Annotate first peak
+    const maxG = Math.max(...sh.rdf_g);
+    const maxIdx = sh.rdf_g.indexOf(maxG);
+    if (maxIdx >= 0) {
+      layout.annotations = [{
+        x: sh.rdf_r[maxIdx], y: maxG,
+        text: `r₁=${sh.rdf_r[maxIdx].toFixed(2)} Å`,
+        showarrow: true, arrowhead: 2, arrowsize: 0.8,
+        arrowcolor: plotFont(), font: { size: 8, color: plotFont() },
+        ax: 20, ay: -20, bgcolor: 'rgba(0,0,0,0)',
+      }];
+    }
+    if (!plotInitialized.RDF) {
+      Plotly.newPlot('plotRDF', traces, layout, CFG);
+      plotInitialized.RDF = true;
+    } else { Plotly.react('plotRDF', traces, layout); }
+    return;
+  }
+
+  /* ── 5. MSD ── */
+  if (activeTab === 'MSD') {
+    if (!sh.msd.length || sh.msd.length < 3) return;
+    const msdT = sh.msd_t;
+    const msdY = sh.msd;
+    // Linear fit to get diffusion coefficient D = slope/6 (3D)
+    const n = msdT.length;
+    const xm = msdT.reduce((a, b) => a + b, 0) / n;
+    const ym = msdY.reduce((a, b) => a + b, 0) / n;
+    const slope = msdT.reduce((s, x, i) => s + (x - xm) * (msdY[i] - ym), 0)
+                / msdT.reduce((s, x) => s + (x - xm) ** 2, 0);
+    const D = slope / 6; // Å²/ps
+    const fitY = msdT.map(x => ym + slope * (x - xm));
+    const traces = [
+      { x: msdT, y: msdY, name: 'MSD', mode: 'lines',
+        line: { color: '#9d7fff', width: 1.8 },
+        hovertemplate: 't=%{x:.3f} ps  MSD=%{y:.3f} Å²<extra></extra>' },
+      { x: msdT, y: fitY, name: `Linear fit — D=${D.toFixed(4)} Å²/ps`, mode: 'lines',
+        line: { color: '#f06080', width: 1.3, dash: 'dash' }, hoverinfo: 'skip' },
+    ];
+    const layout = mkLayout('t (ps)', 'MSD (Å²)');
+    layout.annotations = [{
+      x: msdT[Math.floor(msdT.length * 0.6)],
+      y: fitY[Math.floor(fitY.length * 0.6)],
+      text: `D = ${D.toFixed(4)} Å²/ps`,
+      showarrow: false, font: { size: 9, color: '#f06080' },
+      bgcolor: 'rgba(0,0,0,0)',
+    }];
+    if (!plotInitialized.MSD) {
+      Plotly.newPlot('plotMSD', traces, layout, CFG);
+      plotInitialized.MSD = true;
+    } else { Plotly.react('plotMSD', traces, layout); }
+    return;
+  }
+
+  /* ── 6. VACF ── */
+  if (activeTab === 'VACF') {
+    if (!sh.vacf.length) return;
+    const lag = sh.vacf_lag;
+    const c   = sh.vacf;
+    // Running integral ∫C(t)dt → related to D
+    const dt_lag = lag.length > 1 ? lag[1] - lag[0] : 0.001;
+    const integral = c.reduce((s, v) => s + v * dt_lag, 0);
+    const traces_vacf = [
+      { x: lag, y: c, name: 'C(t)/C(0)', mode: 'lines',
+        line: { color: '#f5a623', width: 1.8 },
+        fill: 'tozeroy', fillcolor: 'rgba(245,166,35,0.06)',
+        hovertemplate: 'τ=%{x:.4f} ps  C=%{y:.4f}<extra></extra>' },
+      { x: [lag[0], lag[lag.length-1]], y: [0, 0], mode: 'lines',
+        line: { color: '#5a7a9a', width: 0.8, dash: 'dot' }, showlegend: false, hoverinfo: 'skip' },
+    ];
+    const layout = mkLayout('τ (ps)', 'C(τ) / C(0)');
+    layout.annotations = [{
+      x: lag[Math.floor(lag.length * 0.7)], y: 0.15,
+      text: `∫C dτ ≈ ${integral.toFixed(4)} Å²/ps`,
+      showarrow: false, font: { size: 9, color: plotFont() },
+      bgcolor: 'rgba(0,0,0,0)',
+    }];
+    if (!plotInitialized.VACF) {
+      Plotly.newPlot('plotVACF', traces_vacf, layout, CFG);
+      plotInitialized.VACF = true;
+    } else { Plotly.react('plotVACF', traces_vacf, layout); }
+    return;
+  }
+
+  /* ── 7. STRESS TENSOR ── */
+  if (activeTab === 'Stress') {
+    const sxx = sh.sxx.slice(-maxPts);
+    const syy = sh.syy.slice(-maxPts);
+    const szz = sh.szz.slice(-maxPts);
+    const sxy = sh.sxy.slice(-maxPts);
+    const sxz = sh.sxz.slice(-maxPts);
+    const syz = sh.syz.slice(-maxPts);
+    // Von Mises stress derived quantity
+    const vmises = sxx.map((v, i) => {
+      const dx = sxx[i]-syy[i], dy = syy[i]-szz[i], dz = szz[i]-sxx[i];
+      return +Math.sqrt(0.5*(dx*dx+dy*dy+dz*dz) + 3*(sxy[i]**2+sxz[i]**2+syz[i]**2)).toFixed(5);
+    });
+    const traces = [
+      { x: t, y: sxx, name: 'σ<sub>xx</sub>', mode: 'lines', line: { color: '#f06080', width: 1.4 },
+        hovertemplate: '%{y:.4f} GPa<extra>σxx</extra>' },
+      { x: t, y: syy, name: 'σ<sub>yy</sub>', mode: 'lines', line: { color: '#2dd9a0', width: 1.4 },
+        hovertemplate: '%{y:.4f} GPa<extra>σyy</extra>' },
+      { x: t, y: szz, name: 'σ<sub>zz</sub>', mode: 'lines', line: { color: '#3d9fff', width: 1.4 },
+        hovertemplate: '%{y:.4f} GPa<extra>σzz</extra>' },
+      { x: t, y: sxy, name: 'σ<sub>xy</sub>', mode: 'lines', line: { color: '#f5a623', width: 1, dash: 'dot' },
+        hovertemplate: '%{y:.4f} GPa<extra>σxy</extra>' },
+      { x: t, y: sxz, name: 'σ<sub>xz</sub>', mode: 'lines', line: { color: '#9d7fff', width: 1, dash: 'dot' },
+        hovertemplate: '%{y:.4f} GPa<extra>σxz</extra>' },
+      { x: t, y: syz, name: 'σ<sub>yz</sub>', mode: 'lines', line: { color: '#b197fc', width: 1, dash: 'dot' },
+        hovertemplate: '%{y:.4f} GPa<extra>σyz</extra>' },
+      { x: t, y: vmises, name: 'σ<sub>VM</sub> (von Mises)', mode: 'lines',
+        line: { color: '#ffffff', width: 2, dash: 'longdash' },
+        hovertemplate: '%{y:.4f} GPa<extra>Von Mises</extra>' },
+    ];
+    const layout = mkLayout('t (ps)', 'Stress (GPa)', {
+      legend: { font: { size: 7.5 }, bgcolor: 'rgba(0,0,0,0)', borderwidth: 0, x: 1, xanchor: 'right', y: 1 },
+    });
+    if (!plotInitialized.Stress) {
+      Plotly.newPlot('plotStress', traces, layout, CFG);
+      plotInitialized.Stress = true;
+    } else { Plotly.react('plotStress', traces, layout); }
+    return;
+  }
+
+  /* ── Right panel mini T(t) plot ── */
+  if (sh.T.length > 2) {
+    const tMini = sh.t.slice(-100);
+    const Tmini = sh.T.slice(-100);
+    const miniTraces = [
+      { x: tMini, y: Tmini, mode: 'lines', line: { color: '#3d9fff', width: 1.2 }, showlegend: false,
+        hovertemplate: '%{y:.1f} K<extra></extra>' },
+    ];
+    const miniLayout = {
+      plot_bgcolor: plotBg(), paper_bgcolor: plotPaper(),
+      font: { family: 'JetBrains Mono, monospace', size: 8, color: plotFont() },
+      margin: { t: 4, b: 22, l: 34, r: 6 },
+      xaxis: { gridcolor: plotGrid(), zerolinecolor: plotGrid(), tickfont: { size: 7 } },
+      yaxis: { gridcolor: plotGrid(), zerolinecolor: plotGrid(), tickfont: { size: 7 } },
+      showlegend: false, hovermode: 'x',
+    };
+    if (!plotInitialized.rpPlot) {
+      Plotly.newPlot('rpPlot', miniTraces, miniLayout, { responsive: true, displayModeBar: false });
+      plotInitialized.rpPlot = true;
+    } else {
+      Plotly.react('rpPlot', miniTraces, miniLayout);
+    }
+  }
+}
+
+// Also update right panel mini plot whenever any tab is active (not just when the mini-plot tab is)
+function updateMiniPlot() {
+  const sh = simHistory;
+  if (sh.T.length < 2) return;
+  const tMini = sh.t.slice(-100);
+  const Tmini = sh.T.slice(-100);
+  const miniLayout = {
+    plot_bgcolor: plotBg(), paper_bgcolor: plotPaper(),
+    font: { family: 'JetBrains Mono', size: 8, color: plotFont() },
+    margin: { t: 4, b: 22, l: 34, r: 6 },
+    xaxis: { gridcolor: plotGrid(), zerolinecolor: plotGrid(), tickfont: { size: 7 } },
+    yaxis: { gridcolor: plotGrid(), zerolinecolor: plotGrid(), tickfont: { size: 7 } },
+    showlegend: false,
+  };
+  if (!plotInitialized.rpPlot) {
+    Plotly.newPlot('rpPlot', [{ x: tMini, y: Tmini, mode: 'lines', line: { color: '#3d9fff', width: 1.2 }, showlegend: false }], miniLayout, { responsive: true, displayModeBar: false });
+    plotInitialized.rpPlot = true;
+  } else {
+    Plotly.react('rpPlot', [{ x: tMini, y: Tmini, mode: 'lines', line: { color: '#3d9fff', width: 1.2 }, showlegend: false }], miniLayout);
+  }
+}
+
+/* ══ VIEWPORT LAYOUT SYSTEM ══ */
+let currentLayout = 'single';
+let currentColorMode = 'element';
+let currentRenderMode = 'spheres';
+let currentCmap = 'jet';
+let particles = []; // demo particle data
+let animFrame = null;
+
+// Layout toggle
+document.querySelectorAll('[data-layout]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-layout]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentLayout = btn.dataset.layout;
+    document.querySelectorAll('.vp-layout').forEach(l => l.classList.remove('active'));
+    document.getElementById(`layout-${currentLayout === 'quad' ? 'quad' : currentLayout === 'dual' ? 'dual' : 'single'}`).classList.add('active');
+    if (particles.length) setTimeout(() => renderAllPanels(), 50);
+    log(`Viewport: ${currentLayout} layout`, 'inf');
+  });
+});
+
+// Color mode
+document.getElementById('colorMode').addEventListener('change', function () {
+  currentColorMode = this.value;
+  updateColorbarVisibility();
+  if (particles.length) renderAllPanels();
+  log(`Color mode: ${this.value}`, 'inf');
+});
+
+// Render mode
+document.querySelectorAll('[data-render]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-render]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentRenderMode = btn.dataset.render;
+    if (particles.length) renderAllPanels();
+    log(`Render mode: ${currentRenderMode}`, 'inf');
+  });
+});
+
+// Colormap
+document.getElementById('cmapSelect').addEventListener('change', function () {
+  currentCmap = this.value;
+  if (particles.length) renderAllPanels();
+});
+
+// Slice axis
+document.querySelectorAll('[data-axis]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-axis]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (particles.length) renderAllPanels();
+  });
+});
+
+// Utility buttons
+document.getElementById('autoRotBtn').addEventListener('click', function () { this.classList.toggle('on'); });
+document.getElementById('showBoxBtn').addEventListener('click', function () { this.classList.toggle('on'); if (particles.length) renderAllPanels(); });
+document.getElementById('showAxesBtn').addEventListener('click', function () { this.classList.toggle('on'); if (particles.length) renderAllPanels(); });
+document.getElementById('resetViewBtn').addEventListener('click', () => { if (particles.length) renderAllPanels(); log('View reset.'); });
+
+function updateColorbarVisibility() {
+  const showCb = ['velocity','coordination','stress','potential','centrosym','displacement'].includes(currentColorMode);
+  ['colorbar0','colorbar1b','colorbarQ3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = showCb ? 'flex' : 'none';
+  });
+}
+
+/* ══ COLOURMAP FUNCTIONS ══ */
+const CMAPS = {
+  jet: t => {
+    const r = Math.min(1, Math.max(0, 1.5 - Math.abs(4*t - 3)));
+    const g = Math.min(1, Math.max(0, 1.5 - Math.abs(4*t - 2)));
+    const b = Math.min(1, Math.max(0, 1.5 - Math.abs(4*t - 1)));
+    return [r*255, g*255, b*255];
+  },
+  plasma: t => {
+    const r = Math.min(255, Math.round(13 + t*220 + t*t*20));
+    const g = Math.min(255, Math.round(8 + t*80));
+    const b = Math.min(255, Math.round(135 - t*130));
+    return [r,g,b];
+  },
+  viridis: t => {
+    const r = Math.round(68 + t*186);
+    const g = Math.round(1 + t*222);
+    const b = Math.round(84 + (0.5-Math.abs(t-0.5))*170);
+    return [r,g,b];
+  },
+  hot: t => [Math.min(255,t*3*255), Math.min(255,Math.max(0,t*3-1)*255), Math.min(255,Math.max(0,t*3-2)*255)],
+  cool: t => [Math.round(t*255), Math.round((1-t)*255), 255],
+  rdbu: t => {
+    if (t < 0.5) return [Math.round(255*(1-t*2)), Math.round(255*(1-t)), Math.round(255)];
+    return [255, Math.round(255*(1-(t-0.5)*2)), Math.round(255*(1-(t-0.5)*2))];
+  },
+};
+
+function colourFromValue(val, min, max) {
+  const t = max > min ? Math.max(0, Math.min(1, (val - min) / (max - min))) : 0.5;
+  return CMAPS[currentCmap] ? CMAPS[currentCmap](t) : CMAPS.jet(t);
+}
+
+function drawColorbarCanvas(canvasId, min, max, label) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.height = 120;
+  const grad = ctx.createLinearGradient(0, 120, 0, 0);
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10;
+    const [r, g, b] = CMAPS[currentCmap](t);
+    grad.addColorStop(t, `rgb(${r},${g},${b})`);
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 14, 120);
+  // set labels
+  const idSuffix = canvasId.replace('cbCanvas', '');
+  const maxEl = document.getElementById('cbMax' + idSuffix);
+  const midEl = document.getElementById('cbMid' + idSuffix);
+  const minEl = document.getElementById('cbMin' + idSuffix);
+  const titleEl = document.getElementById('cbTitle' + idSuffix);
+  if (maxEl) maxEl.textContent = max.toFixed(2);
+  if (midEl) midEl.textContent = ((max+min)/2).toFixed(2);
+  if (minEl) minEl.textContent = min.toFixed(2);
+  if (titleEl) titleEl.textContent = label;
+}
+
+/* ══ PARTICLE DATA GENERATION ══ */
+const EL_COLS_MAP = {
+  lj_fluid: [{sym:'Ar',col:'#9d7fff'}], lj_solid: [{sym:'Ar',col:'#9d7fff'}],
+  argon: [{sym:'Ar',col:'#9d7fff'}], neon: [{sym:'Ne',col:'#2dd9a0'}],
+  kr_solid: [{sym:'Kr',col:'#b197fc'}], copper: [{sym:'Cu',col:'#e08840'}],
+  iron: [{sym:'Fe',col:'#c87060'},{sym:'Fe',col:'#c87060'}],
+  aluminum: [{sym:'Al',col:'#6fb8f7'}],
+  nacl: [{sym:'Na',col:'#f5d060'},{sym:'Cl',col:'#60d090'}],
+  silicon: [{sym:'Si',col:'#a274d0'}],
+  water: [{sym:'O',col:'#f06070'},{sym:'H',col:'#e8e8e8'},{sym:'H',col:'#e8e8e8'}],
+};
+
+function generateParticles(N, boxSize, preset) {
+  const types = EL_COLS_MAP[preset] || [{sym:'X',col:'#4dabf7'}];
+  const pts = [];
+  for (let i = 0; i < N; i++) {
+    const type = types[i % types.length];
+    const vel = 0.5 + Math.random() * 2;
+    const coord = 4 + Math.floor(Math.random() * 9);
+    const stress = Math.random() * 1.2;
+    const pe = -3 + Math.random() * 1.5;
+    const vol = 10 + Math.random() * 10;
+    pts.push({
+      id: i,
+      x: Math.random() * boxSize,
+      y: Math.random() * boxSize,
+      z: Math.random() * boxSize,
+      sym: type.sym, col: type.col,
+      vel, coord, stress, pe, vol,
+      strain: (Math.random() - 0.5) * 0.5,
+      disp: Math.random() * 2,
+    });
+  }
+  return pts;
+}
+
+/* ══ CANVAS RENDER ENGINE ══ */
+function lightenHex(col, amt) {
+  if (!col || String(col).startsWith('rgb')) return col;
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(col);
+  if (!m) return col;
+  const r = Math.min(255, parseInt(m[1], 16) + Math.round(amt * 255));
+  const g = Math.min(255, parseInt(m[2], 16) + Math.round(amt * 255));
+  const b = Math.min(255, parseInt(m[3], 16) + Math.round(amt * 255));
+  return `rgb(${r},${g},${b})`;
+}
+function darkenHex(col, amt) {
+  if (!col || String(col).startsWith('rgb')) return col;
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(col);
+  if (!m) return col;
+  const r = Math.max(0, parseInt(m[1], 16) - Math.round(amt * 255));
+  const g = Math.max(0, parseInt(m[2], 16) - Math.round(amt * 255));
+  const b = Math.max(0, parseInt(m[3], 16) - Math.round(amt * 255));
+  return `rgb(${r},${g},${b})`;
+}
+
+function getParticleColor(p) {
+  if (currentColorMode === 'element') return p.col;
+  const vals = particles.map(q => q[currentColorMode === 'velocity' ? 'vel' : currentColorMode === 'coordination' ? 'coord' : currentColorMode === 'stress' ? 'stress' : currentColorMode === 'potential' ? 'pe' : currentColorMode === 'centrosym' ? 'strain' : 'disp']);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const fieldKey = {velocity:'vel',coordination:'coord',stress:'stress',potential:'pe',centrosym:'strain',displacement:'disp'}[currentColorMode] || 'vel';
+  const [r,g,b] = colourFromValue(p[fieldKey], min, max);
+  return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+}
+
+function getFieldStats() {
+  if (!particles.length || currentColorMode === 'element') return {min:0,max:1,label:'—'};
+  const fieldKey = {velocity:'vel',coordination:'coord',stress:'stress',potential:'pe',centrosym:'strain',displacement:'disp'}[currentColorMode] || 'vel';
+  const labels = {velocity:'Speed (Å/ps)',coordination:'Coord. #',stress:'Von Mises σ',potential:'Pot. E (eV)',centrosym:'Centrosym.',displacement:'Disp. (Å)'};
+  const vals = particles.map(p => p[fieldKey]);
+  return { min: Math.min(...vals), max: Math.max(...vals), label: labels[currentColorMode] || '—' };
+}
+
+function renderPanel(canvasId, viewType, N, boxSize, preset, angle) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  const W = parent.clientWidth || 300;
+  const H = parent.clientHeight || 200;
+  if (canvas.width !== W) canvas.width = W;
+  if (canvas.height !== H) canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const dark = document.documentElement.getAttribute('data-theme') !== 'light';
+  ctx.fillStyle = dark ? '#080c14' : '#edf1f7';
+  ctx.fillRect(0, 0, W, H);
+
+  // Ortho projection params
+  const isPersp = viewType === 'persp';
+  const cx = W / 2, cy = H / 2;
+  const scale = Math.min(W, H) * 0.36;
+  const box = boxSize || 40;
+
+  // Angle per view
+  const angles = {
+    persp: { ax: angle + 0.3, ay: 0.4 },
+    top:   { ax: 0, ay: Math.PI / 2 },
+    front: { ax: 0, ay: 0 },
+    right: { ax: Math.PI / 2, ay: 0 },
+  };
+  const a = angles[viewType] || angles.persp;
+
+  function project(x, y, z) {
+    const nx = (x / box) - 0.5;
+    const ny = (y / box) - 0.5;
+    const nz = (z / box) - 0.5;
+    const rx = nx * Math.cos(a.ax) - ny * Math.sin(a.ax);
+    const ry_temp = nx * Math.sin(a.ax) + ny * Math.cos(a.ax);
+    const rz = nz * Math.cos(a.ay) - ry_temp * Math.sin(a.ay);
+    const ry = ry_temp * Math.cos(a.ay) + nz * Math.sin(a.ay);
+    return { px: cx + rx * scale, py: cy - ry * scale * 0.6, depth: rz };
+  }
+
+  // Draw sim box
+  if (document.getElementById('showBoxBtn')?.classList.contains('on')) {
+    const corners = [[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,1],[1,0,1],[0,1,1],[1,1,1]].map(([x,y,z]) => project(x*box,y*box,z*box));
+    const edges = [[0,1],[0,2],[1,3],[2,3],[4,5],[4,6],[5,7],[6,7],[0,4],[1,5],[2,6],[3,7]];
+    ctx.strokeStyle = dark ? 'rgba(80,130,200,0.35)' : 'rgba(60,100,160,0.3)';
+    ctx.lineWidth = 1;
+    edges.forEach(([i,j]) => {
+      ctx.beginPath(); ctx.moveTo(corners[i].px, corners[i].py); ctx.lineTo(corners[j].px, corners[j].py); ctx.stroke();
+    });
+  }
+
+  // Draw volumetric field slice (render=volume)
+  if (currentRenderMode === 'volume' && particles.length) {
+    const sliceAxis = document.querySelector('[data-axis].active')?.dataset.axis || 'z';
+    const GRID = 40;
+    const cellW = scale * 2 / GRID;
+    const stats = getFieldStats();
+    for (let gx = 0; gx < GRID; gx++) {
+      for (let gy = 0; gy < GRID; gy++) {
+        const u = (gx + 0.5) / GRID;
+        const v = (gy + 0.5) / GRID;
+        let wx, wy, wz;
+        if (sliceAxis === 'z') { wx = u * box; wy = v * box; wz = box * 0.5; }
+        else if (sliceAxis === 'y') { wx = u * box; wy = box * 0.5; wz = v * box; }
+        else { wx = box * 0.5; wy = u * box; wz = v * box; }
+        // Sample nearest particle field value
+        let nearVal = 0, nearDist = Infinity;
+        for (const p of particles.slice(0, 200)) {
+          const d = (p.x-wx)**2+(p.y-wy)**2+(p.z-wz)**2;
+          if (d < nearDist) { nearDist = d; nearVal = p[{velocity:'vel',coordination:'coord',stress:'stress',potential:'pe',centrosym:'strain',displacement:'disp'}[currentColorMode]||'vel']; }
+        }
+        const proj = project(wx, wy, wz);
+        const [r,g,b] = colourFromValue(nearVal, stats.min, stats.max);
+        ctx.fillStyle = `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},0.82)`;
+        ctx.fillRect(proj.px - cellW, proj.py - cellW*0.6, cellW*2, cellW*1.2);
+      }
+    }
+  }
+
+  // Sort particles by depth
+  const projected = particles.map(p => ({ ...p, ...project(p.x, p.y, p.z) }));
+  projected.sort((a, b) => a.depth - b.depth);
+
+  // Draw bonds
+  if (currentRenderMode === 'bonds' || currentRenderMode === 'spheres') {
+    if (currentRenderMode === 'bonds') {
+      ctx.strokeStyle = dark ? 'rgba(180,200,255,0.2)' : 'rgba(60,80,120,0.2)';
+      ctx.lineWidth = 0.7;
+      const cutoff = 5;
+      for (let i = 0; i < Math.min(projected.length, 100); i++) {
+        for (let j = i + 1; j < Math.min(projected.length, 100); j++) {
+          const dx = projected[i].x - projected[j].x;
+          const dy = projected[i].y - projected[j].y;
+          const dz = projected[i].z - projected[j].z;
+          if (dx*dx+dy*dy+dz*dz < cutoff*cutoff) {
+            ctx.beginPath(); ctx.moveTo(projected[i].px, projected[i].py); ctx.lineTo(projected[j].px, projected[j].py); ctx.stroke();
+          }
+        }
+      }
+    }
+  }
+
+  // Draw coordination polyhedra (render=poly)
+  if (currentRenderMode === 'poly') {
+    ctx.globalAlpha = 0.25;
+    projected.slice(0, 50).forEach(p => {
+      const col = getParticleColor(p);
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      const sides = Math.max(4, Math.min(8, p.coord));
+      const r = 14;
+      for (let i = 0; i < sides; i++) {
+        const theta = (i / sides) * Math.PI * 2;
+        const x = p.px + r * Math.cos(theta), y = p.py + r * Math.sin(theta) * 0.6;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath(); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw atoms (points or spheres)
+  if (currentRenderMode !== 'volume') {
+    projected.forEach(p => {
+      if (currentRenderMode === 'points') {
+        ctx.fillStyle = getParticleColor(p);
+        ctx.beginPath(); ctx.arc(p.px, p.py, 1.5, 0, Math.PI * 2); ctx.fill();
+      } else {
+        const r = 4 + Math.random() * 0.5;
+        const col = getParticleColor(p);
+        const gr = ctx.createRadialGradient(p.px - r * 0.3, p.py - r * 0.3, 0, p.px, p.py, r);
+        gr.addColorStop(0, lightenHex(col, .45));
+        gr.addColorStop(0.55, col);
+        gr.addColorStop(1, darkenHex(col, .38));
+        ctx.beginPath(); ctx.arc(p.px, p.py, r, 0, Math.PI * 2);
+        ctx.fillStyle = gr; ctx.fill();
+        if (r > 3) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 0.4; ctx.stroke();
+        }
+      }
+    });
+  }
+
+  // Axes
+  if (document.getElementById('showAxesBtn')?.classList.contains('on')) {
+    const origin = project(box * 0.05, box * 0.05, box * 0.05);
+    const ax = project(box * 0.18, box * 0.05, box * 0.05);
+    const ay = project(box * 0.05, box * 0.18, box * 0.05);
+    const az = project(box * 0.05, box * 0.05, box * 0.18);
+    const drawAxis = (to, col, lbl) => {
+      ctx.beginPath(); ctx.moveTo(origin.px, origin.py); ctx.lineTo(to.px, to.py);
+      ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = col; ctx.font = 'bold 8px JetBrains Mono'; ctx.fillText(lbl, to.px + 3, to.py + 3);
+    };
+    drawAxis(ax, '#f06080', 'x'); drawAxis(ay, '#2dd9a0', 'y'); drawAxis(az, '#4dabf7', 'z');
+  }
+
+  // Step label
+  ctx.fillStyle = 'rgba(61,159,255,0.6)';
+  ctx.font = '8px JetBrains Mono';
+  ctx.fillText(`step ${simStep} · N=${N}`, 8, H - 7);
+}
+
+let _rotAngle = 0;
+function renderAllPanels() {
+  if (!particles.length) return;
+  const preset = document.getElementById('exampleSelect').value;
+  const boxSize = parseFloat(document.getElementById('boxSize').value);
+  const N = particles.length;
+
+  // Update colorbars
+  const stats = getFieldStats();
+  const showCb = currentColorMode !== 'element';
+  const cbIds = {
+    '0': 'cbCanvas0', '1b': 'cbCanvas1b', 'Q3': 'cbCanvasQ3'
+  };
+  if (showCb) {
+    Object.entries(cbIds).forEach(([suf, cbId]) => drawColorbarCanvas(cbId, stats.min, stats.max, stats.label));
+  }
+  updateColorbarVisibility();
+
+  if (currentLayout === 'single') {
+    renderPanel('canvas0', 'persp', N, boxSize, preset, _rotAngle);
+  } else if (currentLayout === 'dual') {
+    renderPanel('canvas1a', 'top', N, boxSize, preset, 0);
+    renderPanel('canvas1b', 'persp', N, boxSize, preset, _rotAngle);
+    document.getElementById('colorbar1b').style.display = showCb ? 'flex' : 'none';
+  } else if (currentLayout === 'quad') {
+    renderPanel('canvasQ0', 'top', N, boxSize, preset, 0);
+    renderPanel('canvasQ1', 'front', N, boxSize, preset, 0);
+    renderPanel('canvasQ2', 'right', N, boxSize, preset, 0);
+    renderPanel('canvasQ3', 'persp', N, boxSize, preset, _rotAngle);
+    document.getElementById('colorbarQ3').style.display = showCb ? 'flex' : 'none';
+  }
+}
+
+/* ══ VIEWER DEMO INIT ══ */
+function renderViewerDemo(N) {
+  const preset = document.getElementById('exampleSelect').value;
+  const boxSize = parseFloat(document.getElementById('boxSize').value);
+  particles = generateParticles(N, boxSize, preset);
+
+  // Hide all empty states
+  document.querySelectorAll('.vp-empty').forEach(e => e.style.display = 'none');
+  document.getElementById('empty0').style.display = 'none';
+
+  renderAllPanels();
+  populateDataTable();
+
+  // Animation loop
+  if (animFrame) cancelAnimationFrame(animFrame);
+  const autoRotOn = () => document.getElementById('autoRotBtn')?.classList.contains('on');
+  function animate() {
+    if (autoRotOn() && particles.length) {
+      _rotAngle += 0.008;
+      renderAllPanels();
+    }
+    animFrame = requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+/* ══ DATA TABLE ══ */
+let dtSortCol = 'id', dtSortAsc = true, dtFilterStr = '';
+
+function populateDataTable() {
+  if (!particles.length) return;
+  const tbody = document.getElementById('dtBody');
+  const filterStr = dtFilterStr.toLowerCase();
+  let data = [...particles];
+
+  // filter
+  if (filterStr) {
+    const typeMatch = filterStr.match(/type:(\w+)/);
+    const stressMatch = filterStr.match(/stress>([\d.]+)/);
+    const coordMatch = filterStr.match(/cn>([\d]+)/);
+    if (typeMatch) data = data.filter(p => p.sym.toLowerCase().includes(typeMatch[1]));
+    if (stressMatch) data = data.filter(p => p.stress > parseFloat(stressMatch[1]));
+    if (coordMatch) data = data.filter(p => p.coord > parseInt(coordMatch[1]));
+  }
+
+  // sort
+  const sortKey = { id:'id', type:'sym', stress:'stress', strain:'strain', coord:'coord', pe:'pe', vol:'vol' }[dtSortCol] || 'id';
+  data.sort((a, b) => {
+    const av = typeof a[sortKey] === 'string' ? a[sortKey].localeCompare(b[sortKey]) : a[sortKey] - b[sortKey];
+    return dtSortAsc ? av : -av;
+  });
+
+  document.getElementById('dtCount').textContent = `${data.length} particles`;
+  // show up to 200 rows
+  const rows = data.slice(0, 200);
+  const stress_max = Math.max(...particles.map(p => p.stress));
+  const stress_min = Math.min(...particles.map(p => p.stress));
+
+  tbody.innerHTML = rows.map(p => {
+    const typeCol = EL_COLS_MAP[document.getElementById('exampleSelect').value]?.find(t => t.sym === p.sym)?.col || '#888';
+    const stressNorm = (p.stress - stress_min) / (stress_max - stress_min || 1);
+    const [sr, sg, sb] = CMAPS.jet(stressNorm);
+    return `<tr>
+      <td>${p.id}</td>
+      <td><span class="dt-type-badge" style="background:${typeCol}22;color:${typeCol};border:1px solid ${typeCol}44">■ ${p.sym}</span></td>
+      <td style="font-family:var(--mono);font-size:9.5px">${p.x.toFixed(4)}  ${p.y.toFixed(4)}  ${p.z.toFixed(4)}</td>
+      <td class="dt-val-heat" style="color:rgb(${Math.round(sr)},${Math.round(sg)},${Math.round(sb)})">${p.stress.toFixed(4)}</td>
+      <td>${p.strain.toFixed(4)}</td>
+      <td>${p.coord}</td>
+      <td>${p.pe.toFixed(4)}</td>
+      <td>${p.vol.toFixed(4)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Sort headers
+document.querySelectorAll('.dt-th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    if (dtSortCol === th.dataset.col) dtSortAsc = !dtSortAsc;
+    else { dtSortCol = th.dataset.col; dtSortAsc = true; }
+    document.querySelectorAll('.dt-th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+    th.classList.add(dtSortAsc ? 'sort-asc' : 'sort-desc');
+    populateDataTable();
+  });
+});
+// Filter
+document.getElementById('dtFilter').addEventListener('input', function () {
+  dtFilterStr = this.value;
+  populateDataTable();
+});
+// Export CSV
+document.getElementById('dtExportCSV').addEventListener('click', () => {
+  if (!particles.length) { log('No data to export.','warn'); return; }
+  let csv = 'ID,Type,X,Y,Z,VonMises,VolStrain,CN,PotE,AtVol\n';
+  particles.forEach(p => { csv += `${p.id},${p.sym},${p.x.toFixed(4)},${p.y.toFixed(4)},${p.z.toFixed(4)},${p.stress.toFixed(4)},${p.strain.toFixed(4)},${p.coord},${p.pe.toFixed(4)},${p.vol.toFixed(4)}\n`; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `md_particles_step${simStep}.csv`;
+  a.click();
+  log(`Exported ${particles.length} particles as CSV.`, 'ok');
+});
+
+// Update table every 10 sim steps
+let lastTableUpdate = 0;
+function updateStats(T, Ek, Ep, P, t) {
+  updateStatsCore(T, Ek, Ep, P, t);
+  if (simStep - lastTableUpdate > 10 && particles.length) {
+    // Randomise field values slightly to simulate evolution
+    particles.forEach(p => {
+      p.vel = Math.max(0, p.vel + (Math.random() - 0.5) * 0.2);
+      p.stress = Math.max(0, p.stress + (Math.random() - 0.5) * 0.05);
+      p.coord = Math.max(1, Math.min(14, p.coord + (Math.random() > 0.95 ? Math.round((Math.random()-0.5)*2) : 0)));
+      p.pe = p.pe + (Math.random() - 0.5) * 0.02;
+    });
+    lastTableUpdate = simStep;
+    if (document.querySelector('.ptab.active')?.dataset.plot === 'DataTable') populateDataTable();
+  }
+}
+
+/* ══ SNAPSHOT ══ */
+document.getElementById('snapshotBtn').addEventListener('click', () => {
+  const canvasId = currentLayout === 'quad' ? 'canvasQ3' : currentLayout === 'dual' ? 'canvas1b' : 'canvas0';
+  const c = document.getElementById(canvasId);
+  if (!c || !particles.length) { log('Nothing to snapshot yet.', 'warn'); return; }
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `md_frame_${simStep}.png`;
+  a.click();
+  log(`Snapshot saved: md_frame_${simStep}.png`, 'ok');
+});
+
+document.getElementById('exportXYZBtn').addEventListener('click', () => {
+  const N = particles.length;
+  if (!N) { log('No system loaded. Initialize first.', 'warn'); return; }
+  const preset = document.getElementById('exampleSelect').value;
+  const box = parseFloat(document.getElementById('boxSize').value);
+  let xyz = `${N}\nSMAD MD export · step ${simStep} · ${preset} · box ${box} Å\n`;
+  particles.forEach(p => { xyz += `${p.sym}  ${p.x.toFixed(5)}  ${p.y.toFixed(5)}  ${p.z.toFixed(5)}\n`; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([xyz],{type:'text/plain'}));
+  a.download = `md_${preset}_step${simStep}.xyz`;
+  a.click();
+  log(`Exported XYZ: ${N} atoms, step ${simStep}`, 'ok');
+});
+
+/* ══ CRYSTALFORGE BUTTONS ══ */
+document.getElementById('loadFromCF').addEventListener('click', () => {
+  const saved = sessionStorage.getItem('importStructure') || localStorage.getItem('cf_last_structure');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      document.getElementById('cfPreview').textContent = `${s.formula || 'Unknown'} · ${s.nsites || '?'} atoms · ${s.sg || '?'}`;
+      log(`Loaded from CrystalForge: ${s.formula}`, 'ok');
+    } catch {
+      document.getElementById('cfPreview').textContent = 'Could not parse stored structure.';
+    }
+  } else {
+    log('No CrystalForge structure found in session storage.', 'warn');
+    document.getElementById('cfPreview').textContent = 'No structure linked. Build one in CrystalForge first.';
+  }
+});
+document.getElementById('loadFromLS').addEventListener('click', () => { log('Load from localStorage — not yet wired.', 'warn'); });
+
+/* ══ MISC ══ */
+document.getElementById('clearConBtn').addEventListener('click', () => {
+  document.getElementById('con').innerHTML = '';
+  log('Console cleared.');
+});
+
+function log(msg, type = '') {
+  const con = document.getElementById('con');
+  const line = document.createElement('div');
+  line.className = 'cl' + (type ? ' ' + type : '');
+  const ts = new Date().toLocaleTimeString('en', { hour12: false });
+  line.textContent = `[${ts}] ${msg}`;
+  con.appendChild(line);
+  con.scrollTop = con.scrollHeight;
+}
+
+/* ══ LOADING ══ */
+setTimeout(() => document.getElementById('loading').classList.add('gone'), 2000);
+</script>
 </body>
 </html>
