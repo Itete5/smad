@@ -19,8 +19,8 @@ extra = """
 """
 out = out.replace("</style>", extra + "\n    </style>", 1)
 out = out.replace(
-    "<title>Materials Explorer · SMAD</title>",
-    '<title>Materials Explorer · SMAD</title>\n    <meta name="robots" content="noindex">',
+    "<title>Material Explorer · SMAD</title>",
+    '<title>Material Explorer · SMAD</title>\n    <meta name="robots" content="noindex">',
     1,
 )
 (ROOT / "templates" / "databases_embed.html").write_text(out, encoding="utf-8")

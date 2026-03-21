@@ -62,7 +62,7 @@
             <div class="collapse navbar-collapse" id="navbarsExample">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link active" href="#overview">Overview</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/databases">Materials DB</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/#material-explorer">Material Explorer</a></li>
                     <li class="nav-item"><a class="nav-link" href="/structures">CrystalForge</a></li>
                     <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
                     <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
@@ -79,38 +79,15 @@
         <div class="hero-overlay"></div>
         <div class="container text-white position-relative">
             <div class="row align-items-center">
-                <div class="col-lg-7">
-                    <h1 class="display-3 fw-bold mb-3">Superconducting Materials Automated Discovery</h1>
-                    <p class="lead mb-4">
-                        SMAD is a scientific discovery platform for designing, optimizing, and analyzing
-                        superconducting materials using high‑performance computing and AI‑driven automation.
-                    </p>
-                    <div class="hero-search card bg-dark bg-opacity-75 border-0 p-3">
-                        <label for="searchBox" class="form-label text-uppercase small text-muted mb-1">
-                            Search in your materials database
-                        </label>
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-3 fw-bold mb-3">SMAD</h1>
+                    <p class="lead mb-4 opacity-75">Superconducting materials discovery — structures, screening, and workflows in one place.</p>
+                    <div class="hero-search card bg-dark bg-opacity-75 border-0 p-3 text-start">
+                        <label for="searchBox" class="form-label small text-muted mb-1">Local database</label>
                         <div class="input-group">
                             <input id="searchBox" type="text" class="form-control form-control-lg"
-                                   placeholder="Search by formula, mp-id, or space group…">
-                            <button class="btn btn-primary btn-lg" type="button" onclick="loadMaterials()">
-                                Search
-                            </button>
-                        </div>
-                        <div class="small text-muted mt-1">
-                            Powered by your local SMAD database and HPC workflows.
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-5 mt-4 mt-lg-0">
-                    <div class="hero-highlight card bg-dark bg-opacity-75 border-0">
-                        <div class="card-body text-white">
-                            <h5 class="card-title text-uppercase small mb-2" style="color: #7dd3fc;">Key capabilities</h5>
-                            <ul class="list-unstyled mb-0 text-white">
-                                <li>• Automated structure generation and screening</li>
-                                <li>• HPC job orchestration for quantum calculations</li>
-                                <li>• AI‑assisted optimization of T<sub>c</sub>, stability, and transport</li>
-                                <li>• Interactive analysis dashboards for candidate materials</li>
-                            </ul>
+                                   placeholder="Formula, mp-id, space group…">
+                            <button class="btn btn-primary btn-lg" type="button" onclick="loadMaterials()">Search</button>
                         </div>
                     </div>
                 </div>
@@ -229,39 +206,25 @@
         </div>
     </section>
 
-    <!-- Materials database -->
-    <section id="materials-db" class="section-dark py-5">
+    <!-- Material Explorer: OPTIMADE + local DB -->
+    <section id="material-explorer" class="section-dark py-5">
         <div class="container">
-            <div class="row mb-4">
-                <div class="col-md-8">
-                    <h2 class="section-title text-white">Superconducting materials workspace</h2>
-                    <p class="section-subtitle text-muted">
-                        Search external materials databases (OPTIMADE) with the Materials Explorer below, and browse
-                        your <strong class="text-light">local SMAD database</strong> in the table — data is served from
-                        the FastAPI backend and can be linked to your HPC runs.
-                    </p>
+            <div class="row mb-3 align-items-center">
+                <div class="col">
+                    <h2 class="section-title text-white mb-0">Material Explorer</h2>
                 </div>
-                <div class="col-md-4 text-md-end">
-                    <button class="btn btn-outline-light mt-3 mt-md-0" type="button" onclick="loadMaterials(true)">
-                        Refresh materials
-                    </button>
+                <div class="col-auto">
+                    <button class="btn btn-outline-light btn-sm" type="button" onclick="loadMaterials(true)">Refresh table</button>
+                    <a href="/databases" class="btn btn-outline-secondary btn-sm ms-1" title="Fullscreen">Fullscreen</a>
                 </div>
             </div>
 
-            <!-- Materials DB: full explorer UI (same as /databases, embedded) -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-                        <h3 class="h6 text-uppercase text-muted mb-0">Materials DB — Explorer</h3>
-                        <a href="/databases" class="btn btn-sm btn-outline-light">Open Materials DB in full page</a>
-                    </div>
-                    <p class="small text-muted mb-2">
-                        Periodic table filters, OPTIMADE search, 3D structure viewer, and CrystalForge handoff — same experience as the standalone page.
-                    </p>
                     <div class="rounded overflow-hidden border border-secondary" style="background:#1a1d21;">
                         <iframe
                             src="/databases?embed=1"
-                            title="Materials Explorer — search OPTIMADE databases"
+                            title="Material Explorer"
                             class="w-100 d-block"
                             style="height:min(85vh,920px); min-height:520px; border:0;"
                             loading="lazy"
