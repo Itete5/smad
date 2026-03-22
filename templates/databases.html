@@ -85,6 +85,13 @@ input,select,textarea{font-family:inherit}
 .nl.active{color:var(--accent);background:rgba(77,171,247,.08)}
 
 .nav-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.nav-home{
+  padding:5px 12px;border-radius:var(--r);
+  color:var(--text1);font-size:11.5px;font-weight:600;
+  border:1px solid var(--border);background:var(--bg3);
+  transition:all var(--t);text-decoration:none;display:inline-flex;align-items:center;
+}
+.nav-home:hover{color:var(--accent);border-color:var(--border2);background:var(--bg2)}
 .nav-chip{
   display:flex;align-items:center;gap:5px;
   padding:4px 10px;background:var(--bg3);border:1px solid var(--border);
@@ -621,6 +628,7 @@ textarea.finp{resize:vertical;min-height:60px}
     </div>
   </div>
   <div class="nav-right">
+    {% if not embed %}<a href="/" class="nav-home">SMAD Home</a>{% endif %}
     <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">
       <span id="themeIco">🌙</span><span id="themeLbl">Dark</span>
     </button>
