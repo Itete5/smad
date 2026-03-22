@@ -1,27 +1,6 @@
-"""Generate templates/databases_embed.html from databases.html (no top nav)."""
-import re
-from pathlib import Path
+"""Deprecated: /databases now uses a single template (databases.html) with ?embed=1.
 
-ROOT = Path(__file__).resolve().parent.parent
-src = (ROOT / "templates" / "databases.html").read_text(encoding="utf-8")
-# Remove top nav
-out = re.sub(
-    r'<nav class="top-nav">.*?</nav>\s*',
-    "",
-    src,
-    count=1,
-    flags=re.DOTALL,
-)
-out = out.replace("<body>", '<body class="databases-embed">', 1)
-extra = """
-        .databases-embed { margin: 0; }
-        .databases-embed .app-container { min-height: 100vh; }
+The embed query param hides the in-page nav via Jinja/CSS and sets window.SMAD_EMBED.
+This script is kept as a no-op placeholder for any old automation that invoked it.
 """
-out = out.replace("</style>", extra + "\n    </style>", 1)
-out = out.replace(
-    "<title>Material Explorer · SMAD</title>",
-    '<title>Material Explorer · SMAD</title>\n    <meta name="robots" content="noindex">',
-    1,
-)
-(ROOT / "templates" / "databases_embed.html").write_text(out, encoding="utf-8")
-print("OK", len(out))
+print("make_databases_embed.py: no longer needed — use templates/databases.html with embed=True from main.py")
