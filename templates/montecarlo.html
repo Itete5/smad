@@ -9,7 +9,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
 <style>
 /* ══════════════════════════════════════════════════════════
    DESIGN TOKENS — identical to MD Simulations page
@@ -374,79 +373,6 @@ select.inp{cursor:pointer}
 @media(max-width:1100px){:root{--rp-w:210px}}
 @media(max-width:900px){ #rpanel{display:none}}
 @media(max-width:680px){ #sidebar{display:none}}
-
-/* ══ ADDITIONS ══ */
-/* 3Dmol + canvas dual-mode viewer */
-#mol-viewer-wrap{position:absolute;inset:0;display:none;z-index:2}
-#mol-viewer-wrap.active{display:block}
-#mcCanvas{position:absolute;inset:0;display:block;z-index:1}
-#mcCanvas.hidden{display:none!important}
-.viewer-mode-bar{
-  position:absolute;top:10px;left:50%;transform:translateX(-50%);
-  display:flex;gap:2px;z-index:30;
-  background:rgba(8,12,20,.88);border:1px solid var(--border2);
-  border-radius:20px;padding:3px;backdrop-filter:blur(8px);
-}
-.vm-btn{
-  padding:3px 12px;border-radius:16px;font-size:9.5px;font-weight:700;
-  font-family:var(--display);background:none;border:none;
-  color:var(--text2);cursor:pointer;transition:all var(--t);
-}
-.vm-btn.active{background:var(--accent);color:#fff}
-.vm-btn:hover:not(.active){color:var(--text0)}
-
-/* T sweep */
-.sweep-row{display:flex;align-items:center;gap:5px;margin-top:8px}
-.sweep-btn{
-  padding:4px 10px;border-radius:var(--r);font-size:10px;font-weight:700;
-  font-family:var(--display);background:var(--amber-glow);
-  border:1px solid rgba(245,166,35,.3);color:var(--amber);
-  cursor:pointer;transition:all var(--t);white-space:nowrap;
-}
-.sweep-btn:hover{background:rgba(245,166,35,.2)}
-.sweep-btn.running{background:var(--amber);color:#000}
-
-/* 2D slice */
-.slice-chip{
-  position:absolute;bottom:38px;left:10px;z-index:20;
-  background:rgba(8,12,20,.82);border:1px solid var(--border);
-  border-radius:var(--r);padding:3px 9px;
-  font-family:var(--mono);font-size:9px;color:var(--amber);display:none;
-}
-.slice-chip.active{display:block}
-
-/* Config badge */
-.cfg-badge{
-  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;
-  border-radius:20px;font-size:9.5px;font-weight:600;font-family:var(--mono);
-  letter-spacing:.2px;transition:all .3s;
-  background:var(--bg3);border:1px solid var(--border);color:var(--text3);
-}
-.cfg-badge.configured{background:var(--green-glow);border-color:rgba(45,217,160,.3);color:var(--green)}
-.cfg-badge.running{background:var(--amber-glow);border-color:rgba(245,166,35,.3);color:var(--amber)}
-
-/* Stats strip expanded to 8 cells */
-.stats-strip{display:grid;grid-template-columns:repeat(8,1fr);border-bottom:1px solid var(--border)}
-
-/* Potts q */
-#pottsQWrap{display:none;margin-top:6px}
-
-/* T sweep progress in sidebar */
-.sweep-progress{
-  height:2px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:4px;display:none;
-}
-.sweep-progress.active{display:block}
-.sweep-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--rose));border-radius:2px;transition:width .3s}
-
-/* Import/export spin config */
-.io-row{display:flex;gap:4px;margin-top:6px}
-
-/* Phase diagram T_c marker */
-.tc-badge{
-  font-size:9px;color:var(--rose);font-family:var(--mono);
-  background:rgba(240,96,128,.08);padding:1px 6px;border-radius:3px;
-  border:1px solid rgba(240,96,128,.2);display:inline-flex;align-items:center;gap:4px;
-}
 </style>
 </head>
 <body>
@@ -701,22 +627,16 @@ select.inp{cursor:pointer}
       <div class="panel-hd"><span class="panel-hd-icon">⬡</span>System</div>
       <div class="field">
         <div class="flabel">Model
-          <span class="tip-b">?<span class="tip">Ising: binary spins ±1. Potts: q-state generalisation. Lattice gas: particle on/off. Heisenberg: 3-component spin vectors. XY: planar vectors.</span></span>
+          <span class="tip-b">?<span class="tip">Ising: binary spins ±1. Potts: q-state generalisation. Lattice gas: particle on/off. Heisenberg: 3-component spin vectors.</span></span>
         </div>
-        <select id="mcModel" class="inp" onchange="onModelChange()">
+        <select id="mcModel" class="inp">
           <option value="ising">Ising</option>
           <option value="potts">Potts (q-state)</option>
           <option value="lattice_gas">Lattice Gas</option>
           <option value="heisenberg">Heisenberg</option>
           <option value="xy">XY model</option>
+          <option value="gauss">Gaussian field</option>
         </select>
-      </div>
-      <div id="pottsQWrap" class="field">
-        <div class="flabel">Potts states q<span class="flabel-val" id="pottsQV">3</span></div>
-        <div class="range-wrap">
-          <input type="range" id="pottsQ" min="2" max="10" step="1" value="3">
-          <span class="range-val" id="pottsQD">3</span>
-        </div>
       </div>
       <div class="field">
         <div class="flabel">Lattice size N<span class="flabel-val" id="latticeNV">4³ = 64</span></div>
@@ -725,21 +645,13 @@ select.inp{cursor:pointer}
           <span class="range-val" id="latticeND">4</span>
         </div>
       </div>
-      <div class="check-row">
-        <input type="checkbox" id="show2DCheck">
-        <span>2D slice view (z = mid plane)</span>
-      </div>
       <div class="field">
         <div class="flabel">Temperature kT/J
-          <span class="tip-b">?<span class="tip">Critical temperatures: 3D Ising kT_c/J ≈ 4.51. 2D Ising kT_c/J ≈ 2.269. Potts q=3 (2D) kT_c/J ≈ 1.005. Below T_c → ordered phase.</span></span>
+          <span class="tip-b">?<span class="tip">Critical temperature for 2D Ising: kT_c/J ≈ 2.269. Below T_c → ordered phase. Above → disordered.</span></span>
         </div>
         <div class="range-wrap">
-          <input type="range" id="sysTemp" min="0.1" max="10.0" step="0.05" value="2.0">
+          <input type="range" id="sysTemp" min="0.1" max="6.0" step="0.05" value="2.0">
           <span class="range-val" id="sysTempD">2.00</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-top:4px">
-          <span class="tc-badge" id="tcBadge">T_c ≈ 4.51 (3D Ising)</span>
-          <span style="font-size:9px;color:var(--text3);font-family:var(--mono)" id="tRatioLbl">T/T_c = 0.44</span>
         </div>
       </div>
       <div class="field">
@@ -753,69 +665,10 @@ select.inp{cursor:pointer}
         <input type="checkbox" id="pbcCheck" checked>
         <span>Periodic boundary conditions</span>
       </div>
-
-      <!-- Temperature sweep -->
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <div class="flabel" style="margin-bottom:7px">T sweep → Phase diagram</div>
-        <div class="g2">
-          <div class="field" style="margin:0"><div class="flabel" style="margin-bottom:3px;font-size:9px">T_min</div>
-            <input type="number" id="sweepTmin" class="inp" value="0.5" step="0.25" style="font-size:11px;padding:4px 7px"></div>
-          <div class="field" style="margin:0"><div class="flabel" style="margin-bottom:3px;font-size:9px">T_max</div>
-            <input type="number" id="sweepTmax" class="inp" value="8.0" step="0.25" style="font-size:11px;padding:4px 7px"></div>
-        </div>
-        <div class="field" style="margin-top:5px;margin-bottom:0">
-          <div class="flabel" style="margin-bottom:3px;font-size:9px">Steps per T point</div>
-          <input type="number" id="sweepSteps" class="inp" value="8000" style="font-size:11px;padding:4px 7px">
-        </div>
-        <div class="sweep-row">
-          <button class="sweep-btn" id="sweepBtn" type="button">⟳ Run Sweep</button>
-          <span id="sweepStatus" style="font-size:9px;color:var(--text3);font-family:var(--mono)">Ready</span>
-        </div>
-        <div class="sweep-progress" id="sweepProg"><div class="sweep-fill" id="sweepFill" style="width:0%"></div></div>
+      <div class="check-row">
+        <input type="checkbox" id="openMPCheck">
+        <span>Parallelise (checkerboard decomp.)</span>
       </div>
-
-      <!-- Import / export spin config -->
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <div class="flabel" style="margin-bottom:5px">Spin configuration I/O</div>
-        <div class="io-row">
-          <button class="btn btn-secondary" style="flex:1;font-size:10px;padding:4px" id="exportSpinsBtn" type="button">↓ Export JSON</button>
-          <button class="btn btn-secondary" style="flex:1;font-size:10px;padding:4px" id="importSpinsBtn" type="button">↑ Import JSON</button>
-          <input type="file" id="spinFileIn" accept=".json" style="display:none">
-        </div>
-      </div>
-
-      <!-- Dynamics mode (Glauber / Kawasaki) -->
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <div class="flabel" style="margin-bottom:5px">Dynamics
-          <span class="tip-b">?<span class="tip">Glauber: spin flip (non-conserved magnetization). Kawasaki: spin exchange (conserved magnetization, models diffusion). Swendsen-Wang: cluster flip for Potts.</span></span>
-        </div>
-        <select id="dynamicsMode" class="inp">
-          <option value="glauber">Glauber (flip, M not conserved)</option>
-          <option value="kawasaki">Kawasaki (exchange, conserved M)</option>
-          <option value="wolff">Wolff / Swendsen-Wang cluster</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- FINITE-SIZE SCALING -->
-    <div class="panel">
-      <div class="panel-hd"><span class="panel-hd-icon">⊞</span>Finite-Size Scaling</div>
-      <div class="note" style="margin-bottom:10px">Run sweeps at N=4,6,8,10 to extract critical exponent ν via χ_max ~ N^(γ/ν) collapse.</div>
-      <div class="g2">
-        <div class="field" style="margin:0">
-          <div class="flabel" style="margin-bottom:3px;font-size:9px">N sizes</div>
-          <input type="text" id="fssSizes" class="inp" value="4,6,8,10" style="font-size:11px;padding:4px 7px">
-        </div>
-        <div class="field" style="margin:0">
-          <div class="flabel" style="margin-bottom:3px;font-size:9px">Steps/T/N</div>
-          <input type="number" id="fssSteps" class="inp" value="4000" style="font-size:11px;padding:4px 7px">
-        </div>
-      </div>
-      <div style="margin-top:6px;display:flex;gap:5px;align-items:center">
-        <button class="sweep-btn" id="fssBtn" type="button">⊞ Run FSS</button>
-        <span id="fssStatus" style="font-size:9px;color:var(--text3);font-family:var(--mono)">Ready</span>
-      </div>
-      <div class="sweep-progress" id="fssProg"><div class="sweep-fill" id="fssFill" style="width:0%"></div></div>
     </div>
 
     <!-- ON-THE-FLY OBSERVABLES -->
@@ -918,8 +771,6 @@ select.inp{cursor:pointer}
   <!-- VIEWPORT -->
   <div id="viewer-wrap">
     <canvas id="mcCanvas" class="vp-canvas"></canvas>
-    <!-- 2D slice overlay canvas (shown when show2DCheck is ticked) -->
-    <canvas id="sliceCanvas" style="position:absolute;top:0;left:0;pointer-events:none;display:none"></canvas>
     <div class="vp-empty" id="vpEmpty">
       <div class="ve-icon">⬡</div>
       <div class="ve-title">No system initialized</div>
@@ -940,11 +791,6 @@ select.inp{cursor:pointer}
         <span class="hsep">·</span>
         <span class="hl">acc</span><span class="hv" id="hudAcc">—</span>
       </div>
-      <div class="hud-chip" id="hudTcChip" style="display:none">
-        <span class="hl">T_c</span><span class="hv" id="hudTc" style="color:var(--rose)">—</span>
-        <span class="hsep">·</span>
-        <span class="hl">T/T_c</span><span class="hv" id="hudTRatio">—</span>
-      </div>
     </div>
     <!-- Colorbar (shown when using field coloring) -->
     <div class="colorbar" id="colorbarWrap" style="display:none">
@@ -964,10 +810,8 @@ select.inp{cursor:pointer}
       <div class="ss-cell"><div class="ss-lbl">⟨m⟩ order</div><div class="ss-val dim" id="sM">—</div></div>
       <div class="ss-cell"><div class="ss-lbl">χ suscept.</div><div class="ss-val dim" id="sChi">—</div></div>
       <div class="ss-cell"><div class="ss-lbl">C_V spec. heat</div><div class="ss-val dim" id="sCv">—</div></div>
-      <div class="ss-cell"><div class="ss-lbl">U₄ Binder</div><div class="ss-val dim" id="sU4">—</div></div>
-      <div class="ss-cell"><div class="ss-lbl">ξ corr. len.</div><div class="ss-val dim" id="sXi">—</div></div>
       <div class="ss-cell"><div class="ss-lbl">Accept rate</div><div class="ss-val dim" id="sAcc">—</div></div>
-      <div class="ss-cell"><div class="ss-lbl">Step · kT</div><div class="ss-val dim" id="sStepT">— · —</div></div>
+      <div class="ss-cell"><div class="ss-lbl">Step · T</div><div class="ss-val dim" id="sStepT">— · —</div></div>
     </div>
     <div class="plot-tabs-bar">
       <button class="ptab active" data-plot="Energy">Energy</button>
@@ -976,10 +820,6 @@ select.inp{cursor:pointer}
       <button class="ptab" data-plot="Accept">Acceptance</button>
       <button class="ptab" data-plot="Hist">Histogram</button>
       <button class="ptab" data-plot="Replica">Replicas (PT)</button>
-      <button class="ptab" data-plot="Phase">Phase Diagram</button>
-      <button class="ptab" data-plot="Corr">Correlation</button>
-      <button class="ptab" data-plot="ChiCv">χ · C_V</button>
-      <button class="ptab" data-plot="FSS">Finite-size</button>
     </div>
   </div>
   <div class="plot-wrap">
@@ -989,10 +829,6 @@ select.inp{cursor:pointer}
     <div id="plotAccept"  class="ppane"><div class="plot-ph"><div class="ph-ico">✓</div><div class="ph-title">Acceptance rate</div><div class="ph-desc">Running acceptance rate — target ~23–40% for Metropolis. Too high → step too small</div></div></div>
     <div id="plotHist"    class="ppane"><div class="plot-ph"><div class="ph-ico">▬</div><div class="ph-title">Energy histogram</div><div class="ph-desc">Distribution of sampled energies — bimodal at T_c indicates first-order transition</div></div></div>
     <div id="plotReplica" class="ppane"><div class="plot-ph"><div class="ph-ico">♻</div><div class="ph-title">Replica temperatures (PT)</div><div class="ph-desc">Temperature assignment of each replica vs swap step — good mixing → all replicas visit all T</div></div></div>
-    <div id="plotPhase"   class="ppane"><div class="plot-ph"><div class="ph-ico">◎</div><div class="ph-title">Phase diagram — T sweep</div><div class="ph-desc">Run a temperature sweep in the System panel to map ⟨|m|⟩, ⟨E⟩, χ, C_V vs T and locate T_c</div></div></div>
-    <div id="plotCorr"    class="ppane"><div class="plot-ph"><div class="ph-ico">〜</div><div class="ph-title">Spin–spin correlation C(r)</div><div class="ph-desc">Spatial correlation function — exponential decay gives correlation length ξ. Diverges at T_c</div></div></div>
-    <div id="plotChiCv"   class="ppane"><div class="plot-ph"><div class="ph-ico">⊗</div><div class="ph-title">χ and C_V live</div><div class="ph-desc">Susceptibility and specific heat vs simulation step — peaks signal proximity to T_c</div></div></div>
-    <div id="plotFSS"     class="ppane"><div class="plot-ph"><div class="ph-ico">⬡</div><div class="ph-title">Finite-size scaling</div><div class="ph-desc">Run T sweep at multiple lattice sizes to extract critical exponents via FSS collapse</div></div></div>
   </div>
 </main>
 
@@ -1007,8 +843,6 @@ select.inp{cursor:pointer}
       <div class="pc"><div class="pc-lbl">χ suscept.</div><div class="pc-val dim" id="propChi">—</div></div>
       <div class="pc"><div class="pc-lbl">C_V / N</div><div class="pc-val dim" id="propCv">—</div></div>
       <div class="pc"><div class="pc-lbl">U₄ Binder</div><div class="pc-val dim" id="propBinder">—</div></div>
-      <div class="pc"><div class="pc-lbl">ξ corr. len.</div><div class="pc-val dim" id="propXi">—</div></div>
-      <div class="pc"><div class="pc-lbl">⟨cluster⟩</div><div class="pc-val dim" id="propCluster">—</div></div>
     </div>
   </div>
 
@@ -1055,66 +889,11 @@ document.getElementById('themeBtn').addEventListener('click', () => {
   isDark = !isDark;
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   document.getElementById('themeIco').textContent = isDark ? '🌙' : '☀️';
-  document.getElementById('themeLbl').textContent  = isDark ? 'Dark' : 'Light';
+  document.getElementById('themeLbl').textContent = isDark ? 'Dark' : 'Light';
   if (plotInit.Energy) rethemePlots();
 });
 
-/* ══════════════════════════════════════════════════════════
-   CRITICAL TEMPERATURES
-══════════════════════════════════════════════════════════ */
-const TC_MAP = {
-  ising:       { '2d': 2.269, '3d': 4.511 },
-  potts_2:     { '2d': 2.269, '3d': 4.511 },
-  potts_3:     { '2d': 1.005, '3d': 3.200 },
-  potts_4:     { '2d': 0.910, '3d': 2.900 },
-  lattice_gas: { '2d': 2.269, '3d': 4.511 },
-  heisenberg:  { '3d': 4.000 },              // classical Heisenberg
-  xy:          { '2d': null,  '3d': 2.200 }, // BKT: no true T_c in 2D
-};
-
-// Critical exponents (approximate, Ising 3D)
-const EXP = { nu: 0.630, gamma: 1.237, beta: 0.326, eta: 0.036 };
-
-function getTc() {
-  const model = document.getElementById('mcModel').value;
-  const use2D  = document.getElementById('show2DCheck')?.checked;
-  const dim    = use2D ? '2d' : '3d';
-  const q      = parseInt(document.getElementById('pottsQ')?.value) || 3;
-  let key = model === 'potts' ? `potts_${Math.min(q,4)}` : model;
-  const table  = TC_MAP[key] || TC_MAP.ising;
-  return table[dim] ?? table['3d'] ?? 4.511;
-}
-
-function updateTcBadge() {
-  const Tc    = getTc();
-  const kT    = parseFloat(document.getElementById('sysTemp').value) || 2;
-  const model = document.getElementById('mcModel').value;
-  const use2D = document.getElementById('show2DCheck')?.checked;
-  const dim   = use2D ? '2D' : '3D';
-  const names = { ising:'Ising', potts:'Potts', lattice_gas:'Lattice Gas',
-                  heisenberg:'Heisenberg', xy:'XY' };
-  const badge    = document.getElementById('tcBadge');
-  const ratioLbl = document.getElementById('tRatioLbl');
-
-  if (Tc) {
-    const ratio = kT / Tc;
-    badge.textContent    = `T_c ≈ ${Tc.toFixed(3)} (${dim} ${names[model]||model})`;
-    ratioLbl.textContent = `T/T_c = ${ratio.toFixed(3)}`;
-    document.getElementById('hudTcChip').style.display = 'flex';
-    document.getElementById('hudTc').textContent      = Tc.toFixed(3);
-    document.getElementById('hudTRatio').textContent  = ratio.toFixed(3);
-    document.getElementById('hudTRatio').style.color  =
-      ratio < 0.85 ? 'var(--accent)' : ratio < 1.15 ? 'var(--rose)' : 'var(--amber)';
-  } else {
-    badge.textContent = `No sharp T_c (BKT — ${dim} ${names[model]||model})`;
-    ratioLbl.textContent = '';
-    document.getElementById('hudTcChip').style.display = 'none';
-  }
-}
-
-/* ══════════════════════════════════════════════════════════
-   METHOD / PLOT TABS & TOOLBAR
-══════════════════════════════════════════════════════════ */
+/* ══ METHOD TABS ══ */
 document.querySelectorAll('[data-method]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('[data-method]').forEach(b => b.classList.remove('active'));
@@ -1123,29 +902,29 @@ document.querySelectorAll('[data-method]').forEach(btn => {
     document.getElementById('pane-' + btn.dataset.method).classList.add('active');
     currentMethod = btn.dataset.method.toUpperCase();
     document.getElementById('navMethod').textContent = currentMethod;
-    document.getElementById('mcCommand').value = `python run_mc.py --method ${btn.dataset.method}`;
+    document.getElementById('mcCommand').value =
+      `python run_mc.py --method ${btn.dataset.method}`;
     log(`Method: ${currentMethod}`, 'inf');
     updateInfoCards();
   });
 });
 
+/* ══ PLOT TABS ══ */
 document.querySelectorAll('.ptab').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.ppane').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('plot' + btn.dataset.plot).classList.add('active');
-    const t = btn.dataset.plot;
-    if (history.E.length >= 2) setTimeout(() => updateActivePlot(t), 30);
-    if (t === 'Phase' && sweepResults.T.length > 0) setTimeout(() => plotPhaseResults(), 30);
-    if (t === 'Corr'  && spins) setTimeout(() => plotCorrelation(), 30);
-    if (t === 'ChiCv' && history.chi.length >= 2) setTimeout(() => plotChiCv(), 30);
-    if (t === 'FSS'   && fssResults.length > 0) setTimeout(() => plotFSS(), 30);
+    const paneId = 'plot' + btn.dataset.plot;
+    document.getElementById(paneId).classList.add('active');
+    if (history.E.length >= 2) setTimeout(() => updateActivePlot(btn.dataset.plot), 30);
   });
 });
 
-['autoRotBtn','showBoxBtn','showAxesBtn'].forEach(id =>
-  document.getElementById(id)?.addEventListener('click', function () { this.classList.toggle('on'); }));
+/* ══ VIEWER TOOLBAR TOGGLES ══ */
+['autoRotBtn','showBoxBtn','showAxesBtn'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', function() { this.classList.toggle('on'); });
+});
 
 document.querySelectorAll('[data-render]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1156,225 +935,125 @@ document.querySelectorAll('[data-render]').forEach(btn => {
   });
 });
 
-document.getElementById('colorMode').addEventListener('change', function () {
+document.getElementById('colorMode').addEventListener('change', function() {
   currentColorMode = this.value;
   const showCb = currentColorMode !== 'spin';
   document.getElementById('colorbarWrap').style.display = showCb ? 'flex' : 'none';
   if (spins) { renderCanvas(); if (showCb) updateColorbar(); }
 });
 
-document.getElementById('cmapSelect').addEventListener('change', function () {
+document.getElementById('cmapSelect').addEventListener('change', function() {
   currentCmap = this.value;
   if (spins) { renderCanvas(); if (currentColorMode !== 'spin') updateColorbar(); }
 });
 
 /* ══ SLIDERS ══ */
 function wireSlider(id, dispId, valId, fmt) {
-  const el = document.getElementById(id); if (!el) return;
+  const el = document.getElementById(id), disp = document.getElementById(dispId),
+        val = document.getElementById(valId);
+  if (!el) return;
   el.addEventListener('input', () => {
-    const v = fmt !== undefined ? parseFloat(el.value).toFixed(fmt) : el.value;
-    if (dispId) { const d = document.getElementById(dispId); if (d) d.textContent = v; }
-    if (valId)  { const d = document.getElementById(valId);  if (d) d.textContent = v; }
+    const v = fmt ? parseFloat(el.value).toFixed(fmt) : el.value;
+    if (disp) disp.textContent = v;
+    if (val)  val.textContent  = v;
   });
 }
-wireSlider('mcmcSigma','mcmcSigmaD','mcmcSigmaV', 2);
-wireSlider('kmcEa',    'kmcEaD',    null,          2);
-wireSlider('ptReplicas','ptReplicasD',null,         0);
-wireSlider('gcmcMu',   'gcmcMuD',   null,           2);
-wireSlider('latticeN', 'latticeND', 'latticeNV',    0);
-wireSlider('sysField', 'sysFieldD', null,           2);
+wireSlider('mcmcSigma','mcmcSigmaD','mcmcSigmaV',2);
+wireSlider('kmcEa','kmcEaD',null,2);
+wireSlider('ptReplicas','ptReplicasD',null,0);
+wireSlider('gcmcMu','gcmcMuD',null,2);
+wireSlider('latticeN','latticeND','latticeNV',0);
+wireSlider('sysTemp','sysTempD',null,2);
+wireSlider('sysField','sysFieldD',null,2);
 
-document.getElementById('latticeN').addEventListener('input', function () {
+// lattice N shows cube size
+document.getElementById('latticeN').addEventListener('input', function() {
   const n = parseInt(this.value);
   document.getElementById('latticeNV').textContent = `${n}³ = ${n*n*n}`;
 });
-document.getElementById('sysTemp').addEventListener('input', function () {
-  document.getElementById('sysTempD').textContent = parseFloat(this.value).toFixed(2);
-  updateTcBadge();
-  if (spins && simState !== 'running') renderCanvas();
-});
-document.getElementById('mcModel').addEventListener('change', onModelChange);
-function onModelChange() {
-  const m = document.getElementById('mcModel').value;
-  document.getElementById('pottsQWrap').style.display = m === 'potts' ? 'block' : 'none';
-  updateTcBadge();
-}
-document.getElementById('show2DCheck')?.addEventListener('change', () => { updateTcBadge(); if (spins) renderCanvas(); });
-document.getElementById('pottsQ')?.addEventListener('input', function () {
-  document.getElementById('pottsQD').textContent = this.value;
-  document.getElementById('pottsQV').textContent = this.value;
-  updateTcBadge();
-});
-
-/* ══════════════════════════════════════════════════════════
-   KEYBOARD SHORTCUTS
-══════════════════════════════════════════════════════════ */
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
-  switch (e.key) {
-    case ' ': e.preventDefault();
-      document.getElementById(simState === 'running' ? 'pauseBtn' : 'startBtn').click(); break;
-    case 'r': case 'R': document.getElementById('resetBtn').click(); break;
-    case 's': case 'S': document.getElementById('snapshotBtn').click(); break;
-    case 'ArrowRight': {
-      const kT = parseFloat(document.getElementById('sysTemp').value);
-      const next = Math.min(10, +(kT + 0.1).toFixed(2));
-      document.getElementById('sysTemp').value = next;
-      document.getElementById('sysTempD').textContent = next.toFixed(2);
-      updateTcBadge(); break;
-    }
-    case 'ArrowLeft': {
-      const kT = parseFloat(document.getElementById('sysTemp').value);
-      const prev = Math.max(0.1, +(kT - 0.1).toFixed(2));
-      document.getElementById('sysTemp').value = prev;
-      document.getElementById('sysTempD').textContent = prev.toFixed(2);
-      updateTcBadge(); break;
-    }
-    case 'b': case 'B': document.getElementById('showBoxBtn').click();  break;
-    case 'a': case 'A': document.getElementById('autoRotBtn').click();  break;
-  }
-});
-
-/* ══ RESIZE OBSERVER ══ */
-const ro = new ResizeObserver(() => { if (spins) renderCanvas(); });
-ro.observe(document.getElementById('viewer-wrap'));
 
 /* ══════════════════════════════════════════════════════════
    SIMULATION STATE
 ══════════════════════════════════════════════════════════ */
-let simState = 'idle', simLoop = null;
-let mcStep = 0, accepted = 0, attempted = 0, lastClusterSize = 0;
+let simState = 'idle';
+let simLoop  = null;
+let mcStep   = 0;
+let accepted = 0, attempted = 0;
 let currentMethod = 'MCMC';
-let spins = null, pottsSpins = null, localEnergies = null;
-// Heisenberg/XY: store θ,φ per site
-let spinTheta = null, spinPhi = null;
+let spins = null;         // flat Int8Array for the spin lattice
+let localEnergies = null; // Float32Array per-site local energy
 let latticeN = 4;
-let currentRender = 'lattice', currentColorMode = 'spin', currentCmap = 'rdbu';
-let rotAngle = 0, animRaf = null;
-let selectedAtom = null;  // atom index picked by mouse click
+let currentRender = 'lattice';
+let currentColorMode = 'spin';
+let currentCmap = 'rdbu';
+let rotAngle = 0;
+let animRaf = null;
 
-const history = { E:[], M:[], acc:[], step:[], chi:[], cv:[], cluster:[], xi:[], tau:[] };
-const sweepResults = { T:[], E:[], M:[], chi:[], cv:[], U4:[] };
-const fssResults = [];   // [{ N, T, M, chi, cv, U4 }, ...]
-let sweepRunning = false, fssRunning = false;
+const history = { E:[], M:[], acc:[], step:[], chi:[], cv:[] };
+
+const CRITICAL_T = 2.269; // 2D Ising
 
 /* ── State management ── */
 function setSimState(s) {
   simState = s;
-  const dot = document.getElementById('statusDot');
+  const dot   = document.getElementById('statusDot');
   const badge = document.getElementById('statusBadge');
+  const lbl   = document.getElementById('statusLbl');
   const pauseBtn = document.getElementById('pauseBtn');
-  dot.className = badge.className = '';
-  dot.classList.add('status-dot', s);
-  badge.classList.add('status-badge', s);
+
+  dot.className   = 'status-dot ' + s;
+  badge.className = 'status-badge ' + s;
+
   if (s === 'running') {
-    badge.textContent = '● Running';
-    document.getElementById('statusLbl').textContent = 'Running';
+    badge.textContent = '● Running'; lbl.textContent = 'Running';
     pauseBtn.disabled = false; pauseBtn.textContent = '⏸ Pause';
   } else if (s === 'paused') {
-    badge.textContent = '● Paused';
-    document.getElementById('statusLbl').textContent = 'Paused';
+    badge.textContent = '● Paused'; lbl.textContent = 'Paused';
     pauseBtn.disabled = false; pauseBtn.textContent = '▶ Resume';
   } else {
-    badge.textContent = '● Idle';
-    document.getElementById('statusLbl').textContent = 'Idle';
+    badge.textContent = '● Idle'; lbl.textContent = 'Idle';
     pauseBtn.disabled = true; pauseBtn.textContent = '⏸ Pause';
   }
 }
 
 /* ══════════════════════════════════════════════════════════
-   MODEL ENGINES
+   ISING MODEL ENGINE
 ══════════════════════════════════════════════════════════ */
 function initSystem() {
   latticeN = parseInt(document.getElementById('latticeN').value) || 4;
-  const N3 = latticeN ** 3;
-  const model = document.getElementById('mcModel').value;
-
-  spins         = new Int8Array(N3);
-  pottsSpins    = new Uint8Array(N3);
+  const N3 = latticeN * latticeN * latticeN;
+  spins = new Int8Array(N3);
   localEnergies = new Float32Array(N3);
-  spinTheta     = new Float32Array(N3);
-  spinPhi       = new Float32Array(N3);
 
-  if (model === 'potts') {
-    const q = parseInt(document.getElementById('pottsQ')?.value) || 3;
-    for (let i = 0; i < N3; i++) {
-      pottsSpins[i] = Math.floor(Math.random() * q);
-      spins[i] = pottsSpins[i] === 0 ? 1 : -1;
-    }
-  } else if (model === 'heisenberg' || model === 'xy') {
-    // Random unit vectors on sphere (heisenberg) or circle (xy)
-    for (let i = 0; i < N3; i++) {
-      spinPhi[i]   = Math.random() * 2 * Math.PI;
-      spinTheta[i] = model === 'xy' ? Math.PI/2 : Math.acos(2*Math.random()-1);
-      spins[i] = Math.cos(spinTheta[i]) >= 0 ? 1 : -1;  // z-component sign for display
-      pottsSpins[i] = spins[i] > 0 ? 0 : 1;
-    }
-  } else {
-    for (let i = 0; i < N3; i++) {
-      spins[i] = Math.random() < 0.5 ? 1 : -1;
-      pottsSpins[i] = spins[i] > 0 ? 0 : 1;
-    }
-  }
+  // Random initial state
+  for (let i = 0; i < N3; i++) spins[i] = Math.random() < 0.5 ? 1 : -1;
   computeAllLocalEnergies();
   document.getElementById('vpEmpty').style.display = 'none';
-  document.getElementById('sliceCanvas').style.display = 'none';
-  updateTcBadge();
 }
 
 function idx(x, y, z) {
   const n = latticeN;
-  return ((x%n+n)%n)*n*n + ((y%n+n)%n)*n + ((z%n+n)%n);
-}
-
-/* ── Local energy functions ── */
-function isingLocalEnergy(x, y, z) {
-  const n = latticeN;
-  const s = spins[idx(x,y,z)];
-  const J = 1.0, H = parseFloat(document.getElementById('sysField').value) || 0;
-  const pbc = document.getElementById('pbcCheck').checked;
-  const getS = (ax,ay,az) => {
-    if (!pbc && (ax<0||ax>=n||ay<0||ay>=n||az<0||az>=n)) return 0;
-    return spins[idx(ax,ay,az)];
-  };
-  const nb = getS(x+1,y,z)+getS(x-1,y,z)+getS(x,y+1,z)+getS(x,y-1,z)+getS(x,y,z+1)+getS(x,y,z-1);
-  return -J*s*nb - H*s;
-}
-
-function pottsLocalEnergy(x, y, z) {
-  const s = pottsSpins[idx(x,y,z)];
-  const H = parseFloat(document.getElementById('sysField').value) || 0;
-  let E = 0;
-  [[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]].forEach(([nx,ny,nz]) => {
-    if (pottsSpins[idx(nx,ny,nz)] !== s) E += 1.0;
-  });
-  return E - H * (s === 0 ? 1 : 0);
-}
-
-function heisenbergLocalEnergy(x, y, z) {
-  // E = -J Σ si·sj  (dot product of unit vectors)
-  const J = 1.0, H = parseFloat(document.getElementById('sysField').value) || 0;
-  const i = idx(x,y,z);
-  const sx = Math.sin(spinTheta[i])*Math.cos(spinPhi[i]);
-  const sy = Math.sin(spinTheta[i])*Math.sin(spinPhi[i]);
-  const sz = Math.cos(spinTheta[i]);
-  let E = 0;
-  [[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]].forEach(([nx,ny,nz]) => {
-    const j = idx(nx,ny,nz);
-    const tx = Math.sin(spinTheta[j])*Math.cos(spinPhi[j]);
-    const ty = Math.sin(spinTheta[j])*Math.sin(spinPhi[j]);
-    const tz = Math.cos(spinTheta[j]);
-    E -= J*(sx*tx + sy*ty + sz*tz);
-  });
-  E -= H * sz;  // field along z
-  return E;
+  x = ((x % n) + n) % n;
+  y = ((y % n) + n) % n;
+  z = ((z % n) + n) % n;
+  return x * n * n + y * n + z;
 }
 
 function localEnergy(x, y, z) {
-  const model = document.getElementById('mcModel').value;
-  if (model === 'potts')      return pottsLocalEnergy(x, y, z);
-  if (model === 'heisenberg' || model === 'xy') return heisenbergLocalEnergy(x, y, z);
-  return isingLocalEnergy(x, y, z);
+  const n = latticeN;
+  const s = spins[idx(x, y, z)];
+  const J = 1.0;
+  const H = parseFloat(document.getElementById('sysField').value) || 0;
+  const pbc = document.getElementById('pbcCheck').checked;
+  const nbrs = pbc
+    ? [spins[idx(x+1,y,z)],spins[idx(x-1,y,z)],spins[idx(x,y+1,z)],
+       spins[idx(x,y-1,z)],spins[idx(x,y,z+1)],spins[idx(x,y,z-1)]]
+    : [
+        x+1<n?spins[idx(x+1,y,z)]:0, x>0?spins[idx(x-1,y,z)]:0,
+        y+1<n?spins[idx(x,y+1,z)]:0, y>0?spins[idx(x,y-1,z)]:0,
+        z+1<n?spins[idx(x,y,z+1)]:0, z>0?spins[idx(x,y,z-1)]:0,
+      ];
+  return -J * s * nbrs.reduce((a,b)=>a+b,0) - H * s;
 }
 
 function computeAllLocalEnergies() {
@@ -1383,851 +1062,364 @@ function computeAllLocalEnergies() {
     localEnergies[idx(x,y,z)] = localEnergy(x,y,z);
 }
 
-function totalEnergy() { return localEnergies.reduce((a,b)=>a+b,0) * 0.5; }
-
-function totalMagnetization() {
-  const model = document.getElementById('mcModel').value;
-  const N3 = latticeN**3;
-  if (model === 'potts') {
-    const q = parseInt(document.getElementById('pottsQ')?.value) || 3;
-    const counts = new Int32Array(q);
-    pottsSpins.forEach(s => counts[s]++);
-    return (q * Math.max(...counts) / N3 - 1) / (q - 1);
-  }
-  if (model === 'heisenberg') {
-    // Vector order parameter |⟨S⟩|
-    let mx=0, my=0, mz=0;
-    for (let i=0;i<N3;i++) {
-      mx += Math.sin(spinTheta[i])*Math.cos(spinPhi[i]);
-      my += Math.sin(spinTheta[i])*Math.sin(spinPhi[i]);
-      mz += Math.cos(spinTheta[i]);
-    }
-    return Math.sqrt(mx*mx+my*my+mz*mz) / N3;
-  }
-  if (model === 'xy') {
-    let mx=0, my=0;
-    for (let i=0;i<N3;i++) { mx+=Math.cos(spinPhi[i]); my+=Math.sin(spinPhi[i]); }
-    return Math.sqrt(mx*mx+my*my) / N3;
-  }
-  if (model === 'lattice_gas') return spins.filter(s=>s>0).length / N3;
-  return Math.abs(spins.reduce((a,b)=>a+b,0) / N3);
+function totalEnergy() {
+  // Avoid double-counting: sum local energies / 2 for bond terms
+  return localEnergies.reduce((a,b)=>a+b,0) * 0.5;
 }
 
-/* ── Metropolis sweep (Ising / Lattice Gas) ── */
+function totalMagnetization() {
+  return spins.reduce((a,b)=>a+b,0) / spins.length;
+}
+
+/* ── Metropolis sweep (one pass over all sites) ── */
 function metropolisSweep(kT) {
   const n = latticeN, N3 = n*n*n;
   let acc = 0;
   for (let i = 0; i < N3; i++) {
-    const x=Math.floor(Math.random()*n), y=Math.floor(Math.random()*n), z=Math.floor(Math.random()*n);
-    const dE = -2 * localEnergy(x,y,z);
-    if (dE <= 0 || Math.random() < Math.exp(-dE/kT)) {
+    const x = Math.floor(Math.random()*n);
+    const y = Math.floor(Math.random()*n);
+    const z = Math.floor(Math.random()*n);
+    const dE = -2 * localEnergy(x, y, z);   // energy cost of flip
+    if (dE <= 0 || Math.random() < Math.exp(-dE / kT)) {
       spins[idx(x,y,z)] *= -1;
-      pottsSpins[idx(x,y,z)] = spins[idx(x,y,z)] > 0 ? 0 : 1;
-      [[x,y,z],[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]].forEach(
-        ([tx,ty,tz]) => { localEnergies[idx(tx,ty,tz)] = localEnergy(tx,ty,tz); });
-      acc++;
-    }
-  }
-  return acc / N3;
-}
-
-/* ── Kawasaki exchange dynamics (conserved M) ── */
-function kawasakiSweep(kT) {
-  const n = latticeN, N3 = n*n*n;
-  let acc = 0;
-  for (let i = 0; i < N3; i++) {
-    // Pick two random sites
-    const x1=Math.floor(Math.random()*n), y1=Math.floor(Math.random()*n), z1=Math.floor(Math.random()*n);
-    const x2=Math.floor(Math.random()*n), y2=Math.floor(Math.random()*n), z2=Math.floor(Math.random()*n);
-    const ii=idx(x1,y1,z1), jj=idx(x2,y2,z2);
-    if (spins[ii] === spins[jj]) continue;  // exchange only unlike spins
-
-    const E_old = localEnergy(x1,y1,z1) + localEnergy(x2,y2,z2);
-    // Swap
-    spins[ii] *= -1; spins[jj] *= -1;
-    const E_new = localEnergy(x1,y1,z1) + localEnergy(x2,y2,z2);
-    const dE = E_new - E_old;
-    if (dE <= 0 || Math.random() < Math.exp(-dE/kT)) {
-      pottsSpins[ii] = spins[ii] > 0 ? 0 : 1;
-      pottsSpins[jj] = spins[jj] > 0 ? 0 : 1;
-      [[x1,y1,z1],[x1+1,y1,z1],[x1-1,y1,z1],[x1,y1+1,z1],[x1,y1-1,z1],
-       [x2,y2,z2],[x2+1,y2,z2],[x2-1,y2,z2],[x2,y2+1,z2],[x2,y2-1,z2]].forEach(
-        ([tx,ty,tz])=>{ localEnergies[idx(tx,ty,tz)]=localEnergy(tx,ty,tz); });
-      acc++;
-    } else {
-      spins[ii] *= -1; spins[jj] *= -1; // revert
-    }
-  }
-  return acc / N3;
-}
-
-/* ── Heisenberg / XY Metropolis (continuous spins) ── */
-function heisenbergSweep(kT) {
-  const n = latticeN, N3 = n*n*n, model = document.getElementById('mcModel').value;
-  let acc = 0;
-  for (let i = 0; i < N3; i++) {
-    const x=Math.floor(Math.random()*n), y=Math.floor(Math.random()*n), z=Math.floor(Math.random()*n);
-    const ii = idx(x,y,z);
-    const old_t = spinTheta[ii], old_p = spinPhi[ii];
-    const E_old = heisenbergLocalEnergy(x,y,z);
-
-    // Propose new random orientation (small perturbation)
-    const delta = 0.5;
-    if (model === 'xy') {
-      spinPhi[ii]   = old_p + (Math.random()-0.5)*2*delta;
-      spinTheta[ii] = Math.PI/2;
-    } else {
-      spinTheta[ii] = Math.acos(Math.max(-1,Math.min(1, Math.cos(old_t) + (Math.random()-0.5)*2*delta)));
-      spinPhi[ii]   = old_p + (Math.random()-0.5)*2*delta;
-    }
-    const E_new = heisenbergLocalEnergy(x,y,z);
-    if (E_new - E_old <= 0 || Math.random() < Math.exp(-(E_new-E_old)/kT)) {
-      spins[ii] = Math.cos(spinTheta[ii]) >= 0 ? 1 : -1;
-      pottsSpins[ii] = spins[ii] > 0 ? 0 : 1;
-      [[x,y,z],[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]].forEach(
-        ([tx,ty,tz])=>{ localEnergies[idx(tx,ty,tz)]=localEnergy(tx,ty,tz); });
-      acc++;
-    } else {
-      spinTheta[ii] = old_t; spinPhi[ii] = old_p;
-    }
-  }
-  return acc / N3;
-}
-
-/* ── Potts Metropolis sweep ── */
-function pottsSweep(kT) {
-  const n=latticeN, N3=n*n*n, q=parseInt(document.getElementById('pottsQ')?.value)||3;
-  let acc = 0;
-  for (let i = 0; i < N3; i++) {
-    const x=Math.floor(Math.random()*n), y=Math.floor(Math.random()*n), z=Math.floor(Math.random()*n);
-    const ii=idx(x,y,z), old_s=pottsSpins[ii];
-    const new_s = (old_s+1+Math.floor(Math.random()*(q-1))) % q;
-    const E_old = pottsLocalEnergy(x,y,z);
-    pottsSpins[ii] = new_s;
-    const E_new = pottsLocalEnergy(x,y,z);
-    const dE = E_new - E_old;
-    if (dE <= 0 || Math.random() < Math.exp(-dE/kT)) {
-      spins[ii] = new_s===0 ? 1 : -1;
-      [[x,y,z],[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]].forEach(
-        ([tx,ty,tz])=>{ localEnergies[idx(tx,ty,tz)]=localEnergy(tx,ty,tz); });
-      acc++;
-    } else { pottsSpins[ii] = old_s; }
-  }
-  return acc / N3;
-}
-
-/* ── Swendsen-Wang cluster flip (Potts) ── */
-function swendsenWangSweep(kT) {
-  const n=latticeN, N3=n*n*n, q=parseInt(document.getElementById('pottsQ')?.value)||3;
-  const J=1.0, p_bond=1-Math.exp(-J/kT);
-  // Label array for connected components
-  const label = new Int32Array(N3).fill(-1);
-  let nextLabel = 0;
-  const clusterOf = [];  // which cluster is this label in?
-
-  // Build bonds using BFS
-  const processed = new Uint8Array(N3);
-  for (let start=0; start<N3; start++) {
-    if (processed[start]) continue;
-    const s = pottsSpins[start];
-    const myLabel = nextLabel++;
-    clusterOf.push([]);
-    label[start] = myLabel; clusterOf[myLabel].push(start);
-    processed[start] = 1;
-    const queue = [start]; let head=0;
-    while (head < queue.length) {
-      const cur = queue[head++];
-      const cx=Math.floor(cur/(n*n)), rem=cur%(n*n), cy=Math.floor(rem/n), cz=rem%n;
-      [[cx+1,cy,cz],[cx-1,cy,cz],[cx,cy+1,cz],[cx,cy-1,cz],[cx,cy,cz+1],[cx,cy,cz-1]].forEach(([nx,ny,nz])=>{
-        const jj=idx(nx,ny,nz);
-        if (!processed[jj] && pottsSpins[jj]===s && Math.random()<p_bond) {
-          processed[jj]=1; label[jj]=myLabel; clusterOf[myLabel].push(jj); queue.push(jj);
-        }
+      localEnergies[idx(x,y,z)] = localEnergy(x,y,z);
+      // update neighbours
+      [[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]].forEach(([nx_,ny_,nz_]) => {
+        const ii = idx(nx_,ny_,nz_);
+        const nx2=((nx_%n)+n)%n,ny2=((ny_%n)+n)%n,nz2=((nz_%n)+n)%n;
+        localEnergies[idx(nx2,ny2,nz2)] = localEnergy(nx2,ny2,nz2);
       });
+      acc++;
     }
   }
-
-  // Randomly reassign each cluster to a new Potts state
-  for (let cl=0; cl<clusterOf.length; cl++) {
-    const newState = Math.floor(Math.random()*q);
-    clusterOf[cl].forEach(ii => {
-      pottsSpins[ii] = newState;
-      spins[ii] = newState===0 ? 1 : -1;
-    });
-  }
-  computeAllLocalEnergies();
-  lastClusterSize = clusterOf.reduce((mx,cl)=>Math.max(mx,cl.length),0);
-  return 1.0; // SW always accepts
+  return acc / N3;
 }
 
-/* ── Wolff cluster flip (Ising) ── */
+/* ── Wolff cluster flip (for kMC / critical regime) ── */
 function wolffFlip(kT) {
-  const n=latticeN, N3=n*n*n;
-  const J=1.0, p_add=1-Math.exp(-2*J/kT);
-  const x0=Math.floor(Math.random()*n), y0=Math.floor(Math.random()*n), z0=Math.floor(Math.random()*n);
-  const s0=spins[idx(x0,y0,z0)];
-  const cluster=[[x0,y0,z0]]; const inCluster=new Uint8Array(N3);
-  inCluster[idx(x0,y0,z0)]=1; let head=0;
-  while (head<cluster.length) {
-    const [x,y,z]=cluster[head++];
-    [[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]].forEach(([nx,ny,nz])=>{
-      const ii=idx(nx,ny,nz);
-      if (!inCluster[ii] && spins[ii]===s0 && Math.random()<p_add) {
-        inCluster[ii]=1; cluster.push([nx,ny,nz]);
+  const n = latticeN, N3 = n*n*n;
+  const J = 1.0, p_add = 1 - Math.exp(-2*J/kT);
+  const x0 = Math.floor(Math.random()*n), y0=Math.floor(Math.random()*n), z0=Math.floor(Math.random()*n);
+  const s0 = spins[idx(x0,y0,z0)];
+  const cluster = []; const queue = [[x0,y0,z0]];
+  const inCluster = new Uint8Array(N3);
+  inCluster[idx(x0,y0,z0)] = 1; cluster.push([x0,y0,z0]);
+
+  while (queue.length) {
+    const [x,y,z] = queue.shift();
+    [[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]].forEach(([nx_,ny_,nz_]) => {
+      const nx2=((nx_%n)+n)%n,ny2=((ny_%n)+n)%n,nz2=((nz_%n)+n)%n;
+      const ii = idx(nx2,ny2,nz2);
+      if (!inCluster[ii] && spins[ii] === s0 && Math.random() < p_add) {
+        inCluster[ii] = 1; cluster.push([nx2,ny2,nz2]); queue.push([nx2,ny2,nz2]);
       }
     });
   }
-  cluster.forEach(([x,y,z])=>{ spins[idx(x,y,z)]*=-1; pottsSpins[idx(x,y,z)]=spins[idx(x,y,z)]>0?0:1; });
+  cluster.forEach(([x,y,z]) => { spins[idx(x,y,z)] *= -1; });
   computeAllLocalEnergies();
-  lastClusterSize = cluster.length;
   return cluster.length / N3;
-}
-
-/* ── Pick the right sweep based on model + dynamics ── */
-function doSweep(kT) {
-  const model    = document.getElementById('mcModel').value;
-  const dynamics = document.getElementById('dynamicsMode')?.value || 'glauber';
-  const Tc       = getTc();
-
-  if (model === 'heisenberg' || model === 'xy') return heisenbergSweep(kT);
-  if (model === 'potts') {
-    if (dynamics === 'wolff') return swendsenWangSweep(kT);
-    return pottsSweep(kT);
-  }
-  if (dynamics === 'kawasaki') return kawasakiSweep(kT);
-  if (dynamics === 'wolff' || (dynamics === 'glauber' && Tc && Math.abs(kT-Tc)<0.5))
-    return wolffFlip(kT);
-  return metropolisSweep(kT);
-}
-
-/* ── Spatial correlation + autocorrelation time ── */
-function computeCorrelation() {
-  if (!spins) return null;
-  const n=latticeN, N3=n*n*n, maxR=Math.floor(n/2);
-  const C=new Float64Array(maxR), cnt=new Int32Array(maxR);
-  const mMean=spins.reduce((a,b)=>a+b,0)/N3;
-  const nSample=Math.min(N3,200);
-  for (let s=0;s<nSample;s++) {
-    const x0=Math.floor(Math.random()*n), y0=Math.floor(Math.random()*n), z0=Math.floor(Math.random()*n);
-    const s0=spins[idx(x0,y0,z0)]-mMean;
-    for (let r=0;r<maxR;r++) { C[r]+=s0*(spins[idx(x0+r,y0,z0)]-mMean); cnt[r]++; }
-  }
-  const r_arr=[], c_arr=[];
-  const C0=C[0]/Math.max(cnt[0],1)||1;
-  for (let r=0;r<maxR;r++) {
-    r_arr.push(r);
-    c_arr.push(C0!==0?(C[r]/Math.max(cnt[r],1))/C0:0);
-  }
-  let xi=null;
-  for (let r=1;r<c_arr.length;r++) { if (c_arr[r]<=Math.exp(-1)){xi=r;break;} }
-  return {r:r_arr, c:c_arr, xi};
-}
-
-function estimateAutocorrTime() {
-  // Integrated autocorrelation time from M time series
-  const M = history.M;
-  if (M.length < 50) return null;
-  const wM = M.slice(-400);
-  const mBar = wM.reduce((a,b)=>a+b,0)/wM.length;
-  const C0 = wM.reduce((a,m)=>a+(m-mBar)**2,0)/wM.length;
-  if (C0 < 1e-10) return null;
-  let tau = 0.5;
-  const maxLag = Math.min(wM.length/4, 100);
-  for (let lag=1;lag<maxLag;lag++) {
-    let Ct = 0;
-    for (let t=0;t<wM.length-lag;t++) Ct+=(wM[t]-mBar)*(wM[t+lag]-mBar);
-    Ct /= (wM.length-lag);
-    const rho = Ct/C0;
-    if (rho < 0.05) break;
-    tau += rho;
-  }
-  return tau;
 }
 
 /* ══════════════════════════════════════════════════════════
    SIMULATION LOOP
 ══════════════════════════════════════════════════════════ */
 document.getElementById('startBtn').addEventListener('click', () => {
-  if (simState==='idle') {
-    mcStep=0; accepted=0; attempted=0; lastClusterSize=0; selectedAtom=null;
-    Object.keys(history).forEach(k=>history[k]=[]);
-    plotInit={};
+  if (simState === 'idle') {
+    mcStep=0; accepted=0; attempted=0;
+    Object.keys(history).forEach(k => history[k]=[]);
+    plotInit = {};
     initSystem();
     setSimState('running');
-    log(`Started: ${currentMethod} · ${latticeN}³ ${document.getElementById('mcModel').value} · kT=${parseFloat(document.getElementById('sysTemp').value).toFixed(2)}`, 'ok');
+    log(`Started: ${currentMethod} · ${latticeN}³ Ising · kT=${parseFloat(document.getElementById('sysTemp').value).toFixed(2)}`, 'ok');
     updateInfoCards();
     startLoop();
-  } else if (simState==='paused') {
-    setSimState('running'); startLoop(); log('Resumed.','ok');
+  } else if (simState === 'paused') {
+    setSimState('running');
+    log('Resumed.', 'ok');
+    startLoop();
   }
 });
 
 document.getElementById('pauseBtn').addEventListener('click', () => {
-  if (simState==='running') {
-    setSimState('paused'); clearInterval(simLoop); log('Paused.','warn');
-  } else if (simState==='paused') {
-    setSimState('running'); startLoop(); log('Resumed.','ok');
+  if (simState === 'running') {
+    setSimState('paused');
+    clearInterval(simLoop);
+    log('Paused.', 'warn');
+  } else if (simState === 'paused') {
+    setSimState('running');
+    log('Resumed.', 'ok');
+    startLoop();
   }
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   clearInterval(simLoop); setSimState('idle');
-  mcStep=0; accepted=0; attempted=0; lastClusterSize=0; selectedAtom=null;
-  Object.keys(history).forEach(k=>history[k]=[]); plotInit={};
-  spins=pottsSpins=localEnergies=spinTheta=spinPhi=null;
+  mcStep=0; accepted=0; attempted=0;
+  Object.keys(history).forEach(k => history[k]=[]);
+  plotInit={};
+  spins=null; localEnergies=null;
   document.getElementById('vpEmpty').style.display='flex';
-  document.getElementById('sliceCanvas').style.display='none';
   document.getElementById('simProg').style.width='0%';
   document.getElementById('stepCtr').textContent='0';
   document.getElementById('acceptCtr').textContent='0.0';
-  log('Reset.','warn');
+  updateStatsBars(0,0,0,0,0);
+  log('Reset.', 'warn');
 });
 
 function startLoop() {
   clearInterval(simLoop);
-  const totalSteps  = parseInt(document.getElementById('totalSteps').value)  || 500000;
+  const totalSteps = parseInt(document.getElementById('totalSteps').value) || 500000;
   const sampleEvery = parseInt(document.getElementById('sampleEvery').value) || 50;
   const N3 = latticeN**3;
 
   simLoop = setInterval(() => {
-    if (simState!=='running') { clearInterval(simLoop); return; }
+    if (simState !== 'running') { clearInterval(simLoop); return; }
+
     const kT = parseFloat(document.getElementById('sysTemp').value) || 2.0;
+    const method = document.querySelector('[data-method].active')?.dataset.method || 'mcmc';
 
-    const sweepAcc = doSweep(kT);
-    mcStep   += N3; attempted += N3; accepted += sweepAcc*N3;
+    let sweepAcc;
+    // Use Wolff near critical point for efficiency
+    if (method === 'kmc' && Math.abs(kT - CRITICAL_T) < 0.4) {
+      sweepAcc = wolffFlip(kT);
+    } else {
+      sweepAcc = metropolisSweep(kT);
+    }
 
-    const accRate = accepted/Math.max(attempted,1);
-    const E = totalEnergy()/N3, M = totalMagnetization();
+    mcStep += N3;  // count individual spin trial moves
+    attempted += N3;
+    accepted += sweepAcc * N3;
+
+    const accRate = accepted / Math.max(attempted, 1);
+    const E = totalEnergy() / N3;
+    const M = Math.abs(totalMagnetization());
 
     history.step.push(mcStep);
     history.E.push(+E.toFixed(6));
     history.M.push(+M.toFixed(6));
     history.acc.push(+accRate.toFixed(4));
-    history.cluster.push(+(lastClusterSize/N3).toFixed(4));
 
-    let chi=0, cv=0;
+    // Susceptibility: χ = N · (⟨m²⟩ − ⟨m⟩²) / kT
     if (history.M.length > 5) {
-      const wSz=Math.min(history.M.length,300);
-      const mArr=history.M.slice(-wSz), eArr=history.E.slice(-wSz);
-      const mMean=mArr.reduce((a,b)=>a+b,0)/wSz, m2=mArr.reduce((a,b)=>a+b*b,0)/wSz;
-      const eMean=eArr.reduce((a,b)=>a+b,0)/wSz, e2=eArr.reduce((a,b)=>a+b*b,0)/wSz;
-      chi=N3*(m2-mMean*mMean)/kT;
-      cv =N3*(e2-eMean*eMean)/(kT*kT);
+      const mArr = history.M;
+      const mMean = mArr.reduce((a,b)=>a+b,0)/mArr.length;
+      const m2Mean = mArr.reduce((a,b)=>a+b*b,0)/mArr.length;
+      const chi = N3 * (m2Mean - mMean*mMean) / kT;
       history.chi.push(+chi.toFixed(5));
+
+      const eArr = history.E;
+      const eMean = eArr.reduce((a,b)=>a+b,0)/eArr.length;
+      const e2Mean = eArr.reduce((a,b)=>a+b*b,0)/eArr.length;
+      const cv = N3 * (e2Mean - eMean*eMean) / (kT*kT);
       history.cv.push(+cv.toFixed(5));
     }
 
-    // Correlation length + autocorr time every 30 sweeps
-    if (mcStep % (30*N3) === 0) {
-      const corrData=computeCorrelation();
-      if (corrData?.xi != null) history.xi.push(corrData.xi);
-      const tau=estimateAutocorrTime();
-      if (tau != null) history.tau.push(+tau.toFixed(2));
-    }
-
-    updateStatsBars(E,M,chi,cv,accRate);
-    updateHUD(kT,E,M,accRate);
+    updateStatsBars(E, M, history.chi.slice(-1)[0]||0, history.cv.slice(-1)[0]||0, accRate);
+    updateHUD(kT, E, M, accRate);
     updateNavChips(accRate);
-    document.getElementById('stepCtr').textContent   = mcStep.toLocaleString();
+    document.getElementById('stepCtr').textContent = mcStep.toLocaleString();
     document.getElementById('acceptCtr').textContent = (accRate*100).toFixed(1);
-    document.getElementById('simProg').style.width   = Math.min(100,mcStep/totalSteps*100)+'%';
+    document.getElementById('simProg').style.width = Math.min(100,mcStep/totalSteps*100)+'%';
 
-    const activeTab = document.querySelector('.ptab.active')?.dataset.plot;
-    updateActivePlot(activeTab);
-    if (activeTab==='ChiCv') plotChiCv();
+    updateActivePlot(document.querySelector('.ptab.active')?.dataset.plot);
     updateMiniPlot();
-    updateAveragesPanel(E,M,chi,cv);
-    if (document.getElementById('show2DCheck')?.checked) renderSlice();
+    updateAveragesPanel(E, M, history.chi.slice(-1)[0]||0, history.cv.slice(-1)[0]||0);
 
-    if (mcStep>=totalSteps) {
-      clearInterval(simLoop); setSimState('idle');
-      log(`Complete: ${mcStep.toLocaleString()} steps · ⟨E/N⟩=${E.toFixed(4)} · ⟨|m|⟩=${M.toFixed(4)} · τ≈${history.tau.slice(-1)[0]??'?'}`, 'ok');
+    if (mcStep >= totalSteps) {
+      clearInterval(simLoop);
+      setSimState('idle');
+      log(`Complete: ${mcStep.toLocaleString()} steps · ⟨E/N⟩=${E.toFixed(4)} · ⟨|m|⟩=${M.toFixed(4)}`, 'ok');
     }
-  }, 55);
+  }, 60);
 }
 
 /* ══════════════════════════════════════════════════════════
-   TEMPERATURE SWEEP
-══════════════════════════════════════════════════════════ */
-document.getElementById('sweepBtn').addEventListener('click', runTSweep);
-
-async function runTSweep() {
-  if (sweepRunning||fssRunning) return;
-  if (simState==='running') { log('Pause simulation first.','warn'); return; }
-  const Tmin=parseFloat(document.getElementById('sweepTmin').value)||0.5;
-  const Tmax=parseFloat(document.getElementById('sweepTmax').value)||8.0;
-  const nSteps=parseInt(document.getElementById('sweepSteps').value)||8000;
-  const nPoints=28;
-  const Tvals=Array.from({length:nPoints},(_,i)=>Tmin+(Tmax-Tmin)*i/(nPoints-1));
-
-  sweepRunning=true;
-  Object.keys(sweepResults).forEach(k=>sweepResults[k]=[]);
-
-  const btn=document.getElementById('sweepBtn'), fill=document.getElementById('sweepFill');
-  const prog=document.getElementById('sweepProg'), status=document.getElementById('sweepStatus');
-  btn.classList.add('running'); btn.textContent='⏹ Running…';
-  prog.classList.add('active'); fill.style.width='0%';
-
-  latticeN=parseInt(document.getElementById('latticeN').value)||4;
-  const N3=latticeN**3;
-  spins=new Int8Array(N3); pottsSpins=new Uint8Array(N3);
-  localEnergies=new Float32Array(N3); spinTheta=new Float32Array(N3); spinPhi=new Float32Array(N3);
-  for (let i=0;i<N3;i++) { spins[i]=Math.random()<0.5?1:-1; pottsSpins[i]=spins[i]>0?0:1; }
-  document.getElementById('vpEmpty').style.display='none';
-  computeAllLocalEnergies();
-
-  for (let ti=0;ti<Tvals.length;ti++) {
-    const kT=Tvals[ti];
-    status.textContent=`T=${kT.toFixed(2)} (${ti+1}/${nPoints})`;
-    fill.style.width=`${((ti+1)/nPoints)*100}%`;
-    for (let eq=0;eq<nSteps/2;eq++) doSweep(kT);
-    const Es=[],Ms=[];
-    for (let s=0;s<nSteps/2;s++) { doSweep(kT); Es.push(totalEnergy()/N3); Ms.push(totalMagnetization()); }
-    const Emean=Es.reduce((a,b)=>a+b,0)/Es.length;
-    const Mmean=Ms.reduce((a,b)=>a+b,0)/Ms.length;
-    const M2=Ms.reduce((a,b)=>a+b*b,0)/Ms.length;
-    const M4=Ms.reduce((a,b)=>a+b*b*b*b,0)/Ms.length;
-    const E2=Es.reduce((a,b)=>a+b*b,0)/Es.length;
-    sweepResults.T.push(kT);
-    sweepResults.E.push(+Emean.toFixed(5));
-    sweepResults.M.push(+Mmean.toFixed(5));
-    sweepResults.chi.push(+(N3*(M2-Mmean*Mmean)/kT).toFixed(5));
-    sweepResults.cv.push(+(N3*(E2-Emean*Emean)/(kT*kT)).toFixed(5));
-    sweepResults.U4.push(+(1-M4/(3*M2*M2||1)).toFixed(5));
-    await new Promise(r=>setTimeout(r,0));
-  }
-
-  sweepRunning=false; btn.classList.remove('running'); btn.textContent='⟳ Run Sweep';
-  status.textContent=`Done (${nPoints} points)`;
-  log(`T sweep: ${nPoints} points, ${Tmin.toFixed(2)}–${Tmax.toFixed(2)}`,'ok');
-
-  // Switch to Phase tab
-  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.ppane').forEach(p=>p.classList.remove('active'));
-  const pt=document.querySelector('[data-plot="Phase"]');
-  if (pt) pt.classList.add('active');
-  document.getElementById('plotPhase').classList.add('active');
-  plotPhaseResults();
-}
-
-function plotPhaseResults() {
-  if (!sweepResults.T.length) return;
-  const {T,M,E,chi,cv,U4}=sweepResults;
-  const Tc=getTc();
-  const chiMax=Math.max(...chi), TcEst=T[chi.indexOf(chiMax)];
-  const chiNorm=chi.map(v=>v/chiMax), cvNorm=cv.map(v=>v/Math.max(...cv,1));
-
-  const traces=[
-    {x:T,y:M,name:'⟨|m|⟩',mode:'lines+markers',line:{color:'#3d9fff',width:2},marker:{size:4},hovertemplate:'T=%{x:.3f}  m=%{y:.4f}<extra></extra>'},
-    {x:T,y:chiNorm,name:'χ/max',mode:'lines+markers',line:{color:'#f06080',width:1.6,dash:'dot'},marker:{size:3},yaxis:'y2',hovertemplate:'T=%{x:.3f}  χ=%{y:.4f}<extra></extra>'},
-    {x:T,y:cvNorm,name:'C_V/max',mode:'lines+markers',line:{color:'#f5a623',width:1.5,dash:'dash'},marker:{size:3},yaxis:'y2',hovertemplate:'T=%{x:.3f}  C_V=%{y:.4f}<extra></extra>'},
-    {x:T,y:U4,name:'U₄ Binder',mode:'lines+markers',line:{color:'#9d7fff',width:1.5},marker:{size:3},hovertemplate:'T=%{x:.3f}  U₄=%{y:.4f}<extra></extra>'},
-    Tc?{x:[Tc,Tc],y:[0,1.1],name:`T_c=${Tc.toFixed(3)} theory`,mode:'lines',line:{color:'#f06080',width:1.2,dash:'longdash'},yaxis:'y',hoverinfo:'skip'}:null,
-    {x:[TcEst,TcEst],y:[0,1.1],name:`T_c≈${TcEst.toFixed(3)} (χ peak)`,mode:'lines',line:{color:'#2dd9a0',width:1.2,dash:'dot'},hoverinfo:'skip'},
-  ].filter(Boolean);
-
-  const layout=mkLayout('kT / J','⟨|m|⟩  ·  U₄',{
-    yaxis2:{overlaying:'y',side:'right',gridcolor:'transparent',title:{text:'χ/max · C_V/max',font:{size:9}},range:[0,1.15]},
-    title:{text:`Phase diagram · N=${latticeN}³  T_c(χ peak)=${TcEst.toFixed(4)}`,font:{size:10,color:plotFont()},x:.5},
-  });
-  plotInit.Phase?Plotly.react('plotPhase',traces,layout):(Plotly.newPlot('plotPhase',traces,layout,CFG),plotInit.Phase=true);
-  log(`T_c from χ peak: ${TcEst.toFixed(4)}  (theory: ${Tc?.toFixed(4)??'?'})`,'inf');
-}
-
-/* ══════════════════════════════════════════════════════════
-   FINITE-SIZE SCALING
-══════════════════════════════════════════════════════════ */
-document.getElementById('fssBtn').addEventListener('click', runFSS);
-
-async function runFSS() {
-  if (sweepRunning||fssRunning) return;
-  if (simState==='running') { log('Pause simulation first.','warn'); return; }
-  const sizesRaw=document.getElementById('fssSizes').value||'4,6,8,10';
-  const sizes=sizesRaw.split(',').map(s=>parseInt(s.trim())).filter(n=>n>=2&&n<=16);
-  const nSteps=parseInt(document.getElementById('fssSteps').value)||4000;
-  const Tmin=parseFloat(document.getElementById('sweepTmin').value)||0.5;
-  const Tmax=parseFloat(document.getElementById('sweepTmax').value)||8.0;
-  const nT=12;
-  const Tvals=Array.from({length:nT},(_,i)=>Tmin+(Tmax-Tmin)*i/(nT-1));
-
-  fssRunning=true; fssResults.length=0;
-  const btn=document.getElementById('fssBtn'), fill=document.getElementById('fssFill');
-  const prog=document.getElementById('fssProg'), status=document.getElementById('fssStatus');
-  btn.classList.add('running'); btn.textContent='⏹ Running…';
-  prog.classList.add('active'); fill.style.width='0%';
-
-  const totalOps=sizes.length*nT;
-  let done=0;
-
-  for (const N of sizes) {
-    const N3=N**3;
-    const lSpins=new Int8Array(N3), lPotts=new Uint8Array(N3), lE=new Float32Array(N3);
-    for (let i=0;i<N3;i++){lSpins[i]=Math.random()<0.5?1:-1;lPotts[i]=lSpins[i]>0?0:1;}
-
-    // Temporary override global arrays
-    const save={spins,pottsSpins,localEnergies,spinTheta,spinPhi,latticeN};
-    spins=lSpins; pottsSpins=lPotts; localEnergies=lE;
-    spinTheta=new Float32Array(N3); spinPhi=new Float32Array(N3); latticeN=N;
-    computeAllLocalEnergies();
-
-    for (const kT of Tvals) {
-      for (let eq=0;eq<nSteps/2;eq++) doSweep(kT);
-      const Ms=[], Es=[];
-      for (let s=0;s<nSteps/2;s++){ doSweep(kT); Ms.push(totalMagnetization()); Es.push(totalEnergy()/N3); }
-      const Mmean=Ms.reduce((a,b)=>a+b,0)/Ms.length;
-      const M2=Ms.reduce((a,b)=>a+b*b,0)/Ms.length;
-      const M4=Ms.reduce((a,b)=>a+b*b*b*b,0)/Ms.length;
-      const Emean=Es.reduce((a,b)=>a+b,0)/Es.length;
-      const E2=Es.reduce((a,b)=>a+b*b,0)/Es.length;
-      fssResults.push({N,kT,M:Mmean,chi:N3*(M2-Mmean*Mmean)/kT,cv:N3*(E2-Emean*Emean)/(kT*kT),U4:1-M4/(3*M2*M2||1)});
-      done++;
-      fill.style.width=`${(done/totalOps)*100}%`;
-      status.textContent=`N=${N}, T=${kT.toFixed(2)} (${done}/${totalOps})`;
-      await new Promise(r=>setTimeout(r,0));
-    }
-
-    // Restore global arrays
-    spins=save.spins; pottsSpins=save.pottsSpins; localEnergies=save.localEnergies;
-    spinTheta=save.spinTheta; spinPhi=save.spinPhi; latticeN=save.latticeN;
-  }
-
-  fssRunning=false; btn.classList.remove('running'); btn.textContent='⊞ Run FSS';
-  status.textContent=`Done (${sizes.length} sizes × ${nT} T-points)`;
-  log(`FSS complete: sizes ${sizes.join(',')}, ${totalOps} data points`,'ok');
-
-  // Switch to FSS tab
-  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.ppane').forEach(p=>p.classList.remove('active'));
-  const ft=document.querySelector('[data-plot="FSS"]');
-  if (ft) ft.classList.add('active');
-  document.getElementById('plotFSS').classList.add('active');
-  plotFSS();
-}
-
-function plotFSS() {
-  if (!fssResults.length) return;
-  const sizes=[...new Set(fssResults.map(d=>d.N))].sort((a,b)=>a-b);
-  const COLS=['#3d9fff','#2dd9a0','#f5a623','#f06080','#9d7fff','#4ade80'];
-  const Tc=getTc();
-
-  // χ vs T for each N
-  const traces=sizes.flatMap((N,si)=>{
-    const pts=fssResults.filter(d=>d.N===N).sort((a,b)=>a.kT-b.kT);
-    return [
-      {x:pts.map(d=>d.kT),y:pts.map(d=>d.chi),name:`N=${N} χ`,mode:'lines+markers',
-       line:{color:COLS[si%COLS.length],width:1.6},marker:{size:4},
-       hovertemplate:`N=${N}  T=%{x:.3f}  χ=%{y:.3f}<extra></extra>`},
-      {x:pts.map(d=>d.kT),y:pts.map(d=>d.U4),name:`N=${N} U₄`,mode:'lines',
-       line:{color:COLS[si%COLS.length],width:1.1,dash:'dot'},yaxis:'y2',showlegend:false,
-       hovertemplate:`N=${N}  T=%{x:.3f}  U₄=%{y:.3f}<extra></extra>`},
-    ];
-  });
-
-  // Add theory Tc line
-  if (Tc) traces.push({x:[Tc,Tc],y:[0,Math.max(...fssResults.map(d=>d.chi))*1.05],
-    name:`T_c=${Tc.toFixed(3)}`,mode:'lines',line:{color:'#f06080',width:1.2,dash:'longdash'},hoverinfo:'skip'});
-
-  // χ_max scaling: χ_max ~ N^(γ/ν) → slope = γ/ν
-  const chiMaxPts=sizes.map(N=>{
-    const pts=fssResults.filter(d=>d.N===N);
-    return {N,chiMax:Math.max(...pts.map(d=>d.chi))};
-  });
-  const logN=chiMaxPts.map(p=>Math.log(p.N)), logX=chiMaxPts.map(p=>Math.log(p.chiMax));
-  const n=logN.length, sumX=logN.reduce((a,b)=>a+b,0), sumY=logX.reduce((a,b)=>a+b,0);
-  const sumXY=logN.reduce((a,x,i)=>a+x*logX[i],0), sumX2=logN.reduce((a,x)=>a+x*x,0);
-  const slope=(n*sumXY-sumX*sumY)/(n*sumX2-sumX*sumX||1);
-
-  traces.push({x:chiMaxPts.map(p=>p.N),y:chiMaxPts.map(p=>p.chiMax),
-    name:`χ_max (slope γ/ν≈${slope.toFixed(2)})`,mode:'markers',
-    marker:{size:10,color:'#f5a623',symbol:'diamond'},xaxis:'x2',yaxis:'y3',
-    hovertemplate:'N=%{x}  χ_max=%{y:.2f}<extra></extra>'});
-
-  const layout=mkLayout('kT / J','χ(T)',{
-    yaxis2:{overlaying:'y',side:'right',gridcolor:'transparent',title:{text:'U₄',font:{size:9}}},
-    xaxis2:{overlaying:'x',side:'top',type:'log',title:{text:'log N',font:{size:9}},showgrid:false},
-    yaxis3:{overlaying:'y',side:'right',anchor:'x2',type:'log',title:{text:'log χ_max',font:{size:9}},position:0.97,showgrid:false},
-    title:{text:`Finite-size scaling  γ/ν ≈ ${slope.toFixed(3)}  (Ising 3D: ${(EXP.gamma/EXP.nu).toFixed(3)})`,font:{size:10,color:plotFont()},x:.5},
-    showlegend:true,
-  });
-  plotInit.FSS?Plotly.react('plotFSS',traces,layout):(Plotly.newPlot('plotFSS',traces,layout,CFG),plotInit.FSS=true);
-  log(`FSS: γ/ν ≈ ${slope.toFixed(3)} (theory 3D Ising: ${(EXP.gamma/EXP.nu).toFixed(3)})`,'inf');
-}
-
-/* ══════════════════════════════════════════════════════════
-   CORRELATION + CHI/CV PLOTS
-══════════════════════════════════════════════════════════ */
-function plotCorrelation() {
-  if (!spins) return;
-  const {r,c,xi}=computeCorrelation()||{r:[],c:[],xi:null};
-  if (!r.length) return;
-  const traces=[
-    {x:r,y:c,name:'C(r)',mode:'lines+markers',line:{color:'#2dd9a0',width:2},marker:{size:4},fill:'tozeroy',fillcolor:'rgba(45,217,160,0.05)',hovertemplate:'r=%{x}  C=%{y:.4f}<extra></extra>'},
-    {x:r,y:r.map(ri=>Math.exp(-ri/(xi||latticeN/2))),name:`exp fit ξ=${xi?.toFixed(1)??'?'}`,mode:'lines',line:{color:'#f5a623',width:1.4,dash:'dash'},hoverinfo:'skip'},
-    {x:[0,r[r.length-1]],y:[Math.exp(-1),Math.exp(-1)],name:'1/e',mode:'lines',line:{color:'#5a7a9a',width:0.8,dash:'dot'},hoverinfo:'skip'},
-  ];
-  const layout=mkLayout('r (lattice units)','C(r)/C(0)');
-  if (xi) layout.annotations=[{x:xi,y:Math.exp(-1)+0.05,text:`ξ=${xi.toFixed(1)}`,showarrow:true,arrowhead:2,arrowsize:0.8,font:{size:9,color:'#f5a623'},arrowcolor:'#f5a623',ax:20,ay:-20,bgcolor:'rgba(0,0,0,0)'}];
-  plotInit.Corr?Plotly.react('plotCorr',traces,layout):(Plotly.newPlot('plotCorr',traces,layout,CFG),plotInit.Corr=true);
-}
-
-function plotChiCv() {
-  if (history.chi.length < 2) return;
-  const MAX=400;
-  const steps=history.step.slice(-MAX);
-  const chi=history.chi.slice(-MAX), cv=history.cv.slice(-MAX);
-  const tau=history.tau.slice(-MAX);
-  const Tc=getTc();
-  const kT=parseFloat(document.getElementById('sysTemp').value)||2;
-  const traces=[
-    {x:steps,y:chi,name:'χ susceptibility',mode:'lines',line:{color:'#f06080',width:1.8},hovertemplate:'%{y:.5f}<extra>χ</extra>'},
-    {x:steps,y:cv,name:'C_V spec. heat',mode:'lines',line:{color:'#f5a623',width:1.5,dash:'dot'},yaxis:'y2',hovertemplate:'%{y:.5f}<extra>C_V</extra>'},
-    tau.length?{x:steps.slice(-tau.length),y:tau,name:'τ_int autocorr',mode:'lines',line:{color:'#9d7fff',width:1.2,dash:'dash'},yaxis:'y2',hovertemplate:'%{y:.2f}<extra>τ</extra>'}:null,
-  ].filter(Boolean);
-  const layout=mkLayout('MC step','χ',{
-    yaxis2:{overlaying:'y',side:'right',gridcolor:'transparent',title:{text:'C_V · τ_int',font:{size:9}},color:'#f5a623'},
-    annotations:Tc?[{x:steps[Math.floor(steps.length*.7)],y:Math.max(...chi)*0.7,text:`kT=${kT.toFixed(2)}, T_c≈${Tc.toFixed(3)}`,showarrow:false,font:{size:8,color:plotFont()},bgcolor:'rgba(0,0,0,0)'}]:[],
-  });
-  plotInit.ChiCv?Plotly.react('plotChiCv',traces,layout):(Plotly.newPlot('plotChiCv',traces,layout,CFG),plotInit.ChiCv=true);
-}
-
-/* ══════════════════════════════════════════════════════════
-   CANVAS RENDERER
+   CANVAS RENDERER — 3D Ising lattice projection
 ══════════════════════════════════════════════════════════ */
 const CMAPS = {
-  rdbu: t => { if(t<.5){const s=t*2;return[Math.round(40+s*175),Math.round(40+s*96),Math.round(200+s*55)];}const s=(t-.5)*2;return[Math.round(215+s*40),Math.round(136-s*96),Math.round(255-s*215)]; },
+  rdbu: t => {
+    if (t < 0.5) { const s=t*2; return [Math.round(40+s*175),Math.round(40+s*96),Math.round(200+s*55)]; }
+    const s=(t-0.5)*2; return [Math.round(215+s*40),Math.round(136-s*96),Math.round(255-s*215)];
+  },
   plasma: t => [Math.min(255,Math.round(13+t*220+t*t*20)),Math.min(255,Math.round(8+t*80)),Math.min(255,Math.round(135-t*130))],
-  viridis: t => [Math.round(68+t*186),Math.round(1+t*222),Math.round(84+(0.5-Math.abs(t-.5))*170)],
-  hot:  t => [Math.min(255,Math.round(t*3*255)),Math.min(255,Math.round(Math.max(0,t*3-1)*255)),Math.min(255,Math.round(Math.max(0,t*3-2)*255))],
-  cool: t => [Math.round(t*255),Math.round((1-t)*255),255],
-  jet:  t => { const r=Math.min(1,Math.max(0,1.5-Math.abs(4*t-3))),g=Math.min(1,Math.max(0,1.5-Math.abs(4*t-2))),b=Math.min(1,Math.max(0,1.5-Math.abs(4*t-1)));return[Math.round(r*255),Math.round(g*255),Math.round(b*255)]; },
+  viridis: t => [Math.round(68+t*186),Math.round(1+t*222),Math.round(84+(0.5-Math.abs(t-0.5))*170)],
+  hot: t => [Math.min(255,t*3*255),Math.min(255,Math.max(0,t*3-1)*255),Math.min(255,Math.max(0,t*3-2)*255)],
+  jet: t => {
+    const r=Math.min(1,Math.max(0,1.5-Math.abs(4*t-3)));
+    const g=Math.min(1,Math.max(0,1.5-Math.abs(4*t-2)));
+    const b=Math.min(1,Math.max(0,1.5-Math.abs(4*t-1)));
+    return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+  },
 };
+
 function cmapColor(t) { return (CMAPS[currentCmap]||CMAPS.rdbu)(Math.max(0,Math.min(1,t))); }
-
-const PCOLS=[[61,159,255],[240,96,128],[45,217,160],[245,166,35],[157,127,255],[240,180,80],[100,200,180],[220,100,100],[80,180,80],[180,80,220]];
-function pottsColor(s) { return PCOLS[s % PCOLS.length]; }
-
-// Heisenberg spin color: angle maps to hue
-function heisenbergColor(i) {
-  if (!spinPhi) return [150,150,150];
-  const phi=spinPhi[i]%(2*Math.PI);
-  const t=phi/(2*Math.PI);
-  // Hue wheel: phi 0→2π maps to hue 0→360
-  const h=t*360, s=0.85, l=0.55;
-  function hsl2rgb(h,s,l){
-    const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
-    let r=0,g=0,b=0;
-    if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
-    return[Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];
-  }
-  return hsl2rgb(h,s,l);
-}
-
-function getSpinColor(a) {
-  const model=document.getElementById('mcModel').value;
-  const eMin=localEnergies?Math.min(...localEnergies):-6;
-  const eMax=localEnergies?Math.max(...localEnergies):0;
-  if (currentColorMode==='spin') {
-    if (model==='heisenberg'||model==='xy') return heisenbergColor(a.i);
-    if (model==='potts') return pottsColor(pottsSpins[a.i]);
-    if (a.i===selectedAtom) return [255,220,0];  // highlight selected
-    return a.sp>0 ? [61,159,255] : [240,96,128];
-  }
-  if (currentColorMode==='energy') return cmapColor(eMax>eMin?(a.le-eMin)/(eMax-eMin):.5);
-  if (currentColorMode==='cluster') return cmapColor(((a.x+a.y+a.z)%7)/6);
-  if (currentColorMode==='flip') {
-    const kT=parseFloat(document.getElementById('sysTemp').value)||2;
-    return cmapColor(a.le>0?1:Math.exp(2*a.le/kT));
-  }
-  return [120,120,120];
-}
 
 function renderCanvas() {
   if (!spins) return;
-  const canvas=document.getElementById('mcCanvas'), wrap=document.getElementById('viewer-wrap');
-  const W=wrap.clientWidth||600, H=wrap.clientHeight||400;
-  if (canvas.width!==W) canvas.width=W; if (canvas.height!==H) canvas.height=H;
-  const ctx=canvas.getContext('2d');
-  ctx.fillStyle=isDark?'#080c14':'#edf1f7'; ctx.fillRect(0,0,W,H);
+  const canvas = document.getElementById('mcCanvas');
+  const wrap   = document.getElementById('viewer-wrap');
+  const W = wrap.clientWidth || 600;
+  const H = wrap.clientHeight || 400;
+  if (canvas.width !== W) canvas.width = W;
+  if (canvas.height !== H) canvas.height = H;
+  const ctx = canvas.getContext('2d');
 
-  const n=latticeN, cx=W/2, cy=H/2, scale=Math.min(W,H)*0.33, ax=0.3, ay=rotAngle;
-  function project(fx,fy,fz){
-    const nx=fx-.5,ny=fy-.5,nz=fz-.5;
-    const rx=nx*Math.cos(ay)-nz*Math.sin(ay), rzt=nx*Math.sin(ay)+nz*Math.cos(ay);
-    const ry=ny*Math.cos(ax)-rzt*Math.sin(ax), depth=ny*Math.sin(ax)+rzt*Math.cos(ax);
-    return {px:cx+rx*scale,py:cy-ry*scale*0.7,depth};
+  const dark = isDark;
+  ctx.fillStyle = dark ? '#080c14' : '#edf1f7';
+  ctx.fillRect(0, 0, W, H);
+
+  const n = latticeN;
+  const cx = W/2, cy = H/2;
+  const scale = Math.min(W, H) * 0.33;
+  const ax = 0.3;
+  const ay = rotAngle;
+
+  function project(fx, fy, fz) {
+    const nx = fx-0.5, ny = fy-0.5, nz = fz-0.5;
+    const rx = nx*Math.cos(ay) - nz*Math.sin(ay);
+    const rz_temp = nx*Math.sin(ay) + nz*Math.cos(ay);
+    const ry = ny*Math.cos(ax) - rz_temp*Math.sin(ax);
+    const depth = ny*Math.sin(ax) + rz_temp*Math.cos(ax);
+    return { px: cx + rx*scale, py: cy - ry*scale*0.7, depth };
   }
 
-  // Box
+  // Draw box
   if (document.getElementById('showBoxBtn').classList.contains('on')) {
-    const corners=[];
-    for(let bx=0;bx<=1;bx++) for(let by=0;by<=1;by++) for(let bz=0;bz<=1;bz++) corners.push(project(bx,by,bz));
+    const corners = [];
+    for (let bx=0;bx<=1;bx++) for (let by=0;by<=1;by++) for (let bz=0;bz<=1;bz++)
+      corners.push(project(bx,by,bz));
     const edges=[[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
-    ctx.strokeStyle=isDark?'rgba(80,130,200,0.3)':'rgba(60,100,160,0.25)'; ctx.lineWidth=0.8;
-    edges.forEach(([i,j])=>{ctx.beginPath();ctx.moveTo(corners[i].px,corners[i].py);ctx.lineTo(corners[j].px,corners[j].py);ctx.stroke();});
+    ctx.strokeStyle = dark ? 'rgba(80,130,200,0.3)' : 'rgba(60,100,160,0.25)';
+    ctx.lineWidth = 0.8;
+    edges.forEach(([i,j]) => {
+      ctx.beginPath(); ctx.moveTo(corners[i].px,corners[i].py); ctx.lineTo(corners[j].px,corners[j].py); ctx.stroke();
+    });
   }
 
-  const show2D=document.getElementById('show2DCheck')?.checked;
-  const midZ=Math.floor(n/2);
-  const atoms=[]; const eMin=localEnergies?Math.min(...localEnergies):-6, eMax=localEnergies?Math.max(...localEnergies):0;
-  for(let x=0;x<n;x++) for(let y=0;y<n;y++) for(let z=0;z<n;z++) {
-    if(show2D && z!==midZ) continue;
-    const i=x*n*n+y*n+z;
-    atoms.push({x,y,z,i,sp:spins[i],le:localEnergies?localEnergies[i]:0,...project((x+.5)/n,(y+.5)/n,(z+.5)/n)});
+  // Build and sort atom list
+  const atoms = [];
+  const eMin = localEnergies ? Math.min(...localEnergies) : -6;
+  const eMax = localEnergies ? Math.max(...localEnergies) :  0;
+
+  for (let x=0;x<n;x++) for (let y=0;y<n;y++) for (let z=0;z<n;z++) {
+    const i = x*n*n + y*n + z;
+    const sp = spins[i];
+    const proj = project((x+0.5)/n, (y+0.5)/n, (z+0.5)/n);
+    atoms.push({ x,y,z,i, sp, le:localEnergies?localEnergies[i]:0, ...proj });
   }
-  atoms.sort((a,b)=>a.depth-b.depth);
-  const radius=Math.max(2,scale*(show2D?.7:.55)/n);
-  const model=document.getElementById('mcModel').value;
+  atoms.sort((a,b) => a.depth - b.depth);
 
-  atoms.forEach(a=>{
-    const [r,g,b]=getSpinColor(a);
-    const isSelected=a.i===selectedAtom;
+  // Draw spins
+  const radius = Math.max(2, scale * 0.55 / n);
 
-    if (currentRender==='heat') {
-      const hw=radius*1.4;
-      ctx.fillStyle=`rgb(${r},${g},${b})`;
-      ctx.fillRect(a.px-hw,a.py-hw*.7,hw*2,hw*1.4);
+  atoms.forEach(a => {
+    let [r,g,b];
+    if (currentColorMode === 'spin') {
+      const kT = parseFloat(document.getElementById('sysTemp').value) || 2;
+      const noise = (Math.random()-0.5)*0.03;
+      if (a.sp > 0) { r=61;g=159;b=255; }   // up = accent blue
+      else          { r=240;g=96;b=128; }   // down = rose
+    } else if (currentColorMode === 'energy') {
+      const t = eMax>eMin ? (a.le - eMin)/(eMax-eMin) : 0.5;
+      [r,g,b] = cmapColor(t);
+    } else if (currentColorMode === 'cluster') {
+      [r,g,b] = cmapColor(((a.x+a.y+a.z) % 7) / 6);
+    } else if (currentColorMode === 'flip') {
+      const kT = parseFloat(document.getElementById('sysTemp').value)||2;
+      const prob = a.le > 0 ? 1 : Math.exp(2*a.le/kT);
+      [r,g,b] = cmapColor(prob);
+    }
 
-    } else if (currentRender==='domain') {
-      const nNbr=[spins[idx(a.x+1,a.y,a.z)],spins[idx(a.x-1,a.y,a.z)],spins[idx(a.x,a.y+1,a.z)],spins[idx(a.x,a.y-1,a.z)]];
-      const isDom=nNbr.some(s=>s!==a.sp);
-      if (isDom){ctx.strokeStyle=isDark?'rgba(245,166,35,.9)':'rgba(196,123,0,.9)';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(a.px,a.py,radius*1.12,0,Math.PI*2);ctx.stroke();}
-      const gr=ctx.createRadialGradient(a.px-radius*.3,a.py-radius*.2,0,a.px,a.py,radius);
-      const br=isDom?1.4:1;
-      gr.addColorStop(0,`rgba(${Math.min(255,r*br+80)},${Math.min(255,g*br+80)},${Math.min(255,b*br+80)},.95)`);
-      gr.addColorStop(1,`rgba(${r},${g},${b},.75)`);
-      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(a.px,a.py,radius,0,Math.PI*2); ctx.fill();
-
-    } else if (currentRender==='spins') {
-      if (model==='heisenberg'||model==='xy') {
-        // Draw projected spin vector
-        const phi=spinPhi?spinPhi[a.i]:0, theta=spinTheta?spinTheta[a.i]:Math.PI/2;
-        const vx=Math.sin(theta)*Math.cos(phi)*radius*2;
-        const vy=Math.sin(theta)*Math.sin(phi)*radius*2;
-        ctx.strokeStyle=`rgb(${r},${g},${b})`; ctx.lineWidth=1.2;
-        ctx.beginPath(); ctx.moveTo(a.px-vx*.5,a.py+vy*.5); ctx.lineTo(a.px+vx*.5,a.py-vy*.5); ctx.stroke();
-        ctx.fillStyle=`rgba(${r},${g},${b},.5)`;
-        ctx.beginPath(); ctx.arc(a.px,a.py,radius*.35,0,Math.PI*2); ctx.fill();
-      } else {
-        const arrowLen=radius*1.8, dy=a.sp>0?-arrowLen:arrowLen;
-        ctx.strokeStyle=`rgb(${r},${g},${b})`; ctx.lineWidth=1.2;
-        ctx.beginPath(); ctx.moveTo(a.px,a.py+dy*.4); ctx.lineTo(a.px,a.py-dy*.4); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(a.px,a.py-dy*.4); ctx.lineTo(a.px-2,a.py-dy*.4+dy*.25); ctx.lineTo(a.px+2,a.py-dy*.4+dy*.25); ctx.closePath();
-        ctx.fillStyle=`rgb(${r},${g},${b})`; ctx.fill();
+    if (currentRender === 'heat') {
+      // Flat square heat map
+      const hw = radius * 1.4;
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(a.px-hw, a.py-hw*0.7, hw*2, hw*1.4);
+    } else if (currentRender === 'domain') {
+      // Domain walls: draw only boundary sites differently
+      const n2 = latticeN;
+      const nNbr = [
+        spins[((a.x+1)%n2)*n2*n2 + a.y*n2 + a.z],
+        spins[((a.x-1+n2)%n2)*n2*n2 + a.y*n2 + a.z],
+        spins[a.x*n2*n2 + ((a.y+1)%n2)*n2 + a.z],
+      ];
+      const isDomain = nNbr.some(s => s !== a.sp);
+      if (isDomain) {
+        ctx.strokeStyle = dark ? 'rgba(245,166,35,0.8)' : 'rgba(196,123,0,0.8)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(a.px, a.py, radius*1.1, 0, Math.PI*2); ctx.stroke();
       }
+      const gr = ctx.createRadialGradient(a.px-radius*.3,a.py-radius*.2,0,a.px,a.py,radius);
+      const bright = isDomain ? 1.4 : 1;
+      gr.addColorStop(0, `rgba(${Math.min(255,r*bright+80)},${Math.min(255,g*bright+80)},${Math.min(255,b*bright+80)},0.95)`);
+      gr.addColorStop(1, `rgba(${r},${g},${b},0.75)`);
+      ctx.fillStyle = gr;
+      ctx.beginPath(); ctx.arc(a.px, a.py, radius, 0, Math.PI*2); ctx.fill();
+    } else if (currentRender === 'spins') {
+      // Draw arrow
+      const arrowLen = radius * 1.8;
+      const dy = a.sp > 0 ? -arrowLen : arrowLen;
+      ctx.strokeStyle = `rgb(${r},${g},${b})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(a.px, a.py + dy*0.4);
+      ctx.lineTo(a.px, a.py - dy*0.4);
+      ctx.stroke();
+      // arrowhead
+      ctx.beginPath();
+      ctx.moveTo(a.px, a.py - dy*0.4);
+      ctx.lineTo(a.px - 2, a.py - dy*0.4 + dy*0.25);
+      ctx.lineTo(a.px + 2, a.py - dy*0.4 + dy*0.25);
+      ctx.closePath();
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fill();
+      // dot center
+      ctx.fillStyle = `rgba(${r},${g},${b},0.4)`;
+      ctx.beginPath(); ctx.arc(a.px, a.py, radius*0.4, 0, Math.PI*2); ctx.fill();
     } else {
       // Default: lit sphere
-      const gr=ctx.createRadialGradient(a.px-radius*.3,a.py-radius*.25,0,a.px,a.py,radius);
-      gr.addColorStop(0,  `rgba(${Math.min(255,r+85)},${Math.min(255,g+85)},${Math.min(255,b+85)},.95)`);
-      gr.addColorStop(.55,`rgba(${r},${g},${b},.9)`);
-      gr.addColorStop(1,  `rgba(${Math.max(0,r-60)},${Math.max(0,g-60)},${Math.max(0,b-60)},.85)`);
-      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(a.px,a.py,radius,0,Math.PI*2); ctx.fill();
-      if (isSelected){ctx.strokeStyle='rgba(255,220,0,.9)';ctx.lineWidth=1.8;ctx.stroke();}
-      else if (radius>3){ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=0.4;ctx.stroke();}
+      const gr = ctx.createRadialGradient(a.px-radius*.3,a.py-radius*.25,0,a.px,a.py,radius);
+      const rLight = Math.min(255, r+85), gLight = Math.min(255, g+85), bLight = Math.min(255, b+85);
+      const rDark  = Math.max(0, r-60),  gDark  = Math.max(0, g-60),  bDark  = Math.max(0, b-60);
+      gr.addColorStop(0,   `rgba(${rLight},${gLight},${bLight},0.95)`);
+      gr.addColorStop(0.55,`rgba(${r},${g},${b},0.9)`);
+      gr.addColorStop(1,   `rgba(${rDark},${gDark},${bDark},0.85)`);
+      ctx.fillStyle = gr;
+      ctx.beginPath(); ctx.arc(a.px, a.py, radius, 0, Math.PI*2); ctx.fill();
+      if (radius > 3) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+        ctx.lineWidth = 0.4; ctx.stroke();
+      }
     }
   });
 
   // Axes
   if (document.getElementById('showAxesBtn').classList.contains('on')) {
-    const o=project(.03,.03,.03);
-    [[.18,.03,.03,'#f06080','a'],[.03,.18,.03,'#2dd9a0','b'],[.03,.03,.18,'#4dabf7','c']].forEach(([px,py,pz,col,lbl])=>{
-      const p=project(px,py,pz); ctx.strokeStyle=col; ctx.lineWidth=1.5;
+    const o = project(0.03,0.03,0.03);
+    [[0.18,0.03,0.03,'#f06080','a'],
+     [0.03,0.18,0.03,'#2dd9a0','b'],
+     [0.03,0.03,0.18,'#4dabf7','c']].forEach(([px,py,pz,col,lbl]) => {
+      const p = project(px,py,pz);
+      ctx.strokeStyle=col; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.moveTo(o.px,o.py); ctx.lineTo(p.px,p.py); ctx.stroke();
-      ctx.fillStyle=col; ctx.font='bold 8px JetBrains Mono'; ctx.fillText(lbl,p.px+3,p.py+3);
+      ctx.fillStyle=col; ctx.font='bold 8px JetBrains Mono';
+      ctx.fillText(lbl, p.px+3, p.py+3);
     });
   }
 
-  // Selected atom info tooltip
-  if (selectedAtom != null && spins) {
-    const sa=atoms.find(a=>a.i===selectedAtom);
-    if (sa) {
-      const info=`Atom #${selectedAtom}  spin=${spins[selectedAtom]>0?'+1':'-1'}  E=${localEnergies?localEnergies[selectedAtom].toFixed(3):'?'}`;
-      ctx.fillStyle='rgba(8,12,20,.88)'; ctx.strokeStyle='rgba(74,158,255,.4)'; ctx.lineWidth=1;
-      const tw=ctx.measureText(info).width+16;
-      const tx=Math.min(sa.px+10, W-tw-4), ty=Math.max(sa.py-28, 4);
-      ctx.beginPath(); ctx.roundRect?ctx.roundRect(tx,ty,tw,18,4):ctx.rect(tx,ty,tw,18);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle='rgba(61,159,255,.9)'; ctx.font='8px JetBrains Mono';
-      ctx.fillText(info, tx+8, ty+12);
-    }
-  }
-
-  // Footer
-  ctx.fillStyle='rgba(61,159,255,.5)'; ctx.font='8px JetBrains Mono';
-  const kT=parseFloat(document.getElementById('sysTemp').value).toFixed(2);
-  ctx.fillText(`step ${mcStep.toLocaleString()} · N=${n}³ · ${document.getElementById('mcModel').value} · kT=${kT}`, 8, H-7);
-}
-
-/* ── Canvas atom picking (click to select) ── */
-document.getElementById('mcCanvas').addEventListener('pointerdown', function(e) {
-  if (!spins) return;
-  const rect=this.getBoundingClientRect();
-  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-  const n=latticeN, scale=Math.min(this.width,this.height)*0.33;
-  const cx=this.width/2, cy=this.height/2, ax=0.3, ay=rotAngle;
-  const show2D=document.getElementById('show2DCheck')?.checked;
-  const midZ=Math.floor(n/2);
-
-  let bestDist=Infinity, bestIdx=null;
-  for(let x=0;x<n;x++) for(let y=0;y<n;y++) for(let z=0;z<n;z++){
-    if(show2D && z!==midZ) continue;
-    const nx=(x+.5)/n-.5, ny=(y+.5)/n-.5, nz=(z+.5)/n-.5;
-    const rx=nx*Math.cos(ay)-nz*Math.sin(ay), rzt=nx*Math.sin(ay)+nz*Math.cos(ay);
-    const ry=ny*Math.cos(ax)-rzt*Math.sin(ax);
-    const px=cx+rx*scale, py=cy-ry*scale*0.7;
-    const d=Math.hypot(px-mx,py-my);
-    if(d<bestDist){bestDist=d;bestIdx=x*n*n+y*n+z;}
-  }
-  const radius=Math.max(2,scale*.55/n);
-  if(bestDist<radius*2.5){
-    selectedAtom = bestIdx===selectedAtom ? null : bestIdx;
-    if (selectedAtom!=null) {
-      const x=Math.floor(selectedAtom/(n*n)), rem=selectedAtom%(n*n);
-      const y=Math.floor(rem/n), z=rem%n;
-      const le=localEnergies?localEnergies[selectedAtom].toFixed(3):'?';
-      log(`Selected atom #${selectedAtom} at (${x},${y},${z})  spin=${spins[selectedAtom]>0?'+1':'-1'}  local E=${le}`,'inf');
-    }
-    renderCanvas();
-  }
-});
-
-/* ── 2D slice overlay ── */
-function renderSlice() {
-  if (!spins) return;
-  const wrap=document.getElementById('viewer-wrap');
-  const canvas=document.getElementById('sliceCanvas');
-  const W=wrap.clientWidth||600, H=wrap.clientHeight||400;
-  canvas.width=W; canvas.height=H; canvas.style.display='block';
-  const n=latticeN, midZ=Math.floor(n/2);
-  const cellW=Math.min(W,H)*0.28/n, offX=W-cellW*n-8, offY=8;
-  const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-  ctx.strokeStyle='rgba(80,130,200,0.25)'; ctx.lineWidth=0.5;
-  ctx.strokeRect(offX-1,offY-1,cellW*n+2,cellW*n+2);
-  ctx.fillStyle='rgba(61,159,255,.5)'; ctx.font='7.5px JetBrains Mono';
-  ctx.fillText(`z=${midZ} slice`,offX,offY-3);
-
-  const model=document.getElementById('mcModel').value;
-  for(let x=0;x<n;x++) for(let y=0;y<n;y++){
-    const i=idx(x,y,midZ);
-    let col;
-    if(model==='heisenberg'||model==='xy'){
-      const [r,g,b]=heisenbergColor(i); col=`rgb(${r},${g},${b})`;
-    } else if(model==='potts'){
-      const [r,g,b]=pottsColor(pottsSpins[i]); col=`rgb(${r},${g},${b})`;
-    } else {
-      col=spins[i]>0?'#3d9fff':'#f06080';
-    }
-    ctx.fillStyle=col; ctx.fillRect(offX+x*cellW,offY+y*cellW,cellW-.5,cellW-.5);
-    if(i===selectedAtom){ctx.strokeStyle='rgba(255,220,0,.9)';ctx.lineWidth=1.2;ctx.strokeRect(offX+x*cellW,offY+y*cellW,cellW-.5,cellW-.5);}
-  }
+  // Step info
+  ctx.fillStyle = 'rgba(61,159,255,0.55)';
+  ctx.font = '8px JetBrains Mono';
+  ctx.fillText(`step ${mcStep.toLocaleString()} · N=${n}³`, 8, H-7);
 }
 
 /* ── Auto-rotate loop ── */
 function startRenderLoop() {
   function tick() {
-    if (document.getElementById('autoRotBtn').classList.contains('on') && spins) rotAngle+=0.006;
+    if (document.getElementById('autoRotBtn').classList.contains('on') && spins)
+      rotAngle += 0.006;
     if (spins) renderCanvas();
-    animRaf=requestAnimationFrame(tick);
+    animRaf = requestAnimationFrame(tick);
   }
   if (animRaf) cancelAnimationFrame(animRaf);
   tick();
@@ -2235,252 +1427,321 @@ function startRenderLoop() {
 
 /* ── Colorbar ── */
 function updateColorbar() {
-  const canvas=document.getElementById('cbCanvas'); if (!canvas) return;
-  canvas.height=100;
-  const ctx=canvas.getContext('2d'), grad=ctx.createLinearGradient(0,100,0,0);
-  for(let i=0;i<=10;i++){const[r,g,b]=cmapColor(i/10);grad.addColorStop(i/10,`rgb(${r},${g},${b})`);}
-  ctx.fillStyle=grad; ctx.fillRect(0,0,14,100);
-  const eMin=localEnergies?Math.min(...localEnergies):-6, eMax=localEnergies?Math.max(...localEnergies):0;
-  document.getElementById('cbMax').textContent=eMax.toFixed(2);
-  document.getElementById('cbMid').textContent=((eMax+eMin)/2).toFixed(2);
-  document.getElementById('cbMin').textContent=eMin.toFixed(2);
+  const canvas = document.getElementById('cbCanvas');
+  if (!canvas) return;
+  canvas.height = 100;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 100, 0, 0);
+  for (let i=0;i<=10;i++) {
+    const [r,g,b] = cmapColor(i/10);
+    grad.addColorStop(i/10, `rgb(${r},${g},${b})`);
+  }
+  ctx.fillStyle = grad; ctx.fillRect(0,0,14,100);
+  const eMin = localEnergies ? Math.min(...localEnergies) : -6;
+  const eMax = localEnergies ? Math.max(...localEnergies) :  0;
+  document.getElementById('cbMax').textContent = eMax.toFixed(2);
+  document.getElementById('cbMid').textContent = ((eMax+eMin)/2).toFixed(2);
+  document.getElementById('cbMin').textContent = eMin.toFixed(2);
 }
 
 /* ══════════════════════════════════════════════════════════
    UI UPDATES
 ══════════════════════════════════════════════════════════ */
-function updateStatsBars(E,M,chi,cv,accRate) {
-  const dim=(id,v)=>{const el=document.getElementById(id);if(el){el.textContent=v;el.classList.remove('dim');}};
-  dim('sE',E.toFixed(5)); dim('sM',M.toFixed(5)); dim('sChi',chi.toFixed(4)); dim('sCv',cv.toFixed(4));
-  if(history.M.length>5){
-    const ms=history.M.slice(-200),m2=ms.reduce((a,m)=>a+m*m,0)/ms.length,m4=ms.reduce((a,m)=>a+m*m*m*m,0)/ms.length;
-    dim('sU4',(1-m4/(3*m2*m2||1)).toFixed(4));
-  }
-  dim('sXi',history.xi.slice(-1)[0]?.toFixed(1)??'—');
-  dim('sAcc',(accRate*100).toFixed(1)+'%');
-  const kT=parseFloat(document.getElementById('sysTemp').value)||2;
-  dim('sStepT',`${mcStep.toLocaleString()} · ${kT.toFixed(2)}`);
+function updateStatsBars(E, M, chi, cv, accRate) {
+  const dim = (id,v) => { const el=document.getElementById(id); if(el){el.textContent=v;el.classList.remove('dim');} };
+  dim('sE', E.toFixed(5));
+  dim('sM', M.toFixed(5));
+  dim('sChi', chi.toFixed(4));
+  dim('sCv', cv.toFixed(4));
+  dim('sAcc', (accRate*100).toFixed(1)+'%');
+  const kT = parseFloat(document.getElementById('sysTemp').value)||2;
+  dim('sStepT', `${mcStep.toLocaleString()} · ${kT.toFixed(2)}`);
 }
 
-function updateHUD(kT,E,M,acc) {
-  document.getElementById('hudT').textContent  = `${kT.toFixed(2)} J/k`;
-  document.getElementById('hudH').textContent  = parseFloat(document.getElementById('sysField').value).toFixed(2);
-  document.getElementById('hudN').textContent  = `${latticeN}³`;
-  document.getElementById('hudE').textContent  = E.toFixed(4);
-  document.getElementById('hudM').textContent  = M.toFixed(4);
-  document.getElementById('hudAcc').textContent= (acc*100).toFixed(1)+'%';
-  const Tc=getTc();
-  if(Tc){
-    const ratio=kT/Tc;
-    document.getElementById('hudTcChip').style.display='flex';
-    document.getElementById('hudTc').textContent=Tc.toFixed(3);
-    document.getElementById('hudTRatio').textContent=ratio.toFixed(3);
-    document.getElementById('hudTRatio').style.color=ratio<.85?'var(--accent)':ratio<1.15?'var(--rose)':'var(--amber)';
-  }
+function updateHUD(kT, E, M, acc) {
+  document.getElementById('hudT').textContent = `${kT.toFixed(2)} J/k`;
+  document.getElementById('hudH').textContent = parseFloat(document.getElementById('sysField').value).toFixed(2);
+  document.getElementById('hudN').textContent = `${latticeN}³`;
+  document.getElementById('hudE').textContent = E.toFixed(4);
+  document.getElementById('hudM').textContent = M.toFixed(4);
+  document.getElementById('hudAcc').textContent = (acc*100).toFixed(1)+'%';
 }
 
 function updateNavChips(acc) {
-  document.getElementById('navStep').textContent  = mcStep.toLocaleString();
-  document.getElementById('navAccept').textContent= (acc*100).toFixed(1)+'%';
+  document.getElementById('navStep').textContent = mcStep.toLocaleString();
+  document.getElementById('navAccept').textContent = (acc*100).toFixed(1)+'%';
 }
 
-function updateAveragesPanel(E,M,chi,cv) {
-  const set=(id,v)=>{const el=document.getElementById(id);if(el){el.textContent=v;el.classList.remove('dim');}};
-  set('propE',E.toFixed(5));
-  if(history.E.length>2){
-    const em=history.E.reduce((a,b)=>a+b,0)/history.E.length;
-    set('propEvar',(history.E.reduce((a,b)=>a+(b-em)**2,0)/history.E.length).toFixed(6));
+function updateAveragesPanel(E, M, chi, cv) {
+  const set = (id,v) => { const el=document.getElementById(id); if(el){el.textContent=v;el.classList.remove('dim');} };
+  set('propE', E.toFixed(5));
+  const N3 = latticeN**3;
+  // Variance of energy
+  if (history.E.length > 2) {
+    const eMean = history.E.reduce((a,b)=>a+b,0)/history.E.length;
+    const eVar  = history.E.reduce((a,b)=>a+(b-eMean)**2,0)/history.E.length;
+    set('propEvar', eVar.toFixed(6));
   }
-  set('propM',M.toFixed(5)); set('propChi',chi.toFixed(5)); set('propCv',cv.toFixed(5));
-  if(history.M.length>5){
-    const ms=history.M,m2=ms.reduce((a,m)=>a+m*m,0)/ms.length,m4=ms.reduce((a,m)=>a+m*m*m*m,0)/ms.length;
-    set('propBinder',(1-m4/(3*m2*m2||1)).toFixed(5));
+  set('propM', M.toFixed(5));
+  set('propChi', chi.toFixed(5));
+  set('propCv', cv.toFixed(5));
+  // Binder cumulant U4 = 1 - ⟨m⁴⟩/(3⟨m²⟩²)
+  if (history.M.length > 5) {
+    const ms = history.M;
+    const m2 = ms.reduce((a,m)=>a+m*m,0)/ms.length;
+    const m4 = ms.reduce((a,m)=>a+m*m*m*m,0)/ms.length;
+    const U4 = 1 - m4/(3*m2*m2||1);
+    set('propBinder', U4.toFixed(5));
   }
-  set('propXi',history.xi.slice(-1)[0]?.toFixed(2)??'—');
-  set('propCluster',lastClusterSize>0?(lastClusterSize/latticeN**3).toFixed(4):'—');
-  set('infoMethod',currentMethod);
-  set('infoModel',document.getElementById('mcModel').options[document.getElementById('mcModel').selectedIndex].text);
-  set('infoLattice',`${latticeN}³`);
-  set('infoAccepted',mcStep>0?((accepted/Math.max(attempted,1))*100).toFixed(1)+'%':'—');
+  set('infoMethod', currentMethod);
+  set('infoModel', document.getElementById('mcModel').options[document.getElementById('mcModel').selectedIndex].text);
+  set('infoLattice', `${latticeN}³`);
+  set('infoAccepted', mcStep > 0 ? ((accepted/Math.max(attempted,1))*100).toFixed(1)+'%' : '—');
 }
 
 function updateInfoCards() {
-  document.getElementById('infoMethod').textContent=currentMethod;
-  document.getElementById('infoModel').textContent=
+  document.getElementById('infoMethod').textContent = currentMethod;
+  document.getElementById('infoModel').textContent =
     document.getElementById('mcModel').options[document.getElementById('mcModel').selectedIndex].text;
-  document.getElementById('infoLattice').textContent=latticeN+'³';
+  document.getElementById('infoLattice').textContent = latticeN+'³';
 }
 
 /* ══════════════════════════════════════════════════════════
    PLOTLY CHARTS
 ══════════════════════════════════════════════════════════ */
-let plotInit={};
-const plotBg  =()=>isDark?'#080c14':'#edf1f7';
-const plotFont=()=>isDark?'#5a7a9a':'#607090';
-const plotGrid=()=>isDark?'rgba(80,130,200,0.1)':'rgba(60,100,160,0.08)';
+let plotInit = {};
 
-function mkLayout(xTitle,yTitle,extra={}) {
+const plotBg    = () => isDark ? '#080c14' : '#edf1f7';
+const plotFont  = () => isDark ? '#5a7a9a' : '#607090';
+const plotGrid  = () => isDark ? 'rgba(80,130,200,0.1)' : 'rgba(60,100,160,0.08)';
+
+function mkLayout(xTitle, yTitle, extra={}) {
   return Object.assign({
-    plot_bgcolor:plotBg(),paper_bgcolor:plotBg(),
-    font:{family:'JetBrains Mono, monospace',size:9,color:plotFont()},
-    margin:{t:6,b:36,l:52,r:14},
-    xaxis:{title:{text:xTitle,font:{size:9},standoff:4},gridcolor:plotGrid(),zerolinecolor:plotGrid(),tickfont:{size:8},linecolor:plotGrid()},
-    yaxis:{title:{text:yTitle,font:{size:9},standoff:4},gridcolor:plotGrid(),zerolinecolor:plotGrid(),tickfont:{size:8},linecolor:plotGrid()},
-    showlegend:true,legend:{font:{size:8},bgcolor:'rgba(0,0,0,0)',borderwidth:0,x:1,xanchor:'right',y:1},
-    hovermode:'x unified',hoverlabel:{bgcolor:plotBg(),bordercolor:plotGrid(),font:{size:9,family:'JetBrains Mono,monospace'}},
-  },extra);
+    plot_bgcolor: plotBg(), paper_bgcolor: plotBg(),
+    font: { family:'JetBrains Mono, monospace', size:9, color:plotFont() },
+    margin: { t:6, b:36, l:52, r:14 },
+    xaxis: { title:{text:xTitle,font:{size:9},standoff:4}, gridcolor:plotGrid(), zerolinecolor:plotGrid(),
+             tickfont:{size:8}, linecolor:plotGrid() },
+    yaxis: { title:{text:yTitle,font:{size:9},standoff:4}, gridcolor:plotGrid(), zerolinecolor:plotGrid(),
+             tickfont:{size:8}, linecolor:plotGrid() },
+    showlegend:true,
+    legend:{ font:{size:8}, bgcolor:'rgba(0,0,0,0)', borderwidth:0, x:1, xanchor:'right', y:1 },
+    hovermode:'x unified',
+    hoverlabel:{ bgcolor:plotBg(), bordercolor:plotGrid(), font:{size:9,family:'JetBrains Mono,monospace'} },
+  }, extra);
 }
-const CFG={responsive:true,displayModeBar:true,displaylogo:false,
+
+const CFG = { responsive:true, displayModeBar:true, displaylogo:false,
   modeBarButtonsToRemove:['select2d','lasso2d','autoScale2d'],
-  toImageButtonOptions:{format:'png',scale:2}};
+  toImageButtonOptions:{format:'png',scale:2} };
 
 function updateActivePlot(tabName) {
-  if (!tabName) tabName=document.querySelector('.ptab.active')?.dataset.plot;
-  if (!tabName||history.E.length<2) return;
-  const MAX=600;
-  const steps=history.step.slice(-MAX),E=history.E.slice(-MAX),M=history.M.slice(-MAX);
-  const acc=history.acc.slice(-MAX),chi=history.chi.slice(-MAX),cv=history.cv.slice(-MAX);
-  const runAvg=(arr,w=20)=>arr.map((_,i)=>{const sl=arr.slice(Math.max(0,i-w),i+1);return sl.reduce((a,b)=>a+b,0)/sl.length;});
-  const Tc=getTc(), kT=parseFloat(document.getElementById('sysTemp').value)||2;
+  if (!tabName) tabName = document.querySelector('.ptab.active')?.dataset.plot;
+  if (!tabName || history.E.length < 2) return;
 
-  if (tabName==='Energy') {
-    const eAvg=runAvg(E);
-    const Tc_line=Tc?[{x:[steps[0],steps[steps.length-1]],y:[kT/Tc,kT/Tc],name:`T/T_c=${( kT/Tc).toFixed(2)}`,mode:'lines',line:{color:'rgba(240,96,128,.4)',width:1,dash:'dot'},hoverinfo:'skip'}]:[];
-    const traces=[
-      {x:steps,y:E,name:'E/N',mode:'lines',line:{color:'#3d9fff',width:1.4},hovertemplate:'%{y:.5f}<extra>E/N</extra>'},
-      {x:steps,y:eAvg,name:'⟨E/N⟩',mode:'lines',line:{color:'#2dd9a0',width:2},hovertemplate:'%{y:.5f}<extra>avg</extra>'},
-      ...Tc_line,
+  const MAX = 600;
+  const steps = history.step.slice(-MAX);
+  const E   = history.E.slice(-MAX);
+  const M   = history.M.slice(-MAX);
+  const acc = history.acc.slice(-MAX);
+  const chi = history.chi.slice(-MAX);
+  const cv  = history.cv.slice(-MAX);
+
+  // Running averages
+  const runAvg = (arr, w=20) => arr.map((_,i)=>{ const sl=arr.slice(Math.max(0,i-w),i+1); return sl.reduce((a,b)=>a+b,0)/sl.length; });
+
+  if (tabName === 'Energy') {
+    const eAvg = runAvg(E);
+    const traces = [
+      { x:steps, y:E, name:'E/N', mode:'lines', line:{color:'#3d9fff',width:1.4},
+        hovertemplate:'%{y:.5f}<extra>E/N</extra>' },
+      { x:steps, y:eAvg, name:'⟨E/N⟩', mode:'lines', line:{color:'#2dd9a0',width:2,dash:'solid'},
+        hovertemplate:'%{y:.5f}<extra>avg</extra>' },
     ];
-    plotInit.Energy?Plotly.react('plotEnergy',traces,mkLayout('MC step','E / N')):(Plotly.newPlot('plotEnergy',traces,mkLayout('MC step','E / N'),CFG),plotInit.Energy=true);
+    const layout = mkLayout('MC step','E / N');
+    plotInit.Energy
+      ? Plotly.react('plotEnergy', traces, layout)
+      : (Plotly.newPlot('plotEnergy', traces, layout, CFG), plotInit.Energy=true);
   }
-  if (tabName==='Trace') {
-    const mAvg=runAvg(M);
-    const traces=[
-      {x:steps,y:M,name:'|m|(t)',mode:'lines',line:{color:'#9d7fff',width:1.2},opacity:.7,hovertemplate:'%{y:.5f}<extra>|m|</extra>'},
-      {x:steps,y:mAvg,name:'⟨|m|⟩ avg',mode:'lines',line:{color:'#f5a623',width:2},hovertemplate:'%{y:.5f}<extra>avg</extra>'},
+
+  if (tabName === 'Trace') {
+    const mAvg = runAvg(M);
+    const traces = [
+      { x:steps, y:M, name:'|m|(t)', mode:'lines', line:{color:'#9d7fff',width:1.2}, opacity:0.7,
+        hovertemplate:'%{y:.5f}<extra>|m|</extra>' },
+      { x:steps, y:mAvg, name:'⟨|m|⟩ running', mode:'lines', line:{color:'#f5a623',width:2},
+        hovertemplate:'%{y:.5f}<extra>avg</extra>' },
     ];
-    plotInit.Trace?Plotly.react('plotTrace',traces,mkLayout('MC step','|m|')):(Plotly.newPlot('plotTrace',traces,mkLayout('MC step','|m|'),CFG),plotInit.Trace=true);
+    const layout = mkLayout('MC step','|m| (magnetisation)');
+    plotInit.Trace
+      ? Plotly.react('plotTrace', traces, layout)
+      : (Plotly.newPlot('plotTrace', traces, layout, CFG), plotInit.Trace=true);
   }
-  if (tabName==='Order') {
-    const traces=[
-      {x:steps,y:M,name:'|m|',mode:'lines',line:{color:'#2dd9a0',width:1.8},fill:'tozeroy',fillcolor:'rgba(45,217,160,.07)',hovertemplate:'%{y:.5f}<extra>|m|</extra>'},
-      chi.length?{x:steps.slice(-chi.length),y:chi,name:'χ',mode:'lines',line:{color:'#f06080',width:1.5},yaxis:'y2',hovertemplate:'%{y:.4f}<extra>χ</extra>'}:null,
-      cv.length?{x:steps.slice(-cv.length),y:cv,name:'C_V',mode:'lines',line:{color:'#f5a623',width:1.2,dash:'dot'},yaxis:'y2',hovertemplate:'%{y:.4f}<extra>C_V</extra>'}:null,
+
+  if (tabName === 'Order') {
+    const kT = parseFloat(document.getElementById('sysTemp').value)||2;
+    const Tc = CRITICAL_T;
+    const traces = [
+      { x:steps, y:M, name:'|m|', mode:'lines', line:{color:'#2dd9a0',width:1.8},
+        fill:'tozeroy', fillcolor:'rgba(45,217,160,0.07)',
+        hovertemplate:'%{y:.5f}<extra>|m|</extra>' },
+      chi.length ? { x:steps.slice(-chi.length), y:chi, name:'χ', mode:'lines',
+        line:{color:'#f06080',width:1.5}, yaxis:'y2',
+        hovertemplate:'%{y:.4f}<extra>χ</extra>' } : null,
     ].filter(Boolean);
-    const layout=mkLayout('MC step','|m|',{yaxis2:{overlaying:'y',side:'right',gridcolor:'transparent',title:{text:'χ · C_V',font:{size:9}},color:'#f06080'},annotations:Tc?[{x:steps[Math.floor(steps.length*.5)],y:.9,text:`kT=${kT.toFixed(2)}, T_c≈${Tc.toFixed(3)}`,showarrow:false,font:{size:8,color:plotFont()},bgcolor:'rgba(0,0,0,0)'}]:[]});
-    plotInit.Order?Plotly.react('plotOrder',traces,layout):(Plotly.newPlot('plotOrder',traces,layout,CFG),plotInit.Order=true);
+    const layout = mkLayout('MC step','|m|', {
+      yaxis2:{ overlaying:'y', side:'right', gridcolor:'transparent',
+               title:{text:'χ',font:{size:9}}, color:'#f06080' },
+      annotations:[{ x:steps[Math.floor(steps.length*.5)], y:0.9,
+        text:`kT=${kT.toFixed(2)}, T_c≈${Tc.toFixed(3)}`,
+        showarrow:false, font:{size:8,color:plotFont()}, bgcolor:'rgba(0,0,0,0)' }],
+    });
+    plotInit.Order
+      ? Plotly.react('plotOrder', traces, layout)
+      : (Plotly.newPlot('plotOrder', traces, layout, CFG), plotInit.Order=true);
   }
-  if (tabName==='Accept') {
-    const traces=[
-      {x:steps,y:acc.map(a=>a*100),name:'Accept %',mode:'lines',line:{color:'#f5a623',width:1.5},fill:'tozeroy',fillcolor:'rgba(245,166,35,.06)',hovertemplate:'%{y:.2f}%<extra>acc</extra>'},
-      {x:[steps[0],steps[steps.length-1]],y:[23.4,23.4],name:'Optimal 23.4%',mode:'lines',line:{color:'#9d7fff',width:1.2,dash:'dash'},hoverinfo:'skip'},
+
+  if (tabName === 'Accept') {
+    const target = 0.234; // optimal for continuous distributions
+    const traces = [
+      { x:steps, y:acc.map(a=>a*100), name:'Accept %', mode:'lines',
+        line:{color:'#f5a623',width:1.5},
+        fill:'tozeroy', fillcolor:'rgba(245,166,35,0.06)',
+        hovertemplate:'%{y:.2f}%<extra>acc</extra>' },
+      { x:[steps[0],steps[steps.length-1]], y:[target*100,target*100],
+        name:`Optimal ${(target*100).toFixed(1)}%`, mode:'lines',
+        line:{color:'#9d7fff',width:1.2,dash:'dash'}, hoverinfo:'skip' },
     ];
-    plotInit.Accept?Plotly.react('plotAccept',traces,mkLayout('MC step','Acceptance (%)')):(Plotly.newPlot('plotAccept',traces,mkLayout('MC step','Acceptance (%)'),CFG),plotInit.Accept=true);
+    const layout = mkLayout('MC step','Acceptance rate (%)');
+    plotInit.Accept
+      ? Plotly.react('plotAccept', traces, layout)
+      : (Plotly.newPlot('plotAccept', traces, layout, CFG), plotInit.Accept=true);
   }
-  if (tabName==='Hist') {
-    const traces=[
-      {x:E,type:'histogram',name:'P(E/N)',nbinsx:40,marker:{color:'rgba(61,159,255,.55)',line:{color:'rgba(61,159,255,.9)',width:1}},hovertemplate:'E=%{x:.4f}  n=%{y}<extra></extra>'},
-      {x:M,type:'histogram',name:'P(|m|)',nbinsx:40,marker:{color:'rgba(45,217,160,.45)',line:{color:'rgba(45,217,160,.8)',width:1}},yaxis:'y2',opacity:.7,hovertemplate:'m=%{x:.4f}  n=%{y}<extra></extra>'},
+
+  if (tabName === 'Hist') {
+    const traces = [
+      { x:E, type:'histogram', name:'P(E/N)', nbinsx:40,
+        marker:{ color:'rgba(61,159,255,0.55)', line:{color:'rgba(61,159,255,0.9)',width:1} },
+        hovertemplate:'E/N=%{x:.4f}  count=%{y}<extra></extra>' },
     ];
-    const layout=mkLayout('Value','Count(E)',{yaxis2:{overlaying:'y',side:'right',gridcolor:'transparent',title:{text:'Count(|m|)',font:{size:9}},color:'#2dd9a0'}});
-    plotInit.Hist?Plotly.react('plotHist',traces,layout):(Plotly.newPlot('plotHist',traces,layout,CFG),plotInit.Hist=true);
+    const layout = mkLayout('E / N','Count',{showlegend:false});
+    plotInit.Hist
+      ? Plotly.react('plotHist', traces, layout)
+      : (Plotly.newPlot('plotHist', traces, layout, CFG), plotInit.Hist=true);
   }
-  if (tabName==='Replica') {
-    const nR=parseInt(document.getElementById('ptReplicas').value)||8;
-    const tMin=parseFloat(document.getElementById('ptTmin').value)||100;
-    const tMax=parseFloat(document.getElementById('ptTmax').value)||1000;
-    const nSwap=Math.min(steps.length,80), swapSteps=Array.from({length:nSwap},(_,i)=>i+1);
-    const traces=Array.from({length:Math.min(nR,8)},(_,r)=>({
-      x:swapSteps,y:swapSteps.map(s=>tMin*Math.pow(tMax/tMin,r/(nR-1||1))+(Math.sin(s*.3+r)*.5+Math.cos(s*.2)*.3)*(tMax-tMin)*.05),
-      name:`R${r+1}`,mode:'lines',line:{width:1.3},hovertemplate:'T=%{y:.1f} K<extra>R'+(r+1)+'</extra>',
+
+  if (tabName === 'Replica') {
+    const nR = parseInt(document.getElementById('ptReplicas').value)||8;
+    const tMin = parseFloat(document.getElementById('ptTmin').value)||100;
+    const tMax = parseFloat(document.getElementById('ptTmax').value)||1000;
+    // Generate mock replica temperature assignment
+    const nSwap = Math.min(steps.length, 80);
+    const swapSteps = Array.from({length:nSwap},(_,i)=>i+1);
+    const traces = Array.from({length:Math.min(nR,6)},(_,r) => ({
+      x: swapSteps,
+      y: swapSteps.map(s => {
+        const base = tMin * Math.pow(tMax/tMin, r/(nR-1||1));
+        const drift = (Math.sin(s*0.3+r)*0.5+Math.cos(s*0.2)*0.3) * (tMax-tMin)*0.05;
+        return base + drift;
+      }),
+      name:`Replica ${r+1}`, mode:'lines',
+      line:{ width:1.3 },
+      hovertemplate:'T=%{y:.1f} K<extra>R'+(r+1)+'</extra>',
     }));
-    plotInit.Replica?Plotly.react('plotReplica',traces,mkLayout('Swap step','T (K)',{showlegend:true})):(Plotly.newPlot('plotReplica',traces,mkLayout('Swap step','T (K)',{showlegend:true}),CFG),plotInit.Replica=true);
+    const layout = mkLayout('Swap step','Temperature (K)',{showlegend:true});
+    plotInit.Replica
+      ? Plotly.react('plotReplica', traces, layout)
+      : (Plotly.newPlot('plotReplica', traces, layout, CFG), plotInit.Replica=true);
   }
 }
 
+/* ── Right panel mini plot ── */
 function updateMiniPlot() {
-  if (history.M.length<2) return;
-  const mMini=history.M.slice(-100),sMini=history.step.slice(-100);
-  const layout={plot_bgcolor:plotBg(),paper_bgcolor:plotBg(),font:{family:'JetBrains Mono',size:8,color:plotFont()},margin:{t:4,b:22,l:34,r:6},xaxis:{gridcolor:plotGrid(),zerolinecolor:plotGrid(),tickfont:{size:7}},yaxis:{gridcolor:plotGrid(),zerolinecolor:plotGrid(),tickfont:{size:7}},showlegend:false};
-  if(!plotInit.rpPlot){Plotly.newPlot('rpPlot',[{x:sMini,y:mMini,mode:'lines',line:{color:'#9d7fff',width:1.3},showlegend:false}],layout,{responsive:true,displayModeBar:false});plotInit.rpPlot=true;}
-  else Plotly.react('rpPlot',[{x:sMini,y:mMini,mode:'lines',line:{color:'#9d7fff',width:1.3},showlegend:false}],layout);
+  if (history.M.length < 2) return;
+  const mMini = history.M.slice(-100);
+  const sMini = history.step.slice(-100);
+  const layout = {
+    plot_bgcolor: plotBg(), paper_bgcolor: plotBg(),
+    font:{family:'JetBrains Mono',size:8,color:plotFont()},
+    margin:{t:4,b:22,l:34,r:6},
+    xaxis:{gridcolor:plotGrid(),zerolinecolor:plotGrid(),tickfont:{size:7}},
+    yaxis:{gridcolor:plotGrid(),zerolinecolor:plotGrid(),tickfont:{size:7}},
+    showlegend:false,
+  };
+  if (!plotInit.rpPlot) {
+    Plotly.newPlot('rpPlot',[{x:sMini,y:mMini,mode:'lines',line:{color:'#9d7fff',width:1.3},showlegend:false}],
+      layout,{responsive:true,displayModeBar:false});
+    plotInit.rpPlot=true;
+  } else {
+    Plotly.react('rpPlot',[{x:sMini,y:mMini,mode:'lines',line:{color:'#9d7fff',width:1.3},showlegend:false}],layout);
+  }
 }
 
 function rethemePlots() {
-  const l={plot_bgcolor:plotBg(),paper_bgcolor:plotBg(),'font.color':plotFont(),'xaxis.gridcolor':plotGrid(),'yaxis.gridcolor':plotGrid()};
-  ['plotEnergy','plotTrace','plotOrder','plotAccept','plotHist','plotReplica','plotPhase','plotCorr','plotChiCv','plotFSS','rpPlot'].forEach(id=>{try{Plotly.relayout(id,l);}catch(_){}});
+  const layout={plot_bgcolor:plotBg(),paper_bgcolor:plotBg(),'font.color':plotFont(),'xaxis.gridcolor':plotGrid(),'yaxis.gridcolor':plotGrid()};
+  ['plotEnergy','plotTrace','plotOrder','plotAccept','plotHist','plotReplica','rpPlot'].forEach(id=>{
+    try{Plotly.relayout(id,layout);}catch(_){}
+  });
 }
 
-/* ══ SPIN IMPORT / EXPORT ══ */
-document.getElementById('exportSpinsBtn').addEventListener('click',()=>{
-  if (!spins){log('No system.','warn');return;}
-  const data={latticeN,model:document.getElementById('mcModel').value,kT:parseFloat(document.getElementById('sysTemp').value),spins:Array.from(spins),pottsSpins:Array.from(pottsSpins),step:mcStep};
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  a.download=`mc_spins_step${mcStep}.json`; a.click();
-  log(`Exported spin config N=${latticeN}³ step=${mcStep}`,'ok');
-});
-document.getElementById('importSpinsBtn').addEventListener('click',()=>document.getElementById('spinFileIn').click());
-document.getElementById('spinFileIn').addEventListener('change',function(){
-  const file=this.files?.[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const data=JSON.parse(e.target.result);
-      latticeN=data.latticeN||4; const N3=latticeN**3;
-      spins=new Int8Array(data.spins); pottsSpins=new Uint8Array(data.pottsSpins||N3);
-      localEnergies=new Float32Array(N3); spinTheta=new Float32Array(N3); spinPhi=new Float32Array(N3);
-      if(data.model) document.getElementById('mcModel').value=data.model;
-      if(data.kT){document.getElementById('sysTemp').value=data.kT;document.getElementById('sysTempD').textContent=data.kT.toFixed(2);}
-      computeAllLocalEnergies(); document.getElementById('vpEmpty').style.display='none';
-      updateTcBadge(); log(`Imported N=${latticeN}³ step=${data.step||0}`,'ok');
-    }catch(err){log(`Import failed: ${err.message}`,'err');}
-    this.value='';
-  };
-  reader.readAsText(file);
+/* ══ SNAPSHOT / EXPORT ══ */
+document.getElementById('snapshotBtn').addEventListener('click', () => {
+  const c = document.getElementById('mcCanvas');
+  if (!spins) { log('Initialize system first.','warn'); return; }
+  const a = document.createElement('a');
+  a.href=c.toDataURL('image/png');
+  a.download=`mc_${currentMethod}_step${mcStep}.png`;
+  a.click();
+  log(`Snapshot saved: mc_${currentMethod}_step${mcStep}.png`,'ok');
 });
 
-/* ══ SNAPSHOT / CSV EXPORT ══ */
-document.getElementById('snapshotBtn').addEventListener('click',()=>{
-  if(!spins){log('Initialize first.','warn');return;}
-  const c=document.getElementById('mcCanvas');
-  const a=document.createElement('a'); a.href=c.toDataURL('image/png');
-  a.download=`mc_${currentMethod}_step${mcStep}.png`; a.click();
-  log(`Snapshot saved`,'ok');
-});
-document.getElementById('exportCSVBtn').addEventListener('click',()=>{
-  if(!history.step.length){log('No data.','warn');return;}
-  let csv='step,E_per_N,m,chi,cv,acceptance_rate,cluster_frac,xi\n';
+document.getElementById('exportCSVBtn').addEventListener('click', () => {
+  if (!spins) { log('No data to export.','warn'); return; }
+  let csv = 'step,E_per_N,m,acceptance_rate\n';
   history.step.forEach((_,i)=>{
-    csv+=`${history.step[i]},${history.E[i]},${history.M[i]},${history.chi[i]??''},${history.cv[i]??''},${history.acc[i]},${history.cluster[i]??''},${history.xi[i]??''}\n`;
+    csv+=`${history.step[i]},${history.E[i]},${history.M[i]},${history.acc[i]}\n`;
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download=`mc_trace_${currentMethod}.csv`; a.click();
-  log(`Exported ${history.step.length} rows (E,m,χ,C_V,acc,cluster,ξ)`,'ok');
+  a.download=`mc_trace_${currentMethod}.csv`;
+  a.click();
+  log(`Exported ${history.step.length} samples as CSV.`,'ok');
 });
 
-/* ══ HPC ══ */
-document.getElementById('submitHPCBtn').addEventListener('click',async()=>{
-  const host=document.getElementById('mcHost').value.trim(), cmd=document.getElementById('mcCommand').value.trim();
-  if(!host||!cmd){log('[HPC] Provide login node and command.','warn');return;}
+/* ══ HPC SUBMIT ══ */
+document.getElementById('submitHPCBtn').addEventListener('click', async () => {
+  const host = document.getElementById('mcHost').value.trim();
+  const cmd  = document.getElementById('mcCommand').value.trim();
+  if (!host||!cmd) { log('[HPC] Provide login node and command.','warn'); return; }
   log(`[HPC] Connecting to ${host}…`,'inf');
-  try{const res=await fetch('/api/md/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host,command:cmd})});const data=await res.json();if(data.error)log('[HPC] '+data.error,'err');else log('[HPC] '+(data.output||'No output.'),'ok');}catch(e){log('[HPC] '+e,'err');}
+  log(`[HPC] Command: ${cmd}`,'inf');
+  try {
+    const res = await fetch('/api/md/run',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({host,command:cmd})});
+    const data = await res.json();
+    if (data.error) log('[HPC] Error: '+data.error,'err');
+    else log('[HPC] Output:\n'+(data.output||'No output.'),'ok');
+  } catch(e) { log('[HPC] '+e,'err'); }
 });
 
 /* ══ CONSOLE ══ */
-document.getElementById('clearConBtn').addEventListener('click',()=>{document.getElementById('con').innerHTML='';log('Cleared.');});
-function log(msg,type=''){
-  const con=document.getElementById('con'), el=document.createElement('div');
-  el.className='cl'+(type?' '+type:'');
-  el.textContent=`[${new Date().toLocaleTimeString('en',{hour12:false})}] ${msg}`;
-  con.appendChild(el); con.scrollTop=con.scrollHeight;
+document.getElementById('clearConBtn').addEventListener('click', () => {
+  document.getElementById('con').innerHTML='';
+  log('Console cleared.');
+});
+
+function log(msg, type='') {
+  const con = document.getElementById('con');
+  const el  = document.createElement('div');
+  el.className = 'cl' + (type?' '+type:'');
+  const ts = new Date().toLocaleTimeString('en',{hour12:false});
+  el.textContent = `[${ts}] ${msg}`;
+  con.appendChild(el);
+  con.scrollTop = con.scrollHeight;
 }
 
 /* ══ INIT ══ */
-updateTcBadge();
-log('Keyboard: Space=start/pause  R=reset  S=snapshot  ←/→=T±0.1','inf');
-setTimeout(()=>document.getElementById('loading').classList.add('gone'),1800);
+setTimeout(() => document.getElementById('loading').classList.add('gone'), 1800);
 startRenderLoop();
 </script>
 </body>

@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMAD – Superconducting Materials Automated Discovery</title>
+    <title>SMAD · Superconducting Materials Automated Discovery</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -189,214 +189,6 @@
 
     #overview.home-overview-bridge{padding-top:3.25rem!important;border-top:1px solid rgba(0,0,0,0.06)}
     body.theme-light #overview.home-overview-bridge{border-top-color:rgba(0,0,0,0.08)}
-
-    /* ── New Home Hero (Orbitron / Space Mono) ── */
-    #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-    .smad-hero { position: relative; z-index: 1; }
-    .smad-hero .page{
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 40px;
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 56px 64px 80px;
-      min-height: calc(100vh - 56px);
-      align-items: start;
-    }
-    @media (max-width: 980px){
-      .smad-hero .page{ grid-template-columns: 1fr; padding: 44px 18px 60px; gap: 28px; }
-    }
-    .smad-hero .left { display: flex; flex-direction: column; gap: 0; }
-    .smad-hero .eyebrow{
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.85rem;
-      color: #7a9bb5;
-      margin-bottom: 28px;
-      letter-spacing: 0.02em;
-    }
-    .smad-hero .eyebrow-bar{
-      width: 3px; height: 18px;
-      background: #00c8ff;
-      border-radius: 2px;
-      box-shadow: 0 0 8px rgba(0,200,255,0.8);
-    }
-    .smad-hero .eyebrow span { color: #00c8ff; }
-    .smad-hero .logo-wrap { margin-bottom: 20px; }
-    .smad-hero .logo{
-      font-family: 'Orbitron', monospace;
-      font-weight: 900;
-      font-size: clamp(72px, 8vw, 120px);
-      letter-spacing: -0.01em;
-      line-height: 1;
-      background: linear-gradient(135deg, #ffffff 0%, #a0d8ff 45%, #00c8ff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0 0 30px rgba(0, 200, 255, 0.25));
-      user-select: none;
-    }
-    .smad-hero .subtitle{
-      font-family: 'Space Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.22em;
-      color: #4a6680;
-      text-transform: uppercase;
-      margin-bottom: 32px;
-    }
-    .smad-hero .description{
-      font-size: 0.95rem;
-      line-height: 1.75;
-      color: #7a9bb5;
-      max-width: 520px;
-      margin-bottom: 44px;
-    }
-    .smad-hero .description strong { color: #e8f4ff; font-weight: 600; }
-    .smad-hero .search-wrap{
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 24px;
-      max-width: 560px;
-    }
-    .smad-hero .search-input-wrap{
-      flex: 1;
-      display: flex;
-      align-items: center;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(26,47,74,1);
-      border-radius: 8px;
-      padding: 0 16px;
-      height: 46px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .smad-hero .search-input-wrap:focus-within{
-      border-color: rgba(0,200,255,0.6);
-      box-shadow: 0 0 0 3px rgba(0,200,255,0.08);
-    }
-    .smad-hero .search-icon { color: #4a6680; margin-right: 10px; flex-shrink: 0; }
-    .smad-hero .search-input{
-      background: none; border: none; outline: none;
-      color: #e8f4ff; font-family: 'Inter', sans-serif; font-size: 0.88rem;
-      width: 100%;
-    }
-    .smad-hero .search-input::placeholder { color: #4a6680; }
-    .smad-hero .btn-search{
-      background: #00c8ff;
-      color: #050d18;
-      border: none; cursor: pointer;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.82rem;
-      font-weight: 700;
-      padding: 0 22px;
-      height: 46px;
-      border-radius: 8px;
-      white-space: nowrap;
-      transition: background 0.2s, box-shadow 0.2s;
-      box-shadow: 0 0 16px rgba(0,200,255,0.3);
-      flex-shrink: 0;
-    }
-    .smad-hero .btn-search:hover{
-      background: #33d6ff;
-      box-shadow: 0 0 24px rgba(0,200,255,0.5);
-    }
-    .smad-hero .tabs{ display: flex; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
-    .smad-hero .tab{
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 24px;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-      text-decoration: none;
-      font-family: 'Inter', sans-serif;
-    }
-    .smad-hero .tab-primary{
-      background: #1a6fff;
-      color: #fff;
-      box-shadow: 0 0 20px rgba(26,111,255,0.35);
-    }
-    .smad-hero .tab-primary:hover{ background: #2a7fff; }
-    .smad-hero .tab-secondary{
-      background: rgba(255,255,255,0.04);
-      color: #7a9bb5;
-      border: 1px solid rgba(26,47,74,1);
-    }
-    .smad-hero .tab-secondary:hover{ border-color: rgba(0,200,255,0.6); color: #e8f4ff; }
-    .smad-hero .stats{ display: flex; gap: 48px; flex-wrap: wrap; }
-    .smad-hero .stat-value{
-      font-family: 'Orbitron', monospace;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #e8f4ff;
-      letter-spacing: 0.02em;
-      line-height: 1.1;
-    }
-    .smad-hero .stat-label{
-      font-family: 'Space Mono', monospace;
-      font-size: 0.62rem;
-      letter-spacing: 0.14em;
-      color: #4a6680;
-      text-transform: uppercase;
-      margin-top: 4px;
-    }
-    .smad-hero .capabilities-panel{
-      background: #0f1c2e;
-      border: 1px solid #1a2f4a;
-      border-radius: 0;
-      padding: 28px 28px 24px;
-      position: sticky;
-      top: 78px;
-      box-shadow: 0 4px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
-    }
-    .smad-hero .cap-title{
-      font-family: 'Space Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 0.22em;
-      color: #4a6680;
-      text-transform: uppercase;
-      margin-bottom: 22px;
-    }
-    .smad-hero .cap-list{ display: flex; flex-direction: column; gap: 0; }
-    .smad-hero .cap-item{
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 14px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      cursor: pointer;
-      transition: background 0.15s;
-      text-decoration: none;
-      color: inherit;
-      border-radius: 0;
-      padding-left: 8px;
-      margin: 0 -8px;
-    }
-    .smad-hero .cap-item:last-child{ border-bottom: none; }
-    .smad-hero .cap-item:hover{ background: rgba(0,200,255,0.04); }
-    .smad-hero .cap-icon{
-      width: 20px; height: 20px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .smad-hero .cap-icon svg{ width: 14px; height: 14px; }
-    .smad-hero .cap-name{
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: #e8f4ff;
-      line-height: 1.2;
-      margin-bottom: 3px;
-    }
-    .smad-hero .cap-desc{
-      font-size: 0.75rem;
-      color: #4a6680;
-      line-height: 1.4;
-    }
     </style>
 </head>
 <body class="home-page">
@@ -420,184 +212,102 @@
         </div>
     </nav>
 
-    <canvas id="stars" aria-hidden="true"></canvas>
-
-    <header class="smad-hero">
-      <div class="page">
-        <div class="left">
-          <div class="eyebrow">
-            <div class="eyebrow-bar"></div>
-            A platform for <span>data-driven superconductivity</span>
+    <header class="home-hero">
+      <canvas id="home-bg-canvas" aria-hidden="true"></canvas>
+      <div class="hh-inner">
+        <div class="hh-main">
+          <p class="hero-platform">A platform for <span>data-driven superconductivity</span></p>
+          <div class="wordmark-wrap">
+            <div class="wordmark">SMAD</div>
+            <div class="wordmark-sub">Superconducting Materials Automated Discovery</div>
           </div>
-
-          <div class="logo-wrap">
-            <div class="logo">SMAD</div>
-          </div>
-
-          <p class="subtitle">Superconducting Materials Automated Discovery</p>
-
-          <p class="description">
-            <strong>Design crystal structures, run physics-based simulations, and explore
-            material properties in real time</strong> — enhanced by advanced visualization
-            and AI-driven material generation. One seamless platform for advanced
-            materials research, accessible directly in your browser.
+          <p class="descriptor">
+            <strong>Design crystal structures, run physics-based simulations, and explore material properties in real time</strong> — enhanced by advanced visualization and AI-driven material generation. One seamless platform for advanced materials research, accessible directly in your browser.
           </p>
-
-          <form class="search-wrap" action="/databases" method="get" role="search">
-            <div class="search-input-wrap">
-              <span class="search-icon" aria-hidden="true">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
-              </span>
-              <input class="search-input" type="search" name="search" placeholder="Search materials, structures…" autocomplete="off">
-            </div>
-            <button class="btn-search" type="submit">Search →</button>
+          <form class="search-row" id="homeSearchForm" action="/databases" method="get" role="search">
+            <span class="search-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <input class="search-input" type="search" name="search" id="homeSearchInput" placeholder="Search materials, structures, formulas…" autocomplete="off" />
+            <button class="search-btn" type="submit">Search →</button>
           </form>
-
-          <div class="tabs">
-            <a href="/databases" class="tab tab-primary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <polygon points="5 3 19 12 5 21 5 3"/>
-              </svg>
+          <div class="action-row">
+            <a class="btn-primary" href="/databases">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Material Explorer
             </a>
-            <a href="/about" class="tab tab-secondary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
+            <a class="btn-ghost" href="/about">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Documentation
             </a>
           </div>
-
-          <div class="stats">
-            <div class="stat-item">
-              <div class="stat-value">2.4M+</div>
-              <div class="stat-label">Materials</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value">180+</div>
-              <div class="stat-label">Sim Types</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value">12k</div>
-              <div class="stat-label">Researchers</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value">99.9%</div>
-              <div class="stat-label">Uptime</div>
-            </div>
+          <div class="stat-row">
+            <div class="stat"><div class="stat-val">2.4M+</div><div class="stat-lbl">Materials</div></div>
+            <div class="stat"><div class="stat-val">180+</div><div class="stat-lbl">Sim types</div></div>
+            <div class="stat"><div class="stat-val">12k</div><div class="stat-lbl">Researchers</div></div>
+            <div class="stat"><div class="stat-val">99.9%</div><div class="stat-lbl">Uptime</div></div>
           </div>
         </div>
-
-        <aside class="capabilities-panel">
-          <img src="/static/smad-hero-logo.png" alt="SMAD magnetic levitation logo" style="width:100%;height:auto;margin-bottom:18px;opacity:0.95">
-          <p class="cap-title">Capabilities</p>
+        <div class="cap-panel">
+          <div class="cap-heading">Capabilities</div>
           <div class="cap-list">
-            <a class="cap-item" href="/structures">
-              <div class="cap-icon ic-design" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                  <path d="M2 17l10 5 10-5"/>
-                  <path d="M2 12l10 5 10-5"/>
-                </svg>
-              </div>
-              <div class="cap-text">
-                <div class="cap-name">Design</div>
-                <div class="cap-desc">Interactive 3D crystal structure editor</div>
-              </div>
-            </a>
-
-            <a class="cap-item" href="/md">
-              <div class="cap-icon ic-sim" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-              </div>
-              <div class="cap-text">
-                <div class="cap-name">Simulate</div>
-                <div class="cap-desc">Physics-based simulations, real-time feedback</div>
-              </div>
-            </a>
-
-            <a class="cap-item" href="/analysis">
-              <div class="cap-icon ic-analyze" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-              </div>
-              <div class="cap-text">
-                <div class="cap-name">Analyze</div>
-                <div class="cap-desc">Extract properties, visualize results instantly</div>
-              </div>
-            </a>
-
-            <a class="cap-item" href="/montecarlo">
-              <div class="cap-icon ic-gen" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-                </svg>
-              </div>
-              <div class="cap-text">
-                <div class="cap-name">Generate</div>
-                <div class="cap-desc">AI-driven material discovery and prediction</div>
-              </div>
-            </a>
+            <div class="cap-item"><span class="ci">✦</span><div class="ct"><span class="cn">Design</span><span class="cs">Interactive 3D crystal structure editor</span></div></div>
+            <div class="cap-item"><span class="ci">⟳</span><div class="ct"><span class="cn">Simulate</span><span class="cs">Physics-based simulations, real-time feedback</span></div></div>
+            <div class="cap-item"><span class="ci">◈</span><div class="ct"><span class="cn">Analyze</span><span class="cs">Extract properties, visualize results instantly</span></div></div>
+            <div class="cap-item"><span class="ci">⬡</span><div class="ct"><span class="cn">Generate</span><span class="cs">AI-driven material discovery and prediction</span></div></div>
+            <div class="cap-item"><span class="ci">⇄</span><div class="ct"><span class="cn">Collaborate</span><span class="cs">Share and iterate on experiments seamlessly</span></div></div>
+            <div class="cap-item"><span class="ci">◎</span><div class="ct"><span class="cn">Access Anywhere</span><span class="cs">Fully browser-based, no setup required</span></div></div>
           </div>
-        </aside>
+        </div>
       </div>
     </header>
 
     <script>
-    // ── Generate starfield on canvas ──
-    (function() {
-      const canvas = document.getElementById('stars');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      let stars = [];
-
-      function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      }
-
-      function initStars() {
-        stars = [];
-        const count = Math.floor((canvas.width * canvas.height) / 6000);
-        for (let i = 0; i < count; i++) {
-          stars.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            r: Math.random() * 1.2 + 0.2,
-            phase: Math.random() * Math.PI * 2,
-            speed: 0.3 + Math.random() * 0.8,
-            min: 0.05 + Math.random() * 0.1,
-            max: 0.5 + Math.random() * 0.5,
-          });
+    (function(){
+      const canvas=document.getElementById('home-bg-canvas'); if(!canvas) return;
+      const ctx=canvas.getContext('2d'); let W,H,stars=[],bonds=[]; const mouse={x:-9999,y:-9999};
+      const hdr=document.querySelector('.home-hero');
+      hdr.addEventListener('mousemove',e=>{ const r=canvas.getBoundingClientRect(); mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top; });
+      hdr.addEventListener('mouseleave',()=>{ mouse.x=-9999; mouse.y=-9999; });
+      function init(){
+        W=canvas.width=canvas.offsetWidth; H=canvas.height=canvas.offsetHeight; stars=[]; bonds=[];
+        for(let i=0;i<300;i++) stars.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.035,vy:(Math.random()-.5)*.035,r:Math.random()*.55+.12,ph:Math.random()*Math.PI*2,sp:Math.random()*.0009+.0005,type:'bg'});
+        const cols=Math.ceil(W/68)+3, rows=Math.ceil(H/60)+3;
+        for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+          const jx=(Math.random()-.5)*22, jy=(Math.random()-.5)*18;
+          stars.push({x:c*68+(r%2)*34-34+jx,y:r*60-30+jy,vx:(Math.random()-.5)*.065,vy:(Math.random()-.5)*.055,r:Math.random()*1.4+.5,ph:Math.random()*Math.PI*2,sp:Math.random()*.0007+.0004,bright:Math.random()>.74,type:'node'});
+        }
+        const nodes=stars.filter(s=>s.type==='node'); const maxD=98;
+        for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+          const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+          if(dx*dx+dy*dy<maxD*maxD) bonds.push([nodes[i],nodes[j],maxD]);
         }
       }
-
-      let t = 0;
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        t += 0.01;
-        for (const s of stars) {
-          const op = s.min + (s.max - s.min) * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,255,255,${op})`;
-          ctx.fill();
+      function draw(t){
+        ctx.clearRect(0,0,W,H);
+        for(const s of stars){ s.x+=s.vx; s.y+=s.vy; if(s.x<-60||s.x>W+60) s.vx*=-1; if(s.y<-60||s.y>H+60) s.vy*=-1; }
+        for(const s of stars){ if(s.type!=='node') continue; const dx=s.x-mouse.x, dy=s.y-mouse.y, d2=dx*dx+dy*dy; if(d2<8100&&d2>0){ const d=Math.sqrt(d2), f=(90-d)/90*.22; s.x+=(dx/d)*f; s.y+=(dy/d)*f; } }
+        for(const [a,b,max] of bonds){
+          const dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy); if(d>max) continue;
+          const mx=(a.x+b.x)*.5-mouse.x, my=(a.y+b.y)*.5-mouse.y, md=Math.sqrt(mx*mx+my*my), mf=md<115?(1-md/115)*.6:0;
+          const alpha=(1-d/max)*(.12+mf); ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+          if(mf>.05){ const gr=ctx.createLinearGradient(a.x,a.y,b.x,b.y); gr.addColorStop(0,`rgba(59,130,246,${alpha})`); gr.addColorStop(1,`rgba(34,211,238,${alpha})`); ctx.strokeStyle=gr; ctx.lineWidth=.5+mf*.7; }
+          else{ ctx.strokeStyle=`rgba(140,195,255,${alpha})`; ctx.lineWidth=.45; }
+          ctx.stroke();
         }
-        requestAnimationFrame(draw);
+        for(const s of stars){ if(s.type!=='bg') continue; const tw=.22+.78*Math.abs(Math.sin(t*s.sp+s.ph)); ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle=`rgba(180,215,255,${.18*tw})`; ctx.fill(); }
+        for(const s of stars){ if(s.type!=='node') continue; const pulse=.5+.5*Math.sin(t*s.sp+s.ph);
+          const mdx=s.x-mouse.x, mdy=s.y-mouse.y, md=Math.sqrt(mdx*mdx+mdy*mdy), near=md<100?(1-md/100):0;
+          if(s.bright||near>.08){ const gr2=Math.max(s.r*5.5,near*15), g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,gr2);
+            g.addColorStop(0,`rgba(80,200,255,${(s.bright?0.15*pulse:0)+near*.38})`); g.addColorStop(1,'rgba(80,200,255,0)');
+            ctx.beginPath(); ctx.arc(s.x,s.y,gr2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill(); }
+          const cr=s.r+(s.bright?pulse*.45:0)+near*1.3, ca=s.bright?(.48+.32*pulse+near*.42):(.14+.14*pulse+near*.52);
+          const rC=Math.round(110+near*70), gC=Math.round(170+near*58);
+          ctx.beginPath(); ctx.arc(s.x,s.y,cr,0,Math.PI*2); ctx.fillStyle=`rgba(${rC},${gC},255,${ca})`; ctx.fill();
+        }
       }
-
-      resize();
-      initStars();
-      draw();
-      window.addEventListener('resize', () => { resize(); initStars(); });
+      function loop(t){ draw(t); requestAnimationFrame(loop); }
+      window.addEventListener('resize',init); init(); requestAnimationFrame(loop);
     })();
     </script>
 
