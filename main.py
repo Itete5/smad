@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal, List
 
 from fastapi import FastAPI, WebSocket, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
@@ -76,10 +76,10 @@ async def structures_page(request: Request):
 
 
 @app.get("/analysis", response_class=HTMLResponse)
-async def analysis_page(request: Request):
-    return templates.TemplateResponse(
-        "analysis.html",
-        {"request": request}
+async def analysis_page():
+    return FileResponse(
+        Path(__file__).resolve().parent / "static" / "analysis_v3.html",
+        media_type="text/html; charset=utf-8",
     )
 
 

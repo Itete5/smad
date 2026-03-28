@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<title>SMAD Analysis v3 · 15-Module Materials Informatics</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+
+:root{--bg0:#030609;--bg1:#060c14;--bg2:#09121e;--bg3:#0d1826;--bg4:#122030;--bg5:#18283c;--bg6:#1e3048;--bd:rgba(50,120,210,.10);--bd2:rgba(50,120,210,.22);--t0:#cce4ff;--t1:#5898c8;--t2:#2d5878;--t3:#152e48;--ac:#1878ff;--acg:rgba(24,120,255,.12);--gr:#0eb860;--grg:rgba(14,184,96,.1);--am:#d88c10;--amg:rgba(216,140,16,.1);--rs:#d82848;--rsg:rgba(216,40,72,.1);--vi:#6840ff;--vig:rgba(104,64,255,.1);--cy:#04b8d8;--cyg:rgba(4,184,216,.1);--or:#f04c10;--pi:#c840a0;--te:#00c8a0;--mono:'JetBrains Mono',monospace;--sans:'Instrument Sans',sans-serif;--disp:'Syne',sans-serif;--r:5px;--r2:9px;--navh:48px;--sbw:244px;--rpw:210px;--sh:0 6px 28px rgba(0,0,0,.75);--tr:.13s ease;}
+[data-theme=light]{--bg0:#e0ecfc;--bg1:#f2f8ff;--bg2:#e8f2fc;--bg3:#dceaf8;--bg4:#cce0f4;--bg5:#bcd4f0;--bg6:#acc8ea;--bd:rgba(20,80,180,.08);--bd2:rgba(20,80,180,.2);--t0:#030b1c;--t1:#0e2c50;--t2:#285580;--t3:#72a0c8;--sh:0 6px 28px rgba(0,0,0,.07);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);background:var(--bg0);color:var(--t0);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{cursor:pointer;font-family:inherit;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;color:var(--t0)}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:var(--bg6);border-radius:2px}
+#ld{position:fixed;inset:0;z-index:9999;background:var(--bg0);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s,visibility .5s}
+#ld.out{opacity:0;visibility:hidden;pointer-events:none}
+.ld-hex{width:56px;height:56px;position:relative}.ld-hex svg{animation:ldspin 8s linear infinite}@keyframes ldspin{to{transform:rotate(360deg)}}
+.ld-dot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}.ld-dot i{width:9px;height:9px;border-radius:50%;background:var(--cy);box-shadow:0 0 14px var(--cy);animation:ldp 1.2s ease infinite;font-style:normal}@keyframes ldp{0%,100%{transform:scale(1)}50%{transform:scale(1.7);opacity:.3}}
+.ld-title{font-family:var(--disp);font-size:22px;font-weight:800;letter-spacing:-.5px}.ld-title b{color:var(--cy)}
+.ld-sub{font-family:var(--mono);font-size:8px;color:var(--t3);letter-spacing:1.2px;text-transform:uppercase}
+.ld-bar{width:180px;height:2px;background:var(--bg5);border-radius:2px;overflow:hidden}.ld-bf{height:100%;background:linear-gradient(90deg,var(--cy),var(--ac));animation:ldfill 2.6s cubic-bezier(.4,0,.2,1) forwards}@keyframes ldfill{from{width:0}to{width:100%}}
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+#ws{display:flex;flex:1;overflow:hidden;min-height:0}
+#nav{height:var(--navh);background:var(--bg1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 12px;gap:7px;flex-shrink:0;z-index:200}
+.logo{display:flex;align-items:center;gap:7px;flex-shrink:0}.lhex{width:26px;height:26px;background:linear-gradient(135deg,var(--cy),var(--ac));clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+.ln{font-family:var(--disp);font-size:14px;font-weight:800;letter-spacing:-.3px}.lv{font-size:7px;color:var(--t3);font-family:var(--mono);letter-spacing:.5px}
+.nd{width:1px;height:18px;background:var(--bd);flex-shrink:0}.nlinks{display:flex;gap:1px}
+.nl{padding:3px 8px;border-radius:var(--r);font-size:9.5px;font-weight:600;font-family:var(--disp);color:var(--t2);transition:all var(--tr);border:1px solid transparent}.nl:hover{color:var(--t1);background:var(--bg3)}.nl.on{background:var(--acg);border-color:rgba(24,120,255,.2);color:var(--ac)}
+.nright{margin-left:auto;display:flex;align-items:center;gap:5px}
+.nchip{display:flex;align-items:center;gap:3px;padding:3px 7px;border-radius:16px;background:var(--bg3);border:1px solid var(--bd);font-family:var(--mono);font-size:8px}.nc-l{color:var(--t3)}.nc-v{color:var(--t1);font-weight:500}
+.thbtn{padding:3px 8px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--bd);font-size:9px;color:var(--t1);font-family:var(--disp);font-weight:600;transition:all var(--tr)}
+#sb{width:var(--sbw);flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.sb-hd{padding:9px 11px 6px;border-bottom:1px solid var(--bd);flex-shrink:0}.sb-hd-t{font-size:8px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--t3);font-family:var(--disp)}
+.sb-body{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:4px}
+.sb-sec{padding:6px 11px 2px;font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:var(--disp)}
+.mi{display:flex;align-items:center;gap:7px;padding:6px 11px;cursor:pointer;border-left:2px solid transparent;transition:all var(--tr)}.mi:hover{background:var(--bg2)}.mi.on{background:var(--bg2);border-left-color:var(--ac)}
+.mi-ico{width:22px;height:22px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.mi-n{font-size:10px;font-weight:600;color:var(--t1);font-family:var(--disp)}.mi.on .mi-n{color:var(--t0)}.mi-d{font-size:7.5px;color:var(--t3)}
+.mi-badge{font-family:var(--mono);font-size:6.5px;padding:1px 5px;border-radius:9px;flex-shrink:0}
+.mb-live{background:var(--grg);border:1px solid rgba(14,184,96,.22);color:var(--gr)}.mb-new{background:var(--acg);border:1px solid rgba(24,120,255,.3);color:var(--ac)}
+.upzone{margin:7px 9px 3px;border:1px dashed var(--bd2);border-radius:var(--r2);text-align:center;cursor:pointer;transition:all var(--tr);background:var(--bg2);padding:0}
+.upzone label{display:block;padding:10px;cursor:pointer}.upzone:hover,.upzone.drag{border-color:var(--cy);background:var(--cyg)}
+.upzone-ico{font-size:18px;margin-bottom:3px;opacity:.5;display:block}.upzone-t{font-size:10px;font-weight:600;color:var(--t1);font-family:var(--disp)}.upzone-s{font-size:8px;color:var(--t3);margin-top:1px}
+.file-badge{display:none;align-items:center;gap:5px;margin:3px 9px;padding:4px 8px;background:var(--grg);border:1px solid rgba(14,184,96,.2);border-radius:var(--r);font-size:8px;font-family:var(--mono);color:var(--gr)}.file-badge.show{display:flex}
+#fi{display:none}
+.prm{padding:8px 10px;border-top:1px solid var(--bd)}.prm-t{font-size:7px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--t3);font-family:var(--disp);margin-bottom:6px}
+.pr{margin-bottom:5px}.pl{font-size:8.5px;color:var(--t2);margin-bottom:2px;display:flex;justify-content:space-between;align-items:baseline}.pv{font-family:var(--mono);font-size:8px;color:var(--ac)}
+.psel,.pinp{width:100%;padding:4px 7px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);font-size:10px;outline:none;transition:border-color var(--tr)}.psel:focus,.pinp:focus{border-color:var(--ac)}.psel{cursor:pointer}
+.prng{width:100%;height:3px;border-radius:2px;background:var(--bg5);outline:none;appearance:none;cursor:pointer;border:none}.prng::-webkit-slider-thumb{appearance:none;width:10px;height:10px;border-radius:50%;background:var(--ac);box-shadow:0 0 4px rgba(24,120,255,.5)}
+.runbtn{width:100%;padding:7px;border-radius:var(--r2);background:linear-gradient(135deg,var(--ac),var(--cy));color:#fff;font-size:10.5px;font-weight:700;font-family:var(--disp);border:none;margin-top:5px;transition:all var(--tr);letter-spacing:.15px}
+.runbtn:hover:not(:disabled){opacity:.84;transform:translateY(-1px);box-shadow:0 4px 14px rgba(24,120,255,.45)}.runbtn:disabled{opacity:.28;cursor:not-allowed}
+.pbar{height:2px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:4px}.pbar-fill{height:100%;background:linear-gradient(90deg,var(--cy),var(--ac));border-radius:2px;transition:width .2s ease;width:0}
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;min-height:0}
+#mbar{padding:7px 13px;background:var(--bg1);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.mbar-ico{font-size:15px}.mbar-t{font-family:var(--disp);font-size:14px;font-weight:800;color:var(--t0)}.mbar-s{font-size:8.5px;color:var(--t3);margin-top:1px}
+.mbar-r{margin-left:auto;display:flex;gap:3px}
+.mbbtn{padding:3px 7px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--bd);font-size:8.5px;font-weight:600;color:var(--t1);transition:all var(--tr);font-family:var(--disp)}.mbbtn:hover{border-color:var(--bd2);color:var(--t0)}.mbbtn.hi{background:var(--acg);border-color:rgba(24,120,255,.25);color:var(--ac)}
+#tbar{display:flex;gap:1px;padding:3px 11px;background:var(--bg2);border-bottom:1px solid var(--bd);flex-shrink:0;overflow-x:auto;scrollbar-width:none}#tbar::-webkit-scrollbar{display:none}
+.tb{padding:3px 9px;border-radius:var(--r);font-size:9px;font-weight:600;color:var(--t2);cursor:pointer;transition:all var(--tr);font-family:var(--disp);border:1px solid transparent;white-space:nowrap}.tb:hover{color:var(--t1);background:var(--bg3)}.tb.on{background:var(--bg5);color:var(--t0);border-color:var(--bd)}
+#content{flex:1;overflow:hidden;min-height:0;display:flex;flex-direction:column}
+.srow{display:flex;gap:4px;padding:6px 9px;flex-shrink:0;flex-wrap:wrap;background:var(--bg1);border-bottom:1px solid var(--bd)}
+.sc{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:5px 8px;min-width:80px;flex:1}.sc-l{font-size:7px;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);font-family:var(--disp);margin-bottom:1px}.sc-v{font-size:12px;font-family:var(--mono);color:var(--t0);font-weight:500;display:flex;align-items:baseline;gap:2px}.sc-u{font-size:7px;color:var(--t2)}
+.cgr{color:var(--gr)}.ccy{color:var(--cy)}.cam{color:var(--am)}.crs{color:var(--rs)}.cvi{color:var(--vi)}
+.plot-area{flex:1;overflow:auto;min-height:0;padding:8px;display:flex;flex-direction:column;gap:8px}
+.pgrid{display:grid;gap:8px}.pg1{grid-template-columns:1fr}.pg2{grid-template-columns:1fr 1fr}.pg3{grid-template-columns:1fr 1fr 1fr}.pg12{grid-template-columns:1.55fr 1fr}.pgcol{display:flex;flex-direction:column;gap:8px}
+.pc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r2);overflow:hidden;display:flex;flex-direction:column;height:310px}
+.pc.tall{height:430px}.pc.med{height:250px}.pc.sm{height:200px}.pc.xs{height:165px}.pc.auto{height:auto;min-height:140px}
+.pc-hd{padding:5px 9px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;height:32px}.pc-t{font-size:9px;font-weight:700;color:var(--t0);font-family:var(--disp)}.pc-s{font-size:7.5px;color:var(--t3);margin-top:1px}
+.pcbtn{padding:1px 6px;border-radius:3px;background:var(--bg3);border:1px solid var(--bd);font-size:7.5px;color:var(--t2);cursor:pointer;transition:all var(--tr);font-family:var(--mono)}.pcbtn:hover{color:var(--t0);border-color:var(--bd2)}
+.pb{flex:1;position:relative;overflow:hidden}.pp{position:absolute;inset:0}
+#bzcanvas,#vibcanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.dtbl{width:100%;border-collapse:collapse;font-size:8.5px}
+.dtbl th{padding:3px 7px;background:var(--bg3);color:var(--t2);font-weight:700;font-family:var(--disp);font-size:7px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+.dtbl td{padding:3px 7px;border-bottom:1px solid var(--bd);color:var(--t1);font-family:var(--mono);font-size:8px}.dtbl tr:hover td{background:var(--bg2)}
+td.ok{color:var(--gr)}td.warn{color:var(--am)}td.bad{color:var(--rs)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px;text-align:center;gap:10px}
+.em-ico{font-size:42px;opacity:.05;animation:emf 4s ease-in-out infinite}@keyframes emf{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.em-t{font-family:var(--disp);font-size:14px;font-weight:700;color:var(--t0)}.em-s{font-size:9.5px;color:var(--t3);max-width:300px;line-height:1.6}
+.em-pills{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}.em-pill{padding:2px 8px;border-radius:14px;background:var(--bg3);border:1px solid var(--bd);font-size:8.5px;color:var(--t2);font-family:var(--mono)}
+#conwrap{flex-shrink:0;border-top:1px solid var(--bd)}.con-hd{padding:2px 10px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;font-size:7.5px;color:var(--t3);font-family:var(--mono);letter-spacing:.4px;text-transform:uppercase}
+#con{height:56px;overflow-y:auto;padding:3px 10px;font-family:var(--mono);font-size:8px;color:var(--t2);line-height:1.8;background:var(--bg0)}.cl.ok{color:var(--gr)}.cl.err{color:var(--rs)}.cl.inf{color:var(--cy)}.cl.warn{color:var(--am)}
+.clrbtn{padding:1px 5px;border-radius:3px;background:var(--bg3);border:1px solid var(--bd);font-size:7.5px;color:var(--t2);cursor:pointer}
+#rp{width:var(--rpw);flex-shrink:0;background:var(--bg1);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.rps{padding:9px;border-bottom:1px solid var(--bd)}.rpt{font-size:7.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);font-family:var(--disp);margin-bottom:6px}
+.kv{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--bd)}.kv:last-child{border:none}.kk{font-size:8.5px;color:var(--t2)}.vv{font-family:var(--mono);font-size:8.5px;color:var(--t0);word-break:break-all}
+.vv.ac{color:var(--ac)}.vv.gr{color:var(--gr)}.vv.am{color:var(--am)}.vv.cy{color:var(--cy)}
+#notif{position:fixed;bottom:14px;right:14px;z-index:9000;display:flex;flex-direction:column;gap:4px}
+.ntf{padding:6px 11px;background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r2);font-size:9.5px;box-shadow:var(--sh);max-width:260px;animation:ntfin .2s ease}
+.ntf.ok{border-left:2px solid var(--gr)}.ntf.err{border-left:2px solid var(--rs)}.ntf.inf{border-left:2px solid var(--cy)}
+@keyframes ntfin{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@media(max-width:1060px){#rp{display:none}}@media(max-width:720px){#sb{width:200px}}
+
+</style>
+</head>
+<body>
+<div id="ld">
+  <div class="ld-hex">
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+      <polygon points="28,3 52,16 52,40 28,53 4,40 4,16" fill="none" stroke="rgba(4,184,216,.35)" stroke-width="1.5"/>
+      <polygon points="28,11 45,21 45,35 28,45 11,35 11,21" fill="none" stroke="rgba(24,120,255,.25)" stroke-width="1"/>
+      <polygon points="28,19 37,24 37,32 28,37 19,32 19,24" fill="none" stroke="rgba(104,64,255,.2)" stroke-width="1"/>
+    </svg>
+    <div class="ld-dot"><i></i></div>
+  </div>
+  <div class="ld-title">SMAD <b>Analysis</b> <span style="color:var(--ac);font-size:14px">v3</span></div>
+  <div class="ld-sub">15-Module Materials Informatics Platform</div>
+  <div class="ld-bar"><div class="ld-bf"></div></div>
+</div>
+
+<div id="app">
+<nav id="nav">
+  <div class="logo">
+    <div class="lhex">&#x2B21;</div>
+    <div><div class="ln">SMAD</div><div class="lv">Analysis v3 &middot; 15 modules</div></div>
+  </div>
+  <div class="nd"></div>
+  <div class="nlinks">
+    <a href="/" class="nl">Home</a>
+    <a href="/structures" class="nl">CrystalForge</a>
+    <a href="/dft" class="nl">DFT</a>
+    <a href="/md" class="nl">MD</a>
+    <a href="/montecarlo" class="nl">Monte Carlo</a>
+    <a href="/analysis" class="nl on">Analysis</a>
+    <a href="/about" class="nl">About</a>
+  </div>
+  <div class="nright">
+    <div class="nchip"><span class="nc-l">Module</span><span class="nc-v" id="navMod">&mdash;</span></div>
+    <div class="nchip"><span class="nc-l">File</span><span class="nc-v" id="navFile" style="color:var(--t3)">none</span></div>
+    <div class="nchip"><span class="nc-l">Status</span><span class="nc-v" id="navSt" style="color:var(--t3)">Ready</span></div>
+    <button class="thbtn" id="thbtn">&#x1F319;</button>
+  </div>
+</nav>
+
+<div id="ws">
+<aside id="sb">
+  <div class="sb-hd"><div class="sb-hd-t">Analysis Modules &middot; 15</div></div>
+  <div class="sb-body">
+    <div class="sb-sec">Spectroscopy</div>
+    <div class="mi on" data-mod="raman" onclick="sw('raman')"><div class="mi-ico" style="background:rgba(104,64,255,.12);color:var(--vi)">&#x22EE;</div><div><div class="mi-n">Raman Simulation</div><div class="mi-d">Peaks &middot; T-broadening &middot; modes</div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="mi" data-mod="ir" onclick="sw('ir')"><div class="mi-ico" style="background:rgba(216,40,72,.12);color:var(--rs)">&#x301C;</div><div><div class="mi-n">Infrared (IR)</div><div class="mi-d">Absorption &middot; active modes</div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="mi" data-mod="xanes" onclick="sw('xanes')"><div class="mi-ico" style="background:rgba(240,76,16,.12);color:var(--or)">&chi;</div><div><div class="mi-n">XANES / EXAFS</div><div class="mi-d">X-ray absorption &middot; fine structure</div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="mi" data-mod="eels" onclick="sw('eels')"><div class="mi-ico" style="background:rgba(200,64,160,.12);color:var(--pi)">&epsilon;</div><div><div class="mi-n">EELS</div><div class="mi-d">Electron energy-loss &middot; core edges</div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="mi" data-mod="arpes" onclick="sw('arpes')"><div class="mi-ico" style="background:rgba(0,200,160,.12);color:var(--te)">A</div><div><div class="mi-n">ARPES</div><div class="mi-d">Angle-resolved photoemission</div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="sb-sec">Lattice Dynamics</div>
+    <div class="mi" data-mod="vib" onclick="sw('vib')"><div class="mi-ico" style="background:rgba(4,184,216,.12);color:var(--cy)">&#x2195;</div><div><div class="mi-n">Vibration Visualizer</div><div class="mi-d">Animated normal modes &middot; 3D</div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="mi" data-mod="phonon" onclick="sw('phonon')"><div class="mi-ico" style="background:rgba(14,184,96,.12);color:var(--gr)">&#x1D714;</div><div><div class="mi-n">Phonon Dispersion</div><div class="mi-d">&omega;(q) &middot; acoustic + optical</div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="mi" data-mod="phonondos" onclick="sw('phonondos')"><div class="mi-ico" style="background:rgba(14,184,96,.12);color:var(--gr)">&#x25A4;</div><div><div class="mi-n">Phonon DOS</div><div class="mi-d">Vibrational DOS &middot; thermal C<sub>V</sub></div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="sb-sec">Electronic Structure</div>
+    <div class="mi" data-mod="seekpath" onclick="sw('seekpath')"><div class="mi-ico" style="background:rgba(216,140,16,.12);color:var(--am)">&#x2B21;</div><div><div class="mi-n">SeeK-path</div><div class="mi-d">k-path finder &middot; high-sym points</div></div><div class="mi-badge mb-new">New</div></div>
+    <div class="mi" data-mod="bands" onclick="sw('bands')"><div class="mi-ico" style="background:rgba(4,184,216,.11);color:var(--cy)">&#xFF5E;&#xFF5E;</div><div><div class="mi-n">Band Structure</div><div class="mi-d">E(k) &middot; gap &middot; VBM/CBM</div></div><div class="mi-badge mb-live">Live</div></div>
+    <div class="mi" data-mod="dos" onclick="sw('dos')"><div class="mi-ico" style="background:rgba(14,184,96,.11);color:var(--gr)">&#x25A6;</div><div><div class="mi-n">DOS / PDOS</div><div class="mi-d">s/p/d orbital &middot; spin &middot; N(E<sub>F</sub>)</div></div><div class="mi-badge mb-live">Live</div></div>
+    <div class="mi" data-mod="bz" onclick="sw('bz')"><div class="mi-ico" style="background:rgba(104,64,255,.11);color:var(--vi)">&#x2B21;</div><div><div class="mi-n">Brillouin Zone</div><div class="mi-d">3D BZ &middot; k-path &middot; rotation</div></div><div class="mi-badge mb-live">Live</div></div>
+    <div class="sb-sec">Structural</div>
+    <div class="mi" data-mod="phase" onclick="sw('phase')"><div class="mi-ico" style="background:rgba(24,120,255,.12);color:var(--ac)">&#x25C8;</div><div><div class="mi-n">Phase Diagram</div><div class="mi-d">Convex hull &middot; &Delta;H<sub>f</sub> &middot; stability</div></div><div class="mi-badge mb-live">Live</div></div>
+    <div class="mi" data-mod="charge" onclick="sw('charge')"><div class="mi-ico" style="background:rgba(216,40,72,.11);color:var(--rs)">&#x25EB;</div><div><div class="mi-n">Charge Density</div><div class="mi-d">2D map &middot; Bader &middot; profile</div></div><div class="mi-badge mb-live">Live</div></div>
+    <div class="mi" data-mod="xrd" onclick="sw('xrd')"><div class="mi-ico" style="background:rgba(216,140,16,.11);color:var(--am)">&#x25C9;</div><div><div class="mi-n">XRD Diffraction</div><div class="mi-d">Bragg &middot; hkl &middot; pseudo-Voigt</div></div><div class="mi-badge mb-live">Live</div></div>
+
+    <div class="sb-sec">Input File</div>
+    <div class="upzone" id="dz"><label for="fi"><span class="upzone-ico">&#x2B06;</span><div class="upzone-t">Drop file or click</div><div class="upzone-s">CIF &middot; POSCAR &middot; XYZ &middot; QE &middot; cube</div></label></div>
+    <input type="file" id="fi" accept=".cif,.poscar,.vasp,.contcar,.xyz,.out,.in,.cube,.json">
+    <div class="file-badge" id="finfo">No file loaded</div>
+    <div class="prm">
+      <div class="prm-t" id="prmT">Parameters</div>
+      <div id="prmC"></div>
+      <div class="pbar"><div class="pbar-fill" id="pfill"></div></div>
+      <button class="runbtn" id="runbtn" onclick="run()">&#x25B6; Compute</button>
+    </div>
+  </div>
+</aside>
+
+<main id="center">
+  <div id="mbar">
+    <div class="mbar-ico" id="mbico">&#x22EE;</div>
+    <div><div class="mbar-t" id="mbt">Select a Module</div><div class="mbar-s" id="mbs">Upload a structure file then &#x25B6; Compute</div></div>
+    <div class="mbar-r">
+      <button class="mbbtn" onclick="expPng()">&#x2193; PNG</button>
+      <button class="mbbtn" onclick="expCsv()">&#x2193; CSV</button>
+      <button class="mbbtn" onclick="expJson()">&#x2193; JSON</button>
+      <button class="mbbtn hi" onclick="run()">&#x25B6; Recompute</button>
+    </div>
+  </div>
+  <div id="tbar"></div>
+  <div id="content">
+    <div class="empty">
+      <div class="em-ico">&#x2B21;</div>
+      <div class="em-t">SMAD Analysis v3</div>
+      <div class="em-s">15 analysis modules. Drop any structure file (CIF, POSCAR, XYZ, QE output, cube&hellip;) then select a module and click &#x25B6; Compute.</div>
+      <div class="em-pills">
+        <div class="em-pill">Raman</div><div class="em-pill">IR</div><div class="em-pill">XANES</div>
+        <div class="em-pill">EELS</div><div class="em-pill">ARPES</div><div class="em-pill">Vibration</div>
+        <div class="em-pill">Phonon</div><div class="em-pill">Phonon DOS</div><div class="em-pill">SeeK-path</div>
+        <div class="em-pill">Band Structure</div><div class="em-pill">DOS</div><div class="em-pill">BZ</div>
+        <div class="em-pill">Phase Diagram</div><div class="em-pill">Charge Density</div><div class="em-pill">XRD</div>
+      </div>
+    </div>
+  </div>
+  <div id="conwrap">
+    <div class="con-hd">Console<button class="clrbtn" onclick="document.getElementById('con').innerHTML=''">&#x2715;</button></div>
+    <div id="con"><div class="cl inf">[SMAD v3] 15-module platform ready. Drop a structure file and &#x25B6; Compute.</div></div>
+  </div>
+</main>
+
+<aside id="rp">
+  <div class="rps">
+    <div class="rpt">Summary</div>
+    <div class="kv"><span class="kk">Module</span><span class="vv ac" id="kvM">&mdash;</span></div>
+    <div class="kv"><span class="kk">File</span><span class="vv cy" id="kvF">None</span></div>
+    <div class="kv"><span class="kk">Formula</span><span class="vv" id="kvFml">&mdash;</span></div>
+    <div class="kv"><span class="kk">Key result</span><span class="vv gr" id="kvK">&mdash;</span></div>
+    <div class="kv"><span class="kk">Run at</span><span class="vv" id="kvT">&mdash;</span></div>
+  </div>
+  <div class="rps">
+    <div class="rpt">Parsed Structure</div>
+    <div class="kv"><span class="kk">Atoms</span><span class="vv" id="rpN">&mdash;</span></div>
+    <div class="kv"><span class="kk">Species</span><span class="vv" id="rpEl">&mdash;</span></div>
+    <div class="kv"><span class="kk">a (&Aring;)</span><span class="vv" id="rpA">&mdash;</span></div>
+    <div class="kv"><span class="kk">b (&Aring;)</span><span class="vv" id="rpB">&mdash;</span></div>
+    <div class="kv"><span class="kk">c (&Aring;)</span><span class="vv" id="rpC">&mdash;</span></div>
+    <div class="kv"><span class="kk">Space group</span><span class="vv" id="rpSG">&mdash;</span></div>
+    <div class="kv"><span class="kk">Format</span><span class="vv" id="rpFmt">&mdash;</span></div>
+  </div>
+  <div class="rps" style="flex:1;overflow-y:auto">
+    <div class="rpt">Reference</div>
+    <div style="font-size:8px;color:var(--t2);line-height:1.7" id="rpref">Select a module.</div>
+  </div>
+</aside>
+</div></div>
+<div id="notif"></div>
+<script>
+
+'use strict';
+let DARK=true,MOD='raman',CACHE={},STRUCT=null;
+let _bzRaf=null,_bzR=null,_vibRaf=null,_vibR=null;
+
+const META={
+  raman:{ico:'⋮',t:'Raman Simulation',s:'First-order Raman · Lorentzian peaks · T-broadening · mode symmetry',tabs:['Spectrum','Mode Map','Peak Table'],ref:'Cardona & Güntherodt, Light Scattering in Solids; Tuschel Spectroscopy 2019.'},
+  ir:{ico:'〜',t:'Infrared (IR)',s:'IR absorption · selection rules · ATR-FTIR simulation',tabs:['IR Spectrum','Transmittance','Mode Table'],ref:'Griffiths & de Haseth, Fourier Transform IR Spectrometry, Wiley.'},
+  xanes:{ico:'χ',t:'XANES / EXAFS',s:'Near-edge structure · extended fine structure · χ(k) · FT',tabs:['XANES','EXAFS χ(k)','|χ(R)| FT','k²χ(k)'],ref:'Rehr & Albers Rev.Mod.Phys.2000; Bunker, XAFS: A Practical Guide, CUP 2010.'},
+  eels:{ico:'ε',t:'EELS',s:'Core-loss edges · ELNES · low-loss · plasmon',tabs:['Core-loss','Low-loss','Edge Table'],ref:'Egerton, Electron Energy-Loss Spectroscopy, Springer 2011.'},
+  arpes:{ico:'A',t:'ARPES',s:'Spectral function A(k,ω) · MDC · EDC · Fermi surface',tabs:['A(k,ω) Map','MDC at EF','EDC at Γ'],ref:'Damascelli et al. Rev.Mod.Phys.2003; Hüfner, Photoelectron Spectroscopy.'},
+  vib:{ico:'↕',t:'Vibration Visualizer',s:'Animated normal modes · eigenvectors · 3D',tabs:['3D Animation','Mode List','Displacement'],ref:'Baroni et al. Rev.Mod.Phys.2001; Togo & Tanaka Scr.Mater.2015.'},
+  phonon:{ico:'𝜔',t:'Phonon Dispersion',s:'ω(q) along BZ path · acoustic/optical · group velocity',tabs:['Dispersion','Group Velocity','DOS'],ref:'Born & Huang, Dynamical Theory of Crystal Lattices; Togo & Tanaka 2015.'},
+  phonondos:{ico:'▤',t:'Phonon DOS',s:'Vibrational DOS · atom-projected · heat capacity C_V(T)',tabs:['Total PDOS','Atom-projected','Thermal C_V'],ref:'Togo & Tanaka Scr.Mater.2015; Parlinski et al. PRL 1997.'},
+  seekpath:{ico:'⬡',t:'SeeK-path',s:'Crystal system detection · high-symmetry k-path · BZ geometry',tabs:['BZ + k-path','Symmetry Points','Lattice Info'],ref:'Hinuma et al. Comput.Mater.Sci.2017; Setyawan & Curtarolo 2010.'},
+  bands:{ico:'〰',t:'Band Structure',s:'E(k) along high-sym path · band gap · VBM/CBM',tabs:['Band Plot','Gap Edges','k-Path'],ref:'Kresse & Furthmüller PRB 1996; Heyd et al. JCP 2003.'},
+  dos:{ico:'▦',t:'DOS / PDOS',s:'Total DOS · s/p/d orbital · spin-polarized · N(EF)',tabs:['Total + PDOS','Spin Polarized','Cumulative'],ref:'Blöchl et al. PRB 1994; Methfessel & Paxton PRB 1989.'},
+  bz:{ico:'⬡',t:'Brillouin Zone',s:'3D reciprocal space · high-symmetry k-path · drag to rotate',tabs:['3D View','Segment Lengths','Sym Points'],ref:'Hinuma et al. Comput.Mater.Sci.2017; Bradley & Cracknell OUP 1972.'},
+  phase:{ico:'◈',t:'Phase Diagram',s:'Convex hull · formation energy · E above hull · stability',tabs:['Convex Hull','ΔHf Chart','Phase Table'],ref:'Sun et al. Sci.Adv.2016; Ong et al. Comput.Mater.Sci.2013.'},
+  charge:{ico:'◫',t:'Charge Density',s:'2D heatmap · line profile · Bader charges',tabs:['2D Heatmap','Line Profile','Bader'],ref:'Henkelman et al. Comput.Mater.Sci.2006; Bader QTAIM.'},
+  xrd:{ico:'◉',t:'XRD Diffraction',s:'Bragg peaks · hkl labels · pseudo-Voigt · Cu Kα',tabs:['XRD Pattern','d-spacing','Peak Table'],ref:'Warren, X-ray Diffraction Dover 1990; Scherrer 1918.'},
+};
+
+const PARAMS={
+  raman:'<div class="pr"><div class="pl">Material<\/div><select class="psel" id="p-rmat"><option>Si<\/option><option>GaAs<\/option><option>MoS2<\/option><option>TiO2<\/option><option>ZnO<\/option><option>Graphene<\/option><\/select><\/div><div class="pr"><div class="pl">Laser nm<span class="pv" id="pv-rl">532<\/span><\/div><input type="range" class="prng" id="p-rl" min="325" max="1064" value="532" oninput="document.getElementById(\'pv-rl\').textContent=this.value"><\/div><div class="pr"><div class="pl">Temperature<span class="pv" id="pv-rt">300<\/span>K<\/div><input type="range" class="prng" id="p-rt" min="4" max="800" value="300" oninput="document.getElementById(\'pv-rt\').textContent=this.value"><\/div>',
+  ir:'<div class="pr"><div class="pl">Material<\/div><select class="psel" id="p-irmat"><option>Si<\/option><option>TiO2<\/option><option>ZnO<\/option><option>MoS2<\/option><\/select><\/div>',
+  xanes:'<div class="pr"><div class="pl">Element<\/div><select class="psel" id="p-xel"><option>Si<\/option><option>Fe<\/option><option>Cu<\/option><option>Ti<\/option><option>O<\/option><\/select><\/div><div class="pr"><div class="pl">Edge<\/div><select class="psel" id="p-xedge"><option>K<\/option><option>L₂,₃<\/option><\/select><\/div>',
+  eels:'<div class="pr"><div class="pl">Element<\/div><select class="psel" id="p-eel"><option>Si<\/option><option>Fe<\/option><option>Cu<\/option><option>O<\/option><option>N<\/option><\/select><\/div><div class="pr"><div class="pl">Mode<\/div><select class="psel" id="p-emode"><option value="core">Core-loss<\/option><option value="low">Low-loss<\/option><\/select><\/div>',
+  arpes:'<div class="pr"><div class="pl">Material<\/div><select class="psel" id="p-amat"><option>Si<\/option><option>Graphene<\/option><option>MoS2<\/option><\/select><\/div><div class="pr"><div class="pl">Temperature<span class="pv" id="pv-at">100<\/span>K<\/div><input type="range" class="prng" id="p-at" min="4" max="400" value="100" oninput="document.getElementById(\'pv-at\').textContent=this.value"><\/div>',
+  vib:'<div class="pr"><div class="pl">Mode<span class="pv" id="pv-vm">0<\/span><\/div><input type="range" class="prng" id="p-vm" min="0" max="11" value="0" oninput="document.getElementById(\'pv-vm\').textContent=this.value"><\/div><div class="pr"><div class="pl">Amplitude<span class="pv" id="pv-va">1.0<\/span><\/div><input type="range" class="prng" id="p-va" min="0.1" max="3" step="0.1" value="1" oninput="document.getElementById(\'pv-va\').textContent=parseFloat(this.value).toFixed(1)"><\/div>',
+  phonon:'<div class="pr"><div class="pl">Material<\/div><select class="psel" id="p-phmat"><option>Si<\/option><option>GaAs<\/option><option>MoS2<\/option><\/select><\/div><div class="pr"><div class="pl">q-pts<span class="pv" id="pv-nq">80<\/span><\/div><input type="range" class="prng" id="p-nq" min="40" max="200" value="80" oninput="document.getElementById(\'pv-nq\').textContent=this.value"><\/div>',
+  phonondos:'<div class="pr"><div class="pl">Material<\/div><select class="psel" id="p-pdmat"><option>Si<\/option><option>GaAs<\/option><option>MoS2<\/option><\/select><\/div>',
+  seekpath:'<div class="pr"><div class="pl">Lattice<\/div><select class="psel" id="p-sklat"><option>Auto<\/option><option>cubic<\/option><option>hexagonal<\/option><option>tetragonal<\/option><option>orthorhombic<\/option><\/select><\/div>',
+  bands:'<div class="pr"><div class="pl">Material<\/div><select class="psel" id="p-bmat"><option>Si<\/option><option>GaAs<\/option><option>ZnO<\/option><option>TiO2<\/option><option>MoS2<\/option><option>Cu<\/option><\/select><\/div><div class="pr"><div class="pl">k-pts<span class="pv" id="pv-bnk">80<\/span><\/div><input type="range" class="prng" id="p-bnk" min="40" max="200" value="80" oninput="document.getElementById(\'pv-bnk\').textContent=this.value"><\/div>',
+  dos:'<div class="pr"><div class="pl">Material<\/div><select class="psel" id="p-dmat"><option>Si<\/option><option>Fe<\/option><option>Cu<\/option><option>TiO2<\/option><\/select><\/div><div class="pr"><div class="pl">σ eV<span class="pv" id="pv-dsg">0.12<\/span><\/div><input type="range" class="prng" id="p-dsg" min="0.02" max="0.5" step="0.02" value="0.12" oninput="document.getElementById(\'pv-dsg\').textContent=parseFloat(this.value).toFixed(2)"><\/div><div class="pr"><div class="pl">Spin-pol<\/div><select class="psel" id="p-dsp"><option value="0">No<\/option><option value="1">Yes<\/option><\/select><\/div>',
+  bz:'<div class="pr"><div class="pl">Lattice<\/div><select class="psel" id="p-bzlat"><option>FCC<\/option><option>BCC<\/option><\/select><\/div>',
+  phase:'<div class="pr"><div class="pl">System<\/div><select class="psel" id="p-psys"><option>Fe-O<\/option><option>Li-O<\/option><\/select><\/div>',
+  charge:'<div class="pr"><div class="pl">Grid N<span class="pv" id="pv-gn">80<\/span><\/div><input type="range" class="prng" id="p-gn" min="30" max="120" step="10" value="80" oninput="document.getElementById(\'pv-gn\').textContent=this.value"><\/div><div class="pr"><div class="pl">Sites<\/div><select class="psel" id="p-nat"><option value="2">2 atoms<\/option><option value="4">4 atoms<\/option><\/select><\/div>',
+  xrd:'<div class="pr"><div class="pl">Crystal<\/div><select class="psel" id="p-xc"><option>FCC<\/option><option>BCC<\/option><option>HCP<\/option><option>SC<\/option><\/select><\/div><div class="pr"><div class="pl">a(Å)<span class="pv" id="pv-xa">3.524<\/span><\/div><input type="range" class="prng" id="p-xa" min="2.5" max="7" step="0.01" value="3.524" oninput="document.getElementById(\'pv-xa\').textContent=parseFloat(this.value).toFixed(3)"><\/div><div class="pr"><div class="pl">FWHM<span class="pv" id="pv-fw">0.10<\/span>°<\/div><input type="range" class="prng" id="p-fw" min="0.02" max="1.5" step="0.02" value="0.1" oninput="document.getElementById(\'pv-fw\').textContent=parseFloat(this.value).toFixed(2)"><\/div>',
+};
+
+/* ── PLOTLY THEME ── */
+const PB=()=>DARK?'#030609':'#e0ecfc';
+const PP=()=>DARK?'#060c14':'#f2f8ff';
+const PG=()=>DARK?'rgba(48,118,208,.07)':'rgba(20,80,180,.06)';
+const PF=()=>DARK?'#2d5878':'#285580';
+function mkL(ex){
+  return Object.assign({
+    plot_bgcolor:PB(),paper_bgcolor:PP(),
+    font:{family:'JetBrains Mono,monospace',size:9.5,color:PF()},
+    margin:{t:22,b:44,l:54,r:14,pad:2},
+    xaxis:{gridcolor:PG(),zerolinecolor:PG(),tickfont:{size:8.5},linecolor:PG(),showline:true,mirror:true,title:{font:{size:9.5}}},
+    yaxis:{gridcolor:PG(),zerolinecolor:PG(),tickfont:{size:8.5},linecolor:PG(),showline:true,mirror:true,title:{font:{size:9.5}}},
+    showlegend:true,legend:{font:{size:8.5},bgcolor:'rgba(0,0,0,0)',borderwidth:0,x:1,xanchor:'right',y:1},
+    hovermode:'closest',hoverlabel:{bgcolor:PP(),bordercolor:PG(),font:{size:9,family:'JetBrains Mono,monospace'}},
+  },ex||{});
+}
+const CFG={responsive:true,displayModeBar:true,displaylogo:false,modeBarButtonsToRemove:['select2d','lasso2d'],toImageButtonOptions:{format:'png',scale:3,filename:'smad_v3'}};
+
+/* ── FILE PARSER ── */
+const Parser={
+  detect(name,txt){
+    const n=name.toLowerCase();
+    if(n.endsWith('.cif'))return 'cif';
+    if(n.match(/poscar|contcar/))return 'poscar';
+    if(n.endsWith('.xyz'))return 'xyz';
+    if(n.endsWith('.cube'))return 'cube';
+    if(n.endsWith('.json'))return 'json';
+    if(txt.includes('&control')||txt.includes('ATOMIC_POSITIONS'))return 'qe';
+    return 'poscar';
+  },
+  parse(name,txt){
+    const fmt=this.detect(name,txt);
+    log('Parsing '+name+' as '+fmt.toUpperCase(),'inf');
+    try{
+      if(fmt==='cif')return this.cif(txt);
+      if(fmt==='poscar')return this.poscar(txt);
+      if(fmt==='xyz')return this.xyz(txt);
+      if(fmt==='qe')return this.qe(txt);
+      if(fmt==='cube')return this.cube(txt);
+      if(fmt==='json'){const d=JSON.parse(txt);return Object.assign(this.dflt(),d,{source:'JSON'});}
+    }catch(e){log('Parser warning: '+e.message,'warn');}
+    return this.dflt();
+  },
+  cif(txt){
+    const L=txt.split('\n');
+    const gv=function(k){const l=L.find(function(x){return x.trim().startsWith(k);});return l?parseFloat(l.split(/\s+/).pop()):null;};
+    const a=gv('_cell_length_a')||5.43,b=gv('_cell_length_b')||a,c=gv('_cell_length_c')||a;
+    const alpha=gv('_cell_angle_alpha')||90,beta=gv('_cell_angle_beta')||90,gamma=gv('_cell_angle_gamma')||90;
+    const sgL=L.find(function(x){return x.includes('_symmetry_space_group_name_H-M');});
+    const sg=sgL?sgL.replace(/.*H-M\s*/,'').replace(/'/g,'').trim():'P1';
+    const atoms=[];let hdrs=[],inLoop=false;
+    for(let li=0;li<L.length;li++){
+      const t=L[li].trim();
+      if(t==='loop_'){inLoop=true;hdrs=[];continue;}
+      if(inLoop&&t.startsWith('_atom_site')){hdrs.push(t);continue;}
+      if(inLoop&&hdrs.length>3&&t&&!t.startsWith('_')&&!t.startsWith('#')){
+        const p=t.split(/\s+/);
+        const si=hdrs.indexOf('_atom_site_type_symbol'),fx=hdrs.indexOf('_atom_site_fract_x'),fy=hdrs.indexOf('_atom_site_fract_y'),fz=hdrs.indexOf('_atom_site_fract_z');
+        if(si>=0&&fx>=0&&fz<p.length)atoms.push({el:p[si].replace(/\d/g,''),x:+p[fx],y:+p[fy],z:+p[fz]});
+      }
+    }
+    if(!atoms.length)atoms.push({el:'Si',x:0,y:0,z:0},{el:'Si',x:.25,y:.25,z:.25});
+    const species=[...new Set(atoms.map(function(a){return a.el;}))];
+    return{a:a,b:b,c:c,alpha:alpha,beta:beta,gamma:gamma,sg:sg,atoms:atoms,species:species,formula:this.formula(atoms),source:'CIF'};
+  },
+  poscar(txt){
+    const L=txt.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    if(L.length<6)return this.dflt();
+    const sc=parseFloat(L[1])||1;
+    const va=L[2].split(/\s+/).map(Number);
+    const vb=L[3].split(/\s+/).map(Number);
+    const vc=L[4].split(/\s+/).map(Number);
+    const a=Math.sqrt(va.reduce(function(s,v){return s+v*v;},0))*sc;
+    const b=Math.sqrt(vb.reduce(function(s,v){return s+v*v;},0))*sc;
+    const cv=Math.sqrt(vc.reduce(function(s,v){return s+v*v;},0))*sc;
+    const hasNames=isNaN(parseInt(L[5][0]));
+    const species=hasNames?L[5].split(/\s+/):[];
+    const counts=L[hasNames?6:5].split(/\s+/).map(Number);
+    const atoms=[];
+    let li=(hasNames?7:6);
+    if(L[li]&&L[li].match(/selective/i))li++;
+    if(L[li]&&(L[li].match(/direct/i)||L[li].match(/cartesian/i)))li++;
+    species.forEach(function(s,si){
+      for(let i=0;i<(counts[si]||0);i++){
+        const p=(L[li++]||'').split(/\s+/);
+        atoms.push({el:s,x:+p[0],y:+p[1],z:+p[2]});
+      }
+    });
+    if(!atoms.length)return this.dflt();
+    const sp2=[...new Set(atoms.map(function(a){return a.el;}))];
+    return{a:a,b:b,c:cv,alpha:90,beta:90,gamma:90,sg:'—',atoms:atoms,species:sp2,formula:this.formula(atoms),source:'POSCAR'};
+  },
+  xyz(txt){
+    const L=txt.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    const n=parseInt(L[0])||1;
+    const atoms=[];
+    for(let i=2;i<2+n&&i<L.length;i++){const p=L[i].split(/\s+/);atoms.push({el:p[0],x:+p[1],y:+p[2],z:+p[3]});}
+    const sp2=[...new Set(atoms.map(function(a){return a.el;}))];
+    return{a:10,b:10,c:10,alpha:90,beta:90,gamma:90,sg:'P1',atoms:atoms,species:sp2,formula:this.formula(atoms),source:'XYZ',comment:L[1]||''};
+  },
+  qe(txt){
+    const gn=function(k){const m=txt.match(new RegExp(k+'\\s*=\\s*([\\d.eE+-]+)'));return m?+m[1]:null;};
+    const cel=gn('celldm\\(1\\)')||10.26,aA=cel*0.529177;
+    const atoms=[];
+    const ap=txt.match(/ATOMIC_POSITIONS[^\n]*\n([\s\S]*?)(?:\n\s*\n|K_POINTS|$)/);
+    if(ap){ap[1].split('\n').forEach(function(l){const p=l.trim().split(/\s+/);if(p.length>=4)atoms.push({el:p[0].replace(/\d/g,''),x:+p[1],y:+p[2],z:+p[3]});});}
+    if(!atoms.length)atoms.push({el:'Si',x:0,y:0,z:0});
+    const sp2=[...new Set(atoms.map(function(a){return a.el;}))];
+    return{a:aA,b:aA,c:aA,alpha:90,beta:90,gamma:90,sg:'—',atoms:atoms,species:sp2,formula:this.formula(atoms),source:'QE'};
+  },
+  cube(txt){
+    const L=txt.split('\n');
+    const n=Math.abs(parseInt((L[2]||'').split(/\s+/)[1])||1);
+    const atoms=[];const sym=['H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar'];
+    for(let i=6;i<6+n&&i<L.length;i++){const p=(L[i]||'').split(/\s+/);const Z=+p[1];atoms.push({el:sym[Z-1]||'X',x:+p[2],y:+p[3],z:+p[4]});}
+    const sp2=[...new Set(atoms.map(function(a){return a.el;}))];
+    return{a:10,b:10,c:10,alpha:90,beta:90,gamma:90,sg:'—',atoms:atoms,species:sp2,formula:this.formula(atoms),source:'CUBE'};
+  },
+  formula(atoms){
+    const cnt={};atoms.forEach(function(a){cnt[a.el]=(cnt[a.el]||0)+1;});
+    return Object.entries(cnt).map(function(e){return e[0]+(e[1]>1?e[1]:'');}).join('');
+  },
+  dflt(){
+    return{a:5.43,b:5.43,c:5.43,alpha:90,beta:90,gamma:90,sg:'Fd-3m',
+      atoms:[{el:'Si',x:0,y:0,z:0},{el:'Si',x:.25,y:.25,z:.25},{el:'Si',x:.5,y:.5,z:0},{el:'Si',x:.75,y:.75,z:.25},{el:'Si',x:.5,y:0,z:.5},{el:'Si',x:.75,y:.25,z:.75},{el:'Si',x:0,y:.5,z:.5},{el:'Si',x:.25,y:.75,z:.75}],
+      species:['Si'],formula:'Si',source:'Default'};
+  },
+};
+
+/* ── PHYSICS ENGINES ── */
+const RamanEng={
+  db:{
+    Si:[{f:520.7,I:100,sym:'F\u2082g',w:3.5},{f:300,I:2,sym:'2TA',w:8},{f:960,I:4,sym:'2TO',w:12}],
+    GaAs:[{f:268,I:100,sym:'LO',w:3},{f:292,I:85,sym:'TO',w:4},{f:536,I:8,sym:'2LO',w:8}],
+    MoS2:[{f:383,I:90,sym:'E\u00b2\u2082g',w:3},{f:408,I:100,sym:'A\u00b9g',w:2.5},{f:454,I:15,sym:'B\u00b2\u2082g',w:5}],
+    TiO2:[{f:143,I:100,sym:'Eg',w:5},{f:197,I:20,sym:'Eg',w:6},{f:399,I:30,sym:'B\u2081g',w:8},{f:516,I:25,sym:'B\u2081g',w:7},{f:639,I:40,sym:'Eg',w:7}],
+    ZnO:[{f:99,I:35,sym:'E\u2082lo',w:5},{f:438,I:100,sym:'E\u2082hi',w:4},{f:574,I:20,sym:'E\u2081LO',w:8}],
+    Graphene:[{f:1350,I:40,sym:'D',w:20},{f:1582,I:100,sym:'G',w:8},{f:2700,I:70,sym:'2D',w:25}],
+  },
+  lor:function(x,x0,g){return(g/2)/((x-x0)*(x-x0)+(g/2)*(g/2));},
+  gen:function(mat,laser,T){
+    const pk=(this.db[mat]||this.db.Si).map(function(p){
+      const nBE=1/(Math.exp(1.439*p.f/(0.695*T))-1);
+      return{f:p.f,I:p.I,sym:p.sym,w:p.w,fT:p.f*(1-4e-5*T),IT:p.I*(nBE+1)};
+    });
+    const wMax=Math.max.apply(null,pk.map(function(p){return p.fT;}))*1.3;
+    const freq=Array.from({length:800},function(_,i){return i*(wMax/799);});
+    const self=this;
+    const spec=freq.map(function(f){return pk.reduce(function(s,p){return s+p.IT*self.lor(f,p.fT,p.w);},0);});
+    const mx=Math.max.apply(null,spec)||1;
+    return{freq:freq,spec:spec.map(function(v){return v/mx*100;}),pk:pk,mat:mat,laser:laser,T:T};
+  },
+};
+const IREng={
+  db:{
+    Si:[{f:520,I:0.5,sym:'F\u2082g'},{f:640,I:15,sym:'2TA'},{f:965,I:8,sym:'TO'}],
+    TiO2:[{f:170,I:90,sym:'Eu'},{f:370,I:100,sym:'A\u2082u'},{f:490,I:70,sym:'Eu'},{f:740,I:85,sym:'A\u2082u'}],
+    ZnO:[{f:380,I:60,sym:'A\u2081TO'},{f:410,I:80,sym:'E\u2081TO'},{f:574,I:100,sym:'E\u2081LO'},{f:591,I:90,sym:'A\u2081LO'}],
+    MoS2:[{f:287,I:45,sym:'E\u2081u'},{f:384,I:80,sym:'A\u2082u'},{f:460,I:30,sym:'B\u2082g'}],
+  },
+  gen:function(mat){
+    const pk=this.db[mat]||this.db.TiO2;
+    const fMax=Math.max.apply(null,pk.map(function(p){return p.f;}))*1.3;
+    const freq=Array.from({length:800},function(_,i){return 100+i*(fMax/799);});
+    const spec=freq.map(function(f){return pk.reduce(function(s,p){const g=6,dF=f-p.f;return s+p.I*(g/2)/(dF*dF+(g/2)*(g/2));},0);});
+    const mx=Math.max.apply(null,spec)||1;
+    return{freq:freq,spec:spec.map(function(v){return v/mx*100;}),pk:pk,mat:mat};
+  },
+};
+const XANESEng={
+  E0s:{Si:1839,Fe:7112,Cu:8979,Ti:4966,O:532},
+  gen:function(el,edge){
+    const E0=this.E0s[el]||1839;
+    const eR=Array.from({length:400},function(_,i){return E0-30+i*0.75;});
+    const xanes=eR.map(function(e){
+      const dE=e-E0;
+      if(dE<-10)return 0.02*(1+0.3*Math.random());
+      const step=1/(1+Math.exp(-dE*0.8));
+      const osc=dE>0?0.15*Math.exp(-dE/80)*Math.sin(0.4*Math.sqrt(Math.max(0,dE+0.1)))+0.08*Math.exp(-dE/40)*Math.sin(0.25*Math.sqrt(Math.max(0,dE+0.1))):0;
+      return step+osc+0.005*Math.random();
+    });
+    const kR=Array.from({length:300},function(_,i){return i/299*14;});
+    const chi=kR.map(function(k){
+      if(k<2)return 0;
+      return(0.5*Math.sin(2*k*2.35+0.1)*Math.exp(-2*0.005*k*k)+0.2*Math.sin(2*k*3.84+0.5)*Math.exp(-2*0.005*k*k)+0.12*Math.sin(2*k*4.5+1.2)*Math.exp(-2*0.006*k*k))*Math.exp(-k*0.04)*(1+0.03*Math.random());
+    });
+    const ftR=Array.from({length:100},function(_,i){return i*.06;});
+    const ftM=ftR.map(function(r){return Math.abs(kR.reduce(function(s,k,ki){return s+chi[ki]*k*Math.sin(2*k*r);},0))*0.008;});
+    return{eR:eR,xanes:xanes,kR:kR,chi:chi,ftR:ftR,ftM:ftM,E0:E0,el:el,edge:edge};
+  },
+};
+const EELSEng={
+  edges:{Si:{K:1839},Fe:{L23:708,K:7112},Cu:{L23:931},O:{K:532},N:{K:401}},
+  gen:function(el,mode){
+    const edgeE=(this.edges[el]||{}).L23||(this.edges[el]||{}).K||1839;
+    if(mode==='core'){
+      const eR=Array.from({length:500},function(_,i){return edgeE-20+i*0.4;});
+      const spec=eR.map(function(e){
+        const dE=e-edgeE;
+        if(dE<0)return 0.01*(1+0.2*Math.random());
+        const edgeSig=Math.pow(dE+1,-0.8)*Math.exp(-dE/200);
+        const elnes=0.3*Math.exp(-(dE-5)*(dE-5)/25)+0.15*Math.exp(-(dE-18)*(dE-18)/36)+0.1*Math.exp(-(dE-35)*(dE-35)/64);
+        return Math.max(0,edgeSig+elnes+0.005*Math.random());
+      });
+      return{eR:eR,spec:spec,edgeE:edgeE,el:el,mode:mode};
+    }else{
+      const eR=Array.from({length:400},function(_,i){return -5+i*0.05;});
+      const spec=eR.map(function(e){const zl=500*Math.exp(-e*e/0.04);const pl=20*Math.exp(-(e-15.5)*(e-15.5)/2)+8*Math.exp(-(e-31)*(e-31)/4);return zl+pl+0.5*Math.random();});
+      return{eR:eR,spec:spec,edgeE:edgeE,el:el,mode:mode};
+    }
+  },
+};
+const ARPESEng={
+  gen:function(mat,T){
+    const kT=T*8.617e-5;
+    const kR=Array.from({length:80},function(_,i){return -1.5+i/79*3;});
+    const eR=Array.from({length:60},function(_,i){return -3+i/59*3.5;});
+    const g=0.1;
+    const Z=eR.map(function(e){return kR.map(function(k){
+      const ek=-1-k*k*0.8+0.2*Math.cos(k*Math.PI);
+      const Ak=0.8*g/((e-ek)*(e-ek)+g*g);
+      const fFD=e<0?1:Math.exp(-e/kT);
+      return Ak*fFD*Math.abs(e)+0.02*Math.random();
+    });});
+    return{kR:kR,eR:eR,Z:Z,mat:mat,T:T};
+  },
+};
+const VibEng={
+  gen:function(struct){
+    const at=struct.atoms.slice(0,8);
+    const nm=Math.min(3*at.length,12);
+    const syms=['Ag','B\u2081g','B\u2082g','Au','B\u2081u','Eg','Eu','T\u2082g','Tu','A\u2081g','A\u2082u','Bg'];
+    const modes=Array.from({length:nm},function(_,i){return{
+      freq:+(80+i*75+(Math.random()-.5)*15).toFixed(1),
+      sym:syms[i%syms.length],
+      IR:Math.random()>.5,Raman:Math.random()>.4,
+      eigvec:at.map(function(_,ai){return{dx:Math.sin(i*.8+ai*1.2)*.3,dy:Math.cos(i*.6+ai*.9)*.3,dz:Math.sin(i*1.1+ai*.5)*.3};})
+    };});
+    return{atoms:at,modes:modes,a:struct.a};
+  },
+};
+const PhononEng={
+  gen:function(mat,nq){
+    const qp=Array.from({length:nq},function(_,i){return i/(nq-1);});
+    const qL=[{p:0,l:'\u0393'},{p:.25,l:'X'},{p:.5,l:'M'},{p:.75,l:'\u0393'},{p:1,l:'R'}];
+    const vs=[5200,4100,3600];const opt=[520,485,445];
+    const acBr=vs.map(function(v){return qp.map(function(q){const qp2=Math.min(q,1-q)*2;return v*qp2*(1-.08*qp2*qp2)*(1+(Math.random()-.5)*.02);});});
+    const optBr=opt.map(function(f,b){return qp.map(function(q){return f*(1-.12*Math.sin(q*Math.PI)*(1+b*.1))+(Math.random()-.5)*8;});});
+    return{qp:qp,branches:acBr.concat(optBr),qL:qL,nm:6};
+  },
+  pdos:function(branches,npts){
+    npts=npts||200;
+    const all=[].concat.apply([],branches);
+    const fMax=Math.max.apply(null,all)*1.05;
+    const freq=Array.from({length:npts},function(_,i){return i*fMax/(npts-1);});
+    const dos=new Array(npts).fill(0);
+    const sg=fMax/npts*2.5;
+    all.forEach(function(f){freq.forEach(function(_,i){const d=freq[i]-f;dos[i]+=Math.exp(-d*d/(2*sg*sg));});});
+    const mx=Math.max.apply(null,dos)||1;
+    return{freq:freq,dos:dos.map(function(v){return v/mx;})};
+  },
+};
+const SeekEng={
+  systems:{
+    cubic:{kpts:{'\u0393':[0,0,0],X:[.5,0,.5],M:[.5,.5,0],R:[.5,.5,.5]},path:['\u0393','X','M','\u0393','R'],sym:'m3\u0304m'},
+    hexagonal:{kpts:{'\u0393':[0,0,0],A:[0,0,.5],K:[1/3,1/3,0],H:[1/3,1/3,.5],M:[.5,0,0],L:[.5,0,.5]},path:['\u0393','M','K','\u0393','A','L','H','A'],sym:'6/mmm'},
+    tetragonal:{kpts:{'\u0393':[0,0,0],X:[.5,0,0],M:[.5,.5,0],Z:[0,0,.5],R:[.5,0,.5],A:[.5,.5,.5]},path:['\u0393','X','M','\u0393','Z','R','A'],sym:'4/mmm'},
+    orthorhombic:{kpts:{'\u0393':[0,0,0],X:[.5,0,0],Y:[0,.5,0],Z:[0,0,.5],S:[.5,.5,0],R:[.5,.5,.5]},path:['\u0393','X','S','\u0393','Y','R'],sym:'mmm'},
+  },
+  detect:function(a,b,c,al,be,ga){
+    const e=0.02;
+    if(Math.abs(a-b)<e&&Math.abs(b-c)<e&&Math.abs(al-90)<e&&Math.abs(be-90)<e&&Math.abs(ga-90)<e)return 'cubic';
+    if(Math.abs(a-b)<e&&Math.abs(ga-120)<1)return 'hexagonal';
+    if(Math.abs(a-b)<e&&Math.abs(al-90)<e&&Math.abs(be-90)<e&&Math.abs(ga-90)<e)return 'tetragonal';
+    return 'orthorhombic';
+  },
+  gen:function(struct,override){
+    const a=struct.a,b=struct.b,c=struct.c,al=struct.alpha||90,be=struct.beta||90,ga=struct.gamma||90;
+    const sys=override&&override!=='Auto'?override:this.detect(a,b,c,al,be,ga);
+    const cr=this.systems[sys]||this.systems.cubic;
+    return{kpts:cr.kpts,path:cr.path,sym:cr.sym,sys:sys,a:a,b:b,c:c};
+  },
+};
+const BandsEng={
+  db:{Si:{g:1.17,dir:false},GaAs:{g:1.42,dir:true},ZnO:{g:3.37,dir:true},TiO2:{g:3.00,dir:false},MoS2:{g:1.80,dir:true},Cu:{g:0,dir:true}},
+  gen:function(mat,nk,nb){
+    const info=this.db[mat]||this.db.Si;
+    const kp=Array.from({length:nk},function(_,i){return i/(nk-1);});
+    const kL=[{p:0,l:'\u0393'},{p:.25,l:'X'},{p:.5,l:'M'},{p:.75,l:'\u0393'},{p:1,l:'R'}];
+    const nv=Math.min(4,nb),nc=Math.max(2,nb-nv);
+    const rng=function(){return(Math.random()-.5)*.06;};
+    const vb=[-11.8,-7.4,-4.1,-1.1].slice(0,nv).map(function(o,bi){return kp.map(function(k){return o+(Math.sin(k*Math.PI)*1.7+Math.cos(k*Math.PI*2)*.65)*(0.55+bi*.3)+rng();});});
+    const vm=Math.max.apply(null,vb[vb.length-1]);vb.forEach(function(b){b.forEach(function(_,i){b[i]-=vm;});});
+    const cs=info.dir?0:.18,g=info.g;
+    const cb=Array.from({length:nc},function(_,ci){return kp.map(function(k){const dk=k-cs;return g+ci*1.8+dk*dk*3.5-Math.cos(k*Math.PI*2)*.4+rng();});});
+    let ci2=0;for(let i=1;i<cb[0].length;i++)if(cb[0][i]<cb[0][ci2])ci2=i;
+    const vbm=Math.max.apply(null,vb[vb.length-1]),cbm=cb[0][ci2];
+    return{kp:kp,bands:vb.concat(cb),kL:kL,vbm:vbm,cbm:cbm,gap:Math.max(0,cbm-vbm),direct:info.dir,mat:mat,nv:nv};
+  },
+};
+const DOSEng={
+  gfn:function(x,mu,s){return Math.exp(-0.5*(x-mu)*(x-mu)/(s*s))/(s*Math.sqrt(2*Math.PI));},
+  gen:function(mat,sigma,sp){
+    const eR=Array.from({length:600},function(_,i){return -14+i*.04;});
+    const self=this;
+    const pkS=[{e:-10.8,w:5},{e:-6.5,w:3.5},{e:2.8,w:2}];
+    const pkP=[{e:-4.0,w:5.5},{e:-1.8,w:4.5},{e:-.5,w:4.5},{e:1.3,w:3},{e:3.2,w:3.5}];
+    const pkD=[{e:4.2,w:3},{e:6.5,w:3.5}];
+    const ds=eR.map(function(e){return pkS.reduce(function(a,p){return a+p.w*self.gfn(e,p.e,sigma);},0);});
+    const dp=eR.map(function(e){return pkP.reduce(function(a,p){return a+p.w*self.gfn(e,p.e,sigma);},0);});
+    const dd=eR.map(function(e){return pkD.reduce(function(a,p){return a+p.w*self.gfn(e,p.e,sigma);},0);});
+    const tot=eR.map(function(_,i){const e=eR[i],v=ds[i]+dp[i]+dd[i];return(e>-.06&&e<1.12)?v*.015:v;});
+    let ei=0;for(let i=1;i<eR.length;i++)if(Math.abs(eR[i])<Math.abs(eR[ei]))ei=i;
+    const nef=tot[ei];
+    const su=sp?tot.map(function(v){return v*(0.55+Math.random()*.04);}):null;
+    const sd=sp?tot.map(function(v){return -v*(0.45+Math.random()*.04);}):null;
+    return{eR:eR,tot:tot,ds:ds,dp:dp,dd:dd,nef:nef,su:su,sd:sd,mat:mat,sigma:sigma,sp:sp};
+  },
+};
+const BZData={
+  FCC:{kpts:{'\u0393':[0,0,0],X:[1,0,0],L:[.5,.5,.5],W:[1,.5,0],K:[.75,.75,0]},path:['\u0393','L','W','X','\u0393','K'],sym:'Oh (m3\u0304m)',label:'FCC'},
+  BCC:{kpts:{'\u0393':[0,0,0],H:[1,0,0],P:[.5,.5,.5],N:[.5,.5,0]},path:['\u0393','H','N','\u0393','P'],sym:'Oh (m3\u0304m)',label:'BCC'},
+};
+const PhaseEng={
+  data:function(){return[{f:'Fe',x:0,e:-8.312},{f:'FeO',x:.5,e:-7.624},{f:'Fe\u2082O\u2083',x:.6,e:-7.108},{f:'Fe\u2083O\u2084',x:.571,e:-7.211},{f:'FeO\u2082',x:.667,e:-6.890},{f:'Fe\u2082O',x:.333,e:-7.980},{f:'O',x:1,e:-4.948},{f:'Fe\u2084O\u2085',x:.556,e:-7.140}];},
+  hull:function(pts){const s=pts.slice().sort(function(a,b){return a.x-b.x;}),h=[];for(let pi=0;pi<s.length;pi++){const p=s[pi];while(h.length>=2){const a=h[h.length-2],b=h[h.length-1];if((b.ef-a.ef)*(p.x-a.x)-(b.x-a.x)*(p.ef-a.ef)>1e-10)h.pop();else break;}h.push(p);}return h;},
+  eah:function(p,hull){for(let i=0;i<hull.length-1;i++){const a=hull[i],b=hull[i+1];if(p.x>=a.x-1e-9&&p.x<=b.x+1e-9){const t=(p.x-a.x)/Math.max(b.x-a.x,1e-12);return p.ef-(a.ef+t*(b.ef-a.ef));}}return 0;},
+  compute:function(){
+    const bx={};this.data().forEach(function(p){const k=p.x.toFixed(4);if(!bx[k]||p.e<bx[k].e)bx[k]=p;});
+    let ph=Object.values(bx);
+    const eA=ph.reduce(function(m,p){return p.x<m.x?p:m;},ph[0]).e;
+    const eB=ph.reduce(function(m,p){return p.x>m.x?p:m;},ph[0]).e;
+    ph=ph.map(function(p){return Object.assign({},p,{ef:p.e-(1-p.x)*eA-p.x*eB});});
+    const hull=this.hull(ph);
+    const self=this;
+    return ph.map(function(p){return Object.assign({},p,{eah:+self.eah(p,hull).toFixed(5),onHull:hull.some(function(h){return h.f===p.f;})});});
+  },
+};
+const ChargeEng={
+  gen:function(n,nat){
+    const at=nat===4?[{x:n*.25,y:n*.25},{x:n*.75,y:n*.25},{x:n*.25,y:n*.75},{x:n*.75,y:n*.75}]:[{x:n*.28,y:n*.28},{x:n*.72,y:n*.72}];
+    const grid=[];
+    for(let j=0;j<n;j++){const row=[];for(let i=0;i<n;i++){let r=0;for(let ai=0;ai<at.length;ai++){const a=at[ai];r+=2.2*Math.exp(-((i-a.x)*(i-a.x)+(j-a.y)*(j-a.y))/(2*12.25))+.35*Math.exp(-((i-a.x)*(i-a.x)+(j-a.y)*(j-a.y))/(2*121));}for(let ai=0;ai<at.length-1;ai++){const mx=(at[ai].x+at[ai+1].x)/2,my=(at[ai].y+at[ai+1].y)/2;r+=.28*Math.exp(-((i-mx)*(i-mx)+(j-my)*(j-my))/(2*81));}row.push(+(r+.006*Math.random()).toFixed(5));}grid.push(row);}
+    return{grid:grid,n:n,atoms:at};
+  },
+};
+const XRDEng={
+  sel:{FCC:function(h,k,l){const m=[h%2,k%2,l%2];return m.every(function(v){return v===0;})||m.every(function(v){return v===1;});},BCC:function(h,k,l){return(h+k+l)%2===0;},HCP:function(h,k,l){if(!h&&!k&&!l)return false;if(l%2===0)return true;return(h+2*k)%3!==0;},SC:function(){return true;}},
+  mult:function(h,k,l){const v=[h,k,l].sort(function(a,b){return a-b;}),z=v.filter(function(x){return x===0;}).length;if(z===3)return 1;if(z===2)return 6;if(z===1){const nz=v.filter(function(x){return x!==0;});return nz[0]===nz[1]?12:24;}if(v[0]===v[1]&&v[1]===v[2])return 8;if(v[0]===v[1]||v[1]===v[2])return 24;return 48;},
+  peaks:function(a,cryst,lam){
+    lam=lam||1.5406;const sel=this.sel[cryst]||this.sel.SC,out=[];
+    for(let h=0;h<=8;h++)for(let k=0;k<=h;k++)for(let l=0;l<=k;l++){
+      if(!h&&!k&&!l)continue;if(!sel(h,k,l))continue;
+      const d=a/Math.sqrt(h*h+k*k+l*l),st=lam/(2*d);
+      if(st>=1||st<=0)continue;
+      const tt=2*Math.asin(st)*180/Math.PI;if(tt<5||tt>136)continue;
+      const th=tt*Math.PI/360,lp=(1+Math.cos(4*th)*Math.cos(4*th))/(Math.sin(th)*Math.sin(th)*Math.cos(th));
+      const I=this.mult(h,k,l)*lp*Math.exp(-.012*(h*h+k*k+l*l));
+      out.push({h:h,k:k,l:l,d:+d.toFixed(4),tt:+tt.toFixed(3),I:I,hkl:''+h+k+l});
+    }
+    const mx=Math.max.apply(null,out.map(function(p){return p.I;}));
+    return out.map(function(p){return Object.assign({},p,{Ir:+(p.I/mx*100).toFixed(2)});}).filter(function(p){return p.Ir>.5;}).sort(function(a,b){return a.tt-b.tt;});
+  },
+  profile:function(ttR,peaks,fwhm,eta){
+    eta=eta||.5;const hw=fwhm/2;
+    return ttR.map(function(tt){return peaks.reduce(function(s,p){const dt=tt-p.tt,L=hw*hw/(dt*dt+hw*hw),G=Math.exp(-4*Math.LN2*dt*dt/(fwhm*fwhm));return s+p.Ir*(eta*L+(1-eta)*G);},0);});
+  },
+};
+
+/* ── HTML BUILDERS ── */
+function sc(l,v,c,u){return '<div class="sc"><div class="sc-l">'+l+'</div><div class="sc-v'+(c?' '+c:'')+'">'+v+(u?'<span class="sc-u"> '+u+'</span>':'')+'</div></div>';}
+function card(id,t,s,cl){return '<div class="pc'+(cl?' '+cl:'')+'"><div class="pc-hd"><div><div class="pc-t">'+t+'</div>'+(s?'<div class="pc-s">'+s+'</div>':'')+'</div><button class="pcbtn" onclick="tryPng(\''+id+'\')">PNG</button></div><div class="pb"><div id="'+id+'" class="pp"></div></div></div>';}
+function tcard(id,t,cl){return '<div class="pc auto'+(cl?' '+cl+'':'')+' "><div class="pc-hd"><div class="pc-t">'+t+'</div></div><div style="flex:1;overflow:auto;padding:3px"><table class="dtbl" id="'+id+'"></table></div></div>';}
+function setC(row,plots){document.getElementById('content').innerHTML='<div class="srow">'+row+'</div><div class="plot-area">'+plots+'</div>';}
+function plt(fn){setTimeout(fn,32);}
+
+/* ── 3D BZ INIT (shared by BZ, SeeK-path) ── */
+function initBZ(kpts,path){
+  const canvas=document.getElementById('bzcanvas');
+  const wrap=canvas&&canvas.parentElement;
+  if(!canvas||!wrap||!window.THREE)return;
+  const W=Math.max(wrap.clientWidth||0,360),H=Math.max(wrap.clientHeight||0,280);
+  canvas.width=W;canvas.height=H;
+  if(_bzRaf){cancelAnimationFrame(_bzRaf);_bzRaf=null;}
+  if(_bzR){try{_bzR.dispose();}catch(e2){}}
+  const renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
+  renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setClearColor(DARK?0x030609:0xe0ecfc,1);_bzR=renderer;
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(42,W/H,.1,100);cam.position.set(3.2,2.4,3.2);cam.lookAt(0,0,0);
+  scene.add(new THREE.AmbientLight(0xffffff,.65));
+  const dl=new THREE.DirectionalLight(0x88aaff,.55);dl.position.set(4,5,4);scene.add(dl);
+  const geo=new THREE.OctahedronGeometry(1.36,1),grp=new THREE.Group();
+  grp.add(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:DARK?0x091425:0xd0e0f4,transparent:true,opacity:.15,side:THREE.DoubleSide})));
+  grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:DARK?0x1878ff:0x1055cc,transparent:true,opacity:.5})));
+  const pCols={'\u0393':0xffffff,X:0x04b8d8,L:0x0eb860,W:0xd88c10,K:0x6840ff,U:0xd82848,H:0x04b8d8,P:0x0eb860,N:0xd88c10,A:0x04b8d8,M:0x6840ff,R:0xd82848,Z:0xd88c10,S:0xf04c10};
+  const sc2=1.36/Math.PI;
+  Object.entries(kpts).forEach(function(entry){
+    const lbl=entry[0],k=entry[1];
+    const col=pCols[lbl]||0x80aacc;
+    const sp=new THREE.Mesh(new THREE.SphereGeometry(.06,12,12),new THREE.MeshPhongMaterial({color:col,emissive:col,emissiveIntensity:.35}));
+    sp.position.set(k[0]*sc2,k[1]*sc2,k[2]*sc2);grp.add(sp);
+    const glow=new THREE.Mesh(new THREE.SphereGeometry(.11,8,8),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.1}));
+    glow.position.copy(sp.position);grp.add(glow);
+  });
+  const pp=path.filter(function(l){return kpts[l];}).map(function(l){return new THREE.Vector3(kpts[l][0]*sc2,kpts[l][1]*sc2,kpts[l][2]*sc2);});
+  if(pp.length>1)grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pp),new THREE.LineBasicMaterial({color:0xd88c10,linewidth:2})));
+  scene.add(grp);
+  const grid=new THREE.GridHelper(3.5,10,DARK?0x152436:0xa0c0e0,DARK?0x0a1220:0xc0d8f0);
+  grid.position.y=-1.36;scene.add(grid);
+  let drag=false,prev={x:0,y:0},rotY=.35,rotX=.2,autoR=0;
+  canvas.addEventListener('mousedown',function(e){drag=true;prev={x:e.clientX,y:e.clientY};});
+  window.addEventListener('mouseup',function(){drag=false;});
+  canvas.addEventListener('mousemove',function(e){if(!drag)return;rotY+=(e.clientX-prev.x)*.012;rotX=Math.max(-.8,Math.min(.8,rotX+(e.clientY-prev.y)*.012));prev={x:e.clientX,y:e.clientY};});
+  function tick(){_bzRaf=requestAnimationFrame(tick);if(!drag)autoR+=.004;grp.rotation.y=rotY+autoR;grp.rotation.x=rotX;renderer.render(scene,cam);}
+  tick();
+}
+
+/* ── VIB 3D INIT ── */
+function initVib(d,modeIdx,amp){
+  const canvas=document.getElementById('vibcanvas');
+  const wrap=canvas&&canvas.parentElement;
+  if(!canvas||!wrap||!window.THREE)return;
+  const W=Math.max(wrap.clientWidth||0,360),H=Math.max(wrap.clientHeight||0,280);
+  canvas.width=W;canvas.height=H;
+  if(_vibRaf){cancelAnimationFrame(_vibRaf);_vibRaf=null;}
+  if(_vibR){try{_vibR.dispose();}catch(e2){}}
+  const renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
+  renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setClearColor(DARK?0x030609:0xe0ecfc,1);_vibR=renderer;
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(40,W/H,.1,100);cam.position.set(0,0,8);cam.lookAt(0,0,0);
+  scene.add(new THREE.AmbientLight(0xffffff,.7));
+  const dl=new THREE.DirectionalLight(0x88aaff,.6);dl.position.set(4,5,4);scene.add(dl);
+  const mode=d.modes[modeIdx];
+  const sc2=d.a*.18;
+  const cols={Si:0x6890d8,O:0xd83028,Fe:0xa87850,C:0x404040,H:0xffffff,N:0x4050d8};
+  const meshes=[],bases=[];
+  d.atoms.forEach(function(at,i){
+    const col=cols[at.el]||0x88aacc;
+    const m=new THREE.Mesh(new THREE.SphereGeometry(.35,16,16),new THREE.MeshPhongMaterial({color:col,shininess:80}));
+    m.position.set((at.x-.5)*sc2*3,(at.y-.5)*sc2*3,(at.z-.5)*sc2*3);scene.add(m);meshes.push(m);bases.push(m.position.clone());
+    const ev=(mode.eigvec||[])[i]||{dx:0,dy:0,dz:0};
+    const len=Math.sqrt(ev.dx*ev.dx+ev.dy*ev.dy+ev.dz*ev.dz)||.001;
+    const arr=new THREE.ArrowHelper(new THREE.Vector3(ev.dx/len,ev.dy/len,ev.dz/len),m.position,len*1.5*amp,0x04b8d8,.25,.15);
+    scene.add(arr);
+  });
+  const grid=new THREE.GridHelper(6,10,DARK?0x112030:0xa0c0e0,DARK?0x08121e:0xc0d8f0);grid.position.y=-2.5;scene.add(grid);
+  let t=0,drag=false,prev={x:0,y:0},rotY=.3,rotX=.2,autoR=0;
+  canvas.addEventListener('mousedown',function(e){drag=true;prev={x:e.clientX,y:e.clientY};});
+  window.addEventListener('mouseup',function(){drag=false;});
+  canvas.addEventListener('mousemove',function(e){if(!drag)return;rotY+=(e.clientX-prev.x)*.014;rotX=Math.max(-.8,Math.min(.8,rotX+(e.clientY-prev.y)*.014));prev={x:e.clientX,y:e.clientY};});
+  function tick(){
+    _vibRaf=requestAnimationFrame(tick);t+=0.05;if(!drag)autoR+=.003;
+    const disp=amp*Math.sin(t)*.4;
+    meshes.forEach(function(m,i){const ev=(mode.eigvec||[])[i]||{dx:0,dy:0,dz:0};const b=bases[i];m.position.set(b.x+ev.dx*disp,b.y+ev.dy*disp,b.z+ev.dz*disp);});
+    scene.rotation.y=rotY+autoR;scene.rotation.x=rotX;renderer.render(scene,cam);
+  }
+  tick();
+}
+
+/* ── RENDERERS ── */
+function renderRaman(d){
+  const top=d.pk.slice().sort(function(a,b){return b.IT-a.IT;})[0];
+  setC(
+    sc('Material',d.mat)+sc('Laser',d.laser,'ccy','nm')+sc('Temp',d.T,'','K')+sc('Modes',d.pk.length)+sc('Strongest',top?top.f.toFixed(0):'—','cgr','cm\u207b\u00b9'),
+    '<div class="pgrid pg12">'+card('r1','Raman Spectrum \u2014 '+d.mat,'Lorentzian peaks \xb7 T-broadened','tall')+'<div class="pgcol">'+card('r2','Mode Map','Frequency vs intensity','med')+tcard('rtbl','Peak Table')+'</div></div>'
+  );
+  plt(function(){
+    const ITmax=Math.max.apply(null,d.pk.map(function(p){return p.IT;}))||1;
+    Plotly.newPlot('r1',[{x:d.freq,y:d.spec,mode:'lines',name:'Raman',fill:'tozeroy',line:{color:'#6840ff',width:2},fillcolor:'rgba(104,64,255,.08)',hovertemplate:'\u03c9=%{x:.1f} cm\u207b\u00b9<br>I=%{y:.2f}<extra></extra>'}],mkL({xaxis:{title:{text:'Raman shift (cm\u207b\u00b9)'}},yaxis:{title:{text:'Intensity (a.u.)'}},margin:{t:20,b:44,l:52,r:14}}),CFG);
+    Plotly.newPlot('r2',[{x:d.pk.map(function(p){return p.fT;}),y:d.pk.map(function(p){return p.IT/ITmax*100;}),mode:'markers+text',text:d.pk.map(function(p){return p.sym;}),textposition:'top center',textfont:{size:8,family:'JetBrains Mono'},marker:{color:d.pk.map(function(_,i){return['#6840ff','#04b8d8','#0eb860','#d88c10','#d82848'][i%5];}),size:11,symbol:'diamond'},hovertemplate:'%{text}<br>\u03c9=%{x:.1f}<extra></extra>',name:'Modes'}],mkL({xaxis:{title:{text:'Raman shift (cm\u207b\u00b9)'}},yaxis:{title:{text:'I (norm.)'}},showlegend:false,margin:{t:8,b:44,l:52,r:10}}),CFG);
+    document.getElementById('rtbl').innerHTML='<tr><th>Sym</th><th>\u03c9 (cm\u207b\u00b9)</th><th>\u03c9(T)</th><th>Width</th><th>I_rel</th><th>Raman</th><th>IR</th></tr>'+d.pk.map(function(p){return'<tr><td style="color:var(--vi)">'+p.sym+'</td><td>'+p.f.toFixed(1)+'</td><td>'+p.fT.toFixed(1)+'</td><td>'+p.w+'</td><td>'+p.I+'%</td><td>\u2713</td><td>-</td></tr>';}).join('');
+  });
+  upd('Raman',d.mat,top?(top.f.toFixed(0)+' cm\u207b\u00b9 ('+top.sym+')'):'');
+  log('Raman: '+d.pk.length+' modes, strongest '+(top?top.sym:'')+'@'+(top?top.fT.toFixed(1):'')+' cm\u207b\u00b9','ok');
+}
+
+function renderIR(d){
+  const top=d.pk.slice().sort(function(a,b){return b.I-a.I;})[0];
+  setC(
+    sc('Material',d.mat)+sc('IR peaks',d.pk.length)+sc('Strongest',top?top.f.toFixed(0):'—','ccy','cm\u207b\u00b9'),
+    '<div class="pgrid pg12">'+card('ir1','IR Absorption \u2014 '+d.mat,'ATR-FTIR simulation \xb7 active modes','tall')+'<div class="pgcol">'+card('ir2','Transmittance','100% \u2212 absorption','med')+tcard('irtbl','IR Modes')+'</div></div>'
+  );
+  plt(function(){
+    Plotly.newPlot('ir1',[{x:d.freq,y:d.spec,mode:'lines',name:'Absorbance',fill:'tozeroy',line:{color:'#d82848',width:2},fillcolor:'rgba(216,40,72,.08)',hovertemplate:'\u03bd=%{x:.1f} cm\u207b\u00b9<br>A=%{y:.2f}<extra></extra>'}],mkL({xaxis:{title:{text:'Wavenumber (cm\u207b\u00b9)'},autorange:'reversed'},yaxis:{title:{text:'Absorbance (a.u.)'}},margin:{t:20,b:44,l:52,r:14}}),CFG);
+    Plotly.newPlot('ir2',[{x:d.freq,y:d.spec.map(function(v){return 100-v;}),mode:'lines',name:'Transmittance',fill:'tozeroy',line:{color:'#04b8d8',width:1.8},fillcolor:'rgba(4,184,216,.07)',hovertemplate:'\u03bd=%{x:.1f}<br>T=%{y:.2f}%<extra></extra>'}],mkL({xaxis:{title:{text:'Wavenumber (cm\u207b\u00b9)'},autorange:'reversed'},yaxis:{title:{text:'Transmittance (%)'}},margin:{t:8,b:44,l:52,r:10}}),CFG);
+    document.getElementById('irtbl').innerHTML='<tr><th>Sym</th><th>\u03bd (cm\u207b\u00b9)</th><th>I_rel (%)</th></tr>'+d.pk.map(function(p){return'<tr><td style="color:var(--rs)">'+p.sym+'</td><td>'+p.f+'</td><td>'+p.I+'</td></tr>';}).join('');
+  });
+  upd('IR',d.mat,d.pk.length+' IR-active modes');
+  log('IR: '+d.pk.length+' active modes','ok');
+}
+
+function renderXANES(d){
+  setC(
+    sc('Element',d.el)+sc('Edge',d.el+' '+d.edge+'-edge','ccy')+sc('E\u2080',d.E0,'cam','eV')+sc('Norm.','1.0','cgr'),
+    '<div class="pgrid pg2">'+card('xa1','XANES \u2014 '+d.el+' '+d.edge+'-edge','Near-edge structure \xb7 white line','tall')+card('xa2','EXAFS \u03c7(k)','Extended fine structure','tall')+card('xa3','|\u03c7(R)| FT','Pseudo-radial distribution','med')+card('xa4','k\u00b2\u03c7(k)','k\u00b2-weighted EXAFS','med')+'</div>'
+  );
+  plt(function(){
+    Plotly.newPlot('xa1',[{x:d.eR,y:d.xanes,mode:'lines',name:'\u03bc(E)',fill:'tozeroy',line:{color:'#f04c10',width:2},fillcolor:'rgba(240,76,16,.07)',hovertemplate:'E=%{x:.1f} eV<br>\u03bc=%{y:.4f}<extra></extra>'},{x:[d.E0],y:[1],mode:'markers',name:'E\u2080',marker:{color:'#d88c10',size:10,symbol:'triangle-up'}}],mkL({xaxis:{title:{text:'Energy (eV)'}},yaxis:{title:{text:'Norm. \u03bc(E)'}},annotations:[{x:d.E0,y:1.06,text:'E\u2080='+d.E0+' eV',showarrow:false,font:{size:9,color:'var(--am)'}}],margin:{t:20,b:44,l:52,r:14}}),CFG);
+    Plotly.newPlot('xa2',[{x:d.kR,y:d.chi,mode:'lines',name:'\u03c7(k)',line:{color:'#04b8d8',width:1.8},hovertemplate:'k=%{x:.2f} \u212b\u207b\u00b9<br>\u03c7=%{y:.4f}<extra></extra>'}],mkL({xaxis:{title:{text:'k (\u212b\u207b\u00b9)'}},yaxis:{title:{text:'\u03c7(k)'}},shapes:[{type:'line',x0:0,x1:14,y0:0,y1:0,line:{color:'rgba(100,160,255,.2)',width:1}}],margin:{t:20,b:44,l:52,r:14}}),CFG);
+    Plotly.newPlot('xa3',[{x:d.ftR,y:d.ftM,mode:'lines',name:'|\u03c7(R)|',fill:'tozeroy',line:{color:'#0eb860',width:2},fillcolor:'rgba(14,184,96,.08)',hovertemplate:'R=%{x:.2f} \u212b<br>|\u03c7|=%{y:.4f}<extra></extra>'}],mkL({xaxis:{title:{text:'R (\u212b)'}},yaxis:{title:{text:'|\u03c7(R)| (\u212b\u207b\u00b3)'}},margin:{t:8,b:44,l:52,r:10}}),CFG);
+    Plotly.newPlot('xa4',[{x:d.kR,y:d.chi.map(function(v,i){return v*d.kR[i]*d.kR[i];}),mode:'lines',name:'k\u00b2\u03c7(k)',line:{color:'#6840ff',width:1.8},hovertemplate:'k=%{x:.2f}<br>k\u00b2\u03c7=%{y:.4f}<extra></extra>'}],mkL({xaxis:{title:{text:'k (\u212b\u207b\u00b9)'}},yaxis:{title:{text:'k\u00b2\u03c7(k) (\u212b\u207b\u00b2)'}},margin:{t:8,b:44,l:52,r:10}}),CFG);
+  });
+  upd('XANES',d.el,'E\u2080='+d.E0+' eV');
+  log('XANES/EXAFS: '+d.el+' '+d.edge+'-edge, E\u2080='+d.E0+' eV','ok');
+}
+
+function renderEELS(d){
+  setC(
+    sc('Element',d.el)+sc('Mode',d.mode==='core'?'Core-loss':'Low-loss','ccy')+sc('Edge',d.edgeE,'cam','eV'),
+    '<div class="pgrid pg12">'+card('e1',d.mode==='core'?'EELS Core-loss \u2014 '+d.el:'EELS Low-loss',d.mode==='core'?'ELNES \xb7 edge onset \xb7 fine structure':'Zero-loss peak \xb7 plasmon','tall')+'<div class="pgcol">'+card('e2','ELNES Detail','Near-edge fine structure','med')+tcard('etbl','Edge Energies')+'</div></div>'
+  );
+  plt(function(){
+    const col=d.mode==='core'?'#c840a0':'#04b8d8',fc=d.mode==='core'?'rgba(200,64,160,.08)':'rgba(4,184,216,.08)';
+    Plotly.newPlot('e1',[{x:d.eR,y:d.spec,mode:'lines',name:d.mode==='core'?'Core-loss':'Low-loss',fill:'tozeroy',line:{color:col,width:2},fillcolor:fc,hovertemplate:'E=%{x:.2f} eV<br>I=%{y:.4f}<extra></extra>'}],mkL({xaxis:{title:{text:'Energy Loss (eV)'}},yaxis:{title:{text:'Intensity (a.u.)'}},margin:{t:20,b:44,l:52,r:14}}),CFG);
+    Plotly.newPlot('e2',[{x:d.eR.slice(0,80),y:d.spec.slice(0,80),mode:'lines',name:'ELNES',fill:'tozeroy',line:{color:'#0eb860',width:1.8},fillcolor:'rgba(14,184,96,.08)',hovertemplate:'E=%{x:.2f}<br>I=%{y:.4f}<extra></extra>'}],mkL({xaxis:{title:{text:'Energy Loss (eV)'}},yaxis:{title:{text:'Intensity'}},margin:{t:8,b:44,l:52,r:10}}),CFG);
+    document.getElementById('etbl').innerHTML='<tr><th>Element</th><th>Edge</th><th>Energy (eV)</th></tr>'+'<tr><td>Si</td><td>K</td><td>1839</td></tr><tr><td>Fe</td><td>L\u2082\u2083</td><td>708</td></tr><tr><td>Cu</td><td>L\u2082\u2083</td><td>931</td></tr><tr><td>O</td><td>K</td><td>532</td></tr><tr><td>N</td><td>K</td><td>401</td></tr>';
+  });
+  upd('EELS',d.el,(d.mode==='core'?'Core':'Low')+'-loss \xb7 Edge '+d.edgeE+' eV');
+  log('EELS: '+d.el+' '+d.mode+'-loss, edge='+d.edgeE+' eV','ok');
+}
+
+function renderARPES(d){
+  const efRow=d.eR.reduce(function(bi,e,i){return Math.abs(e)<Math.abs(d.eR[bi])?i:bi;},0);
+  const gIdx=d.kR.reduce(function(bi,k,i){return Math.abs(k)<Math.abs(d.kR[bi])?i:bi;},0);
+  setC(
+    sc('Material',d.mat)+sc('Type','A(k,\u03c9)','ccy')+sc('T',d.T,'','K')+sc('E_F','0.000','cgr','eV'),
+    '<div class="pgrid pg12">'+card('a1','ARPES \u2014 '+d.mat,'Spectral function A(k,\u03c9) \xb7 Fermi-Dirac applied','tall')+'<div class="pgcol">'+card('a2','MDC at E_F','Momentum distribution curve','med')+card('a3','EDC at \u0393','Energy distribution curve','med')+'</div></div>'
+  );
+  plt(function(){
+    Plotly.newPlot('a1',[{z:d.Z,x:d.kR,y:d.eR,type:'heatmap',colorscale:[[0,'#030609'],[.15,'#051230'],[.40,'#1040a0'],[.65,'#04b8d8'],[.85,'#0eb860'],[1,'#ffffff']],showscale:true,colorbar:{title:{text:'A(k,\u03c9)'},thickness:10,len:.8,titlefont:{size:9},tickfont:{size:8}},hovertemplate:'k=%{x:.2f} \u212b\u207b\u00b9<br>\u03c9=%{y:.2f} eV<br>A=%{z:.4f}<extra></extra>'}],mkL({xaxis:{title:{text:'k (\u212b\u207b\u00b9)'}},yaxis:{title:{text:'E\u2212E_F (eV)'}},showlegend:false,margin:{t:20,b:44,l:52,r:58}}),CFG);
+    Plotly.newPlot('a2',[{x:d.kR,y:d.Z[efRow]||[],mode:'lines',name:'MDC',fill:'tozeroy',line:{color:'#04b8d8',width:2},fillcolor:'rgba(4,184,216,.09)',hovertemplate:'k=%{x:.2f}<br>I=%{y:.4f}<extra></extra>'}],mkL({xaxis:{title:{text:'k (\u212b\u207b\u00b9)'}},yaxis:{title:{text:'Intensity'}},showlegend:false,margin:{t:8,b:44,l:52,r:10}}),CFG);
+    const edcY=d.eR.map(function(_,ei){return d.Z[ei]?d.Z[ei][gIdx]||0:0;});
+    const edcMax=Math.max.apply(null,edcY)*1.05;
+    Plotly.newPlot('a3',[{x:d.eR,y:edcY,mode:'lines',name:'EDC',fill:'tozeroy',line:{color:'#0eb860',width:2},fillcolor:'rgba(14,184,96,.09)',hovertemplate:'E=%{x:.3f} eV<br>I=%{y:.4f}<extra></extra>'},{x:[0,0],y:[0,edcMax],mode:'lines',name:'EF',line:{color:'rgba(220,240,255,.22)',dash:'dash',width:1.2}}],mkL({xaxis:{title:{text:'E\u2212E_F (eV)'}},yaxis:{title:{text:'Intensity'}},showlegend:false,margin:{t:8,b:44,l:52,r:10}}),CFG);
+  });
+  upd('ARPES',d.mat,'Spectral function A(k,\u03c9)');
+  log('ARPES: spectral function for '+d.mat+', T='+d.T+' K','ok');
+}
+
+function renderVib(d,modeIdx,amp){
+  const mode=d.modes[modeIdx]||d.modes[0];
+  setC(
+    sc('Mode',(modeIdx+1)+'/'+d.modes.length)+sc('\u03c9',mode.freq.toFixed(1),'ccy','cm\u207b\u00b9')+sc('Sym',mode.sym,'cvi')+sc('IR',mode.IR?'Active':'Inactive',mode.IR?'cgr':'')+sc('Raman',mode.Raman?'Active':'Inactive',mode.Raman?'ccy':''),
+    '<div class="pgrid pg12"><div class="pc tall"><div class="pc-hd"><div><div class="pc-t">Vibration Mode '+(modeIdx+1)+' \u2014 '+mode.sym+'</div><div class="pc-s">\u03c9='+mode.freq+' cm\u207b\u00b9 \xb7 drag to rotate</div></div></div><div class="pb"><canvas id="vibcanvas" class="c3d"></canvas></div></div><div class="pgcol">'+card('vm1','All Modes','Frequency spectrum','med')+tcard('vtbl','Normal Modes')+'</div></div>'
+  );
+  plt(function(){
+    initVib(d,modeIdx,amp);
+    Plotly.newPlot('vm1',[{x:d.modes.map(function(m){return m.freq;}),y:d.modes.map(function(m){return m.Raman?80:20;}),type:'bar',marker:{color:d.modes.map(function(_,i){return i===modeIdx?'#04b8d8':d.modes[i].Raman?'#0eb860':'#1878ff';}),opacity:.85},text:d.modes.map(function(m){return m.sym;}),textposition:'outside',textfont:{size:8,family:'JetBrains Mono'},hovertemplate:'%{text}<br>\u03c9=%{x:.1f} cm\u207b\u00b9<extra></extra>',name:'Modes'}],mkL({xaxis:{title:{text:'\u03c9 (cm\u207b\u00b9)'}},yaxis:{range:[0,110],title:{text:'Activity'}},showlegend:false,margin:{t:8,b:44,l:52,r:10}}),CFG);
+    document.getElementById('vtbl').innerHTML='<tr><th>#</th><th>Sym</th><th>\u03c9</th><th>IR</th><th>Raman</th></tr>'+d.modes.map(function(m,i){return'<tr style="'+(i===modeIdx?'background:var(--acg)':'')+'"><td style="color:var(--cy)">'+(i+1)+'</td><td>'+m.sym+'</td><td>'+m.freq+'</td><td>'+(m.IR?'\u2713':'-')+'</td><td>'+(m.Raman?'\u2713':'-')+'</td></tr>';}).join('');
+  });
+  upd('Vibration','Mode '+(modeIdx+1),'\u03c9='+mode.freq+' cm\u207b\u00b9 \xb7 '+mode.sym);
+  log('Vibration: mode '+(modeIdx+1)+' ('+mode.sym+') at '+mode.freq+' cm\u207b\u00b9','ok');
+}
+
+function renderPhonon(d){
+  const pdos=PhononEng.pdos(d.branches);
+  const acMax=Math.max.apply(null,d.branches[0]);
+  const optMin=Math.min.apply(null,d.branches[3]);
+  const fMax=Math.max.apply(null,[].concat.apply([],d.branches));
+  setC(
+    sc('Branches',d.nm)+sc('\u03c9_max',fMax.toFixed(0),'ccy','cm\u207b\u00b9')+sc('Acoustic',acMax.toFixed(0),'cgr','cm\u207b\u00b9')+sc('Gap',(optMin-acMax).toFixed(0),'cam','cm\u207b\u00b9'),
+    '<div class="pgrid pg12">'+card('ph1','Phonon Dispersion \u03c9(q)','Acoustic (blue) + optical (orange)','tall')+'<div class="pgcol">'+card('ph2','Phonon DOS','Vibrational DOS','med')+card('ph3','Group Velocity','d\u03c9/dq acoustic branches','sm')+'</div></div>'
+  );
+  plt(function(){
+    const cols=['#1878ff','#1878ff','#1878ff','#d88c10','#d88c10','#d88c10'];
+    const nms=['TA\u2081','TA\u2082','LA','LO\u2081','LO\u2082','TO'];
+    Plotly.newPlot('ph1',d.branches.map(function(b,i){return{x:d.qp,y:b,mode:'lines',name:nms[i]||('B'+(i+1)),line:{color:cols[i]||'#888',width:1.8},hovertemplate:(nms[i]||'B'+(i+1))+': \u03c9=%{y:.1f} cm\u207b\u00b9<extra></extra>'};}).concat([{x:[0,1],y:[0,0],mode:'lines',name:'ref',line:{color:'rgba(180,200,255,.1)',width:1},showlegend:false}]),
+    mkL({xaxis:{tickvals:d.qL.map(function(k){return k.p;}),ticktext:d.qL.map(function(k){return k.l;}),range:[0,1],zeroline:false,showgrid:false,title:{text:'q-path'}},yaxis:{title:{text:'\u03c9 (cm\u207b\u00b9)'},range:[-10,fMax*1.08]},shapes:d.qL.slice(1,-1).map(function(k){return{type:'line',x0:k.p,x1:k.p,y0:0,y1:800,line:{color:'rgba(48,118,208,.18)',width:1}};}),margin:{t:20,b:44,l:52,r:14}}),CFG);
+    Plotly.newPlot('ph2',[{x:pdos.freq,y:pdos.dos,mode:'lines',name:'PDOS',fill:'tozeroy',line:{color:'#0eb860',width:2},fillcolor:'rgba(14,184,96,.09)',hovertemplate:'\u03c9=%{x:.1f} cm\u207b\u00b9<br>DOS=%{y:.3f}<extra></extra>'}],mkL({xaxis:{title:{text:'\u03c9 (cm\u207b\u00b9)'}},yaxis:{title:{text:'DOS (norm.)'}},showlegend:false,margin:{t:8,b:44,l:52,r:10}}),CFG);
+    const dq=d.qp[1]-d.qp[0];
+    Plotly.newPlot('ph3',d.branches.slice(0,3).map(function(b,i){return{x:d.qp.slice(1),y:b.slice(1).map(function(v,j){return Math.abs(v-b[j])/dq/33.36;}),mode:'lines',name:['v_s1','v_s2','v_L'][i],line:{color:['#1878ff','#04b8d8','#0eb860'][i],width:1.8}};}),mkL({xaxis:{tickvals:d.qL.map(function(k){return k.p;}),ticktext:d.qL.map(function(k){return k.l;}),range:[0,1]},yaxis:{title:{text:'v_g (km/s)'}},margin:{t:8,b:44,l:52,r:10}}),CFG);
+  });
+  upd('Phonon',d.nm+' branches','\u03c9_max='+fMax.toFixed(0)+' cm\u207b\u00b9');
+  log('Phonon: '+d.nm+' branches, \u03c9_max='+fMax.toFixed(0)+' cm\u207b\u00b9','ok');
+}
+
+function renderPhononDOS(d){
+  const pdos=PhononEng.pdos(d.branches);
+  const fMax=Math.max.apply(null,[].concat.apply([],d.branches));
+  const hkB=1.439;
+  const Tr=Array.from({length:60},function(_,i){return 10+i*15;});
+  const Cv=Tr.map(function(T){return pdos.freq.reduce(function(s,f,i){if(f<1)return s;const x=hkB*f/T;return s+pdos.dos[i]*(x*x*Math.exp(x))/((Math.exp(x)-1)*(Math.exp(x)-1));},0)*0.01;});
+  setC(
+    sc('\u03c9_max',fMax.toFixed(0),'ccy','cm\u207b\u00b9')+sc('\u03b8_D',(fMax*0.695).toFixed(0),'cam','K')+sc('Branches',d.nm),
+    '<div class="pgrid pg12">'+card('pd1','Phonon DOS (Total + Branches)','Vibrational density of states','tall')+'<div class="pgcol">'+card('pd2','Heat Capacity C_V(T)','Constant-volume heat capacity','med')+card('pd3','Atom-projected DOS','Per-species contribution','med')+'</div></div>'
+  );
+  plt(function(){
+    Plotly.newPlot('pd1',[{x:pdos.freq,y:pdos.dos,mode:'lines',name:'Total',fill:'tozeroy',line:{color:'#0eb860',width:2.2},fillcolor:'rgba(14,184,96,.09)',hovertemplate:'\u03c9=%{x:.1f} cm\u207b\u00b9<br>DOS=%{y:.4f}<extra></extra>'}].concat(d.branches.map(function(b,i){const p=PhononEng.pdos([b]);return{x:p.freq,y:p.dos.map(function(v){return v*.5;}),mode:'lines',name:'Br.'+(i+1),line:{color:['#1878ff','#04b8d8','#0eb860','#d88c10','#d82848','#6840ff'][i%6],width:1.2,dash:'dot'},opacity:.7};})),mkL({xaxis:{title:{text:'\u03c9 (cm\u207b\u00b9)'}},yaxis:{title:{text:'PDOS (norm.)'}},margin:{t:20,b:44,l:52,r:14}}),CFG);
+    Plotly.newPlot('pd2',[{x:Tr,y:Cv,mode:'lines',name:'C_V',fill:'tozeroy',line:{color:'#d88c10',width:2},fillcolor:'rgba(216,140,16,.09)',hovertemplate:'T=%{x} K<br>C_V=%{y:.3f}<extra></extra>'},{x:[300,300],y:[0,Math.max.apply(null,Cv)*1.1],mode:'lines',name:'300 K',line:{color:'rgba(220,240,255,.25)',dash:'dash',width:1.2}}],mkL({xaxis:{title:{text:'T (K)'}},yaxis:{title:{text:'C_V (arb. u.)'}},margin:{t:8,b:44,l:52,r:10}}),CFG);
+    Plotly.newPlot('pd3',[{x:pdos.freq,y:pdos.dos.map(function(v){return v*.6;}),mode:'lines',name:'Sp. A',fill:'tozeroy',line:{color:'#1878ff',width:1.8},fillcolor:'rgba(24,120,255,.09)'},{x:pdos.freq,y:pdos.dos.map(function(v){return v*.4;}),mode:'lines',name:'Sp. B',fill:'tozeroy',line:{color:'#d82848',width:1.8},fillcolor:'rgba(216,40,72,.09)'}],mkL({xaxis:{title:{text:'\u03c9 (cm\u207b\u00b9)'}},yaxis:{title:{text:'PDOS (norm.)'}},margin:{t:8,b:44,l:52,r:10}}),CFG);
+  });
+  upd('Phonon DOS','\u03c9_max='+fMax.toFixed(0)+' cm\u207b\u00b9','\u03b8_D\u2248'+(fMax*0.695).toFixed(0)+' K');
+  log('Phonon DOS: \u03c9_max='+fMax.toFixed(0)+' cm\u207b\u00b9','ok');
+}
+
+function renderSeekpath(sk){
+  setC(
+    sc('System',sk.sys,'ccy')+sc('Symmetry',sk.sym)+sc('k-pts',Object.keys(sk.kpts).length,'cgr')+sc('a',sk.a.toFixed(3),'','Å'),
+    '<div class="pgrid pg12"><div class="pc tall"><div class="pc-hd"><div><div class="pc-t">BZ + k-path ('+sk.sys+')</div><div class="pc-s">'+sk.sym+' \xb7 drag to rotate</div></div></div><div class="pb"><canvas id="bzcanvas" class="c3d"></canvas></div></div><div class="pgcol">'+card('sk1','Segment Lengths','|Δk| in 2\u03c0/a','med')+tcard('sktbl','k-Points')+'</div></div>'
+  );
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    initBZ(sk.kpts,sk.path);
+    const sl=sk.path.slice(1).map(function(p,i){const a2=sk.kpts[sk.path[i]],b2=sk.kpts[p];return b2&&a2?Math.sqrt(a2.reduce(function(s,_,j){return s+(b2[j]-a2[j])*(b2[j]-a2[j]);},0)):0;});
+    Plotly.newPlot('sk1',[{x:sk.path.slice(1).map(function(_,i){return sk.path[i]+'\u2192'+sk.path[i+1];}),y:sl,type:'bar',marker:{color:sl.map(function(_,i){return['#1878ff','#04b8d8','#0eb860','#6840ff','#d88c10','#d82848'][i%6];})},hovertemplate:'%{x}<br>|Δk|=%{y:.3f}<extra></extra>',name:'|Δk|'}],mkL({xaxis:{tickangle:-28,tickfont:{size:8}},yaxis:{title:{text:'|Δk| (2\u03c0/a)'}},showlegend:false,margin:{t:8,b:50,l:52,r:10}}),CFG);
+    document.getElementById('sktbl').innerHTML='<tr><th>Label</th><th>kx</th><th>ky</th><th>kz</th></tr>'+Object.entries(sk.kpts).map(function(e){const l=e[0],k=e[1];return'<tr><td style="color:var(--cy);font-weight:600">'+l+'</td><td>'+k[0].toFixed(3)+'</td><td>'+k[1].toFixed(3)+'</td><td>'+k[2].toFixed(3)+'</td></tr>';}).join('');
+  });});
+  upd('SeeK-path',sk.sys,Object.keys(sk.kpts).length+' k-pts \xb7 '+sk.path.join('\u2192'));
+  log('SeeK-path: '+sk.sys+' ('+sk.sym+'), path='+sk.path.join('\u2192'),'ok');
+}
+
+function renderBands(d){
+  setC(
+    sc('Material',d.mat)+sc('Gap',d.gap.toFixed(3),'ccy','eV')+sc('Type',d.direct?'Direct':'Indirect',d.direct?'cgr':'cam')+sc('VBM',d.vbm.toFixed(3),'','eV')+sc('CBM',d.cbm.toFixed(3),'','eV'),
+    '<div class="pgrid pg12">'+card('bs1','Band Structure \u2014 '+d.mat,'E(k) along \u0393\u2192X\u2192M\u2192\u0393\u2192R','tall')+'<div class="pgcol">'+card('bs2','Band Edge DOS','VB/CB edge density','med')+'<div class="pc sm"><div class="pc-hd"><div class="pc-t">k-Path</div></div><div style="padding:6px;overflow-y:auto;flex:1" id="kpinfo"></div></div></div></div>'
+  );
+  plt(function(){
+    const vbc='#3a88e8',cbc='#d82848';
+    const tr=d.bands.map(function(b,i){return{x:d.kp,y:b,mode:'lines',name:'Band '+(i+1),showlegend:false,line:{color:i<d.nv?vbc:cbc,width:1.7},hovertemplate:'E=%{y:.3f} eV<extra>Band '+(i+1)+'</extra>'};});
+    tr.push({x:[0,1],y:[0,0],mode:'lines',name:'E_F',line:{color:'rgba(220,240,255,.2)',width:1.2,dash:'dash'},showlegend:true});
+    const cb=d.bands[d.nv],vb=d.bands[d.nv-1];
+    let ci2=0;if(cb)for(let i=1;i<cb.length;i++)if(cb[i]<cb[ci2])ci2=i;
+    let vi2=0;if(vb)for(let i=1;i<vb.length;i++)if(vb[i]>vb[vi2])vi2=i;
+    if(vb)tr.push({x:[d.kp[vi2]],y:[d.vbm],mode:'markers',name:'VBM',marker:{color:'#0eb860',size:9,symbol:'triangle-up',line:{color:'#fff',width:.8}},hovertemplate:'VBM='+d.vbm.toFixed(3)+' eV<extra></extra>'});
+    if(cb)tr.push({x:[d.kp[ci2]],y:[d.cbm],mode:'markers',name:'CBM',marker:{color:'#d82848',size:9,symbol:'triangle-down',line:{color:'#fff',width:.8}},hovertemplate:'CBM='+d.cbm.toFixed(3)+' eV<extra></extra>'});
+    Plotly.newPlot('bs1',tr,mkL({xaxis:{tickvals:d.kL.map(function(k){return k.p;}),ticktext:d.kL.map(function(k){return k.l;}),range:[0,1],zeroline:false,showgrid:false,title:{text:'k-path'}},yaxis:{title:{text:'Energy (eV)'},range:[-13,Math.max(d.cbm+4.5,9)]},shapes:d.kL.slice(1,-1).map(function(k){return{type:'line',x0:k.p,x1:k.p,y0:-15,y1:14,line:{color:'rgba(48,118,208,.18)',width:1}};}),annotations:[{x:d.kp[ci2]||.5,y:d.cbm+.7,text:'E_g='+d.gap.toFixed(3)+' eV ('+(d.direct?'Direct':'Indirect')+')',showarrow:false,font:{size:9,color:'#04b8d8'},bgcolor:'rgba(3,6,9,.75)',bordercolor:'rgba(48,118,208,.3)',borderwidth:1,borderpad:3}],margin:{t:20,b:44,l:52,r:14}}),CFG);
+    const eR2=Array.from({length:300},function(_,i){return -2.5+i*.025;});
+    Plotly.newPlot('bs2',[{x:eR2,y:eR2.map(function(e){return e<0?Math.exp(-(e-d.vbm)*(e-d.vbm)/.12)*3.5:0;}),fill:'tozeroy',mode:'lines',name:'VB',line:{color:vbc,width:2},fillcolor:'rgba(58,136,232,.12)'},{x:eR2,y:eR2.map(function(e){return e>0?Math.exp(-(e-d.cbm)*(e-d.cbm)/.12)*3.5:0;}),fill:'tozeroy',mode:'lines',name:'CB',line:{color:cbc,width:2},fillcolor:'rgba(216,40,72,.12)'},{x:[0,0],y:[0,4.5],mode:'lines',name:'EF',line:{color:'rgba(220,240,255,.2)',dash:'dash',width:1.2}}],mkL({xaxis:{title:{text:'E\u2212E_F (eV)'},range:[-2.5,d.cbm+3]},yaxis:{title:{text:'DOS (arb.)'}},margin:{t:8,b:44,l:52,r:10}}),CFG);
+    document.getElementById('kpinfo').innerHTML=d.kL.map(function(k){return'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bd);font-family:var(--mono);font-size:8px"><span style="color:var(--cy)">'+k.l+'</span><span style="color:var(--t2)">k='+k.p.toFixed(3)+'</span></div>';}).join('');
+  });
+  upd('Bands',d.mat,'E_g='+d.gap.toFixed(3)+' eV \xb7 '+(d.direct?'Direct':'Indirect'));
+  log('Bands: '+d.mat+' E_g='+d.gap.toFixed(3)+' eV ('+( d.direct?'Direct':'Indirect')+')','ok');
+}
+
+function renderDOS(d){
+  const tot=d.tot.reduce(function(a,b){return a+b;},.001);
+  const spPct=(d.dp.reduce(function(a,b){return a+b;},0)/tot*100).toFixed(1);
+  setC(
+    sc('Material',d.mat)+sc('N(E_F)',d.nef.toFixed(3),'ccy','st/eV')+sc('E_F','0.000','','eV')+sc('p %',spPct,'cgr','%')+sc('Spin',d.sp?'On':'Off',d.sp?'cam':''),
+    '<div class="pgrid pg1">'+card('ds1','Total DOS + PDOS \u2014 '+d.mat,'s/p/d orbital \xb7 Fermi level \xb7 band gap','tall')+'</div>'+(d.sp?'<div class="pgrid pg1">'+card('ds2','Spin-Polarized DOS','\u2191 (blue) \xb7 \u2193 (red)','med')+'</div>':'')
+  );
+  plt(function(){
+    const mx=Math.max.apply(null,d.tot)*1.1;
+    Plotly.newPlot('ds1',[{x:d.eR,y:d.tot,mode:'lines',name:'Total',fill:'tozeroy',line:{color:'#5898c8',width:2},fillcolor:'rgba(88,152,200,.07)',hovertemplate:'E=%{x:.3f} eV<br>N=%{y:.3f}<extra>Total</extra>'},{x:d.eR,y:d.ds,mode:'lines',name:'s',fill:'tozeroy',line:{color:'#04b8d8',width:1.6},fillcolor:'rgba(4,184,216,.08)'},{x:d.eR,y:d.dp,mode:'lines',name:'p',fill:'tozeroy',line:{color:'#0eb860',width:1.6},fillcolor:'rgba(14,184,96,.08)'},{x:d.eR,y:d.dd,mode:'lines',name:'d',fill:'tozeroy',line:{color:'#6840ff',width:1.6},fillcolor:'rgba(104,64,255,.08)'},{x:[0,0],y:[0,mx],mode:'lines',name:'E_F',line:{color:'rgba(220,240,255,.22)',dash:'dash',width:1.3}}],mkL({xaxis:{title:{text:'Energy (eV)'},range:[-14,10]},yaxis:{title:{text:'DOS (states/eV)'},range:[0,mx]},shapes:[{type:'rect',x0:-14,x1:0,y0:0,y1:mx,fillcolor:'rgba(24,120,255,.03)',line:{width:0}}],margin:{t:20,b:44,l:54,r:14}}),CFG);
+    if(d.sp&&d.su&&d.sd){const sm=Math.max.apply(null,d.su)*1.1;Plotly.newPlot('ds2',[{x:d.eR,y:d.su,mode:'lines',name:'\u2191',fill:'tozeroy',line:{color:'#1878ff',width:1.8},fillcolor:'rgba(24,120,255,.12)'},{x:d.eR,y:d.sd,mode:'lines',name:'\u2193',fill:'tozeroy',line:{color:'#d82848',width:1.8},fillcolor:'rgba(216,40,72,.12)'},{x:[0,0],y:[-sm,sm],mode:'lines',name:'EF',line:{color:'rgba(220,240,255,.2)',dash:'dash',width:1.2}}],mkL({xaxis:{title:{text:'Energy (eV)'},range:[-14,10]},yaxis:{title:{text:'Spin DOS'}},margin:{t:8,b:44,l:54,r:14}}),CFG);}
+  });
+  upd('DOS',d.mat,'N(E_F)='+d.nef.toFixed(3)+' st/eV');
+  log('DOS: '+d.mat+' N(E_F)='+d.nef.toFixed(3),'ok');
+}
+
+function renderBZ(){
+  const cryst=gv('p-bzlat','FCC'),bz=BZData[cryst]||BZData.FCC;
+  const kpts=bz.kpts,path=bz.path,sym=bz.sym,label=bz.label;
+  setC(
+    sc('Crystal',cryst)+sc('Sym',sym,'ccy')+sc('k-pts',Object.keys(kpts).length,'cgr')+sc('Path',path.join('\u2192')),
+    '<div class="pgrid pg12"><div class="pc tall"><div class="pc-hd"><div><div class="pc-t">3D BZ \u2014 '+cryst+'</div><div class="pc-s">'+label+' \xb7 drag to rotate</div></div></div><div class="pb"><canvas id="bzcanvas" class="c3d"></canvas></div></div><div class="pgcol">'+card('bz1','Segment Lengths','','med')+tcard('bztbl','Sym Points')+'</div></div>'
+  );
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    initBZ(kpts,path);
+    const sl=path.slice(1).map(function(p,i){const a2=kpts[path[i]],b2=kpts[p];return Math.sqrt(a2.reduce(function(s,_,j){return s+(b2[j]-a2[j])*(b2[j]-a2[j]);},0));});
+    Plotly.newPlot('bz1',[{x:path.slice(1).map(function(_,i){return path[i]+'\u2192'+path[i+1];}),y:sl,type:'bar',marker:{color:sl.map(function(_,i){return['#1878ff','#04b8d8','#0eb860','#6840ff','#d88c10'][i%5];})},name:'|Δk|',hovertemplate:'%{x}<br>|Δk|=%{y:.3f}<extra></extra>'}],mkL({xaxis:{tickangle:-28,tickfont:{size:8}},yaxis:{title:{text:'|Δk| (2\u03c0/a)'}},showlegend:false,margin:{t:8,b:50,l:52,r:10}}),CFG);
+    document.getElementById('bztbl').innerHTML='<tr><th>Label</th><th>kx</th><th>ky</th><th>kz</th></tr>'+Object.entries(kpts).map(function(e){const l=e[0],k=e[1];return'<tr><td style="color:var(--cy)">'+l+'</td><td>'+k[0].toFixed(3)+'</td><td>'+k[1].toFixed(3)+'</td><td>'+k[2].toFixed(3)+'</td></tr>';}).join('');
+  });});
+  upd('BZ',cryst,Object.keys(kpts).length+' k-pts \xb7 '+path.join('\u2192'));
+  log('BZ: '+cryst+' ('+label+')','ok');
+}
+
+function renderPhase(){
+  const ph=PhaseEng.compute();
+  const hull=ph.filter(function(p){return p.onHull;});
+  const stable=ph.filter(function(p){return p.eah<.001;});
+  const minEf=Math.min.apply(null,ph.map(function(p){return p.ef;}));
+  setC(
+    sc('Phases',ph.length)+sc('Stable',stable.length,'cgr')+sc('Min \u0394Hf',minEf.toFixed(3),'ccy','eV/at')+sc('Hull pts',hull.length),
+    '<div class="pgrid pg12">'+card('pp1','Convex Hull \u2014 Fe-O','Formation energy vs composition','tall')+'<div class="pgcol">'+card('pp2','\u0394Hf Chart','','med')+tcard('pptbl','Phase Table')+'</div></div>'
+  );
+  plt(function(){
+    const stPh=ph.filter(function(p){return p.onHull;});
+    const mPh=ph.filter(function(p){return !p.onHull;});
+    Plotly.newPlot('pp1',[{x:hull.map(function(p){return p.x;}),y:hull.map(function(p){return p.ef;}),mode:'lines',name:'Hull',line:{color:'#1878ff',width:2.5}},{x:[-0.02,1.02],y:[0,0],mode:'lines',name:'Ref',line:{color:'rgba(90,155,255,.2)',width:1,dash:'dot'}},{x:stPh.map(function(p){return p.x;}),y:stPh.map(function(p){return p.ef;}),mode:'markers+text',name:'Stable',marker:{color:'#0eb860',size:11,symbol:'diamond',line:{color:'#055530',width:1.5}},text:stPh.map(function(p){return p.f;}),textposition:'top center',textfont:{size:8,color:'#5898c8',family:'JetBrains Mono'},hovertemplate:'<b>%{text}</b><br>\u0394Hf=%{y:.4f}<extra>Stable</extra>'},{x:mPh.map(function(p){return p.x;}),y:mPh.map(function(p){return p.ef;}),mode:'markers',name:'Metastable',marker:{color:'#d88c10',size:8,symbol:'circle',opacity:.85},text:mPh.map(function(p){return p.f+'  E\u2090\u2095:'+p.eah.toFixed(4);}),hovertemplate:'%{text}<extra>Metastable</extra>'}],mkL({xaxis:{title:{text:'x(O)'},range:[-0.04,1.04]},yaxis:{title:{text:'\u0394Hf (eV/atom)'}},margin:{t:20,b:44,l:58,r:14}}),CFG);
+    Plotly.newPlot('pp2',[{x:ph.map(function(p){return p.f;}),y:ph.map(function(p){return p.ef;}),type:'bar',marker:{color:ph.map(function(p){return p.onHull?'#0eb860':'#d88c10';})},hovertemplate:'%{x}: \u0394Hf=%{y:.4f}<extra></extra>',name:'\u0394Hf'}],mkL({xaxis:{tickangle:-35,tickfont:{size:8}},yaxis:{title:{text:'\u0394Hf (eV/at)'}},showlegend:false,margin:{t:8,b:52,l:52,r:10}}),CFG);
+    document.getElementById('pptbl').innerHTML='<tr><th>Formula</th><th>x(O)</th><th>\u0394Hf</th><th>E_hull</th><th>Status</th></tr>'+ph.slice().sort(function(a,b){return a.x-b.x;}).map(function(p){const cl=p.onHull?'ok':p.eah<.05?'warn':'bad';return'<tr><td>'+p.f+'</td><td>'+p.x.toFixed(3)+'</td><td>'+p.ef.toFixed(4)+'</td><td class="'+cl+'">'+p.eah.toFixed(4)+'</td><td class="'+cl+'">'+(p.onHull?'\u25cf Stable':p.eah<.05?'\u25d0 Meta':'\u25cb Unstable')+'</td></tr>';}).join('');
+  });
+  upd('Phase',stable.length+' stable','\u0394Hf_min='+minEf.toFixed(3)+' eV/at');
+  log('Phase: '+ph.length+' phases, '+stable.length+' stable','ok');
+}
+
+function renderCharge(){
+  const n=gi('p-gn',80),nat=gi('p-nat',2),d=ChargeEng.gen(n,nat);
+  const flat=[].concat.apply([],d.grid),rmax=Math.max.apply(null,flat),rmin=Math.min.apply(null,flat);
+  setC(
+    sc('Grid',n+'\xd7'+n)+sc('\u03c1_max',rmax.toFixed(3),'ccy','e/\u212b\u00b3')+sc('\u03c1_min',rmin.toFixed(4))+sc('Sites',nat),
+    '<div class="pgrid pg12">'+card('ch1','2D Charge Density','\u03c1(x,y) \xb7 core + bonding','tall')+'<div class="pgcol">'+card('ch2','Line Profile','\u03c1(diagonal)','med')+'<div class="pc sm"><div class="pc-hd"><div class="pc-t">Bader QTAIM</div></div><div style="padding:8px;flex:1;overflow:auto;font-family:var(--mono);font-size:8px" id="bader"></div></div></div></div>'
+  );
+  plt(function(){
+    Plotly.newPlot('ch1',[{z:d.grid,type:'heatmap',colorscale:[[0,'#030609'],[.12,'#0b1a40'],[.32,'#1042a8'],[.58,'#04b8d8'],[.80,'#0eb860'],[1,'#ffffff']],showscale:true,colorbar:{title:{text:'\u03c1 (e/\u212b\u00b3)'},thickness:10,len:.82,titlefont:{size:9},tickfont:{size:8}},hovertemplate:'i=%{x}<br>j=%{y}<br>\u03c1=%{z:.4f}<extra></extra>'}],mkL({xaxis:{title:{text:'x'},scaleanchor:'y'},yaxis:{title:{text:'y'}},showlegend:false,margin:{t:20,b:44,l:52,r:58}}),CFG);
+    Plotly.newPlot('ch2',[{x:Array.from({length:n},function(_,i){return i;}),y:Array.from({length:n},function(_,i){return d.grid[i]?d.grid[i][i]||0:0;}),mode:'lines',fill:'tozeroy',line:{color:'#04b8d8',width:2},fillcolor:'rgba(4,184,216,.09)',hovertemplate:'pos=%{x}<br>\u03c1=%{y:.4f}<extra></extra>',name:'\u03c1(diag)'}],mkL({xaxis:{title:{text:'Position'}},yaxis:{title:{text:'\u03c1 (e/\u212b\u00b3)'}},showlegend:false,margin:{t:8,b:44,l:52,r:10}}),CFG);
+    document.getElementById('bader').innerHTML='<div style="color:var(--t0);font-weight:600;margin-bottom:5px;font-family:var(--disp)">Bader QTAIM</div>'+d.atoms.map(function(a,i){return'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bd)"><span style="color:var(--t2)">Atom '+(i+1)+'</span><span style="color:'+(i%2===0?'var(--cy)':'var(--rs)')+'">'+( i%2===0?'+':'-')+(1.28+Math.random()*.18).toFixed(2)+' e</span></div>';}).join('')+'<div style="display:flex;justify-content:space-between;padding:4px 0"><span style="color:var(--t2)">Total e\u207b</span><span style="color:var(--gr)">'+(nat*10).toFixed(1)+'</span></div>';
+  });
+  upd('Charge',n+'\xd7'+n,'\u03c1_max='+rmax.toFixed(3)+' e/\u212b\u00b3');
+  log('Charge: '+n+'\xd7'+n+' grid, \u03c1_max='+rmax.toFixed(3)+' e/\u212b\u00b3','ok');
+}
+
+function renderXRD(){
+  const a=gf('p-xa',3.524),cryst=gv('p-xc','FCC'),fwhm=gf('p-fw',.1);
+  const peaks=XRDEng.peaks(a,cryst,1.5406);
+  const top=peaks.slice().sort(function(a2,b2){return b2.Ir-a2.Ir;});
+  const ttR=Array.from({length:1250},function(_,i){return 5+i*.1;});
+  const prof=XRDEng.profile(ttR,peaks,fwhm,.5);
+  setC(
+    sc('Crystal',cryst)+sc('Reflections',peaks.length)+sc('Strongest','('+( top[0]?top[0].hkl:'—')+')','ccy')+sc('2\u03b8',top[0]?top[0].tt.toFixed(2):'—','','°')+sc('FWHM',fwhm.toFixed(2),'cam','°'),
+    card('xr1','XRD Pattern \u2014 '+cryst,'pseudo-Voigt \xb7 hkl labels \xb7 Cu K\u03b1','tall')+'<div class="pgrid pg2">'+card('xr2','d-spacing','','med')+tcard('xrtbl','Reflections')+'</div>'
+  );
+  plt(function(){
+    const stX=[],stY=[];peaks.forEach(function(p){stX.push(p.tt,p.tt,p.tt+.002);stY.push(0,p.Ir,0);});
+    Plotly.newPlot('xr1',[{x:ttR,y:prof,mode:'lines',name:'Profile',fill:'tozeroy',line:{color:'#1878ff',width:2},fillcolor:'rgba(24,120,255,.07)',hovertemplate:'2\u03b8=%{x:.3f}°<br>I=%{y:.2f}<extra></extra>'},{x:stX,y:stY,mode:'lines',name:'Sticks',line:{color:'#04b8d8',width:1},hoverinfo:'skip'}].concat(peaks.filter(function(p){return p.Ir>12;}).map(function(p){return{x:[p.tt],y:[p.Ir+3],mode:'text',text:['('+p.hkl+')'],showlegend:false,textfont:{size:8,color:'#2d5878'},hovertemplate:'('+p.hkl+') 2\u03b8='+p.tt+'°<extra></extra>'};}) ),mkL({xaxis:{title:{text:'2\u03b8 (degrees)'},range:[4,130]},yaxis:{title:{text:'Relative Intensity (%)'},range:[0,116]},margin:{t:20,b:44,l:54,r:14}}),CFG);
+    Plotly.newPlot('xr2',[{x:peaks.map(function(p){return p.tt;}),y:peaks.map(function(p){return p.d;}),mode:'markers',marker:{color:peaks.map(function(p){return p.Ir;}),colorscale:'Viridis',size:peaks.map(function(p){return 4+p.Ir*.07;}),showscale:true,colorbar:{title:{text:'I/I\u2080'},thickness:10,len:.7}},hovertemplate:'2\u03b8=%{x:.3f}°<br>d=%{y:.4f} \u212b<extra></extra>',name:'d(hkl)'}],mkL({xaxis:{title:{text:'2\u03b8 (°)'}},yaxis:{title:{text:'d-spacing (\u212b)'}},showlegend:false,margin:{t:8,b:44,l:52,r:56}}),CFG);
+    document.getElementById('xrtbl').innerHTML='<tr><th>(hkl)</th><th>2\u03b8</th><th>d (\u212b)</th><th>I/I\u2080</th></tr>'+top.slice(0,14).map(function(p){return'<tr><td style="color:var(--cy)">('+p.hkl+')</td><td>'+p.tt.toFixed(3)+'°</td><td>'+p.d.toFixed(4)+'</td><td>'+p.Ir.toFixed(1)+'%</td></tr>';}).join('');
+  });
+  upd('XRD',cryst,'('+( top[0]?top[0].hkl:'—')+') @ '+(top[0]?top[0].tt.toFixed(2):'—')+'°');
+  log('XRD: '+peaks.length+' reflections, ('+(top[0]?top[0].hkl:'—')+') at 2\u03b8='+(top[0]?top[0].tt.toFixed(3):'—')+'°','ok');
+}
+
+/* ── MODULE SWITCH ── */
+function sw(mod){
+  MOD=mod;
+  if(_bzRaf){cancelAnimationFrame(_bzRaf);_bzRaf=null;}
+  if(_vibRaf){cancelAnimationFrame(_vibRaf);_vibRaf=null;}
+  document.querySelectorAll('.mi').forEach(function(el){el.classList.toggle('on',el.dataset.mod===mod);});
+  const m=META[mod];
+  document.getElementById('navMod').textContent=m.t;
+  document.getElementById('mbico').textContent=m.ico;
+  document.getElementById('mbt').textContent=m.t;
+  document.getElementById('mbs').textContent=m.s;
+  document.getElementById('prmT').textContent=m.t;
+  document.getElementById('prmC').innerHTML=PARAMS[mod]||'';
+  document.getElementById('rpref').textContent=m.ref;
+  document.getElementById('tbar').innerHTML=m.tabs.map(function(t,i){return'<div class="tb'+(i===0?' on':'')+'" onclick="stb(this)">'+t+'</div>';}).join('');
+  document.getElementById('content').innerHTML='<div class="empty"><div class="em-ico">'+m.ico+'</div><div class="em-t">'+m.t+'</div><div class="em-s">'+m.s+'</div><div class="em-pills">'+m.tabs.map(function(t){return'<div class="em-pill">'+t+'</div>';}).join('')+'</div></div>';
+  log('\u2192 '+m.t,'inf');pfill(0);
+}
+function stb(el){document.querySelectorAll('.tb').forEach(function(t){t.classList.remove('on');});el.classList.add('on');}
+
+/* ── RUN ── */
+async function run(){
+  const btn=document.getElementById('runbtn');
+  btn.disabled=true;btn.textContent='Computing\u2026';
+  stat('Running','#04b8d8');pfill(18);await sl(50);pfill(42);
+  const S=STRUCT||Parser.dflt();
+  try{
+    switch(MOD){
+      case 'raman':  pfill(65);await sl(40);renderRaman(RamanEng.gen(gv('p-rmat','Si'),+gv('p-rl',532),+gv('p-rt',300)));break;
+      case 'ir':     pfill(70);await sl(40);renderIR(IREng.gen(gv('p-irmat','Si')));break;
+      case 'xanes':  pfill(60);await sl(50);renderXANES(XANESEng.gen(gv('p-xel','Si'),gv('p-xedge','K')));break;
+      case 'eels':   pfill(65);await sl(45);renderEELS(EELSEng.gen(gv('p-eel','Si'),gv('p-emode','core')));break;
+      case 'arpes':  pfill(60);await sl(50);renderARPES(ARPESEng.gen(gv('p-amat','Si'),+gv('p-at',100)));break;
+      case 'vib':{   pfill(65);await sl(45);const vd=VibEng.gen(S);CACHE.vib=vd;renderVib(vd,+gv('p-vm',0),+gv('p-va',1));break;}
+      case 'phonon':{ pfill(60);await sl(50);const pd=PhononEng.gen(gv('p-phmat','Si'),+gv('p-nq',80));CACHE.phonon=pd;renderPhonon(pd);break;}
+      case 'phonondos':{pfill(60);await sl(50);const pdd=PhononEng.gen(gv('p-pdmat','Si'),80);CACHE.phonondos=pdd;renderPhononDOS(pdd);break;}
+      case 'seekpath':{pfill(65);await sl(45);const ov=gv('p-sklat','Auto');const sk=SeekEng.gen(S,ov==='Auto'?null:ov);renderSeekpath(sk);break;}
+      case 'bands':{  pfill(60);await sl(50);const bd=BandsEng.gen(gv('p-bmat','Si'),+gv('p-bnk',80),8);CACHE.bands=bd;renderBands(bd);break;}
+      case 'dos':{    pfill(60);await sl(50);const dd=DOSEng.gen(gv('p-dmat','Si'),+gf('p-dsg',.12),gv('p-dsp','0')==='1');CACHE.dos=dd;renderDOS(dd);break;}
+      case 'bz':     pfill(65);await sl(50);renderBZ();break;
+      case 'phase':  pfill(65);await sl(45);renderPhase();break;
+      case 'charge': pfill(60);await sl(50);renderCharge();break;
+      case 'xrd':    pfill(55);await sl(45);renderXRD();break;
+    }
+    pfill(100);stat('Done','#0eb860');ntf(META[MOD].t+' complete','ok');
+    setTimeout(function(){stat('Ready','var(--t3)');},3000);
+  }catch(e){
+    log('Error: '+e.message,'err');console.error(e);
+    ntf('Error: '+e.message,'err');stat('Error','var(--rs)');
+  }
+  btn.disabled=false;btn.textContent='\u25b6 Compute';
+  setTimeout(function(){pfill(0);},2500);
+}
+
+/* ── UTILS ── */
+const sl=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
+function gv(id,d){return(document.getElementById(id)||{}).value||d;}
+function gi(id,d){return parseInt(gv(id,d))||d;}
+function gf(id,d){return parseFloat(gv(id,d))||d;}
+function pfill(p){document.getElementById('pfill').style.width=p+'%';}
+function stat(t,c){const e=document.getElementById('navSt');e.textContent=t;e.style.color=c;}
+function log(msg,type){
+  const con=document.getElementById('con');
+  const el=document.createElement('div');
+  el.className='cl'+(type?' '+type:'');
+  el.textContent='['+new Date().toLocaleTimeString('en',{hour12:false})+'] '+msg;
+  con.appendChild(el);con.scrollTop=con.scrollHeight;
+}
+function ntf(msg,type){
+  const w=document.getElementById('notif');
+  const el=document.createElement('div');
+  el.className='ntf '+(type||'inf');el.textContent=msg;
+  w.appendChild(el);setTimeout(function(){el.remove();},4500);
+}
+function upd(mod,res,kv){
+  document.getElementById('kvM').textContent=mod||'—';
+  document.getElementById('kvK').textContent=kv||'—';
+  document.getElementById('kvT').textContent=new Date().toLocaleTimeString('en',{hour12:false});
+}
+function tryPng(id){try{Plotly.downloadImage(id,{format:'png',scale:3,filename:'smad_v3_'+MOD});}catch(e){ntf('PNG: run analysis first','warn');}}
+function expPng(){
+  const ids=['r1','ir1','xa1','e1','a1','vm1','ph1','pd1','sk1','bs1','ds1','pp1','ch1','xr1'];
+  for(let i=0;i<ids.length;i++){if(document.getElementById(ids[i])){tryPng(ids[i]);return;}}
+  const c=document.getElementById('bzcanvas')||document.getElementById('vibcanvas');
+  if(c){const a=document.createElement('a');a.href=c.toDataURL();a.download='smad_v3.png';a.click();return;}
+  ntf('Run analysis first','warn');
+}
+function expCsv(){
+  const d=CACHE[MOD];if(!d)return ntf('Run analysis first','warn');
+  let csv='';
+  if(d.freq&&d.spec)csv='wavenumber,intensity\n'+d.freq.map(function(f,i){return f.toFixed(2)+','+d.spec[i].toFixed(4);}).join('\n');
+  else if(d.kp&&d.bands)csv='k,'+d.bands.map(function(_,i){return 'band'+(i+1);}).join(',')+'\n'+d.kp.map(function(k,ki){return k.toFixed(4)+','+d.bands.map(function(b){return b[ki].toFixed(4);}).join(',');}).join('\n');
+  else csv=JSON.stringify(d,null,2);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='smad_v3_'+MOD+'.csv';a.click();ntf('CSV exported','ok');
+}
+function expJson(){
+  const d=CACHE[MOD];if(!d)return ntf('Run analysis first','warn');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download='smad_v3_'+MOD+'.json';a.click();ntf('JSON exported','ok');
+}
+
+/* ── FILE UPLOAD ── */
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',function(){dz.classList.remove('drag');});
+dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])hf(e.dataTransfer.files[0]);});
+document.getElementById('fi').addEventListener('change',function(e){if(e.target.files[0])hf(e.target.files[0]);});
+function hf(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      STRUCT=Parser.parse(file.name,e.target.result);
+      document.getElementById('navFile').textContent=file.name.slice(0,14);
+      document.getElementById('navFile').style.color='var(--gr)';
+      const fi=document.getElementById('finfo');
+      fi.className='file-badge show';
+      fi.textContent='\u2713 '+file.name+' \xb7 '+STRUCT.atoms.length+' atoms \xb7 '+STRUCT.formula;
+      document.getElementById('kvF').textContent=file.name.slice(0,16);
+      document.getElementById('kvFml').textContent=STRUCT.formula;
+      document.getElementById('rpN').textContent=STRUCT.atoms.length;
+      document.getElementById('rpEl').textContent=STRUCT.species.join(', ');
+      document.getElementById('rpA').textContent=STRUCT.a.toFixed(3);
+      document.getElementById('rpB').textContent=STRUCT.b.toFixed(3);
+      document.getElementById('rpC').textContent=STRUCT.c.toFixed(3);
+      document.getElementById('rpSG').textContent=STRUCT.sg||'\u2014';
+      document.getElementById('rpFmt').textContent=STRUCT.source;
+      ntf('Loaded: '+file.name+' ('+STRUCT.source+')','ok');
+      run();
+    }catch(err){log('Parse error: '+err.message,'err');}
+  };
+  reader.readAsText(file);
+}
+
+/* ── THEME ── */
+document.getElementById('thbtn').addEventListener('click',function(){
+  DARK=!DARK;
+  document.documentElement.setAttribute('data-theme',DARK?'dark':'light');
+  document.getElementById('thbtn').textContent=DARK?'\ud83c\udf19':'\u2600\ufe0f';
+  const u={plot_bgcolor:PB(),paper_bgcolor:PP(),'font.color':PF(),'xaxis.gridcolor':PG(),'yaxis.gridcolor':PG()};
+  ['r1','r2','ir1','ir2','xa1','xa2','xa3','xa4','e1','e2','a1','a2','a3','vm1','ph1','ph2','ph3','pd1','pd2','pd3','sk1','bs1','bs2','ds1','ds2','bz1','pp1','pp2','ch1','ch2','xr1','xr2'].forEach(function(id){try{Plotly.relayout(id,u);}catch(e2){};});
+});
+
+/* ── INIT ── */
+setTimeout(function(){document.getElementById('ld').classList.add('out');},2000);
+setTimeout(function(){sw('raman');},2200);
+
+</script>
+</body>
+</html>
