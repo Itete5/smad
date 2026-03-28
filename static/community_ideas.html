@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
+<title>SMAD · Community Ideas</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8fafc;
+  --bg1: #ffffff;
+  --bg2: #f1f5f9;
+  --bg3: #e8eef7;
+  --bd: #dde5f0;
+  --bd2: #c4d0e8;
+  --t0: #0d1b2e;
+  --t1: #2d4a6e;
+  --t2: #5a7a9e;
+  --t3: #8faabb;
+  --ac: #1a5fff;
+  --acl: #e8efff;
+  --gr: #0d9f6e;
+  --grl: #e6f7f2;
+  --am: #d97706;
+  --aml: #fef3e2;
+  --rs: #dc2626;
+  --rsl: #fef2f2;
+  --vi: #7c3aed;
+  --vil: #f3eeff;
+  --cy: #0891b2;
+  --cyl: #e0f5fa;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Instrument Sans', sans-serif;
+  --disp: 'Syne', sans-serif;
+  --r: 6px;
+  --r2: 12px;
+  --sh: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  --sh2: 0 2px 8px rgba(0,0,0,.08), 0 8px 32px rgba(0,0,0,.1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--t0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SECTION WRAPPER (drop into smad.live main page) ── */
+.smad-community {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+/* ── HEADER ── */
+.sc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.sc-title-block {}
+.sc-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ac);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sc-eyebrow::before {
+  content: '';
+  width: 16px;
+  height: 2px;
+  background: var(--ac);
+  display: inline-block;
+}
+.sc-title {
+  font-family: var(--disp);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  color: var(--t0);
+  line-height: 1.2;
+}
+.sc-sub {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--t2);
+  max-width: 480px;
+}
+
+.sc-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── TABS ── */
+.sc-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg2);
+  border: 1px solid var(--bd);
+  border-radius: var(--r2);
+  padding: 3px;
+  margin-bottom: 20px;
+  width: fit-content;
+}
+.sc-tab {
+  padding: 6px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--disp);
+  color: var(--t2);
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: all .15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sc-tab:hover { color: var(--t0); background: rgba(255,255,255,.6); }
+.sc-tab.on {
+  background: var(--bg1);
+  color: var(--t0);
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
+.tab-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: var(--bg3);
+  color: var(--t2);
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+.sc-tab.on .tab-count { background: var(--ac); color: #fff; }
+
+/* ── FILTERS / SORT ── */
+.sc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.sc-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-chip {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--bd);
+  background: var(--bg1);
+  color: var(--t2);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: var(--disp);
+}
+.filter-chip:hover { border-color: var(--bd2); color: var(--t0); }
+.filter-chip.on { background: var(--acl); border-color: var(--ac); color: var(--ac); }
+.sc-sort {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--t2);
+}
+.sc-sort select {
+  font-family: var(--sans);
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r);
+  background: var(--bg1);
+  color: var(--t0);
+  cursor: pointer;
+  outline: none;
+}
+
+/* ── SUBMIT FORM ── */
+.sc-compose {
+  background: var(--bg1);
+  border: 1px solid var(--bd);
+  border-radius: var(--r2);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--sh);
+  transition: box-shadow .2s;
+}
+.sc-compose:focus-within { box-shadow: var(--sh2); border-color: var(--bd2); }
+.compose-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.compose-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ac), var(--cy));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  font-family: var(--disp);
+}
+.compose-fields { flex: 1; }
+.compose-name-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cinput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r);
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--t0);
+  background: var(--bg);
+  outline: none;
+  transition: border-color .15s;
+}
+.cinput:focus { border-color: var(--ac); }
+.cinput::placeholder { color: var(--t3); }
+.ctag-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.ctag {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1.5px solid var(--bd);
+  background: none;
+  color: var(--t2);
+  cursor: pointer;
+  font-family: var(--mono);
+  transition: all .15s;
+}
+.ctag:hover { border-color: var(--bd2); }
+.ctag.sel { border-color: currentColor; }
+.ctag[data-cat="Feature"].sel { color: var(--ac); border-color: var(--ac); background: var(--acl); }
+.ctag[data-cat="Bug"].sel { color: var(--rs); border-color: var(--rs); background: var(--rsl); }
+.ctag[data-cat="Question"].sel { color: var(--am); border-color: var(--am); background: var(--aml); }
+.ctag[data-cat="Research"].sel { color: var(--vi); border-color: var(--vi); background: var(--vil); }
+.ctag[data-cat="Other"].sel { color: var(--cy); border-color: var(--cy); background: var(--cyl); }
+.ctextarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r);
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--t0);
+  background: var(--bg);
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+  transition: border-color .15s;
+}
+.ctextarea:focus { border-color: var(--ac); }
+.ctextarea::placeholder { color: var(--t3); }
+.compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.visibility-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--t2);
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-track {
+  width: 34px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--bd2);
+  position: relative;
+  transition: background .2s;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggle-track.on { background: var(--ac); }
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle-track.on .toggle-thumb { transform: translateX(16px); }
+.compose-actions { display: flex; gap: 8px; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 7px 16px;
+  border-radius: var(--r);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--disp);
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary {
+  background: var(--ac);
+  color: #fff;
+}
+.btn-primary:hover { background: #1450d0; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,95,255,.3); }
+.btn-ghost {
+  background: var(--bg2);
+  color: var(--t1);
+  border: 1px solid var(--bd);
+}
+.btn-ghost:hover { border-color: var(--bd2); background: var(--bg3); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-danger { background: var(--rsl); color: var(--rs); border: 1px solid #fecaca; }
+.btn-danger:hover { background: var(--rs); color: #fff; }
+
+/* ── IDEA CARDS ── */
+.sc-feed { display: flex; flex-direction: column; gap: 10px; }
+
+.idea-card {
+  background: var(--bg1);
+  border: 1px solid var(--bd);
+  border-radius: var(--r2);
+  padding: 16px 18px;
+  box-shadow: var(--sh);
+  display: flex;
+  gap: 14px;
+  transition: all .15s;
+  position: relative;
+}
+.idea-card:hover { box-shadow: var(--sh2); border-color: var(--bd2); transform: translateY(-1px); }
+.idea-card.pinned { border-left: 3px solid var(--ac); }
+.idea-card.private-card { border-left: 3px solid var(--t3); opacity: .85; }
+
+/* Vote column */
+.vote-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.vote-btn {
+  width: 28px; height: 28px;
+  border-radius: var(--r);
+  border: 1px solid var(--bd);
+  background: var(--bg2);
+  color: var(--t2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all .15s;
+}
+.vote-btn:hover { border-color: var(--ac); color: var(--ac); background: var(--acl); }
+.vote-btn.voted { background: var(--ac); border-color: var(--ac); color: #fff; }
+.vote-count {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--t1);
+  min-width: 24px;
+  text-align: center;
+  line-height: 1;
+}
+.vote-count.high { color: var(--ac); font-weight: 600; }
+
+/* Card body */
+.idea-body { flex: 1; min-width: 0; }
+.idea-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.idea-title {
+  font-family: var(--disp);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--t0);
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+}
+.idea-badges { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--mono);
+  letter-spacing: .3px;
+}
+.badge-Feature { background: var(--acl); color: var(--ac); }
+.badge-Bug { background: var(--rsl); color: var(--rs); }
+.badge-Question { background: var(--aml); color: var(--am); }
+.badge-Research { background: var(--vil); color: var(--vi); }
+.badge-Other { background: var(--cyl); color: var(--cy); }
+.badge-private { background: var(--bg3); color: var(--t3); border: 1px solid var(--bd); }
+.badge-pinned { background: linear-gradient(90deg,var(--acl),var(--cyl)); color: var(--ac); }
+.badge-new { background: linear-gradient(90deg,var(--grl),var(--acl)); color: var(--gr); }
+.badge-status-Open { background: var(--grl); color: var(--gr); }
+.badge-status-Considering { background: var(--aml); color: var(--am); }
+.badge-status-Planned { background: var(--acl); color: var(--ac); }
+.badge-status-Done { background: #f0fdf4; color: #166534; }
+.badge-status-Declined { background: var(--rsl); color: var(--rs); }
+
+.idea-text {
+  font-size: 13.5px;
+  color: var(--t1);
+  line-height: 1.65;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.idea-text.expanded { -webkit-line-clamp: unset; }
+
+.idea-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.idea-meta {
+  font-size: 11.5px;
+  color: var(--t3);
+  font-family: var(--mono);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.idea-meta span { display: flex; align-items: center; gap: 4px; }
+.idea-actions { margin-left: auto; display: flex; gap: 5px; }
+
+/* Admin reply */
+.admin-reply {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(to right, var(--acl), var(--bg2));
+  border-left: 3px solid var(--ac);
+  border-radius: 0 var(--r) var(--r) 0;
+}
+.admin-reply-label {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--ac);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.admin-reply-text { font-size: 13px; color: var(--t1); line-height: 1.6; }
+
+/* Reply form */
+.reply-form {
+  margin-top: 12px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+.reply-form.open { display: flex; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--t3);
+}
+.empty-ico,.empty-state .em-ico { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+.empty-t,.empty-state .em-t { font-family: var(--disp); font-size: 16px; font-weight: 700; color: var(--t2); margin-bottom: 6px; }
+.empty-s,.empty-state .em-s { font-size: 13px; color: var(--t3); }
+
+/* ── ADMIN PANEL ── */
+.admin-panel {
+  background: linear-gradient(135deg, #0d1b2e, #1a2d4a);
+  border-radius: var(--r2);
+  padding: 24px;
+  margin-bottom: 24px;
+  color: #c8daf0;
+  display: none;
+}
+.admin-panel.open { display: block; }
+.admin-panel-title {
+  font-family: var(--disp);
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.astat {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  flex: 1;
+  min-width: 90px;
+}
+.astat-n { font-family: var(--mono); font-size: 22px; font-weight: 500; color: #fff; }
+.astat-l { font-size: 11px; color: rgba(200,218,240,.6); margin-top: 2px; }
+.admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-admin {
+  padding: 6px 14px;
+  border-radius: var(--r);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--disp);
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.08);
+  color: #c8daf0;
+  transition: all .15s;
+}
+.btn-admin:hover { background: rgba(255,255,255,.16); color: #fff; }
+.btn-admin.danger { border-color: rgba(220,38,38,.5); color: #fca5a5; }
+.btn-admin.danger:hover { background: rgba(220,38,38,.25); }
+
+/* ── ADMIN LOGIN ── */
+.admin-login {
+  background: var(--bg1);
+  border: 1px solid var(--bd);
+  border-radius: var(--r2);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--sh);
+  display: none;
+}
+.admin-login.open { display: block; }
+.admin-login-title {
+  font-family: var(--disp);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--t0);
+}
+.admin-login-row { display: flex; gap: 8px; }
+
+/* ── STATUS EDITOR ── */
+.status-select {
+  font-family: var(--sans);
+  font-size: 11px;
+  padding: 2px 6px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r);
+  background: var(--bg2);
+  color: var(--t1);
+  cursor: pointer;
+  outline: none;
+}
+
+/* ── TOAST ── */
+#toast-wrap {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.toast {
+  padding: 10px 16px;
+  border-radius: var(--r);
+  font-size: 13px;
+  box-shadow: var(--sh2);
+  animation: toastin .2s ease;
+  max-width: 280px;
+}
+.toast.ok { background: var(--grl); color: var(--gr); border: 1px solid #a7f3d0; }
+.toast.err { background: var(--rsl); color: var(--rs); border: 1px solid #fecaca; }
+.toast.inf { background: var(--acl); color: var(--ac); border: 1px solid #bfdbfe; }
+@keyframes toastin { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:none; } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .sc-header { flex-direction: column; }
+  .sc-title { font-size: 22px; }
+  .sc-tabs { flex-wrap: wrap; }
+  .compose-name-row { flex-direction: column; }
+  .idea-card { flex-direction: column; gap: 10px; }
+  .vote-col { flex-direction: row; }
+  .idea-actions { margin-left: 0; }
+}
+
+/* Divider */
+.sc-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--bd), transparent);
+  margin: 32px 0;
+}
+
+/* Search */
+.search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 280px;
+}
+.search-wrap svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--t3);
+}
+.search-input {
+  width: 100%;
+  padding: 7px 10px 7px 32px;
+  border: 1px solid var(--bd);
+  border-radius: var(--r);
+  font-family: var(--sans);
+  font-size: 13px;
+  background: var(--bg1);
+  color: var(--t0);
+  outline: none;
+  transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--ac); }
+.search-input::placeholder { color: var(--t3); }
+
+.char-count { font-size: 11px; color: var(--t3); font-family: var(--mono); text-align: right; margin-top: 3px; }
+.char-count.warn { color: var(--am); }
+
+/* Loading skeleton */
+.skeleton { animation: skpulse 1.4s ease infinite; }
+@keyframes skpulse { 0%,100%{opacity:1}50%{opacity:.4} }
+.sk-line { height: 12px; border-radius: 6px; background: var(--bg3); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div id="toast-wrap"></div>
+
+<div class="smad-community" id="root">
+
+  <!-- HEADER -->
+  <div class="sc-header">
+    <div class="sc-title-block">
+      <div class="sc-eyebrow">Community</div>
+      <div class="sc-title">Ideas &amp; Feedback</div>
+      <div class="sc-sub">Share ideas, report bugs, ask questions, or suggest new modules. Vote on what matters to you.</div>
+    </div>
+    <div class="sc-header-actions">
+      <a href="/about" class="btn btn-ghost btn-sm" target="_top" rel="noopener">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+        About
+      </a>
+      <button class="btn btn-ghost btn-sm" id="adminToggleBtn" onclick="toggleAdminLogin()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        Admin
+      </button>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN -->
+  <div class="admin-login" id="adminLogin">
+    <div class="admin-login-title">🔐 Admin Access</div>
+    <div class="admin-login-row">
+      <input type="password" class="cinput" id="adminPwInput" placeholder="Enter admin password…" style="max-width:220px" onkeydown="if(event.key==='Enter')adminLogin()">
+      <button class="btn btn-primary btn-sm" onclick="adminLogin()">Login</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleAdminLogin()">Cancel</button>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-top:8px;font-family:var(--mono)">Default: smad2025admin</div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-panel-title">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      Admin Dashboard
+      <span style="margin-left:auto;font-size:11px;font-weight:400;opacity:.6;font-family:var(--mono)">smad.live</span>
+      <button class="btn-admin" style="font-size:11px;padding:4px 10px" onclick="adminLogout()">Logout</button>
+    </div>
+    <div class="admin-stats" id="adminStats">
+      <div class="astat"><div class="astat-n" id="aStat0">0</div><div class="astat-l">Total ideas</div></div>
+      <div class="astat"><div class="astat-n" id="aStat1">0</div><div class="astat-l">Public</div></div>
+      <div class="astat"><div class="astat-n" id="aStat2">0</div><div class="astat-l">Private</div></div>
+      <div class="astat"><div class="astat-n" id="aStat3">0</div><div class="astat-l">Pending</div></div>
+    </div>
+    <div class="admin-actions">
+      <button class="btn-admin" onclick="adminExport()">↓ Export JSON</button>
+      <button class="btn-admin" onclick="adminExportCSV()">↓ Export CSV</button>
+      <button class="btn-admin" onclick="refreshAll()">⟳ Refresh</button>
+      <button class="btn-admin danger" onclick="adminClearAll()">✕ Clear all data</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="sc-tabs">
+    <button class="sc-tab on" id="tab-all" onclick="switchTab('all')">
+      All <span class="tab-count" id="cnt-all">0</span>
+    </button>
+    <button class="sc-tab" id="tab-feature" onclick="switchTab('feature')">
+      ✦ Features <span class="tab-count" id="cnt-feature">0</span>
+    </button>
+    <button class="sc-tab" id="tab-bug" onclick="switchTab('bug')">
+      ⚠ Bugs <span class="tab-count" id="cnt-bug">0</span>
+    </button>
+    <button class="sc-tab" id="tab-research" onclick="switchTab('research')">
+      ⬡ Research <span class="tab-count" id="cnt-research">0</span>
+    </button>
+    <button class="sc-tab" id="tab-question" onclick="switchTab('question')">
+      ? Questions <span class="tab-count" id="cnt-question">0</span>
+    </button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="sc-toolbar">
+    <div class="sc-filters">
+      <button class="filter-chip on" id="fchip-all" onclick="setFilter('all')">All</button>
+      <button class="filter-chip" id="fchip-Open" onclick="setFilter('Open')">Open</button>
+      <button class="filter-chip" id="fchip-Planned" onclick="setFilter('Planned')">Planned</button>
+      <button class="filter-chip" id="fchip-Done" onclick="setFilter('Done')">Done</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-input" id="searchInput" placeholder="Search ideas…" oninput="renderFeed()">
+      </div>
+      <div class="sc-sort">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+        <select onchange="currentSort=this.value;renderFeed()">
+          <option value="votes">Most voted</option>
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPOSE FORM -->
+  <div class="sc-compose" id="composeForm">
+    <div class="compose-top">
+      <div class="compose-avatar" id="composeAvatar">?</div>
+      <div class="compose-fields" style="flex:1">
+        <div class="compose-name-row">
+          <input class="cinput" id="cName" placeholder="Your name (or leave blank for Anonymous)" style="flex:1" oninput="updateAvatar()" maxlength="60">
+          <input class="cinput" id="cEmail" placeholder="Email (optional, never shown publicly)" style="flex:1" maxlength="120">
+        </div>
+        <input class="cinput" id="cTitle" placeholder="One-line summary of your idea or issue…" style="margin-bottom:8px" maxlength="120" oninput="updateCharCount(this,'cTitleCount',120)">
+        <div class="char-count" id="cTitleCount">120</div>
+      </div>
+    </div>
+
+    <div class="ctag-row" id="catRow">
+      <span style="font-size:11px;color:var(--t3);font-family:var(--mono);align-self:center">Category:</span>
+      <button class="ctag sel" data-cat="Feature" onclick="selectCat(this)">Feature</button>
+      <button class="ctag" data-cat="Bug" onclick="selectCat(this)">Bug</button>
+      <button class="ctag" data-cat="Question" onclick="selectCat(this)">Question</button>
+      <button class="ctag" data-cat="Research" onclick="selectCat(this)">Research</button>
+      <button class="ctag" data-cat="Other" onclick="selectCat(this)">Other</button>
+    </div>
+
+    <textarea class="ctextarea" id="cBody" placeholder="Describe your idea in more detail… What problem does it solve? How should it work? Any references or prior work?" maxlength="2000" oninput="updateCharCount(this,'cBodyCount',2000)"></textarea>
+    <div class="char-count" id="cBodyCount">2000</div>
+
+    <div class="compose-footer">
+      <label class="visibility-toggle">
+        <div class="toggle-track" id="visToggle" onclick="toggleVis()">
+          <div class="toggle-thumb"></div>
+        </div>
+        <span id="visLabel">Post publicly</span>
+        <span style="color:var(--t3);font-size:11px" id="visHint">(visible to everyone)</span>
+      </label>
+      <div class="compose-actions">
+        <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
+        <button class="btn btn-primary" onclick="submitIdea()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          Submit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEED -->
+  <div class="sc-feed" id="feed">
+    <div class="empty-state">
+      <div class="em-ico">&#x2B21;</div>
+      <div class="em-t">Loading…</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:24px;font-size:11px;color:var(--t3);font-family:var(--mono)">
+    Ideas are stored persistently &middot; Vote once per session &middot; Private posts visible to admin only
+  </div>
+</div>
+
+<script>
+window.storage = {
+  async get(key) {
+    try { const v = localStorage.getItem(key); return { value: v }; }
+    catch (e) { return { value: null }; }
+  },
+  async set(key, value) {
+    try { localStorage.setItem(key, value); }
+    catch (e) { throw e; }
+  }
+};
+</script>
+<script>
+'use strict';
+
+/* ── STATE ── */
+let IDEAS = [];
+let IS_ADMIN = false;
+let currentTab = 'all';
+let currentFilter = 'all';
+let currentSort = 'votes';
+let isPublic = true;
+let votedIds = new Set(JSON.parse(sessionStorage.getItem('smad_votes')||'[]'));
+const ADMIN_PW = 'smad2025admin';
+const STORAGE_KEY = 'smad_ideas';
+const MAX_IDEAS = 500;
+
+/* ── STORAGE ── */
+async function loadIdeas() {
+  try {
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if (res && res.value) {
+      IDEAS = JSON.parse(res.value);
+    } else {
+      IDEAS = getSeedIdeas();
+      await saveIdeas();
+    }
+  } catch(e) {
+    IDEAS = getSeedIdeas();
+  }
+  renderAll();
+}
+
+async function saveIdeas() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(IDEAS), true);
+  } catch(e) {
+    toast('Storage error — changes may not persist', 'err');
+  }
+}
+
+function getSeedIdeas() {
+  const now = Date.now();
+  return [
+    {
+      id: 'seed1', title: 'Add ternary phase diagram support',
+      body: 'Currently only binary systems (e.g. Fe-O) are supported. Ternary and quaternary systems are essential for oxide superconductors and complex alloys.',
+      cat: 'Feature', name: 'SMAD Team', email: '', public: true, pinned: true,
+      status: 'Planned', votes: 18, ts: now - 86400000*3,
+      adminReply: 'Great suggestion — ternary phase diagrams are on our v3.2 roadmap. We\'ll use the same convex hull engine extended to 3D composition space.',
+      adminReplyTs: now - 86400000*2
+    },
+    {
+      id: 'seed2', title: 'Phonon DOS: heat capacity shows NaN at T→0',
+      body: 'When temperature slider goes below ~15 K, the C_V calculation produces NaN. This is a numerical issue with the Bose-Einstein formula at very low T.',
+      cat: 'Bug', name: 'Anonymous', email: '', public: true, pinned: false,
+      status: 'Open', votes: 7, ts: now - 86400000*1,
+      adminReply: '', adminReplyTs: 0
+    },
+    {
+      id: 'seed3', title: 'Export XANES data to VESTA-compatible format',
+      body: 'Would be very useful to export charge density cube files and structural data in VESTA format for further visualization.',
+      cat: 'Feature', name: 'User', email: '', public: true, pinned: false,
+      status: 'Considering', votes: 11, ts: now - 86400000*5,
+      adminReply: '', adminReplyTs: 0
+    },
+  ];
+}
+
+/* ── ADMIN ── */
+function toggleAdminLogin() {
+  if (IS_ADMIN) { adminLogout(); return; }
+  const el = document.getElementById('adminLogin');
+  el.classList.toggle('open');
+}
+
+function adminLogin() {
+  const pw = document.getElementById('adminPwInput').value;
+  if (pw === ADMIN_PW) {
+    IS_ADMIN = true;
+    document.getElementById('adminLogin').classList.remove('open');
+    document.getElementById('adminPanel').classList.add('open');
+    document.getElementById('adminToggleBtn').textContent = '🔓 Admin';
+    document.getElementById('adminPwInput').value = '';
+    toast('Admin access granted', 'ok');
+    renderAll();
+  } else {
+    toast('Incorrect password', 'err');
+    document.getElementById('adminPwInput').style.borderColor = 'var(--rs)';
+    setTimeout(() => document.getElementById('adminPwInput').style.borderColor = '', 1500);
+  }
+}
+
+function adminLogout() {
+  IS_ADMIN = false;
+  document.getElementById('adminPanel').classList.remove('open');
+  document.getElementById('adminLogin').classList.remove('open');
+  document.getElementById('adminToggleBtn').innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> Admin';
+  renderAll();
+}
+
+function updateAdminStats() {
+  if (!IS_ADMIN) return;
+  const pub = IDEAS.filter(i=>i.public).length;
+  const priv = IDEAS.filter(i=>!i.public).length;
+  const pending = IDEAS.filter(i=>i.status==='Open').length;
+  document.getElementById('aStat0').textContent = IDEAS.length;
+  document.getElementById('aStat1').textContent = pub;
+  document.getElementById('aStat2').textContent = priv;
+  document.getElementById('aStat3').textContent = pending;
+}
+
+function adminExport() {
+  const blob = new Blob([JSON.stringify(IDEAS, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'smad_community_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  toast('Exported JSON', 'ok');
+}
+
+function adminExportCSV() {
+  const rows = [['ID','Title','Category','Name','Email','Public','Status','Votes','Date','Body','AdminReply']];
+  IDEAS.forEach(i => rows.push([
+    i.id, '"'+i.title.replace(/"/g,'""')+'"', i.cat, i.name||'Anonymous', i.email||'',
+    i.public, i.status, i.votes, new Date(i.ts).toISOString(),
+    '"'+(i.body||'').replace(/"/g,'""')+'"',
+    '"'+(i.adminReply||'').replace(/"/g,'""')+'"'
+  ]));
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'smad_community_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  toast('Exported CSV', 'ok');
+}
+
+function adminClearAll() {
+  if (!confirm('Delete ALL community data? This cannot be undone.')) return;
+  IDEAS = [];
+  saveIdeas();
+  renderAll();
+  toast('All data cleared', 'err');
+}
+
+/* ── SUBMIT ── */
+function submitIdea() {
+  const title = document.getElementById('cTitle').value.trim();
+  const body = document.getElementById('cBody').value.trim();
+  const name = document.getElementById('cName').value.trim();
+  const email = document.getElementById('cEmail').value.trim();
+  const cat = document.querySelector('.ctag.sel')?.dataset.cat || 'Other';
+
+  if (!title) { toast('Please enter a title', 'err'); document.getElementById('cTitle').focus(); return; }
+  if (title.length < 5) { toast('Title too short (min 5 chars)', 'err'); return; }
+
+  const idea = {
+    id: 'i' + Date.now() + Math.random().toString(36).slice(2,7),
+    title, body, cat,
+    name: name || 'Anonymous',
+    email,
+    public: isPublic,
+    pinned: false,
+    status: 'Open',
+    votes: 0,
+    ts: Date.now(),
+    adminReply: '',
+    adminReplyTs: 0,
+  };
+
+  if (IDEAS.length >= MAX_IDEAS) {
+    // Remove oldest non-pinned with 0 votes to make room
+    const oldest = IDEAS.filter(i=>!i.pinned&&i.votes===0).sort((a,b)=>a.ts-b.ts)[0];
+    if (oldest) IDEAS.splice(IDEAS.indexOf(oldest), 1);
+    else { toast('Community board is full — please try again later', 'err'); return; }
+  }
+
+  IDEAS.unshift(idea);
+  saveIdeas();
+  clearForm();
+  renderAll();
+  toast(isPublic ? 'Idea posted publicly! 🎉' : 'Idea submitted privately — only admins can see it.', 'ok');
+}
+
+function clearForm() {
+  document.getElementById('cTitle').value = '';
+  document.getElementById('cBody').value = '';
+  document.getElementById('cName').value = '';
+  document.getElementById('cEmail').value = '';
+  updateAvatar();
+  updateCharCount(document.getElementById('cTitle'), 'cTitleCount', 120);
+  updateCharCount(document.getElementById('cBody'), 'cBodyCount', 2000);
+}
+
+/* ── FORM HELPERS ── */
+function selectCat(el) {
+  document.querySelectorAll('.ctag').forEach(t => t.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function toggleVis() {
+  isPublic = !isPublic;
+  const tr = document.getElementById('visToggle');
+  const lbl = document.getElementById('visLabel');
+  const hint = document.getElementById('visHint');
+  tr.classList.toggle('on', isPublic);
+  lbl.textContent = isPublic ? 'Post publicly' : 'Post privately';
+  hint.textContent = isPublic ? '(visible to everyone)' : '(only visible to admin)';
+}
+
+function updateAvatar() {
+  const name = document.getElementById('cName').value.trim();
+  const av = document.getElementById('composeAvatar');
+  av.textContent = name ? name[0].toUpperCase() : '?';
+}
+
+function updateCharCount(el, countId, max) {
+  const rem = max - el.value.length;
+  const cnt = document.getElementById(countId);
+  cnt.textContent = rem;
+  cnt.classList.toggle('warn', rem < 30);
+}
+
+/* ── VOTE ── */
+async function vote(id) {
+  if (votedIds.has(id)) { toast('Already voted on this one', 'inf'); return; }
+  const idea = IDEAS.find(i=>i.id===id);
+  if (!idea) return;
+  idea.votes++;
+  votedIds.add(id);
+  sessionStorage.setItem('smad_votes', JSON.stringify([...votedIds]));
+  await saveIdeas();
+  renderFeed();
+  toast('+1 vote! 👍', 'ok');
+}
+
+/* ── ADMIN ACTIONS ── */
+async function togglePin(id) {
+  const idea = IDEAS.find(i=>i.id===id);
+  if (!idea) return;
+  idea.pinned = !idea.pinned;
+  await saveIdeas();
+  renderFeed();
+}
+
+async function deleteIdea(id) {
+  if (!confirm('Delete this post?')) return;
+  IDEAS = IDEAS.filter(i=>i.id!==id);
+  await saveIdeas();
+  renderAll();
+  toast('Post deleted', 'err');
+}
+
+async function setStatus(id, status) {
+  const idea = IDEAS.find(i=>i.id===id);
+  if (!idea) return;
+  idea.status = status;
+  await saveIdeas();
+  renderFeed();
+}
+
+function openReply(id) {
+  const form = document.getElementById('reply-' + id);
+  if (!form) return;
+  form.classList.toggle('open');
+}
+
+async function submitReply(id) {
+  const ta = document.getElementById('replytext-' + id);
+  const text = ta?.value.trim();
+  if (!text) { toast('Enter a reply first', 'err'); return; }
+  const idea = IDEAS.find(i=>i.id===id);
+  if (!idea) return;
+  idea.adminReply = text;
+  idea.adminReplyTs = Date.now();
+  await saveIdeas();
+  renderFeed();
+  toast('Reply posted', 'ok');
+}
+
+async function deleteReply(id) {
+  const idea = IDEAS.find(i=>i.id===id);
+  if (!idea) return;
+  idea.adminReply = '';
+  idea.adminReplyTs = 0;
+  await saveIdeas();
+  renderFeed();
+  toast('Reply removed', 'inf');
+}
+
+/* ── TABS / FILTERS ── */
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.sc-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tab-' + tab)?.classList.add('on');
+  renderFeed();
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('fchip-' + f)?.classList.add('on');
+  renderFeed();
+}
+
+/* ── RENDER ── */
+function getVisible() {
+  let list = IS_ADMIN ? IDEAS : IDEAS.filter(i=>i.public);
+  const query = document.getElementById('searchInput')?.value.trim().toLowerCase();
+
+  // Tab filter
+  if (currentTab !== 'all') {
+    const catMap = {feature:'Feature',bug:'Bug',research:'Research',question:'Question'};
+    list = list.filter(i=>i.cat===catMap[currentTab]);
+  }
+  // Status filter
+  if (currentFilter !== 'all') list = list.filter(i=>i.status===currentFilter);
+  // Search
+  if (query) list = list.filter(i=>(i.title+' '+i.body+' '+(i.name||'')).toLowerCase().includes(query));
+  // Sort
+  if (currentSort === 'votes') list = list.sort((a,b)=>b.votes-a.votes||(b.pinned-a.pinned));
+  else if (currentSort === 'newest') list = list.sort((a,b)=>b.ts-a.ts);
+  else list = list.sort((a,b)=>a.ts-b.ts);
+  // Pinned always first
+  return [...list.filter(i=>i.pinned), ...list.filter(i=>!i.pinned)];
+}
+
+function updateCounts() {
+  const base = IS_ADMIN ? IDEAS : IDEAS.filter(i=>i.public);
+  document.getElementById('cnt-all').textContent = base.length;
+  document.getElementById('cnt-feature').textContent = base.filter(i=>i.cat==='Feature').length;
+  document.getElementById('cnt-bug').textContent = base.filter(i=>i.cat==='Bug').length;
+  document.getElementById('cnt-research').textContent = base.filter(i=>i.cat==='Research').length;
+  document.getElementById('cnt-question').textContent = base.filter(i=>i.cat==='Question').length;
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts), now = Date.now(), diff = now - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+  if (diff < 86400000*7) return Math.floor(diff/86400000) + 'd ago';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function ideaHTML(idea) {
+  const voted = votedIds.has(idea.id);
+  const isNew = (Date.now() - idea.ts) < 86400000 * 2;
+  const voteHigh = idea.votes >= 10;
+
+  return `
+  <div class="idea-card ${idea.pinned?'pinned':''} ${!idea.public?'private-card':''}" id="card-${idea.id}">
+    <div class="vote-col">
+      <button class="vote-btn ${voted?'voted':''}" onclick="vote('${idea.id}')" title="${voted?'Voted':'Upvote'}">▲</button>
+      <div class="vote-count ${voteHigh?'high':''}">${idea.votes}</div>
+    </div>
+    <div class="idea-body">
+      <div class="idea-header">
+        <div class="idea-title">${esc(idea.title)}</div>
+        <div class="idea-badges">
+          <span class="badge badge-${idea.cat}">${idea.cat}</span>
+          <span class="badge badge-status-${idea.status}">${idea.status}</span>
+          ${idea.pinned?'<span class="badge badge-pinned">📌 Pinned</span>':''}
+          ${isNew&&!idea.pinned?'<span class="badge badge-new">New</span>':''}
+          ${!idea.public?'<span class="badge badge-private">🔒 Private</span>':''}
+        </div>
+      </div>
+      ${idea.body ? `<div class="idea-text" id="text-${idea.id}">${esc(idea.body)}</div>
+      ${idea.body.length > 200 ? `<button onclick="toggleExpand('${idea.id}')" style="font-size:11px;color:var(--ac);background:none;border:none;cursor:pointer;padding:0;font-family:var(--mono)" id="expand-${idea.id}">Show more ↓</button>` : ''}` : ''}
+
+      ${idea.adminReply ? `
+      <div class="admin-reply">
+        <div class="admin-reply-label">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          SMAD Admin replied ${fmtDate(idea.adminReplyTs)}
+        </div>
+        <div class="admin-reply-text">${esc(idea.adminReply)}</div>
+        ${IS_ADMIN ? `<button onclick="deleteReply('${idea.id}')" style="font-size:10px;color:var(--rs);background:none;border:none;cursor:pointer;margin-top:6px;font-family:var(--mono)">Delete reply</button>` : ''}
+      </div>` : ''}
+
+      <div class="idea-footer">
+        <div class="idea-meta">
+          <span>👤 ${esc(idea.name||'Anonymous')}</span>
+          <span>🕐 ${fmtDate(idea.ts)}</span>
+          ${IS_ADMIN && idea.email ? `<span>✉ ${esc(idea.email)}</span>` : ''}
+        </div>
+        <div class="idea-actions">
+          ${IS_ADMIN ? `
+            <select class="status-select" onchange="setStatus('${idea.id}',this.value)">
+              ${['Open','Considering','Planned','Done','Declined'].map(s=>`<option ${idea.status===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="togglePin('${idea.id}')">${idea.pinned?'Unpin':'📌 Pin'}</button>
+            <button class="btn btn-ghost btn-sm" onclick="openReply('${idea.id}')">↩ Reply</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteIdea('${idea.id}')">✕</button>
+          ` : `
+            <button class="btn btn-ghost btn-sm" onclick="vote('${idea.id}')" ${voted?'disabled':''}>
+              ${voted?'✓ Voted':'▲ Vote'}
+            </button>
+          `}
+        </div>
+      </div>
+
+      ${IS_ADMIN ? `
+      <div class="reply-form" id="reply-${idea.id}">
+        <textarea class="ctextarea" id="replytext-${idea.id}" placeholder="Write an official admin response…" style="min-height:60px">${esc(idea.adminReply||'')}</textarea>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" onclick="submitReply('${idea.id}')">Post Reply</button>
+          <button class="btn btn-ghost btn-sm" onclick="openReply('${idea.id}')">Cancel</button>
+        </div>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleExpand(id) {
+  const el = document.getElementById('text-' + id);
+  const btn = document.getElementById('expand-' + id);
+  if (!el || !btn) return;
+  el.classList.toggle('expanded');
+  btn.textContent = el.classList.contains('expanded') ? 'Show less ↑' : 'Show more ↓';
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderFeed() {
+  updateCounts();
+  const items = getVisible();
+  const feed = document.getElementById('feed');
+  if (items.length === 0) {
+    feed.innerHTML = `<div class="empty-state"><div class="em-ico">💬</div><div class="em-t">No posts yet</div><div class="em-s">Be the first to share an idea or suggestion!</div></div>`;
+    return;
+  }
+  feed.innerHTML = items.map(ideaHTML).join('');
+}
+
+function renderAll() {
+  updateAdminStats();
+  renderFeed();
+}
+
+/* ── TOAST ── */
+function toast(msg, type='inf') {
+  const w = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  w.appendChild(el);
+  setTimeout(() => el.remove(), 3800);
+}
+
+function refreshAll() { loadIdeas(); toast('Refreshed', 'ok'); }
+
+/* ── INIT ── */
+loadIdeas();
+</script>
+</body>
+</html>

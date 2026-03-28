@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMAD · Superconducting Materials Automated Discovery</title>
-    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -214,6 +214,10 @@
 
     #overview.home-overview-bridge{padding-top:3.25rem!important;border-top:1px solid rgba(0,0,0,0.06)}
     body.theme-light #overview.home-overview-bridge{border-top-color:rgba(0,0,0,0.08)}
+    .home-community-wrap{background:#f8fafc!important;border-top:1px solid rgba(0,0,0,0.06)}
+    body.theme-light .home-community-wrap{background:#f8fafc!important}
+    .home-community-iframe{width:100%;max-width:1040px;min-height:min(2000px,92vh);height:1600px;border:0}
+    @media(max-width:768px){.home-community-iframe{height:2200px;min-height:85vh}}
     </style>
 </head>
 <body class="home-page">
@@ -474,35 +478,16 @@
         </div>
     </section>
 
-    <!-- About / footer -->
-    <section id="about" class="section-light py-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h2 class="section-title">About SMAD</h2>
-                    <p class="section-subtitle">
-                        SMAD (<strong>S</strong>uperconducting <strong>M</strong>aterials <strong>A</strong>utomated
-                        <strong>D</strong>iscovery) is a research‑grade platform intended for computational
-                        superconductivity projects running on institutional clusters or cloud HPC.
-                    </p>
-                    <p>
-                        This instance is configured for your environment and can be extended with custom workflows,
-                        schedulers, and analysis dashboards tailored to your research group or lab.
-                    </p>
-                </div>
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Getting started</h5>
-                            <ol class="small mb-0">
-                                <li>Populate `smad.db` with materials of interest (e.g. from Materials Project or in‑house data).</li>
-                                <li>Configure SSH access in `config.py` to point to your login node.</li>
-                                <li>Extend the FastAPI backend with routes for launching and tracking calculations.</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Community ideas & feedback (isolated document — /static/community_ideas.html) -->
+    <section id="about" class="section-light py-4 home-community-wrap">
+        <div class="container-fluid px-0">
+            <iframe
+                src="/static/community_ideas.html"
+                title="SMAD community — ideas and feedback"
+                class="home-community-iframe d-block mx-auto"
+                loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin"
+            ></iframe>
         </div>
     </section>
 

@@ -30,7 +30,7 @@ def main() -> None:
         html = html.replace(
             "<title>CrystalForge · Crystal Structure Discovery</title>",
             '<title>CrystalForge · Crystal Structure Discovery</title>\n'
-            '  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">',
+            '  <link rel="icon" href="/static/favicon.png?v=atom" type="image/png">',
             1,
         )
         OUT.write_text(html, encoding="utf-8")
