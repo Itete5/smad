@@ -68,10 +68,10 @@ async def md_page(request: Request):
     )
 
 @app.get("/structures", response_class=HTMLResponse)
-async def structures_page(request: Request):
-    return templates.TemplateResponse(
-        "structures.html",
-        {"request": request}
+async def structures_page():
+    return FileResponse(
+        Path(__file__).resolve().parent / "static" / "crystalforge.html",
+        media_type="text/html; charset=utf-8",
     )
 
 

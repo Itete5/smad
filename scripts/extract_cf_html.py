@@ -7,7 +7,7 @@ TRANSCRIPT = Path(
     r"C:\Users\itete\.cursor\projects\c-smadlive\agent-transcripts"
     r"\36ae68c9-12a8-4290-a934-9c8fa75d0821\36ae68c9-12a8-4290-a934-9c8fa75d0821.jsonl"
 )
-OUT = Path(__file__).resolve().parent.parent / "templates" / "structures.html"
+OUT = Path(__file__).resolve().parent.parent / "static" / "crystalforge.html"
 
 
 def main() -> None:
