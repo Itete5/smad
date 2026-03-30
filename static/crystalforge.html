@@ -319,6 +319,53 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
   :root{--nav-h:50px}
   .logo-sub{display:none}
 }
+/* ── DROP ZONE ── */
+.drop-zone{
+  border:2px dashed var(--border2);border-radius:var(--r2);
+  padding:24px 16px;text-align:center;cursor:pointer;
+  transition:all var(--t);background:var(--bg2);
+}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-glow)}
+.dz-icon{font-size:28px;margin-bottom:8px;opacity:.5}
+.dz-title{font-size:11.5px;font-weight:600;color:var(--text1);margin-bottom:4px}
+.dz-sub{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.import-status{padding:8px 10px;border-radius:var(--r);font-size:10.5px;font-family:var(--mono);margin-top:8px;border:1px solid var(--border)}
+.import-status.ok{background:var(--green-glow);border-color:rgba(45,217,160,.3);color:var(--green)}
+.import-status.err{background:var(--rose-glow);border-color:rgba(240,96,128,.3);color:var(--rose)}
+/* ── MP RESULTS ── */
+.mp-results{display:flex;flex-direction:column;gap:5px;margin-top:8px;max-height:260px;overflow-y:auto}
+.mp-item{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  border-radius:var(--r);background:var(--bg2);border:1px solid var(--border);
+  cursor:pointer;transition:all var(--t);
+}
+.mp-item:hover{border-color:var(--accent);background:var(--accent-glow)}
+.mp-formula{font-family:var(--display);font-size:13px;font-weight:700;color:var(--text0);min-width:60px}
+.mp-meta{flex:1}
+.mp-id{font-family:var(--mono);font-size:9px;color:var(--text3)}
+.mp-sg{font-size:9.5px;color:var(--text2)}
+.mp-load{padding:3px 9px;background:var(--accent);color:#fff;border-radius:5px;font-size:9.5px;font-weight:600;border:none;cursor:pointer;white-space:nowrap}
+.mp-empty{text-align:center;padding:16px;font-size:10.5px;color:var(--text3)}
+/* ── SUPERCELL PREVIEW ── */
+.sc-preview-box{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--text2);
+  line-height:1.6;
+}
+/* ── SEND TO ── */
+.send-group{margin-bottom:14px}
+.send-group-title{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text3);font-family:var(--display);margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.send-btns{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.send-btn{
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:9px 10px;border-radius:var(--r);
+  background:var(--bg2);border:1px solid var(--border);
+  transition:all var(--t);cursor:pointer;text-align:left;
+}
+.send-btn:hover{border-color:var(--accent);background:var(--accent-glow)}
+.send-btn-name{font-size:11px;font-weight:700;font-family:var(--display);color:var(--text0)}
+.send-btn-sub{font-size:8.5px;color:var(--text3);font-family:var(--mono)}
+#sendEngineBadge span{display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;font-family:var(--mono);background:var(--accent-glow);border:1px solid var(--accent);color:var(--accent)}
   </style>
 </head>
 <body>
@@ -378,6 +425,9 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
     <div class="nav-divider"></div>
     <div class="nav-tabs">
       <button class="ntab active" data-main="build">⬡ Build</button>
+      <button class="ntab" data-main="import">⬆ Import</button>
+      <button class="ntab" data-main="superslb">⊞ Super/Slab</button>
+      <button class="ntab" data-main="sendto">▶ Send To</button>
       <button class="ntab" data-main="predict">◎ Predict <span class="ntab-pip">Soon</span></button>
       <button class="ntab" data-main="analyze">◈ Analyze <span class="ntab-pip">Soon</span></button>
       <button class="ntab" data-main="export">↓ Export</button>
@@ -486,7 +536,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
             <button class="btn btn-primary bfull" id="buildBtn">⬡ Build Structure</button>
           </div>
           <div class="brow">
-            <button class="btn btn-secondary" style="flex:1" disabled data-soon>⊞ Supercell</button>
+            <button class="btn btn-secondary" style="flex:1" id="buildTabSupercellBtn">⊞ Supercell</button>
             <button class="btn btn-secondary" style="flex:1" disabled data-soon>⚬ Defects</button>
             <button class="btn btn-secondary" style="flex:1" disabled data-soon>↯ Strain</button>
           </div>
@@ -549,6 +599,217 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
           <h3>Structure Analysis</h3>
           <p>Symmetry analysis, Voronoi tessellation, and electronic structure properties.</p>
           <div class="soon-tag">In Development</div>
+        </div>
+      </div>
+
+      <!-- ══ IMPORT TAB ══ -->
+      <div class="main-tab" id="tab-import">
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">📂</span>Import File</div>
+          <div class="field">
+            <label>Drop or browse a structure file</label>
+            <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Drop zone for structure files">
+              <div class="dz-icon">📄</div>
+              <div class="dz-title">Drop file here or click to browse</div>
+              <div class="dz-sub">CIF · POSCAR · XYZ · LMP · JSON</div>
+              <input type="file" id="fileInput" accept=".cif,.vasp,.POSCAR,POSCAR,.xyz,.lmp,.json,.txt" style="display:none">
+            </div>
+          </div>
+          <div id="importStatus" class="import-status" style="display:none"></div>
+          <div class="brow">
+            <button class="btn btn-primary bfull" id="loadFileBtn">⬆ Load Selected File</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">🔬</span>Materials Project Explorer</div>
+          <div style="font-size:10.5px;color:var(--text2);margin-bottom:10px">Search by formula, element, or mp-id. Results load instantly from the MP REST API.</div>
+          <div class="field">
+            <label for="mpApiKey">API Key <span class="tip-badge" tabindex="0">?<span class="tip-box">Get a free key at next.materialsproject.org → Dashboard → API Keys. Stored in browser only.</span></span></label>
+            <input id="mpApiKey" type="password" class="inp" placeholder="Paste your MP API key…" autocomplete="off">
+            <div style="margin-top:4px;display:flex;gap:5px">
+              <button class="btn btn-secondary" style="flex:1;font-size:10px" id="mpSaveKey">💾 Save</button>
+              <button class="btn btn-ghost" style="flex:1;font-size:10px" id="mpClearKey">✕ Clear</button>
+            </div>
+          </div>
+          <div class="field" style="margin-top:6px">
+            <label for="mpQuery">Search</label>
+            <div class="srow">
+              <input id="mpQuery" type="text" class="inp" placeholder="Fe2O3 · mp-19770 · Ti,O" style="flex:1">
+              <button class="btn btn-primary" id="mpSearchBtn" style="padding:7px 10px">🔍</button>
+            </div>
+          </div>
+          <div id="mpResults" class="mp-results"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">📋</span>Paste Raw Text</div>
+          <div class="field">
+            <label for="pasteFormat">Format</label>
+            <select id="pasteFormat" class="inp">
+              <option value="cif">CIF</option>
+              <option value="poscar">POSCAR / CONTCAR</option>
+              <option value="xyz">XYZ</option>
+            </select>
+          </div>
+          <textarea id="pasteText" class="inp" rows="7" placeholder="Paste file contents here…" style="margin-top:6px"></textarea>
+          <div class="brow">
+            <button class="btn btn-primary bfull" id="parsePasteBtn">↳ Parse &amp; Load</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SUPERCELL / SLAB TAB ══ -->
+      <div class="main-tab" id="tab-superslb">
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">⊞</span>Supercell Builder</div>
+          <div style="font-size:10.5px;color:var(--text2);margin-bottom:10px">Replicate the current unit cell along each lattice vector. Requires a loaded structure.</div>
+          <div class="field">
+            <label>Repetitions (na × nb × nc)</label>
+            <div class="g3">
+              <div><label style="font-size:9px">na</label><input id="scNa" type="number" class="inp" value="2" min="1" max="10" step="1"></div>
+              <div><label style="font-size:9px">nb</label><input id="scNb" type="number" class="inp" value="2" min="1" max="10" step="1"></div>
+              <div><label style="font-size:9px">nc</label><input id="scNc" type="number" class="inp" value="1" min="1" max="10" step="1"></div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="sc-preview-box" id="scPreview">— Load a structure first —</div>
+          </div>
+          <div class="brow">
+            <button class="btn btn-primary bfull" id="buildSupercellBtn">⊞ Build Supercell</button>
+          </div>
+          <div class="note">Supercell replaces the current structure. Export before building to save the original.</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">⬜</span>Slab Generator</div>
+          <div style="font-size:10.5px;color:var(--text2);margin-bottom:10px">Cut a surface slab from the current bulk structure. Vacuum layer added along the surface normal.</div>
+          <div class="field">
+            <label>Miller Index (h k l)</label>
+            <div class="g3">
+              <div><label style="font-size:9px">h</label><input id="slabH" type="number" class="inp" value="0" min="-5" max="5" step="1"></div>
+              <div><label style="font-size:9px">k</label><input id="slabK" type="number" class="inp" value="0" min="-5" max="5" step="1"></div>
+              <div><label style="font-size:9px">l</label><input id="slabL" type="number" class="inp" value="1" min="-5" max="5" step="1"></div>
+            </div>
+          </div>
+          <div class="g2" style="margin-bottom:8px">
+            <div class="field">
+              <label style="font-size:10px">Slab layers</label>
+              <input id="slabLayers" type="number" class="inp" value="4" min="1" max="20">
+            </div>
+            <div class="field">
+              <label style="font-size:10px">Vacuum (Å)</label>
+              <input id="slabVacuum" type="number" class="inp" value="15" min="5" max="50">
+            </div>
+          </div>
+          <div class="field">
+            <label>
+              <input type="checkbox" id="slabSymmetric" style="margin-right:5px;accent-color:var(--accent)">
+              Symmetric slab (mirror termination)
+            </label>
+          </div>
+          <div class="brow">
+            <button class="btn btn-primary bfull" id="buildSlabBtn">⬜ Generate Slab</button>
+          </div>
+          <div class="note">Surface normal points along +Z after generation. Periodic in X and Y.</div>
+        </div>
+      </div>
+
+      <!-- ══ SEND TO TAB ══ -->
+      <div class="main-tab" id="tab-sendto">
+        <div class="panel">
+          <div class="panel-hd"><span class="panel-hd-icon">▶</span>Send Structure To…</div>
+          <div style="font-size:10.5px;color:var(--text2);margin-bottom:12px">Choose a simulation engine and output format. The structure file will be downloaded and pre-configured input files generated.</div>
+
+          <!-- DFT -->
+          <div class="send-group">
+            <div class="send-group-title">⚡ DFT — Density Functional Theory</div>
+            <div class="send-btns">
+              <button class="send-btn" data-engine="vasp">
+                <div class="send-btn-name">VASP</div>
+                <div class="send-btn-sub">POSCAR + INCAR + KPOINTS</div>
+              </button>
+              <button class="send-btn" data-engine="qe">
+                <div class="send-btn-name">Quantum ESPRESSO</div>
+                <div class="send-btn-sub">pw.x input file</div>
+              </button>
+              <button class="send-btn" data-engine="cp2k">
+                <div class="send-btn-name">CP2K</div>
+                <div class="send-btn-sub">cell + coord input</div>
+              </button>
+              <button class="send-btn" data-engine="abinit">
+                <div class="send-btn-name">ABINIT</div>
+                <div class="send-btn-sub">.abi input file</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- MD -->
+          <div class="send-group">
+            <div class="send-group-title">🔄 MD — Molecular Dynamics</div>
+            <div class="send-btns">
+              <button class="send-btn" data-engine="lammps">
+                <div class="send-btn-name">LAMMPS</div>
+                <div class="send-btn-sub">data + in.lammps script</div>
+              </button>
+              <button class="send-btn" data-engine="gromacs">
+                <div class="send-btn-name">GROMACS</div>
+                <div class="send-btn-sub">.gro + topology stub</div>
+              </button>
+              <button class="send-btn" data-engine="namd">
+                <div class="send-btn-name">NAMD</div>
+                <div class="send-btn-sub">PSF + PDB files</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Monte Carlo -->
+          <div class="send-group">
+            <div class="send-group-title">🎲 Monte Carlo</div>
+            <div class="send-btns">
+              <button class="send-btn" data-engine="raspa">
+                <div class="send-btn-name">RASPA</div>
+                <div class="send-btn-sub">CIF + simulation.input</div>
+              </button>
+              <button class="send-btn" data-engine="mcmd">
+                <div class="send-btn-name">MCMD / GCMC</div>
+                <div class="send-btn-sub">XYZ + config file</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Analysis -->
+          <div class="send-group">
+            <div class="send-group-title">📊 Visualization &amp; Analysis</div>
+            <div class="send-btns">
+              <button class="send-btn" data-engine="vesta">
+                <div class="send-btn-name">VESTA</div>
+                <div class="send-btn-sub">CIF — open in VESTA</div>
+              </button>
+              <button class="send-btn" data-engine="ovito">
+                <div class="send-btn-name">OVITO</div>
+                <div class="send-btn-sub">XYZ / LAMMPS dump</div>
+              </button>
+              <button class="send-btn" data-engine="ase">
+                <div class="send-btn-name">ASE / Python</div>
+                <div class="send-btn-sub">Python script + CIF</div>
+              </button>
+              <button class="send-btn" data-engine="pymatgen">
+                <div class="send-btn-name">pymatgen</div>
+                <div class="send-btn-sub">JSON structure file</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="sendPreviewPanel" style="display:none">
+          <div class="panel-hd"><span class="panel-hd-icon">📝</span>Generated Input Preview</div>
+          <div id="sendEngineBadge" style="margin-bottom:8px"></div>
+          <textarea id="sendPreviewText" class="inp" rows="12" readonly style="font-size:10px;line-height:1.5"></textarea>
+          <div class="brow">
+            <button class="btn btn-primary" id="sendDownloadBtn" style="flex:1">↓ Download Package</button>
+            <button class="btn btn-secondary" id="sendCopyBtn" style="flex:1">⎘ Copy</button>
+          </div>
         </div>
       </div>
 
@@ -2000,6 +2261,728 @@ setTimeout(()=>{
   calcLatt();
   triggerBuild(d);
 },3500);
+
+/* ═══════════════════════════════════════════════
+   ── FILE IMPORT ──
+═══════════════════════════════════════════════ */
+let importedFileText='', importedFileFormat='';
+
+// Drop zone
+const dz=document.getElementById('dropZone');
+const fi=document.getElementById('fileInput');
+dz.addEventListener('click',()=>fi.click());
+dz.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')fi.click()});
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const file=e.dataTransfer.files[0]; if(file) readFileIntoImport(file);
+});
+fi.addEventListener('change',()=>{if(fi.files[0]) readFileIntoImport(fi.files[0])});
+
+function readFileIntoImport(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    importedFileText=e.target.result;
+    const ext=file.name.split('.').pop().toLowerCase();
+    if(ext==='cif') importedFileFormat='cif';
+    else if(['vasp','poscar','contcar'].includes(ext)||file.name.toUpperCase().includes('POSCAR')||file.name.toUpperCase().includes('CONTCAR')) importedFileFormat='poscar';
+    else if(ext==='xyz') importedFileFormat='xyz';
+    else if(ext==='lmp'||ext==='data') importedFileFormat='lammps';
+    else if(ext==='json') importedFileFormat='json';
+    else importedFileFormat='auto';
+    showImportStatus(`✓ Loaded: ${file.name} (${(file.size/1024).toFixed(1)} KB)`, true);
+    dz.querySelector('.dz-title').textContent=file.name;
+    dz.querySelector('.dz-sub').textContent=`${importedFileFormat.toUpperCase()} · ${(file.size/1024).toFixed(1)} KB`;
+  };
+  reader.readAsText(file);
+}
+
+function showImportStatus(msg, ok){
+  const el=document.getElementById('importStatus');
+  el.style.display='block'; el.textContent=msg;
+  el.className='import-status '+(ok?'ok':'err');
+}
+
+document.getElementById('loadFileBtn').addEventListener('click',()=>{
+  if(!importedFileText){showImportStatus('No file loaded. Drop or browse a file first.', false);return;}
+  parseAndLoadText(importedFileText, importedFileFormat);
+});
+
+// Paste loader
+document.getElementById('parsePasteBtn').addEventListener('click',()=>{
+  const txt=document.getElementById('pasteText').value.trim();
+  const fmt=document.getElementById('pasteFormat').value;
+  if(!txt){showImportStatus('Nothing to parse.', false);return;}
+  parseAndLoadText(txt, fmt);
+});
+
+/* ── PARSERS ── */
+function parseAndLoadText(text, fmt){
+  try{
+    let result=null;
+    if(fmt==='cif'||fmt==='auto'&&text.includes('_cell_length_a')) result=parseCIF(text);
+    else if(fmt==='poscar'||(fmt==='auto'&&isPOSCAR(text))) result=parsePOSCAR(text);
+    else if(fmt==='xyz'||fmt==='auto') result=parseXYZ(text);
+    else if(fmt==='lammps') result=parseLAMMPS(text);
+    else if(fmt==='json') result=parseJSONStruct(text);
+    if(!result){showImportStatus('Could not parse file. Check format.', false);return;}
+    applyImportedStructure(result);
+    showImportStatus(`✓ Loaded ${result.atoms.length} atoms · ${result.formula}`, true);
+    logLine(`Imported ${result.formula} · ${result.atoms.length} atoms · ${fmt.toUpperCase()}`,'ok');
+  }catch(e){
+    showImportStatus('Parse error: '+e.message, false);
+    logLine('Import error: '+e.message,'err');
+    console.error(e);
+  }
+}
+
+function isPOSCAR(text){
+  const lines=text.trim().split('\n');
+  if(lines.length<9) return false;
+  // line 2 should be a scale factor (number)
+  return !isNaN(parseFloat(lines[1]));
+}
+
+function parseCIF(text){
+  const getVal=(key)=>{
+    const re=new RegExp(key+'\\s+([\\d\\.\\-\\(\\)]+)','i');
+    const m=text.match(re); return m?parseFloat(m[1].replace(/\(.*\)/,'')):null;
+  };
+  const a=getVal('_cell_length_a')||4, b=getVal('_cell_length_b')||a, c=getVal('_cell_length_c')||a;
+  const al=getVal('_cell_angle_alpha')||90, be=getVal('_cell_angle_beta')||90, ga=getVal('_cell_angle_gamma')||90;
+  const sgM=text.match(/_symmetry_space_group_name_H-M\s+['"]?([^'"#\n]+)['"]?/i);
+  const sg=(sgM?sgM[1].trim():'P 1');
+
+  // Parse atom sites
+  const atoms=[];
+  const loopMatch=text.match(/loop_[\s\S]*?_atom_site[\s\S]*?(?=loop_|$)/gi);
+  if(loopMatch){
+    loopMatch.forEach(block=>{
+      const headers=[]; const hre=/_atom_site_(\S+)/gi; let hm;
+      while((hm=hre.exec(block))!==null) headers.push(hm[1].toLowerCase());
+      const labelIdx=headers.findIndex(h=>h==='label'||h==='type_symbol');
+      const xIdx=headers.findIndex(h=>h==='fract_x');
+      const yIdx=headers.findIndex(h=>h==='fract_y');
+      const zIdx=headers.findIndex(h=>h==='fract_z');
+      if(xIdx<0||yIdx<0||zIdx<0) return;
+      const dataLines=block.split('\n').filter(l=>l.trim()&&!l.trim().startsWith('_')&&!l.trim().startsWith('loop_'));
+      dataLines.forEach(line=>{
+        const parts=line.trim().split(/\s+/);
+        if(parts.length>Math.max(xIdx,yIdx,zIdx)){
+          let sym=parts[labelIdx]||'X';
+          sym=sym.replace(/[0-9\+\-_]/g,'').replace(/\(.*\)/,'');
+          sym=sym.charAt(0).toUpperCase()+sym.slice(1).toLowerCase();
+          const fx=parseFloat(parts[xIdx].replace(/\(.*\)/,'')),
+                fy=parseFloat(parts[yIdx].replace(/\(.*\)/,'')),
+                fz=parseFloat(parts[zIdx].replace(/\(.*\)/,''));
+          if(!isNaN(fx)&&!isNaN(fy)&&!isNaN(fz)) atoms.push({sym,fx,fy,fz});
+        }
+      });
+    });
+  }
+  if(!atoms.length) throw new Error('No atom sites found in CIF');
+  const formula=makeFormula(atoms);
+  return {a,b,c,al,be,ga,sg,atoms,formula,sys:guessSys(a,b,c,al,be,ga)};
+}
+
+function parsePOSCAR(text){
+  const lines=text.trim().split('\n');
+  const scale=parseFloat(lines[1])||1;
+  const v1=lines[2].trim().split(/\s+/).map(Number);
+  const v2=lines[3].trim().split(/\s+/).map(Number);
+  const v3=lines[4].trim().split(/\s+/).map(Number);
+  // compute cell params from lattice vectors
+  const a=Math.sqrt(v1[0]**2+v1[1]**2+v1[2]**2)*scale;
+  const b=Math.sqrt(v2[0]**2+v2[1]**2+v2[2]**2)*scale;
+  const c=Math.sqrt(v3[0]**2+v3[1]**2+v3[2]**2)*scale;
+  const cosAl=(v2[0]*v3[0]+v2[1]*v3[1]+v2[2]*v3[2])/(b*c/scale/scale);
+  const cosBe=(v1[0]*v3[0]+v1[1]*v3[1]+v1[2]*v3[2])/(a*c/scale/scale);
+  const cosGa=(v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2])/(a*b/scale/scale);
+  const al=Math.acos(Math.max(-1,Math.min(1,cosAl)))*180/Math.PI;
+  const be=Math.acos(Math.max(-1,Math.min(1,cosBe)))*180/Math.PI;
+  const ga=Math.acos(Math.max(-1,Math.min(1,cosGa)))*180/Math.PI;
+
+  // species — line 5 or 6
+  let speciesLine=5, countsLine=6;
+  const l5=lines[5].trim().split(/\s+/);
+  if(isNaN(parseInt(l5[0]))){ speciesLine=5; countsLine=6; }
+  else { speciesLine=4; countsLine=5; } // old VASP without species names
+  const species=lines[speciesLine].trim().split(/\s+/);
+  const counts=lines[countsLine].trim().split(/\s+/).map(Number);
+  const coordType=lines[countsLine+1].trim().toLowerCase();
+  const isDirect=coordType.startsWith('d');
+
+  const atoms=[];
+  let lineIdx=countsLine+2;
+  species.forEach((sym,si)=>{
+    for(let i=0;i<counts[si];i++){
+      const parts=lines[lineIdx++].trim().split(/\s+/);
+      let fx=parseFloat(parts[0]),fy=parseFloat(parts[1]),fz=parseFloat(parts[2]);
+      if(!isDirect){
+        // Cartesian → fractional (simple cubic approx for now)
+        fx=fx/a; fy=fy/b; fz=fz/c;
+      }
+      atoms.push({sym,fx,fy,fz});
+    }
+  });
+  if(!atoms.length) throw new Error('No atoms found in POSCAR');
+  const formula=makeFormula(atoms);
+  return {a,b,c,al,be,ga,sg:'P1',atoms,formula,sys:guessSys(a,b,c,al,be,ga)};
+}
+
+function parseXYZ(text){
+  const lines=text.trim().split('\n');
+  const n=parseInt(lines[0]);
+  if(isNaN(n)||n<1) throw new Error('Invalid XYZ: first line must be atom count');
+  // comment line may have lattice info
+  const comment=lines[1]||'';
+  let a=10,b=10,c=10,al=90,be=90,ga=90;
+  const latM=comment.match(/Lattice="([^"]+)"/i);
+  if(latM){
+    const v=latM[1].split(/\s+/).map(Number);
+    if(v.length>=9){
+      a=Math.sqrt(v[0]**2+v[1]**2+v[2]**2);
+      b=Math.sqrt(v[3]**2+v[4]**2+v[5]**2);
+      c=Math.sqrt(v[6]**2+v[7]**2+v[8]**2);
+    }
+  }
+  const atoms=[];
+  for(let i=2;i<2+n&&i<lines.length;i++){
+    const p=lines[i].trim().split(/\s+/);
+    if(p.length<4) continue;
+    const sym=p[0].charAt(0).toUpperCase()+p[0].slice(1).toLowerCase();
+    atoms.push({sym, fx:parseFloat(p[1])/a, fy:parseFloat(p[2])/b, fz:parseFloat(p[3])/c});
+  }
+  if(!atoms.length) throw new Error('No atoms in XYZ');
+  const formula=makeFormula(atoms);
+  return {a,b,c,al,be,ga,sg:'P1',atoms,formula,sys:guessSys(a,b,c,al,be,ga)};
+}
+
+function parseLAMMPS(text){
+  const lines=text.split('\n');
+  let xlo=0,xhi=10,ylo=0,yhi=10,zlo=0,zhi=10;
+  const atoms=[];
+  let inAtoms=false;
+  for(const line of lines){
+    const t=line.trim();
+    if(t.includes('xlo xhi')){const p=t.split(/\s+/);xlo=+p[0];xhi=+p[1];}
+    if(t.includes('ylo yhi')){const p=t.split(/\s+/);ylo=+p[0];yhi=+p[1];}
+    if(t.includes('zlo zhi')){const p=t.split(/\s+/);zlo=+p[0];zhi=+p[1];}
+    if(t==='Atoms') {inAtoms=true;continue;}
+    if(inAtoms&&t&&!isNaN(parseInt(t.split(/\s+/)[0]))){
+      const p=t.split(/\s+/);
+      if(p.length>=5){
+        const x=+p[p.length-3],y=+p[p.length-2],z=+p[p.length-1];
+        atoms.push({sym:'X',fx:(x-xlo)/(xhi-xlo),fy:(y-ylo)/(yhi-ylo),fz:(z-zlo)/(zhi-zlo)});
+      }
+    }
+  }
+  if(!atoms.length) throw new Error('No atoms in LAMMPS file');
+  const a=xhi-xlo,b=yhi-ylo,c=zhi-zlo;
+  return {a,b,c,al:90,be:90,ga:90,sg:'P1',atoms,formula:'X'+atoms.length,sys:'Orthorhombic'};
+}
+
+function parseJSONStruct(text){
+  const d=JSON.parse(text);
+  const lat=d.lattice||d.structure?.lattice||{};
+  const a=lat.a||lat.length_a||10,b=lat.b||lat.length_b||a,c=lat.c||lat.length_c||a;
+  const al=lat.alpha||90,be=lat.beta||90,ga=lat.gamma||90;
+  const rawAtoms=d.atoms||d.sites||d.structure?.sites||[];
+  const atoms=rawAtoms.map(s=>({
+    sym:s.sym||s.species?.[0]?.element||s.element||'X',
+    fx:s.fx||s.abc?.[0]||s.frac_coords?.[0]||0,
+    fy:s.fy||s.abc?.[1]||s.frac_coords?.[1]||0,
+    fz:s.fz||s.abc?.[2]||s.frac_coords?.[2]||0,
+  }));
+  if(!atoms.length) throw new Error('No atoms in JSON');
+  const formula=d.formula||makeFormula(atoms);
+  return {a,b,c,al,be,ga,sg:d.sg||'P1',atoms,formula,sys:guessSys(a,b,c,al,be,ga)};
+}
+
+function makeFormula(atoms){
+  const cnt={};
+  atoms.forEach(a=>{cnt[a.sym]=(cnt[a.sym]||0)+1;});
+  return Object.entries(cnt).map(([s,n])=>s+(n>1?n:'')).join('');
+}
+function guessSys(a,b,c,al,be,ga){
+  if(Math.abs(a-b)<0.01&&Math.abs(b-c)<0.01&&Math.abs(al-90)<0.5&&Math.abs(be-90)<0.5&&Math.abs(ga-90)<0.5) return 'Cubic';
+  if(Math.abs(a-b)<0.01&&Math.abs(al-90)<0.5&&Math.abs(be-90)<0.5&&Math.abs(ga-120)<0.5) return 'Hexagonal';
+  if(Math.abs(a-b)<0.01&&Math.abs(al-90)<0.5&&Math.abs(be-90)<0.5&&Math.abs(ga-90)<0.5) return 'Tetragonal';
+  if(Math.abs(al-90)<0.5&&Math.abs(be-90)<0.5&&Math.abs(ga-90)<0.5) return 'Orthorhombic';
+  return 'Triclinic';
+}
+
+function applyImportedStructure(result){
+  const {a,b,c,al,be,ga,sg,atoms,formula,sys,dens}=result;
+  document.getElementById('lpA').value=a.toFixed(4);
+  document.getElementById('lpB').value=(b||a).toFixed(4);
+  document.getElementById('lpC').value=(c||a).toFixed(4);
+  document.getElementById('lpAl').value=(al||90).toFixed(2);
+  document.getElementById('lpBe').value=(be||90).toFixed(2);
+  document.getElementById('lpGa').value=(ga||90).toFixed(2);
+  document.getElementById('sgInput').value=sg||'P1';
+  // detect elements
+  const syms=[...new Set(atoms.map(x=>x.sym))];
+  if(syms[0]&&document.getElementById('elA')) document.getElementById('elA').value=syms[0];
+  if(syms[1]){document.getElementById('slotB').style.display='flex';document.getElementById('elB').value=syms[1];}
+  else document.getElementById('slotB').style.display='none';
+  if(syms[2]){document.getElementById('slotC').style.display='flex';document.getElementById('elC').value=syms[2];}
+  else document.getElementById('slotC').style.display='none';
+  calcLatt();
+
+  // directly set currentAtoms and build 3D
+  const toR=d=>d*Math.PI/180;
+  const V=a*(b||a)*(c||a)*Math.sqrt(1-Math.cos(toR(al||90))**2-Math.cos(toR(be||90))**2-Math.cos(toR(ga||90))**2+2*Math.cos(toR(al||90))*Math.cos(toR(be||90))*Math.cos(toR(ga||90)));
+
+  const btn=document.getElementById('buildBtn');
+  btn.textContent='⏳ Loading…'; btn.disabled=true; navStatus('Loading…');
+  setTimeout(()=>{
+    btn.textContent='⬡ Build Structure'; btn.disabled=false; navStatus('Ready');
+    document.getElementById('canvas-empty').style.display='none';
+    setVal('stSG',sg||'P1'); setVal('stF',formula); setVal('stV',V.toFixed(2));
+    setVal('stD',dens?dens.toFixed(2):'—'); setVal('stSys',sys||'—');
+    document.getElementById('hudSG').textContent=(sg||'P1').split(' ')[0];
+    document.getElementById('hudN').textContent=atoms.length;
+    document.getElementById('hudV').textContent=V.toFixed(1)+' Å³';
+    document.getElementById('hudA').textContent=a.toFixed(3)+' Å';
+    document.getElementById('hudB').textContent=(b||a).toFixed(3)+' Å';
+    document.getElementById('hudC').textContent=(c||a).toFixed(3)+' Å';
+    document.getElementById('navSG').textContent=(sg||'P1').split(' ')[0];
+    document.getElementById('navN').textContent=atoms.length;
+    setPC('rpN',atoms.length); setPC('rpSp',syms.join(', ')); setPC('rpSym','—'); setPC('rpSys',sys||'—');
+    buildAtomListUI(atoms);
+    currentMeta={formula,sg,sys};
+    buildThreeStructure(atoms,a,b||a,c||a,al||90,be||90,ga||90,currentMeta);
+    updateSCPreview();
+  },300);
+}
+
+/* ═══════════════════════════════════════════════
+   ── MATERIALS PROJECT EXPLORER ──
+═══════════════════════════════════════════════ */
+let mpKey='';
+try{mpKey=localStorage.getItem('cf_mpkey')||'';}catch(e){}
+if(mpKey) document.getElementById('mpApiKey').value=mpKey;
+
+document.getElementById('mpSaveKey').addEventListener('click',()=>{
+  mpKey=document.getElementById('mpApiKey').value.trim();
+  try{localStorage.setItem('cf_mpkey',mpKey);}catch(e){}
+  logLine('MP API key saved.','ok');
+});
+document.getElementById('mpClearKey').addEventListener('click',()=>{
+  mpKey=''; document.getElementById('mpApiKey').value='';
+  try{localStorage.removeItem('cf_mpkey');}catch(e){}
+  logLine('MP API key cleared.');
+});
+document.getElementById('mpSearchBtn').addEventListener('click',mpSearch);
+document.getElementById('mpQuery').addEventListener('keydown',e=>{if(e.key==='Enter')mpSearch()});
+
+async function mpSearch(){
+  const q=document.getElementById('mpQuery').value.trim();
+  if(!q){logLine('Enter a formula or mp-id.','err');return;}
+  if(!mpKey){
+    document.getElementById('mpResults').innerHTML='<div class="mp-empty">⚠ No API key. Enter your Materials Project key above.</div>';
+    return;
+  }
+  const resultsEl=document.getElementById('mpResults');
+  resultsEl.innerHTML='<div class="mp-empty">Searching…</div>';
+  logLine(`MP search: ${q}`,'inf');
+  try{
+    // Build query URL
+    let url=`https://api.materialsproject.org/materials/summary/?_limit=10&fields=material_id,formula_pretty,symmetry,volume,density&_api_key=${mpKey}`;
+    if(q.startsWith('mp-')) url+=`&material_ids=${q}`;
+    else url+=`&formula=${encodeURIComponent(q)}`;
+
+    const resp=await fetch(url,{headers:{'X-API-KEY':mpKey}});
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data=await resp.json();
+    const items=data.data||[];
+    if(!items.length){resultsEl.innerHTML='<div class="mp-empty">No results found.</div>';return;}
+    resultsEl.innerHTML='';
+    items.forEach(item=>{
+      const sg=item.symmetry?.symbol||'—';
+      const div=document.createElement('div');
+      div.className='mp-item';
+      div.innerHTML=`
+        <div class="mp-formula">${item.formula_pretty}</div>
+        <div class="mp-meta">
+          <div class="mp-id">${item.material_id}</div>
+          <div class="mp-sg">${sg} · ${item.volume?item.volume.toFixed(1)+' Å³':'—'}</div>
+        </div>
+        <button class="mp-load" data-mpid="${item.material_id}">Load</button>`;
+      div.querySelector('.mp-load').addEventListener('click',e=>{
+        e.stopPropagation();
+        mpLoadStructure(item.material_id, item.formula_pretty);
+      });
+      resultsEl.appendChild(div);
+    });
+    logLine(`MP: found ${items.length} result(s) for "${q}"`,'ok');
+  }catch(e){
+    resultsEl.innerHTML=`<div class="mp-empty">Error: ${e.message}</div>`;
+    logLine('MP search error: '+e.message,'err');
+  }
+}
+
+async function mpLoadStructure(mpid, formula){
+  if(!mpKey){logLine('No API key set.','err');return;}
+  logLine(`Fetching ${mpid} structure…`,'inf');
+  try{
+    const url=`https://api.materialsproject.org/materials/${mpid}/?fields=structure&_api_key=${mpKey}`;
+    const resp=await fetch(url,{headers:{'X-API-KEY':mpKey}});
+    if(!resp.ok){
+      // Fallback: fetch CIF
+      const cifUrl=`https://www.materialsproject.org/materials/${mpid}/cif?type=conventional_standard`;
+      const cr=await fetch(cifUrl);
+      if(!cr.ok) throw new Error(`HTTP ${resp.status}`);
+      const cif=await cr.text();
+      const result=parseCIF(cif);
+      result.formula=formula||result.formula;
+      applyImportedStructure(result);
+      logLine(`Loaded ${mpid} via CIF`,'ok');
+      return;
+    }
+    const data=await resp.json();
+    const struct=data.data?.[0]?.structure||data.structure;
+    if(!struct) throw new Error('No structure in response');
+    // Convert pymatgen structure JSON
+    const lat=struct.lattice||struct.matrix;
+    const a=struct.lattice?.a||10, b_=struct.lattice?.b||a, c=struct.lattice?.c||a;
+    const al=struct.lattice?.alpha||90, be=struct.lattice?.beta||90, ga=struct.lattice?.gamma||90;
+    const sites=struct.sites||[];
+    const atoms=sites.map(s=>({
+      sym:s.species?.[0]?.element||'X',
+      fx:s.abc?.[0]||0, fy:s.abc?.[1]||0, fz:s.abc?.[2]||0
+    }));
+    if(!atoms.length) throw new Error('Empty structure');
+    applyImportedStructure({a,b:b_,c,al,be,ga,sg:'—',atoms,formula:formula||makeFormula(atoms),sys:guessSys(a,b_,c,al,be,ga)});
+    logLine(`Loaded ${mpid} from MP API`,'ok');
+  }catch(e){
+    logLine('MP load error: '+e.message,'err');
+    console.error(e);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   ── SUPERCELL BUILDER ──
+═══════════════════════════════════════════════ */
+function updateSCPreview(){
+  const na=+document.getElementById('scNa').value||1;
+  const nb=+document.getElementById('scNb').value||1;
+  const nc=+document.getElementById('scNc').value||1;
+  const n=currentAtoms.length;
+  if(!n){document.getElementById('scPreview').textContent='— Load a structure first —';return;}
+  const a=+document.getElementById('lpA').value, b=+document.getElementById('lpB').value||a, c=+document.getElementById('lpC').value||a;
+  const total=n*na*nb*nc;
+  const V=(a*na)*(b*nb)*(c*nc);
+  document.getElementById('scPreview').textContent=
+    `${na}×${nb}×${nc} supercell\n`+
+    `${n} → ${total} atoms\n`+
+    `a′=${(a*na).toFixed(3)}  b′=${(b*nb).toFixed(3)}  c′=${(c*nc).toFixed(3)} Å\n`+
+    `V′=${V.toFixed(2)} Å³`;
+}
+['scNa','scNb','scNc'].forEach(id=>document.getElementById(id).addEventListener('input',updateSCPreview));
+
+document.getElementById('buildSupercellBtn').addEventListener('click',()=>{
+  if(!currentAtoms.length){logLine('No structure loaded.','err');return;}
+  const na=Math.max(1,Math.min(10,+document.getElementById('scNa').value||1));
+  const nb=Math.max(1,Math.min(10,+document.getElementById('scNb').value||1));
+  const nc=Math.max(1,Math.min(10,+document.getElementById('scNc').value||1));
+  if(na*nb*nc>2000){logLine('Supercell too large (>2000 atoms). Reduce repetitions.','err');return;}
+
+  const a=+document.getElementById('lpA').value;
+  const b=+document.getElementById('lpB').value||a;
+  const c=+document.getElementById('lpC').value||a;
+  const al=+document.getElementById('lpAl').value||90;
+  const be=+document.getElementById('lpBe').value||90;
+  const ga=+document.getElementById('lpGa').value||90;
+
+  const newAtoms=[];
+  for(let ia=0;ia<na;ia++) for(let ib=0;ib<nb;ib++) for(let ic=0;ic<nc;ic++){
+    currentAtoms.forEach(at=>{
+      newAtoms.push({sym:at.sym, fx:(at.fx+ia)/na, fy:(at.fy+ib)/nb, fz:(at.fz+ic)/nc});
+    });
+  }
+
+  const newA=a*na, newB=b*nb, newC=c*nc;
+  document.getElementById('lpA').value=newA.toFixed(4);
+  document.getElementById('lpB').value=newB.toFixed(4);
+  document.getElementById('lpC').value=newC.toFixed(4);
+  calcLatt();
+
+  const formula=makeFormula(newAtoms);
+  currentMeta={...currentMeta, formula};
+  const toR=d=>d*Math.PI/180;
+  const V=newA*newB*newC*Math.sqrt(1-Math.cos(toR(al))**2-Math.cos(toR(be))**2-Math.cos(toR(ga))**2+2*Math.cos(toR(al))*Math.cos(toR(be))*Math.cos(toR(ga)));
+
+  navStatus('Building supercell…');
+  setTimeout(()=>{
+    navStatus('Ready');
+    setVal('stSG','—'); setVal('stF',formula); setVal('stV',V.toFixed(2)); setVal('stSys','—');
+    document.getElementById('hudN').textContent=newAtoms.length;
+    document.getElementById('navN').textContent=newAtoms.length;
+    setPC('rpN',newAtoms.length);
+    buildAtomListUI(newAtoms);
+    buildThreeStructure(newAtoms,newA,newB,newC,al,be,ga,currentMeta);
+    updateSCPreview();
+    logLine(`Supercell ${na}×${nb}×${nc}: ${newAtoms.length} atoms`,'ok');
+  },200);
+  logLine(`Building ${na}×${nb}×${nc} supercell…`,'inf');
+});
+
+// shortcut from Build tab
+document.getElementById('buildTabSupercellBtn').addEventListener('click',()=>{
+  document.querySelectorAll('[data-main]').forEach(b=>{b.classList.remove('active')});
+  document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('[data-main="superslb"]').classList.add('active');
+  document.getElementById('tab-superslb').classList.add('active');
+  updateSCPreview();
+});
+
+/* ═══════════════════════════════════════════════
+   ── SLAB GENERATOR ──
+═══════════════════════════════════════════════ */
+document.getElementById('buildSlabBtn').addEventListener('click',()=>{
+  if(!currentAtoms.length){logLine('No structure loaded.','err');return;}
+  const h=+document.getElementById('slabH').value||0;
+  const k=+document.getElementById('slabK').value||0;
+  const l=+document.getElementById('slabL').value||1;
+  const layers=Math.max(1,Math.min(20,+document.getElementById('slabLayers').value||4));
+  const vacuum=Math.max(5,+document.getElementById('slabVacuum').value||15);
+  const symmetric=document.getElementById('slabSymmetric').checked;
+
+  const a=+document.getElementById('lpA').value;
+  const b=+document.getElementById('lpB').value||a;
+  const c=+document.getElementById('lpC').value||a;
+  const al=+document.getElementById('lpAl').value||90;
+  const be=+document.getElementById('lpBe').value||90;
+  const ga=+document.getElementById('lpGa').value||90;
+
+  logLine(`Generating (${h}${k}${l}) slab · ${layers} layers · ${vacuum} Å vacuum…`,'inf');
+
+  // Build supercell first along surface normal direction
+  // Simplified: for (001) slab just repeat along c, for others we reorient
+  const hkl=Math.sqrt(h*h+k*k+l*l)||1;
+  // Approximate: tile in all directions needed for the slab
+  const tiledAtoms=[];
+  const repeatZ=layers;
+  for(let ic=0;ic<repeatZ;ic++){
+    currentAtoms.forEach(at=>{
+      tiledAtoms.push({sym:at.sym, fx:at.fx, fy:at.fy, fz:(at.fz+ic)/repeatZ});
+    });
+  }
+
+  // Apply surface orientation rotation (simplified — rotate so hkl points to Z)
+  // Full reorientation: project atoms to new basis
+  const norm=new THREE.Vector3(h,k,l).normalize();
+  let newX=new THREE.Vector3(1,0,0);
+  if(Math.abs(norm.dot(newX))>0.9) newX=new THREE.Vector3(0,1,0);
+  const newY=new THREE.Vector3().crossVectors(norm,newX).normalize();
+  newX.crossVectors(newY,norm).normalize();
+
+  const slabC=c*repeatZ+vacuum;
+  const toR=d=>d*Math.PI/180;
+
+  // For simplified slab, trim atoms to slab region [0, layers*c/(layers*c+vacuum)]
+  const slabFrac=c*repeatZ/slabC;
+  const finalAtoms=tiledAtoms.map(at=>({
+    sym:at.sym, fx:at.fx, fy:at.fy,
+    fz: at.fz * slabFrac  // compress to leave room for vacuum
+  }));
+
+  if(symmetric){
+    // Mirror the bottom half to create symmetric termination
+    const topAtoms=finalAtoms.filter(at=>at.fz>slabFrac/2);
+    topAtoms.forEach(at=>{
+      finalAtoms.push({...at, fz: slabFrac - at.fz + slabFrac/4});
+    });
+  }
+
+  const formula=makeFormula(finalAtoms)+'_slab';
+  const meta={formula,sg:'P1',sys:'Slab ('+h+k+l+')'};
+
+  document.getElementById('lpC').value=slabC.toFixed(4);
+  calcLatt();
+
+  navStatus('Generating slab…');
+  setTimeout(()=>{
+    navStatus('Ready');
+    setVal('stSG','P1 (slab)'); setVal('stF',formula.replace('_slab','')); setVal('stV','—'); setVal('stSys',`(${h}${k}${l}) slab`);
+    document.getElementById('hudN').textContent=finalAtoms.length;
+    document.getElementById('navN').textContent=finalAtoms.length;
+    setPC('rpN',finalAtoms.length); setPC('rpSys','Slab');
+    buildAtomListUI(finalAtoms);
+    currentMeta=meta;
+    buildThreeStructure(finalAtoms,a,b,slabC,al,be,90,meta);
+    logLine(`(${h}${k}${l}) slab: ${finalAtoms.length} atoms · ${layers} layers · ${vacuum}Å vacuum`,'ok');
+  },300);
+});
+
+/* ═══════════════════════════════════════════════
+   ── SEND TO ENGINE ──
+═══════════════════════════════════════════════ */
+let lastEngine='';
+
+document.querySelectorAll('.send-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(!currentAtoms.length){logLine('No structure loaded. Build or import one first.','err');return;}
+    generateEngineInput(btn.dataset.engine);
+  });
+});
+
+function generateEngineInput(engine){
+  lastEngine=engine;
+  const a=+document.getElementById('lpA').value;
+  const b=+document.getElementById('lpB').value||a;
+  const c=+document.getElementById('lpC').value||a;
+  const al=+document.getElementById('lpAl').value||90;
+  const be=+document.getElementById('lpBe').value||90;
+  const ga=+document.getElementById('lpGa').value||90;
+  const formula=currentMeta.formula||makeFormula(currentAtoms);
+  const syms=[...new Set(currentAtoms.map(x=>x.sym))];
+
+  const toR=d=>d*Math.PI/180;
+  const ca=Math.cos(toR(al)),cb=Math.cos(toR(be)),cg=Math.cos(toR(ga)),sg_=Math.sin(toR(ga));
+  const vv=Math.sqrt(Math.max(0,1-ca*ca-cb*cb-cg*cg+2*ca*cb*cg));
+  // Lattice vectors
+  const v1=[a,0,0];
+  const v2=[b*cg, b*sg_, 0];
+  const v3=[c*cb, c*(ca-cb*cg)/Math.max(sg_,1e-10), c*vv/Math.max(sg_,1e-10)];
+  const fmtV=v=>v.map(x=>x.toFixed(9)).join('  ');
+
+  let text='', label='', ext='txt';
+
+  if(engine==='vasp'){
+    label='VASP (POSCAR + INCAR + KPOINTS)'; ext='zip-text';
+    const counts=syms.map(s=>currentAtoms.filter(x=>x.sym===s).length);
+    let poscar=`${formula}\n1.0\n  ${fmtV(v1)}\n  ${fmtV(v2)}\n  ${fmtV(v3)}\n`;
+    poscar+=syms.join('  ')+'\n'+counts.join('  ')+'\nDirect\n';
+    syms.forEach(s=>currentAtoms.filter(x=>x.sym===s).forEach(at=>{
+      poscar+=`  ${at.fx.toFixed(9)}  ${at.fy.toFixed(9)}  ${at.fz.toFixed(9)}\n`;
+    }));
+    const incar=`SYSTEM = ${formula}\nISMEAR = 1 ; SIGMA = 0.2\nENcut = 520\nEDIFF = 1E-6\nNSW = 100\nIONS = conj\nPREC = Accurate\nLREAL = Auto\n`;
+    const kpoints=`Automatic\n0\nGamma\n  4  4  4\n  0  0  0\n`;
+    text=`=== POSCAR ===\n${poscar}\n=== INCAR ===\n${incar}\n=== KPOINTS ===\n${kpoints}`;
+  } else if(engine==='qe'){
+    label='Quantum ESPRESSO (pw.x)'; ext='in';
+    text=`&CONTROL\n  calculation='scf',\n  prefix='${formula}',\n  outdir='./tmp/',\n/\n&SYSTEM\n  ibrav=0,\n  nat=${currentAtoms.length},\n  ntyp=${syms.length},\n  ecutwfc=60.0,\n  ecutrho=480.0,\n/\n&ELECTRONS\n  conv_thr=1.0d-8,\n/\nATOMIC_SPECIES\n`;
+    syms.forEach(s=>{const el=ELEMENTS.find(e=>e[1]===s);text+=`  ${s}  ${el?el[3]:1.0}  ${s}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
+    text+=`CELL_PARAMETERS angstrom\n  ${fmtV(v1)}\n  ${fmtV(v2)}\n  ${fmtV(v3)}\nATOMIC_POSITIONS crystal\n`;
+    currentAtoms.forEach(at=>{text+=`  ${at.sym}  ${at.fx.toFixed(9)}  ${at.fy.toFixed(9)}  ${at.fz.toFixed(9)}\n`;});
+    text+=`K_POINTS automatic\n  4 4 4  0 0 0\n`;
+  } else if(engine==='cp2k'){
+    label='CP2K'; ext='inp';
+    text=`&GLOBAL\n  PROJECT ${formula}\n  RUN_TYPE ENERGY_FORCE\n  PRINT_LEVEL MEDIUM\n&END GLOBAL\n&FORCE_EVAL\n  METHOD QS\n  &DFT\n    BASIS_SET_FILE_NAME BASIS_MOLOPT\n    POTENTIAL_FILE_NAME GTH_POTENTIALS\n    &MGRID\n      CUTOFF 400\n    &END MGRID\n    &QS\n      EPS_DEFAULT 1.0E-10\n    &END QS\n  &END DFT\n  &SUBSYS\n    &CELL\n      A  ${fmtV(v1)}\n      B  ${fmtV(v2)}\n      C  ${fmtV(v3)}\n    &END CELL\n    &COORD\n`;
+    currentAtoms.forEach(at=>{
+      const p=fracToCart(at.fx,at.fy,at.fz,a,b,c,al,be,ga);
+      text+=`      ${at.sym}  ${p.x.toFixed(6)}  ${p.y.toFixed(6)}  ${p.z.toFixed(6)}\n`;
+    });
+    text+=`    &END COORD\n  &END SUBSYS\n&END FORCE_EVAL\n`;
+  } else if(engine==='abinit'){
+    label='ABINIT'; ext='abi';
+    text=`# ABINIT input for ${formula}\nntypat ${syms.length}\nznucl ${syms.map(s=>{const e=ELEMENTS.find(x=>x[1]===s);return e?e[0]:1;}).join(' ')}\nnatom ${currentAtoms.length}\ntypat ${currentAtoms.map(at=>syms.indexOf(at.sym)+1).join(' ')}\nxred\n`;
+    currentAtoms.forEach(at=>{text+=`  ${at.fx.toFixed(9)}  ${at.fy.toFixed(9)}  ${at.fz.toFixed(9)}\n`;});
+    text+=`acell  ${a.toFixed(6)}  ${b.toFixed(6)}  ${c.toFixed(6)}  Angstrom\nrprim\n  ${fmtV(v1)}\n  ${fmtV(v2)}\n  ${fmtV(v3)}\necut 30\nnkpt 1\nkpt 0.25 0.25 0.25\n`;
+  } else if(engine==='lammps'){
+    label='LAMMPS data + script'; ext='zip-text';
+    let data=`# LAMMPS data for ${formula}\n${currentAtoms.length} atoms\n${syms.length} atom types\n0.0 ${v1[0].toFixed(6)} xlo xhi\n0.0 ${v2[1].toFixed(6)} ylo yhi\n0.0 ${v3[2].toFixed(6)} zlo zhi\n\nMasses\n\n`;
+    syms.forEach((s,i)=>{const el=ELEMENTS.find(e=>e[1]===s);data+=`${i+1}  ${el?el[3]:1.0}  # ${s}\n`;});
+    data+=`\nAtoms # atomic\n\n`;
+    currentAtoms.forEach((at,i)=>{
+      const p=fracToCart(at.fx,at.fy,at.fz,a,b,c,al,be,ga);
+      data+=`${i+1} ${syms.indexOf(at.sym)+1}  ${p.x.toFixed(6)}  ${p.y.toFixed(6)}  ${p.z.toFixed(6)}\n`;
+    });
+    const script=`units metal\natom_style atomic\nboundary p p p\nread_data ${formula}.lammps\npair_style eam/alloy\n# pair_coeff * * potential.eam ${syms.join(' ')}\nthermo 100\nminimize 1e-6 1e-8 1000 10000\n`;
+    text=`=== ${formula}.lammps (data file) ===\n${data}\n=== in.lammps (run script) ===\n${script}`;
+  } else if(engine==='gromacs'){
+    label='GROMACS (.gro)'; ext='gro';
+    text=`${formula} structure\n${currentAtoms.length}\n`;
+    currentAtoms.forEach((at,i)=>{
+      const p=fracToCart(at.fx,at.fy,at.fz,a,b,c,al,be,ga);
+      text+=`${String(i+1).padStart(5)}${at.sym.padEnd(5)}${at.sym.padStart(5)}${String(i+1).padStart(5)}${(p.x/10).toFixed(3).padStart(8)}${(p.y/10).toFixed(3).padStart(8)}${(p.z/10).toFixed(3).padStart(8)}\n`;
+    });
+    text+=`${(v1[0]/10).toFixed(5)} ${(v2[1]/10).toFixed(5)} ${(v3[2]/10).toFixed(5)}\n`;
+  } else if(engine==='namd'){
+    label='NAMD (PDB)'; ext='pdb';
+    text=`REMARK  ${formula} — generated by CrystalForge\n`;
+    currentAtoms.forEach((at,i)=>{
+      const p=fracToCart(at.fx,at.fy,at.fz,a,b,c,al,be,ga);
+      text+=`ATOM  ${String(i+1).padStart(5)} ${at.sym.padEnd(4)} MOL A   1    ${p.x.toFixed(3).padStart(8)}${p.y.toFixed(3).padStart(8)}${p.z.toFixed(3).padStart(8)}  1.00  0.00          ${at.sym.padEnd(2)}\n`;
+    });
+    text+=`END\n`;
+  } else if(engine==='raspa'){
+    label='RASPA (CIF + simulation.input)'; ext='zip-text';
+    let cif_=`data_${formula}\n_cell_length_a  ${a}\n_cell_length_b  ${b}\n_cell_length_c  ${c}\n_cell_angle_alpha  ${al}\n_cell_angle_beta  ${be}\n_cell_angle_gamma  ${ga}\n_symmetry_space_group_name_H-M  'P 1'\nloop_\n_atom_site_label\n_atom_site_fract_x\n_atom_site_fract_y\n_atom_site_fract_z\n`;
+    currentAtoms.forEach((at,i)=>{cif_+=`${at.sym}${i+1}  ${at.fx.toFixed(5)}  ${at.fy.toFixed(5)}  ${at.fz.toFixed(5)}\n`;});
+    const simInput=`SimulationType  MonteCarlo\nNumberOfCycles  10000\nPrintEvery  1000\nFramework 0\n  FrameworkName  ${formula}\n  UnitCells 1 1 1\n  ExternalTemperature 298.0\n  ExternalPressure 1e5\n`;
+    text=`=== ${formula}.cif ===\n${cif_}\n=== simulation.input ===\n${simInput}`;
+  } else if(engine==='mcmd'){
+    label='MCMD / GCMC (XYZ + config)'; ext='zip-text';
+    let xyz_=`${currentAtoms.length}\n${formula} Lattice="${fmtV(v1)} ${fmtV(v2)} ${fmtV(v3)}"\n`;
+    currentAtoms.forEach(at=>{
+      const p=fracToCart(at.fx,at.fy,at.fz,a,b,c,al,be,ga);
+      xyz_+=`${at.sym}  ${p.x.toFixed(6)}  ${p.y.toFixed(6)}  ${p.z.toFixed(6)}\n`;
+    });
+    const cfg=`temperature 300\npressure 1.0\nmcsteps 100000\nsample_every 100\nensemble nvt\n`;
+    text=`=== ${formula}.xyz ===\n${xyz_}\n=== mc.config ===\n${cfg}`;
+  } else if(engine==='vesta'){
+    label='VESTA (CIF)'; ext='cif';
+    text=`data_${formula}\n_cell_length_a  ${a}\n_cell_length_b  ${b}\n_cell_length_c  ${c}\n_cell_angle_alpha  ${al}\n_cell_angle_beta  ${be}\n_cell_angle_gamma  ${ga}\n_symmetry_space_group_name_H-M  '${currentMeta.sg||'P 1'}'\nloop_\n_atom_site_label\n_atom_site_fract_x\n_atom_site_fract_y\n_atom_site_fract_z\n`;
+    currentAtoms.forEach((at,i)=>{text+=`${at.sym}${i+1}  ${at.fx.toFixed(5)}  ${at.fy.toFixed(5)}  ${at.fz.toFixed(5)}\n`;});
+  } else if(engine==='ovito'){
+    label='OVITO (XYZ extended)'; ext='xyz';
+    text=`${currentAtoms.length}\nLattice="${fmtV(v1)} ${fmtV(v2)} ${fmtV(v3)}" Properties=species:S:1:pos:R:3 pbc="T T T"\n`;
+    currentAtoms.forEach(at=>{
+      const p=fracToCart(at.fx,at.fy,at.fz,a,b,c,al,be,ga);
+      text+=`${at.sym}  ${p.x.toFixed(6)}  ${p.y.toFixed(6)}  ${p.z.toFixed(6)}\n`;
+    });
+  } else if(engine==='ase'){
+    label='ASE Python script'; ext='py';
+    text=`from ase import Atoms\nfrom ase.io import write\nimport numpy as np\n\n# ${formula} — generated by CrystalForge\ncell = np.array([\n  [${fmtV(v1)}],\n  [${fmtV(v2)}],\n  [${fmtV(v3)}]\n])\n\nsymbols = [${currentAtoms.map(a=>`'${a.sym}'`).join(', ')}]\nscaled_positions = [\n`;
+    currentAtoms.forEach(at=>{text+=`  [${at.fx.toFixed(9)}, ${at.fy.toFixed(9)}, ${at.fz.toFixed(9)}],\n`;});
+    text+=`]\n\natoms = Atoms(symbols=symbols, scaled_positions=scaled_positions, cell=cell, pbc=True)\nwrite('${formula}.cif', atoms)\nprint(atoms)\n`;
+  } else if(engine==='pymatgen'){
+    label='pymatgen JSON'; ext='json';
+    const sites=currentAtoms.map(at=>({
+      species:[{element:at.sym,occu:1}],
+      abc:[at.fx,at.fy,at.fz],
+      xyz:fracToCart(at.fx,at.fy,at.fz,a,b,c,al,be,ga)
+    }));
+    text=JSON.stringify({formula,lattice:{a,b,c,alpha:al,beta:be,gamma:ga,matrix:[v1,v2,v3]},sites,sg:currentMeta.sg||'P1'},null,2);
+  }
+
+  // Show preview panel
+  document.getElementById('sendPreviewPanel').style.display='';
+  document.getElementById('sendEngineBadge').innerHTML=`<span>${label}</span>`;
+  document.getElementById('sendPreviewText').value=text;
+  document.getElementById('sendPreviewText').dataset.ext=ext;
+  document.getElementById('sendPreviewText').dataset.label=label;
+  // scroll to preview
+  document.getElementById('sendPreviewPanel').scrollIntoView({behavior:'smooth'});
+  logLine(`Generated ${label} input`,'ok');
+}
+
+document.getElementById('sendDownloadBtn').addEventListener('click',()=>{
+  const text=document.getElementById('sendPreviewText').value;
+  const ext=document.getElementById('sendPreviewText').dataset.ext||'txt';
+  const formula=currentMeta.formula||'structure';
+  const fname=ext==='zip-text'?formula+'_inputs.txt':formula+'.'+ext;
+  const blob=new Blob([text],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url; link.download=fname; link.click();
+  URL.revokeObjectURL(url);
+  logLine(`Downloaded ${fname}`,'ok');
+});
+
+document.getElementById('sendCopyBtn').addEventListener('click',()=>{
+  const text=document.getElementById('sendPreviewText').value;
+  navigator.clipboard.writeText(text).then(()=>logLine('Copied to clipboard.','ok')).catch(()=>{
+    document.getElementById('sendPreviewText').select();
+    document.execCommand('copy');
+    logLine('Copied to clipboard.','ok');
+  });
+});
 </script>
 </body>
 </html>
