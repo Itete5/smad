@@ -4,1315 +4,843 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
-<title>SMAD · Community Ideas</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>SMAD Community — Ideas & Feedback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #f8fafc;
-  --bg1: #ffffff;
-  --bg2: #f1f5f9;
-  --bg3: #e8eef7;
-  --bd: #dde5f0;
-  --bd2: #c4d0e8;
-  --t0: #0d1b2e;
-  --t1: #2d4a6e;
-  --t2: #5a7a9e;
-  --t3: #8faabb;
-  --ac: #1a5fff;
-  --acl: #e8efff;
-  --gr: #0d9f6e;
-  --grl: #e6f7f2;
-  --am: #d97706;
-  --aml: #fef3e2;
-  --rs: #dc2626;
-  --rsl: #fef2f2;
-  --vi: #7c3aed;
-  --vil: #f3eeff;
-  --cy: #0891b2;
-  --cyl: #e0f5fa;
-  --mono: 'JetBrains Mono', monospace;
-  --sans: 'Instrument Sans', sans-serif;
-  --disp: 'Syne', sans-serif;
-  --r: 6px;
-  --r2: 12px;
-  --sh: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
-  --sh2: 0 2px 8px rgba(0,0,0,.08), 0 8px 32px rgba(0,0,0,.1);
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f2f3f5;
+  --surface:#ffffff;
+  --surface2:#f7f8fa;
+  --border:#e2e5eb;
+  --border2:#d0d4dc;
+  --text:#0d1117;
+  --text2:#4a5568;
+  --text3:#8a96a8;
+  --blue:#1a56e8;
+  --blue-bg:#eef3ff;
+  --blue-border:#c3d3fa;
+  --red:#dc2626;
+  --red-bg:#fef2f2;
+  --amber:#d97706;
+  --amber-bg:#fffbeb;
+  --green:#16a34a;
+  --green-bg:#f0fdf4;
+  --teal:#0891b2;
+  --teal-bg:#ecfeff;
+  --purple:#7c3aed;
+  --gray:#6b7280;
+  --radius:10px;
+  --radius-sm:7px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.08),0 2px 6px rgba(0,0,0,0.04);
+  --font-head:'Archivo Black',sans-serif;
+  --font:'Archivo',sans-serif;
+}
+html{background:var(--bg);font-family:var(--font);color:var(--text);font-size:14px;line-height:1.6}
+body{min-height:100vh;padding:0 0 64px}
+
+/* ── Page header ── */
+.page-wrap{max-width:960px;margin:0 auto;padding:32px 24px 0}
+.community-label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:10px}
+.community-label::before{content:'';display:block;width:22px;height:2px;background:var(--blue)}
+.page-title{font-family:var(--font-head);font-size:clamp(28px,5vw,42px);color:var(--text);letter-spacing:-.02em;line-height:1.05;margin-bottom:10px}
+.page-sub{font-size:14px;color:var(--text2);max-width:480px;line-height:1.6;margin-bottom:28px}
+.page-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.top-actions{display:flex;gap:8px;flex-shrink:0;padding-top:4px}
+.top-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);font-size:12.5px;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .15s;text-decoration:none}
+.top-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.top-btn svg{flex-shrink:0}
+.top-btn.admin-btn{color:var(--text3)}
+.top-btn.admin-btn.active{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+
+/* ── Category tabs ── */
+.cat-tabs{display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:5px;width:fit-content;flex-wrap:wrap;margin-bottom:16px;box-shadow:var(--shadow)}
+.cat-tab{display:flex;align-items:center;gap:6px;padding:6px 15px;border-radius:999px;border:none;background:transparent;color:var(--text2);font-size:13px;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.cat-tab:hover:not(.active){color:var(--text);background:var(--surface2)}
+.cat-tab.active{background:var(--blue);color:#fff}
+.cat-tab .count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:10.5px;font-weight:600;background:rgba(255,255,255,0.22);color:inherit}
+.cat-tab:not(.active) .count{background:var(--bg);color:var(--text3)}
+.cat-tab svg{width:13px;height:13px;flex-shrink:0}
+
+/* ── Status + search row ── */
+.filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.status-pills{display:flex;gap:6px;flex-wrap:wrap}
+.status-pill{padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-size:13px;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .15s}
+.status-pill:hover:not(.active){border-color:var(--border2);color:var(--text);background:var(--surface)}
+.status-pill.active{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.search-wrap{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.search-box{display:flex;align-items:center;gap:8px;padding:7px 13px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);transition:border-color .2s;box-shadow:var(--shadow)}
+.search-box:focus-within{border-color:var(--blue)}
+.search-box svg{color:var(--text3);flex-shrink:0}
+.search-box input{border:none;background:transparent;outline:none;font-size:13px;font-family:var(--font);color:var(--text);width:160px}
+.search-box input::placeholder{color:var(--text3)}
+.sort-select{padding:7px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:13px;font-family:var(--font);outline:none;cursor:pointer;box-shadow:var(--shadow)}
+
+/* ── Submission form card ── */
+.form-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:20px;box-shadow:var(--shadow)}
+.form-top{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:#fff;font-weight:700;font-family:var(--font-head)}
+.form-fields{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.form-row{display:flex;gap:10px;flex-wrap:wrap}
+.form-row .inp{flex:1;min-width:160px}
+.inp{width:100%;padding:10px 13px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13.5px;font-family:var(--font);outline:none;transition:border-color .2s,box-shadow .2s}
+.inp::placeholder{color:var(--text3)}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,232,0.08)}
+.inp.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,0.07)}
+textarea.inp{resize:vertical;min-height:90px;line-height:1.6}
+.summary-wrap{position:relative}
+.char-counter{position:absolute;right:12px;bottom:10px;font-size:11px;color:var(--text3);pointer-events:none}
+.char-counter.warn{color:var(--amber)}
+.char-counter.over{color:var(--red)}
+.desc-wrap{position:relative}
+.desc-counter{text-align:right;font-size:11px;color:var(--text3);margin-top:3px}
+.desc-counter.warn{color:var(--amber)}
+.desc-counter.over{color:var(--red)}
+.err-msg{font-size:11.5px;color:var(--red);margin-top:3px;display:none}
+.err-msg.show{display:block}
+
+/* Category pill selector */
+.cat-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cat-label{font-size:13px;color:var(--text2);font-weight:500;flex-shrink:0}
+.cat-pills{display:flex;gap:7px;flex-wrap:wrap}
+.cat-pill{padding:5px 14px;border-radius:999px;border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13px;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .15s}
+.cat-pill:hover:not(.sel){border-color:var(--blue);color:var(--blue)}
+.cat-pill.sel{border-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
+.cat-pill.sel-bug{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.cat-pill.sel-question{border-color:var(--purple);background:#f5f3ff;color:var(--purple)}
+.cat-pill.sel-research{border-color:var(--teal);background:var(--teal-bg);color:var(--teal)}
+.cat-pill.sel-other{border-color:var(--gray);background:#f9fafb;color:var(--gray)}
+
+/* Toggle */
+.form-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:12px}
+.toggle-row{display:flex;align-items:center;gap:9px}
+.toggle-wrap{position:relative;width:42px;height:23px;flex-shrink:0}
+.toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:#d1d5db;border-radius:999px;cursor:pointer;transition:background .2s}
+.toggle-track::after{content:'';position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:left .2s}
+.toggle-wrap input:checked~.toggle-track{background:var(--blue)}
+.toggle-wrap input:checked~.toggle-track::after{left:22px}
+.toggle-lbl{font-size:13px;color:var(--text2)}
+.toggle-lbl span{color:var(--text3);font-size:12.5px}
+.form-btns{display:flex;gap:8px}
+.btn-clear{padding:9px 20px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13.5px;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .15s}
+.btn-clear:hover{border-color:var(--border2);color:var(--text);background:var(--surface2)}
+.btn-submit{display:inline-flex;align-items:center;gap:7px;padding:9px 22px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:#fff;font-size:13.5px;font-family:var(--font);font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(26,86,232,0.28);transition:all .15s}
+.btn-submit:hover{background:#1248cc;box-shadow:0 4px 14px rgba(26,86,232,0.35);transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-submit svg{flex-shrink:0}
+
+/* Required field indicators */
+.req-star{color:var(--red);margin-left:2px;font-size:13px}
+.inp.req-empty{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,0.07)}
+.field-hint{font-size:11px;color:var(--text3);margin-top:3px}
+.field-hint.err{color:var(--red)}
+
+/* Submit button disabled/locked state */
+.btn-submit:disabled,.btn-submit[aria-disabled="true"]{
+  background:#b0bec5;box-shadow:none;cursor:not-allowed;transform:none;opacity:1
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
-body {
-  font-family: var(--sans);
-  background: var(--bg);
-  color: var(--t0);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
+/* Honeypot */
+.hp-field{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
-/* ── SECTION WRAPPER (drop into smad.live main page) ── */
-.smad-community {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 48px 24px 64px;
-}
+/* ── Admin OTP modal ── */
+.adm-overlay{display:none;position:fixed;inset:0;background:rgba(13,17,23,0.55);backdrop-filter:blur(3px);z-index:200;align-items:center;justify-content:center;padding:20px}
+.adm-overlay.open{display:flex}
+.adm-modal{background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--radius);padding:30px 28px 26px;width:100%;max-width:380px;box-shadow:var(--shadow-md);animation:slideIn .2s ease}
+.adm-modal h3{font-family:var(--font-head);font-size:18px;color:var(--text);margin-bottom:6px}
+.adm-modal .adm-sub{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.55}
+.adm-modal .adm-sub strong{color:var(--text);font-weight:600}
+.adm-code-wrap{display:flex;gap:8px;margin-bottom:8px}
+.adm-code-inp{flex:1;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:22px;font-family:var(--font-head);letter-spacing:.25em;outline:none;text-align:center;transition:border-color .2s,box-shadow .2s}
+.adm-code-inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,232,0.08);background:var(--surface)}
+.adm-code-inp.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,0.07)}
+.adm-err{font-size:12px;color:var(--red);min-height:16px;margin-bottom:14px}
+.adm-actions{display:flex;gap:8px}
+.adm-cancel{flex:1;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13.5px;font-family:var(--font);cursor:pointer;transition:all .15s}
+.adm-cancel:hover{background:var(--surface2);color:var(--text)}
+.adm-verify{flex:1;padding:10px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:#fff;font-size:13.5px;font-family:var(--font);font-weight:600;cursor:pointer;transition:all .15s}
+.adm-verify:hover{background:#1248cc}
+.adm-verify:disabled{opacity:.45;cursor:not-allowed}
+.adm-send-row{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.adm-send-btn{padding:9px 18px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:#fff;font-size:13px;font-family:var(--font);font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.adm-send-btn:hover{background:#1248cc}
+.adm-send-btn:disabled{opacity:.45;cursor:not-allowed}
+.adm-sent-note{font-size:12px;color:var(--green);display:none}
+.adm-sent-note.show{display:block}
+.adm-step{display:none}
+.adm-step.active{display:block}
+.adm-logout{padding:5px 12px;border-radius:var(--radius-sm);border:1.5px solid rgba(220,38,38,0.3);background:transparent;color:var(--red);font-size:12px;font-family:var(--font);cursor:pointer;transition:all .15s;margin-left:4px}
+.adm-logout:hover{background:var(--red-bg)}
 
-/* ── HEADER ── */
-.sc-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-}
-.sc-title-block {}
-.sc-eyebrow {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--ac);
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.sc-eyebrow::before {
-  content: '';
-  width: 16px;
-  height: 2px;
-  background: var(--ac);
-  display: inline-block;
-}
-.sc-title {
-  font-family: var(--disp);
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -.5px;
-  color: var(--t0);
-  line-height: 1.2;
-}
-.sc-sub {
-  margin-top: 6px;
-  font-size: 14px;
-  color: var(--t2);
-  max-width: 480px;
-}
-
-.sc-header-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-/* ── TABS ── */
-.sc-tabs {
-  display: flex;
-  gap: 2px;
-  background: var(--bg2);
-  border: 1px solid var(--bd);
-  border-radius: var(--r2);
-  padding: 3px;
-  margin-bottom: 20px;
-  width: fit-content;
-}
-.sc-tab {
-  padding: 6px 16px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: var(--disp);
-  color: var(--t2);
-  cursor: pointer;
-  border: none;
-  background: none;
-  transition: all .15s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.sc-tab:hover { color: var(--t0); background: rgba(255,255,255,.6); }
-.sc-tab.on {
-  background: var(--bg1);
-  color: var(--t0);
-  box-shadow: 0 1px 4px rgba(0,0,0,.1);
-}
-.tab-count {
-  font-family: var(--mono);
-  font-size: 10px;
-  background: var(--bg3);
-  color: var(--t2);
-  padding: 1px 6px;
-  border-radius: 10px;
-  min-width: 20px;
-  text-align: center;
-}
-.sc-tab.on .tab-count { background: var(--ac); color: #fff; }
-
-/* ── FILTERS / SORT ── */
-.sc-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.sc-filters { display: flex; gap: 6px; flex-wrap: wrap; }
-.filter-chip {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1px solid var(--bd);
-  background: var(--bg1);
-  color: var(--t2);
-  cursor: pointer;
-  transition: all .15s;
-  font-family: var(--disp);
-}
-.filter-chip:hover { border-color: var(--bd2); color: var(--t0); }
-.filter-chip.on { background: var(--acl); border-color: var(--ac); color: var(--ac); }
-.sc-sort {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--t2);
-}
-.sc-sort select {
-  font-family: var(--sans);
-  font-size: 12px;
-  padding: 4px 8px;
-  border: 1px solid var(--bd);
-  border-radius: var(--r);
-  background: var(--bg1);
-  color: var(--t0);
-  cursor: pointer;
-  outline: none;
-}
-
-/* ── SUBMIT FORM ── */
-.sc-compose {
-  background: var(--bg1);
-  border: 1px solid var(--bd);
-  border-radius: var(--r2);
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: var(--sh);
-  transition: box-shadow .2s;
-}
-.sc-compose:focus-within { box-shadow: var(--sh2); border-color: var(--bd2); }
-.compose-top {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-.compose-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--ac), var(--cy));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-  font-family: var(--disp);
-}
-.compose-fields { flex: 1; }
-.compose-name-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.cinput {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--bd);
-  border-radius: var(--r);
-  font-family: var(--sans);
-  font-size: 13px;
-  color: var(--t0);
-  background: var(--bg);
-  outline: none;
-  transition: border-color .15s;
-}
-.cinput:focus { border-color: var(--ac); }
-.cinput::placeholder { color: var(--t3); }
-.ctag-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-.ctag {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  border: 1.5px solid var(--bd);
-  background: none;
-  color: var(--t2);
-  cursor: pointer;
-  font-family: var(--mono);
-  transition: all .15s;
-}
-.ctag:hover { border-color: var(--bd2); }
-.ctag.sel { border-color: currentColor; }
-.ctag[data-cat="Feature"].sel { color: var(--ac); border-color: var(--ac); background: var(--acl); }
-.ctag[data-cat="Bug"].sel { color: var(--rs); border-color: var(--rs); background: var(--rsl); }
-.ctag[data-cat="Question"].sel { color: var(--am); border-color: var(--am); background: var(--aml); }
-.ctag[data-cat="Research"].sel { color: var(--vi); border-color: var(--vi); background: var(--vil); }
-.ctag[data-cat="Other"].sel { color: var(--cy); border-color: var(--cy); background: var(--cyl); }
-.ctextarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--bd);
-  border-radius: var(--r);
-  font-family: var(--sans);
-  font-size: 13px;
-  color: var(--t0);
-  background: var(--bg);
-  outline: none;
-  resize: vertical;
-  min-height: 80px;
-  line-height: 1.6;
-  transition: border-color .15s;
-}
-.ctextarea:focus { border-color: var(--ac); }
-.ctextarea::placeholder { color: var(--t3); }
-.compose-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
-}
-.visibility-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--t2);
-  cursor: pointer;
-  user-select: none;
-}
-.toggle-track {
-  width: 34px;
-  height: 18px;
-  border-radius: 9px;
-  background: var(--bd2);
-  position: relative;
-  transition: background .2s;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.toggle-track.on { background: var(--ac); }
-.toggle-thumb {
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform .2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,.2);
-}
-.toggle-track.on .toggle-thumb { transform: translateX(16px); }
-.compose-actions { display: flex; gap: 8px; }
-
-/* ── BUTTONS ── */
-.btn {
-  padding: 7px 16px;
-  border-radius: var(--r);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: var(--disp);
-  border: none;
-  cursor: pointer;
-  transition: all .15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.btn-primary {
-  background: var(--ac);
-  color: #fff;
-}
-.btn-primary:hover { background: #1450d0; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,95,255,.3); }
-.btn-ghost {
-  background: var(--bg2);
-  color: var(--t1);
-  border: 1px solid var(--bd);
-}
-.btn-ghost:hover { border-color: var(--bd2); background: var(--bg3); }
-.btn-sm { padding: 4px 10px; font-size: 11px; }
-.btn-danger { background: var(--rsl); color: var(--rs); border: 1px solid #fecaca; }
-.btn-danger:hover { background: var(--rs); color: #fff; }
-
-/* ── IDEA CARDS ── */
-.sc-feed { display: flex; flex-direction: column; gap: 10px; }
-
-.idea-card {
-  background: var(--bg1);
-  border: 1px solid var(--bd);
-  border-radius: var(--r2);
-  padding: 16px 18px;
-  box-shadow: var(--sh);
-  display: flex;
-  gap: 14px;
-  transition: all .15s;
-  position: relative;
-}
-.idea-card:hover { box-shadow: var(--sh2); border-color: var(--bd2); transform: translateY(-1px); }
-.idea-card.pinned { border-left: 3px solid var(--ac); }
-.idea-card.private-card { border-left: 3px solid var(--t3); opacity: .85; }
+/* ── Ideas feed ── */
+.ideas-feed{display:flex;flex-direction:column;gap:8px}
+.idea-item{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;gap:14px;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .15s;position:relative}
+.idea-item:hover{border-color:var(--border2);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.idea-item:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:var(--radius)}
 
 /* Vote column */
-.vote-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  padding-top: 2px;
-}
-.vote-btn {
-  width: 28px; height: 28px;
-  border-radius: var(--r);
-  border: 1px solid var(--bd);
-  background: var(--bg2);
-  color: var(--t2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: all .15s;
-}
-.vote-btn:hover { border-color: var(--ac); color: var(--ac); background: var(--acl); }
-.vote-btn.voted { background: var(--ac); border-color: var(--ac); color: #fff; }
-.vote-count {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--t1);
-  min-width: 24px;
-  text-align: center;
-  line-height: 1;
-}
-.vote-count.high { color: var(--ac); font-weight: 600; }
+.vote-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;width:42px}
+.upvote-btn{width:38px;height:32px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;font-size:13px}
+.upvote-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.upvote-btn.voted{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.vote-num{font-size:14px;font-weight:700;color:var(--text);font-family:var(--font-head);letter-spacing:-.01em}
+.vote-num.pop{color:var(--blue)}
 
-/* Card body */
-.idea-body { flex: 1; min-width: 0; }
-.idea-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-.idea-title {
-  font-family: var(--disp);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--t0);
-  line-height: 1.3;
-  flex: 1;
-  min-width: 0;
-}
-.idea-badges { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
-.badge {
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 600;
-  font-family: var(--mono);
-  letter-spacing: .3px;
-}
-.badge-Feature { background: var(--acl); color: var(--ac); }
-.badge-Bug { background: var(--rsl); color: var(--rs); }
-.badge-Question { background: var(--aml); color: var(--am); }
-.badge-Research { background: var(--vil); color: var(--vi); }
-.badge-Other { background: var(--cyl); color: var(--cy); }
-.badge-private { background: var(--bg3); color: var(--t3); border: 1px solid var(--bd); }
-.badge-pinned { background: linear-gradient(90deg,var(--acl),var(--cyl)); color: var(--ac); }
-.badge-new { background: linear-gradient(90deg,var(--grl),var(--acl)); color: var(--gr); }
-.badge-status-Open { background: var(--grl); color: var(--gr); }
-.badge-status-Considering { background: var(--aml); color: var(--am); }
-.badge-status-Planned { background: var(--acl); color: var(--ac); }
-.badge-status-Done { background: #f0fdf4; color: #166534; }
-.badge-status-Declined { background: var(--rsl); color: var(--rs); }
+/* Idea body */
+.idea-body{flex:1;min-width:0}
+.idea-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.idea-title{font-size:14.5px;font-weight:600;color:var(--text);line-height:1.4;flex:1;min-width:0;font-family:var(--font)}
+.idea-desc{font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.idea-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.idea-author{font-size:11.5px;color:var(--text3)}
+.idea-time{font-size:11.5px;color:var(--text3)}
+.dot{color:var(--border2)}
 
-.idea-text {
-  font-size: 13.5px;
-  color: var(--t1);
-  line-height: 1.65;
-  margin-bottom: 10px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.idea-text.expanded { -webkit-line-clamp: unset; }
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.badge svg{width:10px;height:10px}
+.b-feature{background:var(--blue-bg);color:var(--blue)}
+.b-bug{background:var(--red-bg);color:var(--red)}
+.b-question{background:#f5f3ff;color:var(--purple)}
+.b-research{background:var(--teal-bg);color:var(--teal)}
+.b-other{background:#f9fafb;color:var(--gray)}
+.b-open{background:var(--green-bg);color:var(--green)}
+.b-planned{background:var(--amber-bg);color:var(--amber)}
+.b-done{background:var(--teal-bg);color:var(--teal)}
 
-.idea-footer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.idea-meta {
-  font-size: 11.5px;
-  color: var(--t3);
-  font-family: var(--mono);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.idea-meta span { display: flex; align-items: center; gap: 4px; }
-.idea-actions { margin-left: auto; display: flex; gap: 5px; }
+/* Admin actions */
+.admin-row{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+.adm-btn{padding:3px 10px;border-radius:5px;border:1.5px solid var(--border2);background:transparent;color:var(--text3);font-size:11px;font-family:var(--font);cursor:pointer;transition:all .15s}
+.adm-btn:hover{color:var(--text);border-color:var(--border2);background:var(--surface2)}
+.adm-btn.del:hover{color:var(--red);border-color:rgba(220,38,38,0.35);background:var(--red-bg)}
+.status-sel{padding:3px 8px;border-radius:5px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);font-size:11px;font-family:var(--font);cursor:pointer;outline:none}
 
-/* Admin reply */
-.admin-reply {
-  margin-top: 12px;
-  padding: 10px 14px;
-  background: linear-gradient(to right, var(--acl), var(--bg2));
-  border-left: 3px solid var(--ac);
-  border-radius: 0 var(--r) var(--r) 0;
-}
-.admin-reply-label {
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--mono);
-  color: var(--ac);
-  letter-spacing: .8px;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.admin-reply-text { font-size: 13px; color: var(--t1); line-height: 1.6; }
+/* Empty state */
+.empty-state{text-align:center;padding:52px 20px;color:var(--text3)}
+.empty-state svg{opacity:.3;margin-bottom:12px}
+.empty-state p{font-size:14px;color:var(--text2)}
 
-/* Reply form */
-.reply-form {
-  margin-top: 12px;
-  display: none;
-  flex-direction: column;
-  gap: 8px;
-}
-.reply-form.open { display: flex; }
-
-/* ── EMPTY STATE ── */
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-  color: var(--t3);
-}
-.empty-ico,.empty-state .em-ico { font-size: 40px; margin-bottom: 12px; opacity: .4; }
-.empty-t,.empty-state .em-t { font-family: var(--disp); font-size: 16px; font-weight: 700; color: var(--t2); margin-bottom: 6px; }
-.empty-s,.empty-state .em-s { font-size: 13px; color: var(--t3); }
-
-/* ── ADMIN PANEL ── */
-.admin-panel {
-  background: linear-gradient(135deg, #0d1b2e, #1a2d4a);
-  border-radius: var(--r2);
-  padding: 24px;
-  margin-bottom: 24px;
-  color: #c8daf0;
-  display: none;
-}
-.admin-panel.open { display: block; }
-.admin-panel-title {
-  font-family: var(--disp);
-  font-size: 16px;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.admin-stats {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.astat {
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: var(--r);
-  padding: 10px 16px;
-  flex: 1;
-  min-width: 90px;
-}
-.astat-n { font-family: var(--mono); font-size: 22px; font-weight: 500; color: #fff; }
-.astat-l { font-size: 11px; color: rgba(200,218,240,.6); margin-top: 2px; }
-.admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn-admin {
-  padding: 6px 14px;
-  border-radius: var(--r);
-  font-size: 12px;
-  font-weight: 600;
-  font-family: var(--disp);
-  cursor: pointer;
-  border: 1px solid rgba(255,255,255,.15);
-  background: rgba(255,255,255,.08);
-  color: #c8daf0;
-  transition: all .15s;
-}
-.btn-admin:hover { background: rgba(255,255,255,.16); color: #fff; }
-.btn-admin.danger { border-color: rgba(220,38,38,.5); color: #fca5a5; }
-.btn-admin.danger:hover { background: rgba(220,38,38,.25); }
-
-/* ── ADMIN LOGIN ── */
-.admin-login {
-  background: var(--bg1);
-  border: 1px solid var(--bd);
-  border-radius: var(--r2);
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: var(--sh);
-  display: none;
-}
-.admin-login.open { display: block; }
-.admin-login-title {
-  font-family: var(--disp);
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: var(--t0);
-}
-.admin-login-row { display: flex; gap: 8px; }
-
-/* ── STATUS EDITOR ── */
-.status-select {
-  font-family: var(--sans);
-  font-size: 11px;
-  padding: 2px 6px;
-  border: 1px solid var(--bd);
-  border-radius: var(--r);
-  background: var(--bg2);
-  color: var(--t1);
-  cursor: pointer;
-  outline: none;
-}
-
-/* ── TOAST ── */
-#toast-wrap {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.toast {
-  padding: 10px 16px;
-  border-radius: var(--r);
-  font-size: 13px;
-  box-shadow: var(--sh2);
-  animation: toastin .2s ease;
-  max-width: 280px;
-}
-.toast.ok { background: var(--grl); color: var(--gr); border: 1px solid #a7f3d0; }
-.toast.err { background: var(--rsl); color: var(--rs); border: 1px solid #fecaca; }
-.toast.inf { background: var(--acl); color: var(--ac); border: 1px solid #bfdbfe; }
-@keyframes toastin { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:none; } }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 640px) {
-  .sc-header { flex-direction: column; }
-  .sc-title { font-size: 22px; }
-  .sc-tabs { flex-wrap: wrap; }
-  .compose-name-row { flex-direction: column; }
-  .idea-card { flex-direction: column; gap: 10px; }
-  .vote-col { flex-direction: row; }
-  .idea-actions { margin-left: 0; }
-}
+/* Success toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0d1117;color:#fff;padding:12px 22px;border-radius:var(--radius);font-size:13.5px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,0.22);opacity:0;pointer-events:none;transition:all .3s;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Divider */
-.sc-divider {
-  height: 1px;
-  background: linear-gradient(to right, transparent, var(--bd), transparent);
-  margin: 32px 0;
-}
+.section-div{height:1px;background:var(--border);margin:24px 0}
 
-/* Search */
-.search-wrap {
-  position: relative;
-  flex: 1;
-  max-width: 280px;
-}
-.search-wrap svg {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
-  color: var(--t3);
-}
-.search-input {
-  width: 100%;
-  padding: 7px 10px 7px 32px;
-  border: 1px solid var(--bd);
-  border-radius: var(--r);
-  font-family: var(--sans);
-  font-size: 13px;
-  background: var(--bg1);
-  color: var(--t0);
-  outline: none;
-  transition: border-color .15s;
-}
-.search-input:focus { border-color: var(--ac); }
-.search-input::placeholder { color: var(--t3); }
+/* Rate limit notice */
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:12px;display:none}
+.alert.show{display:block}
+.alert-err{background:var(--red-bg);color:var(--red);border:1px solid rgba(220,38,38,0.2)}
 
-.char-count { font-size: 11px; color: var(--t3); font-family: var(--mono); text-align: right; margin-top: 3px; }
-.char-count.warn { color: var(--am); }
+/* Animations */
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.idea-item{animation:slideIn .2s ease both}
 
-/* Loading skeleton */
-.skeleton { animation: skpulse 1.4s ease infinite; }
-@keyframes skpulse { 0%,100%{opacity:1}50%{opacity:.4} }
-.sk-line { height: 12px; border-radius: 6px; background: var(--bg3); margin-bottom: 8px; }
+/* Responsive */
+@media(max-width:600px){
+  .page-wrap{padding:20px 14px 0}
+  .filter-row{flex-direction:column;align-items:flex-start}
+  .search-wrap{width:100%;flex-direction:column;align-items:stretch}
+  .search-box{width:100%}
+  .search-box input{width:100%}
+  .form-btns{width:100%;justify-content:flex-end}
+}
 </style>
 </head>
 <body>
+<div class="page-wrap">
 
-<div id="toast-wrap"></div>
-
-<div class="smad-community" id="root">
-
-  <!-- HEADER -->
-  <div class="sc-header">
-    <div class="sc-title-block">
-      <div class="sc-eyebrow">Community</div>
-      <div class="sc-title">Ideas &amp; Feedback</div>
-      <div class="sc-sub">Share ideas, report bugs, ask questions, or suggest new modules. Vote on what matters to you.</div>
+  <!-- Header -->
+  <div class="page-top-row">
+    <div>
+      <div class="community-label">Community</div>
+      <h1 class="page-title">Ideas &amp; Feedback</h1>
+      <p class="page-sub">Share ideas, report bugs, ask questions, or suggest new modules. Vote on what matters to you.</p>
     </div>
-    <div class="sc-header-actions">
-      <a href="/about" class="btn btn-ghost btn-sm" target="_top" rel="noopener">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+    <div class="top-actions">
+      <a href="/about" class="top-btn" title="About SMAD">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         About
       </a>
-      <button class="btn btn-ghost btn-sm" id="adminToggleBtn" onclick="toggleAdminLogin()">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      <button class="top-btn admin-btn" id="adminToggle" title="Admin login">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Admin
       </button>
     </div>
   </div>
 
-  <!-- ADMIN LOGIN -->
-  <div class="admin-login" id="adminLogin">
-    <div class="admin-login-title">🔐 Admin Access</div>
-    <div class="admin-login-row">
-      <input type="password" class="cinput" id="adminPwInput" placeholder="Enter admin password…" style="max-width:220px" onkeydown="if(event.key==='Enter')adminLogin()">
-      <button class="btn btn-primary btn-sm" onclick="adminLogin()">Login</button>
-      <button class="btn btn-ghost btn-sm" onclick="toggleAdminLogin()">Cancel</button>
-    </div>
-    <div style="font-size:11px;color:var(--t3);margin-top:8px;font-family:var(--mono)">Default: smad2025admin</div>
-  </div>
-
-  <!-- ADMIN PANEL -->
-  <div class="admin-panel" id="adminPanel">
-    <div class="admin-panel-title">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-      Admin Dashboard
-      <span style="margin-left:auto;font-size:11px;font-weight:400;opacity:.6;font-family:var(--mono)">smad.live</span>
-      <button class="btn-admin" style="font-size:11px;padding:4px 10px" onclick="adminLogout()">Logout</button>
-    </div>
-    <div class="admin-stats" id="adminStats">
-      <div class="astat"><div class="astat-n" id="aStat0">0</div><div class="astat-l">Total ideas</div></div>
-      <div class="astat"><div class="astat-n" id="aStat1">0</div><div class="astat-l">Public</div></div>
-      <div class="astat"><div class="astat-n" id="aStat2">0</div><div class="astat-l">Private</div></div>
-      <div class="astat"><div class="astat-n" id="aStat3">0</div><div class="astat-l">Pending</div></div>
-    </div>
-    <div class="admin-actions">
-      <button class="btn-admin" onclick="adminExport()">↓ Export JSON</button>
-      <button class="btn-admin" onclick="adminExportCSV()">↓ Export CSV</button>
-      <button class="btn-admin" onclick="refreshAll()">⟳ Refresh</button>
-      <button class="btn-admin danger" onclick="adminClearAll()">✕ Clear all data</button>
-    </div>
-  </div>
-
-  <!-- TABS -->
-  <div class="sc-tabs">
-    <button class="sc-tab on" id="tab-all" onclick="switchTab('all')">
-      All <span class="tab-count" id="cnt-all">0</span>
+  <!-- Category tabs -->
+  <div class="cat-tabs" id="catTabs" role="tablist" aria-label="Filter by category">
+    <button class="cat-tab active" data-cat="all" role="tab" aria-selected="true">
+      All <span class="count" id="count-all">0</span>
     </button>
-    <button class="sc-tab" id="tab-feature" onclick="switchTab('feature')">
-      ✦ Features <span class="tab-count" id="cnt-feature">0</span>
+    <button class="cat-tab" data-cat="feature" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Features <span class="count" id="count-feature">0</span>
     </button>
-    <button class="sc-tab" id="tab-bug" onclick="switchTab('bug')">
-      ⚠ Bugs <span class="tab-count" id="cnt-bug">0</span>
+    <button class="cat-tab" data-cat="bug" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4.97 0 9-3.134 9-7s-4.03-7-9-7-9 3.134-9 7 4.03 7 9 7z"/><path d="M12 8V2"/><path d="M5 3l2.5 2.5"/><path d="M19 3l-2.5 2.5"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+      Bugs <span class="count" id="count-bug">0</span>
     </button>
-    <button class="sc-tab" id="tab-research" onclick="switchTab('research')">
-      ⬡ Research <span class="tab-count" id="cnt-research">0</span>
+    <button class="cat-tab" data-cat="research" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Research <span class="count" id="count-research">0</span>
     </button>
-    <button class="sc-tab" id="tab-question" onclick="switchTab('question')">
-      ? Questions <span class="tab-count" id="cnt-question">0</span>
+    <button class="cat-tab" data-cat="question" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Questions <span class="count" id="count-question">0</span>
     </button>
   </div>
 
-  <!-- TOOLBAR -->
-  <div class="sc-toolbar">
-    <div class="sc-filters">
-      <button class="filter-chip on" id="fchip-all" onclick="setFilter('all')">All</button>
-      <button class="filter-chip" id="fchip-Open" onclick="setFilter('Open')">Open</button>
-      <button class="filter-chip" id="fchip-Planned" onclick="setFilter('Planned')">Planned</button>
-      <button class="filter-chip" id="fchip-Done" onclick="setFilter('Done')">Done</button>
+  <!-- Status pills + search -->
+  <div class="filter-row">
+    <div class="status-pills" role="group" aria-label="Filter by status">
+      <button class="status-pill active" data-status="all">All</button>
+      <button class="status-pill" data-status="open">Open</button>
+      <button class="status-pill" data-status="planned">Planned</button>
+      <button class="status-pill" data-status="done">Done</button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <div class="search-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input class="search-input" id="searchInput" placeholder="Search ideas…" oninput="renderFeed()">
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="searchInput" placeholder="Search ideas..." aria-label="Search ideas" autocomplete="off">
       </div>
-      <div class="sc-sort">
-        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-        <select onchange="currentSort=this.value;renderFeed()">
-          <option value="votes">Most voted</option>
-          <option value="newest">Newest</option>
-          <option value="oldest">Oldest</option>
-        </select>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3);flex-shrink:0"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <select class="sort-select" id="sortSel" aria-label="Sort ideas">
+        <option value="votes">Most voted</option>
+        <option value="newest">Newest</option>
+      </select>
+    </div>
+  </div>
+
+<!-- Admin OTP modal -->
+<div class="adm-overlay" id="admOverlay" role="dialog" aria-modal="true" aria-labelledby="admTitle">
+  <div class="adm-modal">
+    <!-- Step 1: send code -->
+    <div class="adm-step active" id="admStep1">
+      <h3 id="admTitle">Admin access</h3>
+      <p class="adm-sub">A one-time code will be sent to the registered admin address.<br><strong>Click Send to continue.</strong></p>
+      <div class="adm-send-row">
+        <button class="adm-send-btn" id="admSendBtn">Send code</button>
+        <span class="adm-sent-note" id="admSentNote">✓ Code sent — check your inbox</span>
+      </div>
+      <div class="adm-actions">
+        <button class="adm-cancel" id="admCancel1">Cancel</button>
+      </div>
+    </div>
+    <!-- Step 2: enter code -->
+    <div class="adm-step" id="admStep2">
+      <h3>Enter your code</h3>
+      <p class="adm-sub">Enter the 6-digit code sent to your admin email. It expires in 10 minutes.</p>
+      <div class="adm-code-wrap">
+        <input class="adm-code-inp" id="admCodeInp" type="text" inputmode="numeric" maxlength="6" placeholder="––––––" autocomplete="one-time-code" aria-label="6-digit admin code">
+      </div>
+      <div class="adm-err" id="admErr"></div>
+      <div class="adm-actions">
+        <button class="adm-cancel" id="admCancel2">Cancel</button>
+        <button class="adm-verify" id="admVerifyBtn">Verify</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- COMPOSE FORM -->
-  <div class="sc-compose" id="composeForm">
-    <div class="compose-top">
-      <div class="compose-avatar" id="composeAvatar">?</div>
-      <div class="compose-fields" style="flex:1">
-        <div class="compose-name-row">
-          <input class="cinput" id="cName" placeholder="Your name (or leave blank for Anonymous)" style="flex:1" oninput="updateAvatar()" maxlength="60">
-          <input class="cinput" id="cEmail" placeholder="Email (optional, never shown publicly)" style="flex:1" maxlength="120">
+  <!-- Submission form -->
+  <div class="form-card" id="formCard">
+    <div class="alert alert-err" id="rateAlert">You're submitting too quickly. Please wait a moment.</div>
+    <div class="form-top">
+      <div class="avatar" id="formAvatar" aria-hidden="true">?</div>
+      <div class="form-fields">
+        <div class="form-row">
+          <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:3px">
+            <input class="inp" id="fName" type="text" placeholder="Your name (required)" maxlength="80" aria-label="Your name" aria-required="true">
+            <div class="field-hint" id="nameHint">Required to submit</div>
+          </div>
+          <input class="inp" id="fEmail" type="email" placeholder="Email (optional, never shown publicly)" maxlength="120" aria-label="Your email" style="flex:1;min-width:160px">
         </div>
-        <input class="cinput" id="cTitle" placeholder="One-line summary of your idea or issue…" style="margin-bottom:8px" maxlength="120" oninput="updateCharCount(this,'cTitleCount',120)">
-        <div class="char-count" id="cTitleCount">120</div>
+        <div class="summary-wrap">
+          <input class="inp" id="fSummary" type="text" placeholder="One-line summary of your idea or issue (required)" maxlength="120" aria-label="Summary" aria-required="true" aria-describedby="summaryErr">
+          <div class="char-counter" id="sumCount">120</div>
+        </div>
+        <div class="err-msg" id="summaryErr" role="alert">Please enter a summary (3–120 characters).</div>
       </div>
     </div>
 
-    <div class="ctag-row" id="catRow">
-      <span style="font-size:11px;color:var(--t3);font-family:var(--mono);align-self:center">Category:</span>
-      <button class="ctag sel" data-cat="Feature" onclick="selectCat(this)">Feature</button>
-      <button class="ctag" data-cat="Bug" onclick="selectCat(this)">Bug</button>
-      <button class="ctag" data-cat="Question" onclick="selectCat(this)">Question</button>
-      <button class="ctag" data-cat="Research" onclick="selectCat(this)">Research</button>
-      <button class="ctag" data-cat="Other" onclick="selectCat(this)">Other</button>
+    <!-- Category -->
+    <div class="cat-row" style="margin-bottom:14px">
+      <span class="cat-label">Category:</span>
+      <div class="cat-pills" id="catPills" role="group" aria-label="Select category">
+        <button type="button" class="cat-pill sel" data-cat="feature">Feature</button>
+        <button type="button" class="cat-pill" data-cat="bug">Bug</button>
+        <button type="button" class="cat-pill" data-cat="question">Question</button>
+        <button type="button" class="cat-pill" data-cat="research">Research</button>
+        <button type="button" class="cat-pill" data-cat="other">Other</button>
+      </div>
+    </div>
+    <div class="err-msg" id="catErr" role="alert" style="margin-bottom:8px">Please select a category.</div>
+
+    <!-- Description -->
+    <div class="desc-wrap">
+      <textarea class="inp" id="fDesc" rows="4" placeholder="Describe your idea in more detail... What problem does it solve? How should it work? Any references or prior work?" maxlength="2000" aria-label="Detailed description" aria-describedby="descCount"></textarea>
+      <div class="desc-counter" id="descCount">2000</div>
     </div>
 
-    <textarea class="ctextarea" id="cBody" placeholder="Describe your idea in more detail… What problem does it solve? How should it work? Any references or prior work?" maxlength="2000" oninput="updateCharCount(this,'cBodyCount',2000)"></textarea>
-    <div class="char-count" id="cBodyCount">2000</div>
+    <!-- Honeypot -->
+    <div class="hp-field" aria-hidden="true"><input type="text" id="hp" tabindex="-1" autocomplete="off"></div>
 
-    <div class="compose-footer">
-      <label class="visibility-toggle">
-        <div class="toggle-track" id="visToggle" onclick="toggleVis()">
-          <div class="toggle-thumb"></div>
+    <!-- Bottom row -->
+    <div class="form-bottom">
+      <div class="toggle-row">
+        <div class="toggle-wrap">
+          <input type="checkbox" id="fPublic" aria-label="Post publicly">
+          <span class="toggle-track" onclick="document.getElementById('fPublic').click()"></span>
         </div>
-        <span id="visLabel">Post publicly</span>
-        <span style="color:var(--t3);font-size:11px" id="visHint">(visible to everyone)</span>
-      </label>
-      <div class="compose-actions">
-        <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
-        <button class="btn btn-primary" onclick="submitIdea()">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        <label for="fPublic" class="toggle-lbl">Post publicly <span>(visible to everyone)</span></label>
+      </div>
+      <div class="form-btns">
+        <button type="button" class="btn-clear" id="clearBtn">Clear</button>
+        <button type="button" class="btn-submit" id="submitBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 2 11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           Submit
         </button>
       </div>
     </div>
   </div>
 
-  <!-- FEED -->
-  <div class="sc-feed" id="feed">
-    <div class="empty-state">
-      <div class="em-ico">&#x2B21;</div>
-      <div class="em-t">Loading…</div>
-    </div>
-  </div>
+  <div class="section-div"></div>
 
-  <div style="text-align:center;margin-top:24px;font-size:11px;color:var(--t3);font-family:var(--mono)">
-    Ideas are stored persistently &middot; Vote once per session &middot; Private posts visible to admin only
-  </div>
+  <!-- Ideas list -->
+  <div class="ideas-feed" id="ideasFeed" role="list" aria-label="Community ideas and feedback"></div>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script>
-window.storage = {
-  async get(key) {
-    try { const v = localStorage.getItem(key); return { value: v }; }
-    catch (e) { return { value: null }; }
-  },
-  async set(key, value) {
-    try { localStorage.setItem(key, value); }
-    catch (e) { throw e; }
-  }
-};
-</script>
-<script>
+(function(){
 'use strict';
 
-/* ── STATE ── */
-let IDEAS = [];
-let IS_ADMIN = false;
-let currentTab = 'all';
-let currentFilter = 'all';
-let currentSort = 'votes';
-let isPublic = true;
-let votedIds = new Set(JSON.parse(sessionStorage.getItem('smad_votes')||'[]'));
-const ADMIN_PW = 'smad2025admin';
-const STORAGE_KEY = 'smad_ideas';
-const MAX_IDEAS = 500;
+/* ── Sanitizer ── */
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const strip=s=>s?s.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim():'';
 
-/* ── STORAGE ── */
-async function loadIdeas() {
-  try {
-    const res = await window.storage.get(STORAGE_KEY, true);
-    if (res && res.value) {
-      IDEAS = JSON.parse(res.value);
-    } else {
-      IDEAS = getSeedIdeas();
-      await saveIdeas();
-    }
-  } catch(e) {
-    IDEAS = getSeedIdeas();
+/* ── Seed data ── */
+const SEED=[
+  {id:1,name:'Dr. Sarah Chen',summary:'Add band structure visualization overlay on 3D crystal view',description:'It would be extremely useful to see the electronic band structure computed from DFT overlaid directly on the crystal structure viewer. Helps correlate structural motifs with electronic properties.',category:'feature',status:'planned',votes:24,voted:false,ts:Date.now()-864e5*2},
+  {id:2,name:'Marco Bellini',summary:'Export MD trajectory as .xyz or LAMMPS dump format',description:'Currently only CIF export is available. For MD results, standard formats like .xyz (multi-frame) or LAMMPS dump are needed to load into OVITO or VESTA.',category:'feature',status:'open',votes:18,voted:false,ts:Date.now()-864e5*5},
+  {id:3,name:'Anonymous',summary:'Monte Carlo step count resets unexpectedly mid-run',description:'When running >100k steps the counter resets to 0 around step 65536, suggesting a 16-bit integer overflow. The simulation continues but reported step numbers are wrong.',category:'bug',status:'open',votes:15,voted:false,ts:Date.now()-864e5*1},
+  {id:4,name:'Yuki T.',summary:'What equations does the Tc estimator use under the hood?',description:'Curious whether the Tc estimation uses the full Eliashberg equations or a simpler BCS expression. The docs say "physics-based" but don\'t specify the level of approximation.',category:'question',status:'done',votes:9,voted:false,ts:Date.now()-864e5*10},
+  {id:5,name:'Prof. A. Nguyen',summary:'Integrate Materials Project API for experimental Tc reference data',description:'Cross-referencing predicted Tc values against Materials Project\'s experimental dataset would allow automated validation and uncertainty quantification for new predictions.',category:'research',status:'planned',votes:31,voted:false,ts:Date.now()-864e5*14},
+  {id:6,name:'Lena M.',summary:'Dark/light theme toggle should persist across sessions',description:'Every time I reload the page it reverts to dark mode. Should store preference in localStorage.',category:'bug',status:'open',votes:7,voted:false,ts:Date.now()-864e5*3},
+  {id:7,name:'Anonymous',summary:'Add keyboard shortcuts for common CrystalForge actions',description:'Power users would benefit from shortcuts: R to reset view, S to save, G to toggle grid, etc. Even a cheat sheet would help.',category:'feature',status:'open',votes:12,voted:false,ts:Date.now()-864e5*7},
+  {id:8,name:'Hans R.',summary:'Live SCF convergence plot during DFT run',description:'Showing the SCF convergence in real time would help users diagnose stuck or oscillating calculations without waiting for the full run to finish.',category:'feature',status:'open',votes:20,voted:false,ts:Date.now()-864e5*6},
+];
+
+/* ── State ── */
+let ideas=[...SEED];
+let nextId=ideas.length+1;
+let activeCat='all', activeStatus='all', sortBy='votes', searchQ='';
+let selCat='feature', adminMode=false, searchTimer=null;
+let submitTimes=[];
+
+/* ── OTP state (simulated — replace send logic with real email API) ── */
+let otpCode=null, otpExpiry=0, otpAttempts=0;
+const OTP_MAX_ATTEMPTS=5;
+
+/* ── Helpers ── */
+function timeAgo(ts){
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+function catBadge(cat){
+  const map={feature:['b-feature','Feature'],bug:['b-bug','Bug'],question:['b-question','Question'],research:['b-research','Research'],other:['b-other','Other']};
+  const [cls,lbl]=map[cat]||['b-other','Other'];
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+function statusBadge(status){
+  const map={open:'b-open Open',planned:'b-planned Planned',done:'b-done Done'};
+  const p=(map[status]||'b-other '+status).split(' ');
+  return `<span class="badge ${p[0]}">${p[1]}</span>`;
+}
+function showToast(msg,dur=2600){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+/* ── Rate limit ── */
+function checkRate(){
+  const now=Date.now();
+  submitTimes=submitTimes.filter(x=>now-x<60000);
+  if(submitTimes.length>=5){document.getElementById('rateAlert').classList.add('show');return false;}
+  submitTimes.push(now);
+  document.getElementById('rateAlert').classList.remove('show');
+  return true;
+}
+
+/* ── Counts ── */
+function updateCounts(){
+  document.getElementById('count-all').textContent=ideas.length;
+  ['feature','bug','research','question'].forEach(c=>{
+    const el=document.getElementById('count-'+c);
+    if(el) el.textContent=ideas.filter(i=>i.category===c).length;
+  });
+}
+
+/* ── Render ideas ── */
+function getFiltered(){
+  let list=[...ideas];
+  if(activeCat!=='all') list=list.filter(i=>i.category===activeCat);
+  if(activeStatus!=='all') list=list.filter(i=>i.status===activeStatus);
+  if(searchQ){
+    const q=searchQ.toLowerCase();
+    list=list.filter(i=>i.summary.toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q));
   }
-  renderAll();
+  list.sort(sortBy==='votes'?(a,b)=>b.votes-a.votes:(a,b)=>b.ts-a.ts);
+  return list;
 }
 
-async function saveIdeas() {
-  try {
-    await window.storage.set(STORAGE_KEY, JSON.stringify(IDEAS), true);
-  } catch(e) {
-    toast('Storage error — changes may not persist', 'err');
-  }
-}
-
-function getSeedIdeas() {
-  const now = Date.now();
-  return [
-    {
-      id: 'seed1', title: 'Add ternary phase diagram support',
-      body: 'Currently only binary systems (e.g. Fe-O) are supported. Ternary and quaternary systems are essential for oxide superconductors and complex alloys.',
-      cat: 'Feature', name: 'SMAD Team', email: '', public: true, pinned: true,
-      status: 'Planned', votes: 18, ts: now - 86400000*3,
-      adminReply: 'Great suggestion — ternary phase diagrams are on our v3.2 roadmap. We\'ll use the same convex hull engine extended to 3D composition space.',
-      adminReplyTs: now - 86400000*2
-    },
-    {
-      id: 'seed2', title: 'Phonon DOS: heat capacity shows NaN at T→0',
-      body: 'When temperature slider goes below ~15 K, the C_V calculation produces NaN. This is a numerical issue with the Bose-Einstein formula at very low T.',
-      cat: 'Bug', name: 'Anonymous', email: '', public: true, pinned: false,
-      status: 'Open', votes: 7, ts: now - 86400000*1,
-      adminReply: '', adminReplyTs: 0
-    },
-    {
-      id: 'seed3', title: 'Export XANES data to VESTA-compatible format',
-      body: 'Would be very useful to export charge density cube files and structural data in VESTA format for further visualization.',
-      cat: 'Feature', name: 'User', email: '', public: true, pinned: false,
-      status: 'Considering', votes: 11, ts: now - 86400000*5,
-      adminReply: '', adminReplyTs: 0
-    },
-  ];
-}
-
-/* ── ADMIN ── */
-function toggleAdminLogin() {
-  if (IS_ADMIN) { adminLogout(); return; }
-  const el = document.getElementById('adminLogin');
-  el.classList.toggle('open');
-}
-
-function adminLogin() {
-  const pw = document.getElementById('adminPwInput').value;
-  if (pw === ADMIN_PW) {
-    IS_ADMIN = true;
-    document.getElementById('adminLogin').classList.remove('open');
-    document.getElementById('adminPanel').classList.add('open');
-    document.getElementById('adminToggleBtn').textContent = '🔓 Admin';
-    document.getElementById('adminPwInput').value = '';
-    toast('Admin access granted', 'ok');
-    renderAll();
-  } else {
-    toast('Incorrect password', 'err');
-    document.getElementById('adminPwInput').style.borderColor = 'var(--rs)';
-    setTimeout(() => document.getElementById('adminPwInput').style.borderColor = '', 1500);
-  }
-}
-
-function adminLogout() {
-  IS_ADMIN = false;
-  document.getElementById('adminPanel').classList.remove('open');
-  document.getElementById('adminLogin').classList.remove('open');
-  document.getElementById('adminToggleBtn').innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> Admin';
-  renderAll();
-}
-
-function updateAdminStats() {
-  if (!IS_ADMIN) return;
-  const pub = IDEAS.filter(i=>i.public).length;
-  const priv = IDEAS.filter(i=>!i.public).length;
-  const pending = IDEAS.filter(i=>i.status==='Open').length;
-  document.getElementById('aStat0').textContent = IDEAS.length;
-  document.getElementById('aStat1').textContent = pub;
-  document.getElementById('aStat2').textContent = priv;
-  document.getElementById('aStat3').textContent = pending;
-}
-
-function adminExport() {
-  const blob = new Blob([JSON.stringify(IDEAS, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'smad_community_' + new Date().toISOString().slice(0,10) + '.json';
-  a.click();
-  toast('Exported JSON', 'ok');
-}
-
-function adminExportCSV() {
-  const rows = [['ID','Title','Category','Name','Email','Public','Status','Votes','Date','Body','AdminReply']];
-  IDEAS.forEach(i => rows.push([
-    i.id, '"'+i.title.replace(/"/g,'""')+'"', i.cat, i.name||'Anonymous', i.email||'',
-    i.public, i.status, i.votes, new Date(i.ts).toISOString(),
-    '"'+(i.body||'').replace(/"/g,'""')+'"',
-    '"'+(i.adminReply||'').replace(/"/g,'""')+'"'
-  ]));
-  const csv = rows.map(r=>r.join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'smad_community_' + new Date().toISOString().slice(0,10) + '.csv';
-  a.click();
-  toast('Exported CSV', 'ok');
-}
-
-function adminClearAll() {
-  if (!confirm('Delete ALL community data? This cannot be undone.')) return;
-  IDEAS = [];
-  saveIdeas();
-  renderAll();
-  toast('All data cleared', 'err');
-}
-
-/* ── SUBMIT ── */
-function submitIdea() {
-  const title = document.getElementById('cTitle').value.trim();
-  const body = document.getElementById('cBody').value.trim();
-  const name = document.getElementById('cName').value.trim();
-  const email = document.getElementById('cEmail').value.trim();
-  const cat = document.querySelector('.ctag.sel')?.dataset.cat || 'Other';
-
-  if (!title) { toast('Please enter a title', 'err'); document.getElementById('cTitle').focus(); return; }
-  if (title.length < 5) { toast('Title too short (min 5 chars)', 'err'); return; }
-
-  const idea = {
-    id: 'i' + Date.now() + Math.random().toString(36).slice(2,7),
-    title, body, cat,
-    name: name || 'Anonymous',
-    email,
-    public: isPublic,
-    pinned: false,
-    status: 'Open',
-    votes: 0,
-    ts: Date.now(),
-    adminReply: '',
-    adminReplyTs: 0,
-  };
-
-  if (IDEAS.length >= MAX_IDEAS) {
-    // Remove oldest non-pinned with 0 votes to make room
-    const oldest = IDEAS.filter(i=>!i.pinned&&i.votes===0).sort((a,b)=>a.ts-b.ts)[0];
-    if (oldest) IDEAS.splice(IDEAS.indexOf(oldest), 1);
-    else { toast('Community board is full — please try again later', 'err'); return; }
-  }
-
-  IDEAS.unshift(idea);
-  saveIdeas();
-  clearForm();
-  renderAll();
-  toast(isPublic ? 'Idea posted publicly! 🎉' : 'Idea submitted privately — only admins can see it.', 'ok');
-}
-
-function clearForm() {
-  document.getElementById('cTitle').value = '';
-  document.getElementById('cBody').value = '';
-  document.getElementById('cName').value = '';
-  document.getElementById('cEmail').value = '';
-  updateAvatar();
-  updateCharCount(document.getElementById('cTitle'), 'cTitleCount', 120);
-  updateCharCount(document.getElementById('cBody'), 'cBodyCount', 2000);
-}
-
-/* ── FORM HELPERS ── */
-function selectCat(el) {
-  document.querySelectorAll('.ctag').forEach(t => t.classList.remove('sel'));
-  el.classList.add('sel');
-}
-
-function toggleVis() {
-  isPublic = !isPublic;
-  const tr = document.getElementById('visToggle');
-  const lbl = document.getElementById('visLabel');
-  const hint = document.getElementById('visHint');
-  tr.classList.toggle('on', isPublic);
-  lbl.textContent = isPublic ? 'Post publicly' : 'Post privately';
-  hint.textContent = isPublic ? '(visible to everyone)' : '(only visible to admin)';
-}
-
-function updateAvatar() {
-  const name = document.getElementById('cName').value.trim();
-  const av = document.getElementById('composeAvatar');
-  av.textContent = name ? name[0].toUpperCase() : '?';
-}
-
-function updateCharCount(el, countId, max) {
-  const rem = max - el.value.length;
-  const cnt = document.getElementById(countId);
-  cnt.textContent = rem;
-  cnt.classList.toggle('warn', rem < 30);
-}
-
-/* ── VOTE ── */
-async function vote(id) {
-  if (votedIds.has(id)) { toast('Already voted on this one', 'inf'); return; }
-  const idea = IDEAS.find(i=>i.id===id);
-  if (!idea) return;
-  idea.votes++;
-  votedIds.add(id);
-  sessionStorage.setItem('smad_votes', JSON.stringify([...votedIds]));
-  await saveIdeas();
-  renderFeed();
-  toast('+1 vote! 👍', 'ok');
-}
-
-/* ── ADMIN ACTIONS ── */
-async function togglePin(id) {
-  const idea = IDEAS.find(i=>i.id===id);
-  if (!idea) return;
-  idea.pinned = !idea.pinned;
-  await saveIdeas();
-  renderFeed();
-}
-
-async function deleteIdea(id) {
-  if (!confirm('Delete this post?')) return;
-  IDEAS = IDEAS.filter(i=>i.id!==id);
-  await saveIdeas();
-  renderAll();
-  toast('Post deleted', 'err');
-}
-
-async function setStatus(id, status) {
-  const idea = IDEAS.find(i=>i.id===id);
-  if (!idea) return;
-  idea.status = status;
-  await saveIdeas();
-  renderFeed();
-}
-
-function openReply(id) {
-  const form = document.getElementById('reply-' + id);
-  if (!form) return;
-  form.classList.toggle('open');
-}
-
-async function submitReply(id) {
-  const ta = document.getElementById('replytext-' + id);
-  const text = ta?.value.trim();
-  if (!text) { toast('Enter a reply first', 'err'); return; }
-  const idea = IDEAS.find(i=>i.id===id);
-  if (!idea) return;
-  idea.adminReply = text;
-  idea.adminReplyTs = Date.now();
-  await saveIdeas();
-  renderFeed();
-  toast('Reply posted', 'ok');
-}
-
-async function deleteReply(id) {
-  const idea = IDEAS.find(i=>i.id===id);
-  if (!idea) return;
-  idea.adminReply = '';
-  idea.adminReplyTs = 0;
-  await saveIdeas();
-  renderFeed();
-  toast('Reply removed', 'inf');
-}
-
-/* ── TABS / FILTERS ── */
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.sc-tab').forEach(t=>t.classList.remove('on'));
-  document.getElementById('tab-' + tab)?.classList.add('on');
-  renderFeed();
-}
-
-function setFilter(f) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('on'));
-  document.getElementById('fchip-' + f)?.classList.add('on');
-  renderFeed();
-}
-
-/* ── RENDER ── */
-function getVisible() {
-  let list = IS_ADMIN ? IDEAS : IDEAS.filter(i=>i.public);
-  const query = document.getElementById('searchInput')?.value.trim().toLowerCase();
-
-  // Tab filter
-  if (currentTab !== 'all') {
-    const catMap = {feature:'Feature',bug:'Bug',research:'Research',question:'Question'};
-    list = list.filter(i=>i.cat===catMap[currentTab]);
-  }
-  // Status filter
-  if (currentFilter !== 'all') list = list.filter(i=>i.status===currentFilter);
-  // Search
-  if (query) list = list.filter(i=>(i.title+' '+i.body+' '+(i.name||'')).toLowerCase().includes(query));
-  // Sort
-  if (currentSort === 'votes') list = list.sort((a,b)=>b.votes-a.votes||(b.pinned-a.pinned));
-  else if (currentSort === 'newest') list = list.sort((a,b)=>b.ts-a.ts);
-  else list = list.sort((a,b)=>a.ts-b.ts);
-  // Pinned always first
-  return [...list.filter(i=>i.pinned), ...list.filter(i=>!i.pinned)];
-}
-
-function updateCounts() {
-  const base = IS_ADMIN ? IDEAS : IDEAS.filter(i=>i.public);
-  document.getElementById('cnt-all').textContent = base.length;
-  document.getElementById('cnt-feature').textContent = base.filter(i=>i.cat==='Feature').length;
-  document.getElementById('cnt-bug').textContent = base.filter(i=>i.cat==='Bug').length;
-  document.getElementById('cnt-research').textContent = base.filter(i=>i.cat==='Research').length;
-  document.getElementById('cnt-question').textContent = base.filter(i=>i.cat==='Question').length;
-}
-
-function fmtDate(ts) {
-  const d = new Date(ts), now = Date.now(), diff = now - ts;
-  if (diff < 60000) return 'just now';
-  if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
-  if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
-  if (diff < 86400000*7) return Math.floor(diff/86400000) + 'd ago';
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-}
-
-function ideaHTML(idea) {
-  const voted = votedIds.has(idea.id);
-  const isNew = (Date.now() - idea.ts) < 86400000 * 2;
-  const voteHigh = idea.votes >= 10;
-
-  return `
-  <div class="idea-card ${idea.pinned?'pinned':''} ${!idea.public?'private-card':''}" id="card-${idea.id}">
-    <div class="vote-col">
-      <button class="vote-btn ${voted?'voted':''}" onclick="vote('${idea.id}')" title="${voted?'Voted':'Upvote'}">▲</button>
-      <div class="vote-count ${voteHigh?'high':''}">${idea.votes}</div>
-    </div>
-    <div class="idea-body">
-      <div class="idea-header">
-        <div class="idea-title">${esc(idea.title)}</div>
-        <div class="idea-badges">
-          <span class="badge badge-${idea.cat}">${idea.cat}</span>
-          <span class="badge badge-status-${idea.status}">${idea.status}</span>
-          ${idea.pinned?'<span class="badge badge-pinned">📌 Pinned</span>':''}
-          ${isNew&&!idea.pinned?'<span class="badge badge-new">New</span>':''}
-          ${!idea.public?'<span class="badge badge-private">🔒 Private</span>':''}
-        </div>
-      </div>
-      ${idea.body ? `<div class="idea-text" id="text-${idea.id}">${esc(idea.body)}</div>
-      ${idea.body.length > 200 ? `<button onclick="toggleExpand('${idea.id}')" style="font-size:11px;color:var(--ac);background:none;border:none;cursor:pointer;padding:0;font-family:var(--mono)" id="expand-${idea.id}">Show more ↓</button>` : ''}` : ''}
-
-      ${idea.adminReply ? `
-      <div class="admin-reply">
-        <div class="admin-reply-label">
-          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          SMAD Admin replied ${fmtDate(idea.adminReplyTs)}
-        </div>
-        <div class="admin-reply-text">${esc(idea.adminReply)}</div>
-        ${IS_ADMIN ? `<button onclick="deleteReply('${idea.id}')" style="font-size:10px;color:var(--rs);background:none;border:none;cursor:pointer;margin-top:6px;font-family:var(--mono)">Delete reply</button>` : ''}
-      </div>` : ''}
-
-      <div class="idea-footer">
-        <div class="idea-meta">
-          <span>👤 ${esc(idea.name||'Anonymous')}</span>
-          <span>🕐 ${fmtDate(idea.ts)}</span>
-          ${IS_ADMIN && idea.email ? `<span>✉ ${esc(idea.email)}</span>` : ''}
-        </div>
-        <div class="idea-actions">
-          ${IS_ADMIN ? `
-            <select class="status-select" onchange="setStatus('${idea.id}',this.value)">
-              ${['Open','Considering','Planned','Done','Declined'].map(s=>`<option ${idea.status===s?'selected':''}>${s}</option>`).join('')}
-            </select>
-            <button class="btn btn-ghost btn-sm" onclick="togglePin('${idea.id}')">${idea.pinned?'Unpin':'📌 Pin'}</button>
-            <button class="btn btn-ghost btn-sm" onclick="openReply('${idea.id}')">↩ Reply</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteIdea('${idea.id}')">✕</button>
-          ` : `
-            <button class="btn btn-ghost btn-sm" onclick="vote('${idea.id}')" ${voted?'disabled':''}>
-              ${voted?'✓ Voted':'▲ Vote'}
-            </button>
-          `}
-        </div>
-      </div>
-
-      ${IS_ADMIN ? `
-      <div class="reply-form" id="reply-${idea.id}">
-        <textarea class="ctextarea" id="replytext-${idea.id}" placeholder="Write an official admin response…" style="min-height:60px">${esc(idea.adminReply||'')}</textarea>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-primary btn-sm" onclick="submitReply('${idea.id}')">Post Reply</button>
-          <button class="btn btn-ghost btn-sm" onclick="openReply('${idea.id}')">Cancel</button>
-        </div>
-      </div>` : ''}
-    </div>
-  </div>`;
-}
-
-function toggleExpand(id) {
-  const el = document.getElementById('text-' + id);
-  const btn = document.getElementById('expand-' + id);
-  if (!el || !btn) return;
-  el.classList.toggle('expanded');
-  btn.textContent = el.classList.contains('expanded') ? 'Show less ↑' : 'Show more ↓';
-}
-
-function esc(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function renderFeed() {
+function renderIdeas(){
   updateCounts();
-  const items = getVisible();
-  const feed = document.getElementById('feed');
-  if (items.length === 0) {
-    feed.innerHTML = `<div class="empty-state"><div class="em-ico">💬</div><div class="em-t">No posts yet</div><div class="em-s">Be the first to share an idea or suggestion!</div></div>`;
+  const feed=document.getElementById('ideasFeed');
+  const list=getFiltered();
+  if(!list.length){
+    feed.innerHTML=`<div class="empty-state"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>No ideas match your filters</p></div>`;
     return;
   }
-  feed.innerHTML = items.map(ideaHTML).join('');
+  feed.innerHTML=list.map((idea,idx)=>{
+    const adminHtml=adminMode?`
+      <div class="admin-row">
+        <select class="status-sel" onchange="smad.setStatus(${idea.id},this.value)" aria-label="Change status">
+          <option value="open"${idea.status==='open'?' selected':''}>Open</option>
+          <option value="planned"${idea.status==='planned'?' selected':''}>Planned</option>
+          <option value="done"${idea.status==='done'?' selected':''}>Done</option>
+        </select>
+        <button class="adm-btn del" onclick="smad.del(${idea.id})">Delete</button>
+      </div>`:'';
+    return `<div class="idea-item" role="listitem" tabindex="0" style="animation-delay:${idx*0.04}s" aria-label="${esc(idea.summary)}">
+      <div class="vote-col">
+        <button class="upvote-btn${idea.voted?' voted':''}" onclick="smad.vote(${idea.id})" aria-label="${idea.voted?'Remove vote':'Upvote'} (${idea.votes})" aria-pressed="${idea.voted}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="${idea.voted?'currentColor':'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <span class="vote-num${idea.votes>20?' pop':''}">${idea.votes}</span>
+      </div>
+      <div class="idea-body">
+        <div class="idea-top">
+          <div class="idea-title">${esc(idea.summary)}</div>
+          ${catBadge(idea.category)}
+          ${statusBadge(idea.status)}
+        </div>
+        ${idea.description?`<div class="idea-desc">${esc(idea.description)}</div>`:''}
+        <div class="idea-foot">
+          <span class="idea-author">by ${esc(idea.name||'Anonymous')}</span>
+          <span class="dot">·</span>
+          <span class="idea-time">${timeAgo(idea.ts)}</span>
+          ${adminHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function renderAll() {
-  updateAdminStats();
-  renderFeed();
+/* ── Public API ── */
+window.smad={
+  vote(id){
+    const idea=ideas.find(i=>i.id===id);if(!idea)return;
+    idea.voted=!idea.voted;idea.votes+=idea.voted?1:-1;renderIdeas();
+  },
+  setStatus(id,status){
+    const idea=ideas.find(i=>i.id===id);if(!idea)return;
+    idea.status=status;renderIdeas();showToast('Status updated');
+  },
+  del(id){
+    if(!confirm('Permanently delete this idea?'))return;
+    ideas=ideas.filter(i=>i.id!==id);renderIdeas();showToast('Idea deleted');
+  }
+};
+
+/* ── Category tabs ── */
+document.getElementById('catTabs').addEventListener('click',e=>{
+  const btn=e.target.closest('.cat-tab');if(!btn)return;
+  document.querySelectorAll('.cat-tab').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-selected','false');});
+  btn.classList.add('active');btn.setAttribute('aria-selected','true');
+  activeCat=btn.dataset.cat;renderIdeas();
+});
+
+/* ── Status pills ── */
+document.querySelectorAll('.status-pill').forEach(pill=>{
+  pill.addEventListener('click',()=>{
+    document.querySelectorAll('.status-pill').forEach(p=>p.classList.remove('active'));
+    pill.classList.add('active');activeStatus=pill.dataset.status;renderIdeas();
+  });
+});
+
+/* ── Search ── */
+document.getElementById('searchInput').addEventListener('input',e=>{
+  clearTimeout(searchTimer);searchTimer=setTimeout(()=>{searchQ=e.target.value.trim();renderIdeas();},300);
+});
+
+/* ── Sort ── */
+document.getElementById('sortSel').addEventListener('change',e=>{sortBy=e.target.value;renderIdeas();});
+
+/* ═══════════════════════════════════════════════
+   ADMIN OTP FLOW
+   In production: replace simulateEmailSend() with
+   a real POST to your backend which emails the code.
+   The code itself must be generated & verified server-side.
+═══════════════════════════════════════════════ */
+function generateOtp(){
+  return String(Math.floor(100000+Math.random()*900000));
+}
+function simulateEmailSend(code){
+  /* --- PRODUCTION: replace this block with ---
+     fetch('/api/admin/send-otp', {method:'POST'})
+     The backend generates the code, emails jiteter1@jhu.com,
+     stores a hashed version server-side, and never exposes it here.
+  ------------------------------------------- */
+  console.info('[DEV] Admin OTP (remove in production):', code);
+  // In dev you can read the code from browser console.
 }
 
-/* ── TOAST ── */
-function toast(msg, type='inf') {
-  const w = document.getElementById('toast-wrap');
-  const el = document.createElement('div');
-  el.className = 'toast ' + type;
-  el.textContent = msg;
-  w.appendChild(el);
-  setTimeout(() => el.remove(), 3800);
+const admOverlay=document.getElementById('admOverlay');
+const admStep1=document.getElementById('admStep1');
+const admStep2=document.getElementById('admStep2');
+
+function openAdmModal(){
+  otpCode=null;otpExpiry=0;otpAttempts=0;
+  admStep1.classList.add('active');admStep2.classList.remove('active');
+  document.getElementById('admSentNote').classList.remove('show');
+  document.getElementById('admSendBtn').disabled=false;
+  document.getElementById('admCodeInp').value='';
+  document.getElementById('admErr').textContent='';
+  document.getElementById('admCodeInp').classList.remove('err');
+  admOverlay.classList.add('open');
+  setTimeout(()=>document.getElementById('admSendBtn').focus(),80);
+}
+function closeAdmModal(){
+  admOverlay.classList.remove('open');
+  otpCode=null;
 }
 
-function refreshAll() { loadIdeas(); toast('Refreshed', 'ok'); }
+document.getElementById('adminToggle').addEventListener('click',()=>{
+  if(adminMode){
+    // Already logged in — log out
+    adminMode=false;
+    updateAdminButton();
+    renderIdeas();
+    showToast('Logged out of admin mode');
+  } else {
+    openAdmModal();
+  }
+});
 
-/* ── INIT ── */
-loadIdeas();
+document.getElementById('admCancel1').addEventListener('click',closeAdmModal);
+document.getElementById('admCancel2').addEventListener('click',closeAdmModal);
+admOverlay.addEventListener('click',e=>{if(e.target===admOverlay)closeAdmModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&admOverlay.classList.contains('open'))closeAdmModal();});
+
+document.getElementById('admSendBtn').addEventListener('click',function(){
+  this.disabled=true;
+  otpCode=generateOtp();
+  otpExpiry=Date.now()+10*60*1000; // 10 min
+  otpAttempts=0;
+  simulateEmailSend(otpCode);
+  document.getElementById('admSentNote').classList.add('show');
+  setTimeout(()=>{
+    admStep1.classList.remove('active');
+    admStep2.classList.add('active');
+    document.getElementById('admCodeInp').focus();
+  },1100);
+});
+
+document.getElementById('admCodeInp').addEventListener('input',function(){
+  this.classList.remove('err');
+  document.getElementById('admErr').textContent='';
+  // Auto-verify when 6 digits entered
+  if(this.value.replace(/\D/g,'').length===6) document.getElementById('admVerifyBtn').focus();
+});
+
+document.getElementById('admVerifyBtn').addEventListener('click',verifyOtp);
+document.getElementById('admCodeInp').addEventListener('keydown',e=>{if(e.key==='Enter')verifyOtp();});
+
+function verifyOtp(){
+  const entered=document.getElementById('admCodeInp').value.replace(/\D/g,'');
+  const errEl=document.getElementById('admErr');
+  const inp=document.getElementById('admCodeInp');
+  if(!otpCode){errEl.textContent='No code was sent. Please go back.';return;}
+  if(Date.now()>otpExpiry){
+    errEl.textContent='Code expired. Close and try again.';
+    inp.classList.add('err');otpCode=null;return;
+  }
+  if(otpAttempts>=OTP_MAX_ATTEMPTS){
+    errEl.textContent='Too many attempts. Please request a new code.';
+    inp.classList.add('err');otpCode=null;return;
+  }
+  otpAttempts++;
+  if(entered===otpCode){
+    adminMode=true;
+    otpCode=null;
+    closeAdmModal();
+    updateAdminButton();
+    renderIdeas();
+    showToast('Admin mode enabled',3000);
+  } else {
+    const left=OTP_MAX_ATTEMPTS-otpAttempts;
+    errEl.textContent=`Incorrect code. ${left} attempt${left===1?'':'s'} remaining.`;
+    inp.classList.add('err');
+    inp.value='';
+    inp.focus();
+  }
+}
+
+function updateAdminButton(){
+  const btn=document.getElementById('adminToggle');
+  if(adminMode){
+    btn.classList.add('active');
+    btn.innerHTML=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Log out`;
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Admin`;
+  }
+}
+
+/* ── Form: category pills ── */
+document.getElementById('catPills').addEventListener('click',e=>{
+  const btn=e.target.closest('.cat-pill');if(!btn)return;
+  document.querySelectorAll('.cat-pill').forEach(p=>{p.className='cat-pill';});
+  selCat=btn.dataset.cat;
+  const clsMap={feature:'sel',bug:'sel sel-bug',question:'sel sel-question',research:'sel sel-research',other:'sel sel-other'};
+  btn.className='cat-pill '+(clsMap[selCat]||'sel');
+  document.getElementById('catErr').classList.remove('show');
+});
+
+/* ── Avatar hint from name ── */
+function updateAvatar(){
+  const name=document.getElementById('fName').value.trim();
+  const av=document.getElementById('formAvatar');
+  av.textContent=name?name.charAt(0).toUpperCase():'?';
+  checkSubmitReady();
+}
+document.getElementById('fName').addEventListener('input',()=>{
+  updateAvatar();
+  const filled=document.getElementById('fName').value.trim().length>0;
+  document.getElementById('nameHint').className='field-hint'+(filled?'':' err');
+  document.getElementById('nameHint').textContent=filled?'':'Required to submit';
+  document.getElementById('fName').classList.toggle('req-empty',!filled);
+});
+
+/* ── Char counters + live submit guard ── */
+document.getElementById('fSummary').addEventListener('input',function(){
+  const rem=120-this.value.length;
+  const el=document.getElementById('sumCount');
+  el.textContent=rem;
+  el.className='char-counter'+(rem<=20?' warn':'')+(rem<0?' over':'');
+  document.getElementById('summaryErr').classList.remove('show');
+  this.classList.remove('err');
+  checkSubmitReady();
+});
+document.getElementById('fDesc').addEventListener('input',function(){
+  const rem=2000-this.value.length;
+  const el=document.getElementById('descCount');
+  el.textContent=rem;
+  el.className='desc-counter'+(rem<=200?' warn':'')+(rem<0?' over':'');
+});
+
+/* ── Submit button state ── */
+function checkSubmitReady(){
+  const nameOk=document.getElementById('fName').value.trim().length>0;
+  const summaryOk=document.getElementById('fSummary').value.trim().length>=3;
+  const btn=document.getElementById('submitBtn');
+  const ready=nameOk&&summaryOk;
+  btn.disabled=!ready;
+  btn.title=ready?'':'Please fill in your name and a summary first';
+}
+
+/* ── Validate (full, on submit) ── */
+function validate(){
+  let ok=true;
+  const name=document.getElementById('fName').value.trim();
+  if(!name){
+    document.getElementById('fName').classList.add('req-empty','err');
+    document.getElementById('nameHint').className='field-hint err';
+    document.getElementById('nameHint').textContent='Your name is required';
+    ok=false;
+  }
+  const s=document.getElementById('fSummary').value.trim();
+  if(s.length<3||s.length>120){
+    document.getElementById('summaryErr').classList.add('show');
+    document.getElementById('fSummary').classList.add('err');
+    ok=false;
+  }
+  if(!selCat){document.getElementById('catErr').classList.add('show');ok=false;}
+  return ok;
+}
+
+/* ── Submit ── */
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  if(document.getElementById('hp').value)return;
+  if(!validate())return;
+  if(!checkRate())return;
+  const name=strip(document.getElementById('fName').value);
+  const summary=strip(document.getElementById('fSummary').value).slice(0,120);
+  const description=strip(document.getElementById('fDesc').value).slice(0,2000);
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;
+  btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Sending…';
+  setTimeout(()=>{
+    ideas.unshift({id:nextId++,name,summary,description,category:selCat,status:'open',votes:0,voted:false,ts:Date.now()});
+    renderIdeas();
+    // Reset form
+    ['fName','fEmail','fSummary','fDesc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('sumCount').textContent='120';
+    document.getElementById('descCount').textContent='2000';
+    document.getElementById('sumCount').className='char-counter';
+    document.getElementById('descCount').className='desc-counter';
+    document.getElementById('fPublic').checked=false;
+    document.getElementById('formAvatar').textContent='?';
+    document.getElementById('nameHint').className='field-hint';
+    document.getElementById('nameHint').textContent='Required to submit';
+    document.getElementById('fName').classList.remove('req-empty','err');
+    document.querySelectorAll('.cat-pill').forEach(p=>p.className='cat-pill');
+    selCat='feature';
+    document.querySelector('.cat-pill[data-cat="feature"]').className='cat-pill sel';
+    btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 2 11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Submit';
+    checkSubmitReady(); // will re-disable since fields are now empty
+    showToast('Your idea was submitted — thank you!');
+  },550);
+});
+
+/* ── Clear ── */
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  ['fName','fEmail','fSummary','fDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fPublic').checked=false;
+  document.getElementById('sumCount').textContent='120';
+  document.getElementById('descCount').textContent='2000';
+  document.getElementById('sumCount').className='char-counter';
+  document.getElementById('descCount').className='desc-counter';
+  document.getElementById('summaryErr').classList.remove('show');
+  document.getElementById('catErr').classList.remove('show');
+  document.getElementById('fSummary').classList.remove('err');
+  document.getElementById('fName').classList.remove('req-empty','err');
+  document.getElementById('nameHint').className='field-hint';
+  document.getElementById('nameHint').textContent='Required to submit';
+  document.getElementById('formAvatar').textContent='?';
+  checkSubmitReady();
+});
+
+/* ── Spin keyframe for loading state ── */
+const style=document.createElement('style');
+style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
+
+/* ── Init ── */
+checkSubmitReady();
+renderIdeas();
+})();
 </script>
 </body>
 </html>
