@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 import paramiko
 from pathlib import Path
@@ -21,6 +22,17 @@ app = FastAPI()
 # -------------------------
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+_APP_DIR = Path(__file__).resolve().parent
+
+
+def _static_file_cache_bust(relative_path: str, nbytes: int = 12) -> str:
+    """Short hash so iframe URLs change when the static file changes (avoids stale browser/CDN cache)."""
+    try:
+        data = (_APP_DIR / relative_path).read_bytes()
+        return hashlib.md5(data).hexdigest()[:nbytes]
+    except OSError:
+        return "0"
 
 # -------------------------
 # Initialize DB
@@ -50,7 +62,13 @@ async def home(request: Request):
     superconductors_data = _load_superconductors_data()
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "ws_path": WS_PATH, "token": token, "superconductors_data": superconductors_data}
+        {
+            "request": request,
+            "ws_path": WS_PATH,
+            "token": token,
+            "superconductors_data": superconductors_data,
+            "community_iframe_v": _static_file_cache_bust("static/community_ideas.html"),
+        },
     )
 
 @app.get("/about", response_class=HTMLResponse)
