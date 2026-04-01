@@ -14,3 +14,10 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 SMTP_FROM = os.getenv("SMTP_FROM", "")
+
+# If true, do not log OTP when email is unset — return 503 until RESEND/SMTP is configured.
+COMMUNITY_OTP_REQUIRE_EMAIL = os.getenv("COMMUNITY_OTP_REQUIRE_EMAIL", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)

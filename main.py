@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+import logging
 import paramiko
 import secrets
 import smtplib
@@ -29,8 +30,11 @@ from config import (
     SMTP_USER,
     SMTP_PASSWORD,
     SMTP_FROM,
+    COMMUNITY_OTP_REQUIRE_EMAIL,
 )
 from security import generate_daily_ws_path, generate_token, verify_token
+
+_log = logging.getLogger("smad.community")
 
 app = FastAPI()
 
@@ -62,6 +66,12 @@ _community_otp_send_mono: dict[str, float] = {}
 
 def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
+
+
+def _community_email_provider_configured() -> bool:
+    if RESEND_API_KEY:
+        return True
+    return bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD and SMTP_FROM)
 
 
 async def _send_community_admin_otp_email(to_email: str, code: str) -> None:
@@ -129,15 +139,39 @@ async def community_admin_send_otp(request: Request):
         }
         _community_otp_send_mono[ip] = now_m
 
+    if not _community_email_provider_configured():
+        if COMMUNITY_OTP_REQUIRE_EMAIL:
+            with _community_otp_lock:
+                _community_otp = None
+            return JSONResponse(
+                {
+                    "ok": False,
+                    "error": (
+                        "Email is not configured. In Render → Environment add RESEND_API_KEY "
+                        "(free tier at https://resend.com ) and RESEND_FROM, or set SMTP_* variables."
+                    ),
+                },
+                status_code=503,
+            )
+        _log.warning(
+            "Community admin OTP (no RESEND/SMTP; code only in server logs): %s",
+            code,
+        )
+        return {"ok": True, "delivery": "console_fallback"}
+
     try:
         await _send_community_admin_otp_email(COMMUNITY_ADMIN_OTP_EMAIL, code)
     except Exception:
+        _log.exception("Community admin OTP email send failed")
         with _community_otp_lock:
             _community_otp = None
         return JSONResponse(
             {
                 "ok": False,
-                "error": "Could not send email. Configure RESEND_API_KEY or SMTP_* on the server.",
+                "error": (
+                    "Email send failed. Check RESEND_API_KEY / RESEND_FROM or SMTP_* in Render, "
+                    "and see service logs for the error."
+                ),
             },
             status_code=503,
         )

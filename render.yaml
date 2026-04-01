@@ -13,6 +13,14 @@ services:
     envVars:
       - key: DATABASE_URL
         value: sqlite:///./smad.db
+      # Admin OTP for Ideas & Feedback: add Resend (recommended) or SMTP_*.
+      # Without them, the OTP is written to service logs only (Render → Logs).
+      # - key: RESEND_API_KEY
+      #   sync: false
+      # - key: RESEND_FROM
+      #   value: "SMAD <onboarding@resend.dev>"
+      # - key: COMMUNITY_ADMIN_OTP_EMAIL
+      #   value: your-admin@university.edu
       # Optional: for cluster console
       # - key: SSH_KEY_PATH
       #   sync: false

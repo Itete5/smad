@@ -169,8 +169,9 @@ textarea.inp{resize:vertical;min-height:90px;line-height:1.6}
 .adm-send-btn{padding:9px 18px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:#fff;font-size:13px;font-family:var(--font);font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
 .adm-send-btn:hover{background:#1248cc}
 .adm-send-btn:disabled{opacity:.45;cursor:not-allowed}
-.adm-sent-note{font-size:12px;color:var(--green);display:none}
+.adm-sent-note{font-size:12px;color:var(--green);display:none;line-height:1.45}
 .adm-sent-note.show{display:block}
+.adm-sent-note.long{max-width:340px;text-align:left;white-space:normal}
 .adm-step{display:none}
 .adm-step.active{display:block}
 .adm-logout{padding:5px 12px;border-radius:var(--radius-sm);border:1.5px solid rgba(220,38,38,0.3);background:transparent;color:var(--red);font-size:12px;font-family:var(--font);cursor:pointer;transition:all .15s;margin-left:4px}
@@ -585,7 +586,9 @@ const admStep2=document.getElementById('admStep2');
 
 function openAdmModal(){
   admStep1.classList.add('active');admStep2.classList.remove('active');
-  document.getElementById('admSentNote').classList.remove('show');
+  const sn=document.getElementById('admSentNote');
+  sn.classList.remove('show','long');
+  sn.textContent='✓ Code sent — check the admin inbox';
   document.getElementById('admSendErr').textContent='';
   document.getElementById('admSendBtn').disabled=false;
   document.getElementById('admCodeInp').value='';
@@ -627,7 +630,15 @@ document.getElementById('admSendBtn').addEventListener('click',async function(){
       this.disabled=false;
       return;
     }
-    document.getElementById('admSentNote').classList.add('show');
+    const note=document.getElementById('admSentNote');
+    if(data.delivery==='console_fallback'){
+      note.textContent='✓ No email provider configured — open your host logs (Render → Logs) and find the line “Community admin OTP”. For email, add RESEND_API_KEY in Environment.';
+      note.classList.add('long');
+    }else{
+      note.textContent='✓ Code sent — check the admin inbox';
+      note.classList.remove('long');
+    }
+    note.classList.add('show');
     setTimeout(()=>{
       admStep1.classList.remove('active');
       admStep2.classList.add('active');
