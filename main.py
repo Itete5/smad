@@ -2,9 +2,15 @@ import asyncio
 import hashlib
 import json
 import paramiko
+import secrets
+import smtplib
+import threading
+import time
+from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Literal, List
 
+import httpx
 from fastapi import FastAPI, WebSocket, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,7 +18,18 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from database import SessionLocal, Material, init_db
-from config import SSH_KEY_PATH, DEFAULT_USER
+from config import (
+    SSH_KEY_PATH,
+    DEFAULT_USER,
+    COMMUNITY_ADMIN_OTP_EMAIL,
+    RESEND_API_KEY,
+    RESEND_FROM,
+    SMTP_HOST,
+    SMTP_PORT,
+    SMTP_USER,
+    SMTP_PASSWORD,
+    SMTP_FROM,
+)
 from security import generate_daily_ws_path, generate_token, verify_token
 
 app = FastAPI()
@@ -33,6 +50,136 @@ def _static_file_cache_bust(relative_path: str, nbytes: int = 12) -> str:
         return hashlib.md5(data).hexdigest()[:nbytes]
     except OSError:
         return "0"
+
+
+# -------------------------
+# Community admin OTP (email to configured admin only; address not shown in UI)
+# -------------------------
+_community_otp_lock = threading.Lock()
+_community_otp: dict | None = None  # {"code": str, "expires": float, "verify_attempts": int}
+_community_otp_send_mono: dict[str, float] = {}
+
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+async def _send_community_admin_otp_email(to_email: str, code: str) -> None:
+    body = (
+        f"Your SMAD Ideas & Feedback admin verification code is: {code}\n\n"
+        "This code expires in 10 minutes. If you did not request this, ignore this message."
+    )
+    if RESEND_API_KEY:
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {RESEND_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": RESEND_FROM,
+                    "to": [to_email],
+                    "subject": "SMAD admin verification code",
+                    "text": body,
+                },
+                timeout=20.0,
+            )
+            r.raise_for_status()
+        return
+    if SMTP_HOST and SMTP_USER and SMTP_PASSWORD and SMTP_FROM:
+
+        def _smtp_sync() -> None:
+            msg = MIMEText(body)
+            msg["Subject"] = "SMAD admin verification code"
+            msg["From"] = SMTP_FROM
+            msg["To"] = to_email
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
+                s.starttls()
+                s.login(SMTP_USER, SMTP_PASSWORD)
+                s.sendmail(SMTP_FROM, [to_email], msg.as_string())
+
+        await asyncio.to_thread(_smtp_sync)
+        return
+    raise RuntimeError("No email provider configured (set RESEND_API_KEY or SMTP_*)")
+
+
+class CommunityVerifyOtpBody(BaseModel):
+    code: str = Field(..., min_length=1, max_length=32)
+
+
+@app.post("/api/community/admin/send-otp")
+async def community_admin_send_otp(request: Request):
+    """Generate OTP and email the configured admin (COMMUNITY_ADMIN_OTP_EMAIL)."""
+    global _community_otp
+    ip = _client_ip(request)
+    now_m = time.monotonic()
+    with _community_otp_lock:
+        last = _community_otp_send_mono.get(ip, 0.0)
+        if now_m - last < 60.0:
+            return JSONResponse(
+                {"ok": False, "error": "Please wait a minute before requesting another code."},
+                status_code=429,
+            )
+        code = f"{secrets.randbelow(900000) + 100000:06d}"
+        _community_otp = {
+            "code": code,
+            "expires": time.time() + 600.0,
+            "verify_attempts": 0,
+        }
+        _community_otp_send_mono[ip] = now_m
+
+    try:
+        await _send_community_admin_otp_email(COMMUNITY_ADMIN_OTP_EMAIL, code)
+    except Exception:
+        with _community_otp_lock:
+            _community_otp = None
+        return JSONResponse(
+            {
+                "ok": False,
+                "error": "Could not send email. Configure RESEND_API_KEY or SMTP_* on the server.",
+            },
+            status_code=503,
+        )
+
+    return {"ok": True}
+
+
+@app.post("/api/community/admin/verify-otp")
+async def community_admin_verify_otp(body: CommunityVerifyOtpBody):
+    global _community_otp
+    digits = "".join(c for c in body.code if c.isdigit())[:6]
+    if len(digits) != 6:
+        return JSONResponse({"ok": False, "error": "Enter the 6-digit code."}, status_code=400)
+
+    with _community_otp_lock:
+        slot = _community_otp
+        if not slot:
+            return JSONResponse(
+                {"ok": False, "error": "No active code. Go back and send a new code."},
+                status_code=400,
+            )
+        if time.time() > slot["expires"]:
+            _community_otp = None
+            return JSONResponse({"ok": False, "error": "Code expired. Request a new one."}, status_code=400)
+
+        slot["verify_attempts"] += 1
+        if digits != slot["code"]:
+            if slot["verify_attempts"] >= 5:
+                _community_otp = None
+                return JSONResponse(
+                    {"ok": False, "error": "Too many incorrect attempts. Request a new code."},
+                    status_code=429,
+                )
+            left = 5 - slot["verify_attempts"]
+            return JSONResponse(
+                {"ok": False, "error": f"Incorrect code. {left} attempt{'s' if left != 1 else ''} left."},
+                status_code=401,
+            )
+        _community_otp = None
+
+    return {"ok": True}
+
 
 # -------------------------
 # Initialize DB

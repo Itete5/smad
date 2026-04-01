@@ -323,10 +323,11 @@ textarea.inp{resize:vertical;min-height:90px;line-height:1.6}
     <!-- Step 1: send code -->
     <div class="adm-step active" id="admStep1">
       <h3 id="admTitle">Admin access</h3>
-      <p class="adm-sub">A one-time code will be sent to the registered admin address.<br><strong>Click Send to continue.</strong></p>
+      <p class="adm-sub">A one-time security code will be emailed to the site administrator (the address is never shown on this page).<br><strong>Click Send code to continue.</strong></p>
+      <div class="adm-err" id="admSendErr" style="margin-bottom:12px;min-height:0"></div>
       <div class="adm-send-row">
         <button class="adm-send-btn" id="admSendBtn">Send code</button>
-        <span class="adm-sent-note" id="admSentNote">✓ Code sent — check your inbox</span>
+        <span class="adm-sent-note" id="admSentNote">✓ Code sent — check the admin inbox</span>
       </div>
       <div class="adm-actions">
         <button class="adm-cancel" id="admCancel1">Cancel</button>
@@ -335,7 +336,7 @@ textarea.inp{resize:vertical;min-height:90px;line-height:1.6}
     <!-- Step 2: enter code -->
     <div class="adm-step" id="admStep2">
       <h3>Enter your code</h3>
-      <p class="adm-sub">Enter the 6-digit code sent to your admin email. It expires in 10 minutes.</p>
+      <p class="adm-sub">Enter the 6-digit code from the message sent to the site administrator. It expires in 10 minutes.</p>
       <div class="adm-code-wrap">
         <input class="adm-code-inp" id="admCodeInp" type="text" inputmode="numeric" maxlength="6" placeholder="––––––" autocomplete="one-time-code" aria-label="6-digit admin code">
       </div>
@@ -426,28 +427,14 @@ textarea.inp{resize:vertical;min-height:90px;line-height:1.6}
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const strip=s=>s?s.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim():'';
 
-/* ── Seed data ── */
-const SEED=[
-  {id:1,name:'Dr. Sarah Chen',summary:'Add band structure visualization overlay on 3D crystal view',description:'It would be extremely useful to see the electronic band structure computed from DFT overlaid directly on the crystal structure viewer. Helps correlate structural motifs with electronic properties.',category:'feature',status:'planned',votes:24,voted:false,ts:Date.now()-864e5*2},
-  {id:2,name:'Marco Bellini',summary:'Export MD trajectory as .xyz or LAMMPS dump format',description:'Currently only CIF export is available. For MD results, standard formats like .xyz (multi-frame) or LAMMPS dump are needed to load into OVITO or VESTA.',category:'feature',status:'open',votes:18,voted:false,ts:Date.now()-864e5*5},
-  {id:3,name:'Anonymous',summary:'Monte Carlo step count resets unexpectedly mid-run',description:'When running >100k steps the counter resets to 0 around step 65536, suggesting a 16-bit integer overflow. The simulation continues but reported step numbers are wrong.',category:'bug',status:'open',votes:15,voted:false,ts:Date.now()-864e5*1},
-  {id:4,name:'Yuki T.',summary:'What equations does the Tc estimator use under the hood?',description:'Curious whether the Tc estimation uses the full Eliashberg equations or a simpler BCS expression. The docs say "physics-based" but don\'t specify the level of approximation.',category:'question',status:'done',votes:9,voted:false,ts:Date.now()-864e5*10},
-  {id:5,name:'Prof. A. Nguyen',summary:'Integrate Materials Project API for experimental Tc reference data',description:'Cross-referencing predicted Tc values against Materials Project\'s experimental dataset would allow automated validation and uncertainty quantification for new predictions.',category:'research',status:'planned',votes:31,voted:false,ts:Date.now()-864e5*14},
-  {id:6,name:'Lena M.',summary:'Dark/light theme toggle should persist across sessions',description:'Every time I reload the page it reverts to dark mode. Should store preference in localStorage.',category:'bug',status:'open',votes:7,voted:false,ts:Date.now()-864e5*3},
-  {id:7,name:'Anonymous',summary:'Add keyboard shortcuts for common CrystalForge actions',description:'Power users would benefit from shortcuts: R to reset view, S to save, G to toggle grid, etc. Even a cheat sheet would help.',category:'feature',status:'open',votes:12,voted:false,ts:Date.now()-864e5*7},
-  {id:8,name:'Hans R.',summary:'Live SCF convergence plot during DFT run',description:'Showing the SCF convergence in real time would help users diagnose stuck or oscillating calculations without waiting for the full run to finish.',category:'feature',status:'open',votes:20,voted:false,ts:Date.now()-864e5*6},
-];
-
-/* ── State ── */
-let ideas=[...SEED];
-let nextId=ideas.length+1;
+/* ── State (no demo posts — feed starts empty) ── */
+let ideas=[];
+let nextId=1;
 let activeCat='all', activeStatus='all', sortBy='votes', searchQ='';
 let selCat='feature', adminMode=false, searchTimer=null;
 let submitTimes=[];
 
-/* ── OTP state (simulated — replace send logic with real email API) ── */
-let otpCode=null, otpExpiry=0, otpAttempts=0;
-const OTP_MAX_ATTEMPTS=5;
+/* ── Admin OTP: server emails code; verification via /api/community/admin/verify-otp ── */
 
 /* ── Helpers ── */
 function timeAgo(ts){
@@ -510,7 +497,11 @@ function renderIdeas(){
   const feed=document.getElementById('ideasFeed');
   const list=getFiltered();
   if(!list.length){
-    feed.innerHTML=`<div class="empty-state"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>No ideas match your filters</p></div>`;
+    const isDefaultView=ideas.length===0&&activeCat==='all'&&activeStatus==='all'&&!searchQ;
+    const msg=isDefaultView
+      ?'No submissions yet. Be the first to share an idea using the form above.'
+      :'No ideas match your filters.';
+    feed.innerHTML=`<div class="empty-state"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>${msg}</p></div>`;
     return;
   }
   feed.innerHTML=list.map((idea,idx)=>{
@@ -588,33 +579,14 @@ document.getElementById('searchInput').addEventListener('input',e=>{
 /* ── Sort ── */
 document.getElementById('sortSel').addEventListener('change',e=>{sortBy=e.target.value;renderIdeas();});
 
-/* ═══════════════════════════════════════════════
-   ADMIN OTP FLOW
-   In production: replace simulateEmailSend() with
-   a real POST to your backend which emails the code.
-   The code itself must be generated & verified server-side.
-═══════════════════════════════════════════════ */
-function generateOtp(){
-  return String(Math.floor(100000+Math.random()*900000));
-}
-function simulateEmailSend(code){
-  /* --- PRODUCTION: replace this block with ---
-     fetch('/api/admin/send-otp', {method:'POST'})
-     The backend generates the code, emails jiteter1@jhu.com,
-     stores a hashed version server-side, and never exposes it here.
-  ------------------------------------------- */
-  console.info('[DEV] Admin OTP (remove in production):', code);
-  // In dev you can read the code from browser console.
-}
-
 const admOverlay=document.getElementById('admOverlay');
 const admStep1=document.getElementById('admStep1');
 const admStep2=document.getElementById('admStep2');
 
 function openAdmModal(){
-  otpCode=null;otpExpiry=0;otpAttempts=0;
   admStep1.classList.add('active');admStep2.classList.remove('active');
   document.getElementById('admSentNote').classList.remove('show');
+  document.getElementById('admSendErr').textContent='';
   document.getElementById('admSendBtn').disabled=false;
   document.getElementById('admCodeInp').value='';
   document.getElementById('admErr').textContent='';
@@ -624,7 +596,6 @@ function openAdmModal(){
 }
 function closeAdmModal(){
   admOverlay.classList.remove('open');
-  otpCode=null;
 }
 
 document.getElementById('adminToggle').addEventListener('click',()=>{
@@ -644,18 +615,28 @@ document.getElementById('admCancel2').addEventListener('click',closeAdmModal);
 admOverlay.addEventListener('click',e=>{if(e.target===admOverlay)closeAdmModal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&admOverlay.classList.contains('open'))closeAdmModal();});
 
-document.getElementById('admSendBtn').addEventListener('click',function(){
+document.getElementById('admSendBtn').addEventListener('click',async function(){
+  const sendErr=document.getElementById('admSendErr');
+  sendErr.textContent='';
   this.disabled=true;
-  otpCode=generateOtp();
-  otpExpiry=Date.now()+10*60*1000; // 10 min
-  otpAttempts=0;
-  simulateEmailSend(otpCode);
-  document.getElementById('admSentNote').classList.add('show');
-  setTimeout(()=>{
-    admStep1.classList.remove('active');
-    admStep2.classList.add('active');
-    document.getElementById('admCodeInp').focus();
-  },1100);
+  try{
+    const r=await fetch('/api/community/admin/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',credentials:'same-origin'});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok||!data.ok){
+      sendErr.textContent=data.error||'Could not send code.';
+      this.disabled=false;
+      return;
+    }
+    document.getElementById('admSentNote').classList.add('show');
+    setTimeout(()=>{
+      admStep1.classList.remove('active');
+      admStep2.classList.add('active');
+      document.getElementById('admCodeInp').focus();
+    },600);
+  }catch(e){
+    sendErr.textContent='Network error. Try again.';
+    this.disabled=false;
+  }
 });
 
 document.getElementById('admCodeInp').addEventListener('input',function(){
@@ -668,33 +649,44 @@ document.getElementById('admCodeInp').addEventListener('input',function(){
 document.getElementById('admVerifyBtn').addEventListener('click',verifyOtp);
 document.getElementById('admCodeInp').addEventListener('keydown',e=>{if(e.key==='Enter')verifyOtp();});
 
-function verifyOtp(){
+async function verifyOtp(){
   const entered=document.getElementById('admCodeInp').value.replace(/\D/g,'');
   const errEl=document.getElementById('admErr');
   const inp=document.getElementById('admCodeInp');
-  if(!otpCode){errEl.textContent='No code was sent. Please go back.';return;}
-  if(Date.now()>otpExpiry){
-    errEl.textContent='Code expired. Close and try again.';
-    inp.classList.add('err');otpCode=null;return;
+  errEl.textContent='';
+  inp.classList.remove('err');
+  if(entered.length!==6){
+    errEl.textContent='Enter all 6 digits.';
+    inp.classList.add('err');
+    return;
   }
-  if(otpAttempts>=OTP_MAX_ATTEMPTS){
-    errEl.textContent='Too many attempts. Please request a new code.';
-    inp.classList.add('err');otpCode=null;return;
-  }
-  otpAttempts++;
-  if(entered===otpCode){
-    adminMode=true;
-    otpCode=null;
-    closeAdmModal();
-    updateAdminButton();
-    renderIdeas();
-    showToast('Admin mode enabled',3000);
-  } else {
-    const left=OTP_MAX_ATTEMPTS-otpAttempts;
-    errEl.textContent=`Incorrect code. ${left} attempt${left===1?'':'s'} remaining.`;
+  const btn=document.getElementById('admVerifyBtn');
+  btn.disabled=true;
+  try{
+    const r=await fetch('/api/community/admin/verify-otp',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code:entered}),
+      credentials:'same-origin'
+    });
+    const data=await r.json().catch(()=>({}));
+    if(r.ok&&data.ok){
+      adminMode=true;
+      closeAdmModal();
+      updateAdminButton();
+      renderIdeas();
+      showToast('Admin mode enabled',3000);
+      return;
+    }
+    errEl.textContent=data.error||'Verification failed.';
     inp.classList.add('err');
     inp.value='';
     inp.focus();
+  }catch(e){
+    errEl.textContent='Network error. Try again.';
+    inp.classList.add('err');
+  }finally{
+    btn.disabled=false;
   }
 }
 
