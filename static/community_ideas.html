@@ -19,18 +19,20 @@
   --mono:'JetBrains Mono',monospace;--sans:'DM Sans',system-ui,sans-serif;--display:'Syne',sans-serif;
 }
 html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var(--text0);-webkit-font-smoothing:antialiased}
+html{-webkit-text-size-adjust:100%}
 a{text-decoration:none;color:inherit}
 button{cursor:pointer;font-family:var(--sans);border:none;background:none}
 input,textarea,select{font-family:var(--sans)}
 
-.page{max-width:1040px;margin:0 auto;padding:48px 32px 80px}
+.page{max-width:1040px;margin:0 auto;padding:48px 32px 32px}
 
 .action-btns{display:flex;gap:12px;flex-wrap:wrap}
 .action-btn{
   display:inline-flex;align-items:center;gap:10px;
   padding:13px 24px;border-radius:14px;
   border:1px solid rgba(80,130,220,0.22);background:rgba(10,18,34,0.7);
-  color:var(--text0);font-size:14px;font-weight:500;
+  color:var(--text0);font-size:14px;font-weight:500;font-family:var(--sans);
+  cursor:pointer;text-decoration:none;
   transition:border-color .18s,background .18s,color .18s;
 }
 .action-btn:hover{
@@ -50,7 +52,7 @@ input,textarea,select{font-family:var(--sans)}
   color:var(--accent);margin-bottom:10px;
 }
 .board-left .label::before{content:'';display:block;width:22px;height:1.5px;background:var(--accent)}
-.board-left h1{font-family:var(--display);font-size:clamp(26px,3.5vw,40px);font-weight:800;color:var(--text0);margin-bottom:8px;letter-spacing:-.02em}
+.board-left h2{font-family:var(--display);font-size:clamp(26px,3.5vw,40px);font-weight:800;color:var(--text0);margin-bottom:8px;letter-spacing:-.02em}
 .board-left p{font-size:13.5px;color:var(--text2);max-width:380px;line-height:1.65}
 .head-btns{display:flex;gap:8px;flex-shrink:0;padding-top:4px;flex-wrap:wrap}
 .head-btn{
@@ -91,7 +93,7 @@ input,textarea,select{font-family:var(--sans)}
 }
 .st:hover{border-color:var(--border2);color:var(--text1)}
 .st.act{border-color:var(--accent);color:var(--accent)}
-.right-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.right-controls{display:flex;align-items:center;gap:8px}
 .search-wrap{
   display:flex;align-items:center;gap:8px;
   background:var(--bg2);border:1px solid var(--border);
@@ -202,11 +204,11 @@ input,textarea,select{font-family:var(--sans)}
 .btn-submit{
   display:flex;align-items:center;gap:7px;
   padding:9px 20px;border-radius:9px;
-  background:rgba(61,127,255,.25);border:1px solid rgba(80,130,220,.35);
-  color:var(--text0);font-size:13px;font-weight:600;font-family:var(--sans);
+  background:rgba(60,90,150,.35);border:1px solid rgba(80,130,220,.25);
+  color:rgba(160,200,240,.8);font-size:13px;font-weight:600;font-family:var(--sans);
   transition:all .15s;
 }
-.btn-submit:hover:not(:disabled){background:rgba(61,127,255,.38);border-color:var(--accent)}
+.btn-submit:hover:not(:disabled){background:rgba(61,127,255,.22);border-color:var(--accent);color:var(--text0)}
 .btn-submit:disabled{opacity:.45;cursor:not-allowed}
 .btn-submit svg{width:14px;height:14px}
 
@@ -291,7 +293,6 @@ input,textarea,select{font-family:var(--sans)}
   text-align:center;padding:52px 20px;
   border:1px dashed var(--border);border-radius:12px;margin-top:16px;
 }
-.empty-state svg{opacity:.35;margin-bottom:12px;color:var(--text3)}
 .empty-state p{color:var(--text2);font-size:14px}
 .empty-state span{font-size:13px;color:var(--text3);margin-top:6px;display:block}
 
@@ -321,7 +322,7 @@ input,textarea,select{font-family:var(--sans)}
   <div class="board-head">
     <div class="board-left">
       <div class="label">Community</div>
-      <h1>Ideas &amp; Feedback</h1>
+      <h2>Ideas &amp; Feedback</h2>
       <p>Share ideas, report bugs, ask questions, or suggest new modules. Vote on what matters to you.</p>
     </div>
     <div class="head-btns">
@@ -549,7 +550,7 @@ function renderIdeas(){
       ?'No ideas yet — be the first to share one.'
       :'No ideas match your filters.';
     const sub=isDefault?'Use the form above to submit a feature request, bug report, or question.':'Try changing filters or search.';
-    feed.innerHTML=`<div class="empty-state"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>${msg}</p><span>${sub}</span></div>`;
+    feed.innerHTML=`<div class="empty-state"><p>${msg}</p><span>${sub}</span></div>`;
     return;
   }
   feed.innerHTML=list.map((idea,idx)=>{
