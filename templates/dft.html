@@ -5,570 +5,745 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DFT Simulator · SMAD</title>
 <link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
-<meta name="description" content="SMAD DFT Simulator — plane-wave DFT, QE-style input, bands, DOS, convergence.">
+<meta name="description" content="SMAD DFT Simulator — 3Dmol viewer, QE/VASP input, bands, DOS, HPC demo.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/3dmol/build/3Dmol-min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
 <style>
-/* ═══ Design tokens — MD-aligned ═══ */
-:root {
-  --bg0:#080c14; --bg1:#0d1520; --bg2:#111d2e; --bg3:#172236;
-  --bg4:#1e2d44; --bg5:#253550;
-  --border:rgba(80,130,200,0.13); --border2:rgba(80,130,200,0.28);
-  --text0:#ddeeff; --text1:#99b8d8; --text2:#5a7a9a; --text3:#334a62;
-  --accent:#3d9fff; --accent-glow:rgba(61,159,255,0.15);
-  --green:#2dd9a0; --green-glow:rgba(45,217,160,0.12);
-  --amber:#f5a623; --amber-glow:rgba(245,166,35,0.12);
-  --rose:#f06080; --rose-glow:rgba(240,96,128,0.12);
-  --violet:#9d7fff;
-  --mono:'JetBrains Mono',monospace;
-  --sans:'Instrument Sans',sans-serif;
-  --display:'Syne',sans-serif;
-  --r:8px; --r2:12px;
-  --nav-h:56px; --sb-w:min(340px,36vw); --rp-w:min(380px,40vw);
-  --shadow:0 8px 32px rgba(0,0,0,0.5);
-  --t:.17s ease;
+:root{
+  --bg0:#06090f;--bg1:#0c1320;--bg2:#101828;--bg3:#162030;--bg4:#1c2a3e;--bg5:#223248;
+  --border:rgba(80,140,210,0.12);--border2:rgba(80,140,210,0.26);--border3:rgba(80,140,210,0.45);
+  --text0:#ddeeff;--text1:#92b4d4;--text2:#52728e;--text3:#2e4a62;
+  --accent:#3d9fff;--ac-dim:rgba(61,159,255,0.12);--ac-med:rgba(61,159,255,0.22);
+  --green:#2dd9a0;--gn-dim:rgba(45,217,160,0.1);
+  --amber:#f5a623;--am-dim:rgba(245,166,35,0.1);
+  --rose:#f06080;--ro-dim:rgba(240,96,128,0.1);
+  --violet:#9d7fff;--vi-dim:rgba(157,127,255,0.1);
+  --mono:'JetBrains Mono',monospace;--sans:'Instrument Sans',sans-serif;--display:'Syne',sans-serif;
+  --r:7px;--r2:11px;--nav-h:52px;--sb-w:330px;--rp-w:400px;
+  --sh:0 8px 32px rgba(0,0,0,.55);--t:.15s ease;
 }
-[data-theme="light"] {
-  --bg0:#edf1f7; --bg1:#ffffff; --bg2:#f3f6fb; --bg3:#e6ecf5;
-  --bg4:#d8e2f0; --bg5:#ccd8eb;
-  --border:rgba(60,100,160,0.12); --border2:rgba(60,100,160,0.28);
-  --text0:#0d1828; --text1:#2a4060; --text2:#607090; --text3:#90a8c0;
-  --shadow:0 8px 32px rgba(0,0,0,0.1);
+[data-theme="light"]{
+  --bg0:#edf2f8;--bg1:#ffffff;--bg2:#f4f7fc;--bg3:#e8edf7;--bg4:#dce5f2;--bg5:#cdd8ee;
+  --border:rgba(60,100,160,0.1);--border2:rgba(60,100,160,0.22);--border3:rgba(60,100,160,0.4);
+  --text0:#0c1828;--text1:#2a4260;--text2:#587090;--text3:#8aa2be;--sh:0 8px 24px rgba(0,0,0,.1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:var(--sans);background:var(--bg0);color:var(--text0);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
 button{cursor:pointer;font-family:inherit;border:none;background:none}
 input,select,textarea{font-family:inherit;font-size:12px}
-a{text-decoration:none;color:var(--accent)}
-a:hover{text-decoration:underline}
+a{color:var(--accent);text-decoration:none}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px}
-::-webkit-scrollbar-track{background:transparent}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* ══ LOADING ══ */
-#loading{
-  position:fixed;inset:0;z-index:9000;background:var(--bg0);
-  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;
-  transition:opacity .4s ease,visibility .4s ease;cursor:pointer;
-}
-#loading.gone{opacity:0;visibility:hidden;pointer-events:none}
-.ld-wave{width:60px;height:60px;position:relative}
-.ld-title{font-family:var(--display);font-size:20px;font-weight:700;color:var(--text0);letter-spacing:-.3px}
-.ld-title span{color:var(--accent)}
-.ld-sub{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px}
-.ld-bar{width:180px;height:2px;background:var(--bg4);border-radius:2px;overflow:hidden}
-.ld-prog{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:2px;animation:ldProg 1.8s cubic-bezier(.4,0,.2,1) forwards}
-@keyframes ldProg{from{width:0}to{width:100%}}
-
-/* ══ ATOM LOGO ANIMATIONS ══ */
-@keyframes orbit-e1{from{transform:rotate(0deg) translate(43px,0) rotate(0deg)}to{transform:rotate(360deg) translate(43px,0) rotate(-360deg)}}
-@keyframes orbit-e2{from{transform:rotate(120deg) translate(43px,0) rotate(-120deg)}to{transform:rotate(480deg) translate(43px,0) rotate(-480deg)}}
-@keyframes orbit-e3{from{transform:rotate(240deg) translate(43px,0) rotate(-240deg)}to{transform:rotate(600deg) translate(43px,0) rotate(-600deg)}}
-@keyframes ld-orbit-e1{from{transform:rotate(0deg) translate(66px,0) rotate(0deg)}to{transform:rotate(360deg) translate(66px,0) rotate(-360deg)}}
-@keyframes ld-orbit-e2{from{transform:rotate(120deg) translate(66px,0) rotate(-120deg)}to{transform:rotate(480deg) translate(66px,0) rotate(-480deg)}}
-@keyframes ld-orbit-e3{from{transform:rotate(240deg) translate(66px,0) rotate(-240deg)}to{transform:rotate(600deg) translate(66px,0) rotate(-600deg)}}
-@media(prefers-reduced-motion:no-preference){
-  .atom-e1{animation:orbit-e1 3.2s linear infinite;transform-origin:19px 19px}
-  .atom-e2{animation:orbit-e2 3.2s linear infinite;transform-origin:19px 19px}
-  .atom-e3{animation:orbit-e3 3.2s linear infinite;transform-origin:19px 19px}
-  .ld-e1{animation:ld-orbit-e1 3.2s linear infinite;transform-origin:30px 30px}
-  .ld-e2{animation:ld-orbit-e2 3.2s linear infinite;transform-origin:30px 30px}
-  .ld-e3{animation:ld-orbit-e3 3.2s linear infinite;transform-origin:30px 30px}
-}
-
-/* ══ LAYOUT ══ */
+/* LAYOUT */
 #app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 #workspace{display:flex;flex:1;min-height:0;overflow:hidden}
 
-/* ══ NAVBAR ══ */
-#nav{
-  height:var(--nav-h);background:var(--bg1);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 14px;gap:10px;
-  flex-shrink:0;position:relative;z-index:300;
-}
-.logo-mark{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.logo-mark svg{width:38px;height:38px}
-.logo-text{margin-right:4px}
-.logo-name{font-family:var(--display);font-size:17px;font-weight:800;color:var(--text0);letter-spacing:-.3px;line-height:1}
-.logo-sub{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.6px}
-.nav-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
-.nav-home-link{
-  display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--r);
-  background:var(--bg3);border:1px solid var(--border);
-  color:var(--text1);font-size:11px;font-weight:600;font-family:var(--display);
-  transition:all var(--t);white-space:nowrap;flex-shrink:0;text-decoration:none;
-}
-.nav-home-link:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
-.nav-chips{display:flex;align-items:center;gap:6px;margin-left:auto;flex-wrap:wrap}
-.nchip{
-  display:flex;align-items:center;gap:5px;padding:4px 10px;
-  border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);
-  font-family:var(--mono);font-size:10px;
-}
-.nchip-lbl{color:var(--text3)}
-.nchip-val{color:var(--text1);font-weight:500}
-.status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s,box-shadow .3s;flex-shrink:0}
-.status-dot.running{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:sdPulse 1.5s ease infinite}
-.status-dot.done{background:var(--green);box-shadow:0 0 6px var(--green)}
-@keyframes sdPulse{0%,100%{opacity:1}50%{opacity:.3}}
-.theme-toggle{
-  display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--r);
-  background:var(--bg3);border:1px solid var(--border);
-  color:var(--text1);font-size:11px;font-weight:500;transition:all var(--t);
-}
-.theme-toggle:hover{border-color:var(--border2);color:var(--text0)}
+/* NAV */
+#nav{height:var(--nav-h);background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0;z-index:300}
+.logo-name{font-family:var(--display);font-size:16px;font-weight:800;letter-spacing:-.3px}
+.logo-sub{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px}
+.ndiv{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.nav-link{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);color:var(--text1);font-size:11px;font-weight:600;font-family:var(--display);transition:all var(--t);white-space:nowrap;cursor:pointer}
+.nav-link:hover{border-color:var(--accent);color:var(--accent);background:var(--ac-dim)}
+.nav-chips{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.nchip{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);font-family:var(--mono);font-size:10px}
+.nchip-l{color:var(--text3)}.nchip-v{color:var(--text1);font-weight:500}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--text3);transition:all .3s;flex-shrink:0}
+.sdot.run{background:var(--green);box-shadow:0 0 7px var(--green);animation:blink 1.4s ease infinite}
+.sdot.done{background:var(--accent);box-shadow:0 0 5px var(--accent)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.theme-btn{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);color:var(--text1);font-size:11px;transition:all var(--t)}
+.theme-btn:hover{border-color:var(--border2);color:var(--text0)}
 
-/* ══ LEFT SIDEBAR ══ */
-#sidebar{
-  width:var(--sb-w);min-width:260px;background:var(--bg1);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
-}
-/* MD-style sidebar tabs */
-.sb-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2)}
-.sb-tabs button{
-  flex:1;padding:10px 6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
-  background:transparent;color:var(--text2);border:none;border-bottom:2px solid transparent;
-  font-family:var(--display);transition:all var(--t);
-}
-.sb-tabs button.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg1)}
-.sb-tabs button:hover:not(.active){color:var(--text1)}
-.sb-scroll{flex:1;overflow-y:auto;padding:12px;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
-.sb-pane{display:none}.sb-pane.active{display:block}
-
-/* fields */
-.fgroup{margin-bottom:14px}
-.fgroup h4{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin:0 0 8px;font-weight:700;font-family:var(--display)}
-.flabel{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2);margin-bottom:4px}
-.flabel-val{font-family:var(--mono);color:var(--accent);font-size:11px}
-.inp,select.inp{
-  width:100%;padding:7px 9px;background:var(--bg3);border:1px solid var(--border);
-  border-radius:var(--r);color:var(--text0);outline:none;transition:border-color var(--t);
-}
-.inp:focus,select.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+/* SIDEBAR */
+#sidebar{width:var(--sb-w);min-width:270px;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sb-tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border)}
+.sb-tabs button{flex:1;padding:9px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:transparent;color:var(--text2);border:none;border-bottom:2px solid transparent;font-family:var(--display);transition:all var(--t)}
+.sb-tabs button.act{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg1)}
+.sb-tabs button:hover:not(.act){color:var(--text1)}
+.sb-scroll{flex:1;overflow-y:auto;padding:12px;scrollbar-width:thin;min-height:0}
+.sb-pane{display:none}.sb-pane.act{display:block}
+.fgroup{margin-bottom:13px}
+.fgroup h4{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin:0 0 7px;font-weight:700;font-family:var(--display)}
+.flabel{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2);margin-bottom:3px}
+.flabel-v{font-family:var(--mono);color:var(--accent);font-size:11px}
+.inp,select.inp{width:100%;padding:6px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text0);outline:none;transition:border-color var(--t)}
+.inp:focus,select.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--ac-dim)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
 .range{width:100%;accent-color:var(--accent)}
-
-/* buttons */
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  padding:7px 12px;border-radius:var(--r);font-size:11px;font-weight:600;
-  border:1px solid var(--border);background:var(--bg3);color:var(--text0);
-  transition:all var(--t);font-family:var(--display);
-}
-.btn:hover{border-color:var(--border2);color:var(--text0)}
-.btn-primary{background:linear-gradient(135deg,var(--accent),#2a8fd9);border-color:transparent;color:#fff}
-.btn-primary:hover{filter:brightness(1.08);border-color:transparent}
-.btn-green{background:rgba(45,217,160,.1);border:1px solid rgba(45,217,160,.25);color:var(--green)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 11px;border-radius:var(--r);font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--bg3);color:var(--text0);transition:all var(--t);font-family:var(--display)}
+.btn:hover{border-color:var(--border2)}
+.btn-primary{background:linear-gradient(135deg,#3d9fff,#2278cc);border-color:transparent;color:#fff}
+.btn-primary:hover{filter:brightness(1.1);border-color:transparent}
+.btn-green{background:var(--gn-dim);border-color:rgba(45,217,160,.25);color:var(--green)}
 .btn-green:hover{background:rgba(45,217,160,.2)}
-.btn-sm{padding:5px 8px;font-size:11px}
+.btn-amber{background:var(--am-dim);border-color:rgba(245,166,35,.25);color:var(--amber)}
+.btn-amber:hover{background:rgba(245,166,35,.18)}
+.btn-rose{background:var(--ro-dim);border-color:rgba(240,96,128,.25);color:var(--rose)}
+.btn-violet{background:var(--vi-dim);border-color:rgba(157,127,255,.25);color:var(--violet)}
+.btn-sm{padding:5px 8px;font-size:10.5px}
 .btn-block{width:100%}
 
-/* structure sub-tabs */
-.pitnav{display:flex;gap:4px;margin-bottom:10px}
-.pitnav button{flex:1;padding:6px;font-size:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:var(--display);font-weight:600;transition:all var(--t)}
-.pitnav button.active{background:var(--bg4);color:var(--accent);border-color:var(--border2)}
-.pitpane{display:none}.pitpane.active{display:block}
+/* IMPORT CARDS */
+.import-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.imp-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px;cursor:pointer;transition:all var(--t);text-align:center;position:relative}
+.imp-card:hover{border-color:var(--border2);background:var(--bg4)}
+.imp-card.active{border-color:var(--accent);background:var(--ac-dim)}
+.imp-card .ic{font-size:22px;margin-bottom:4px}
+.imp-card .il{font-size:11px;font-weight:600;color:var(--text1);font-family:var(--display)}
+.imp-card .is{font-size:10px;color:var(--text2);margin-top:2px}
+.imp-card .ext-badge{position:absolute;top:5px;right:5px;font-size:8px;padding:1px 5px;border-radius:8px;background:var(--am-dim);color:var(--amber);border:1px solid rgba(245,166,35,.2);font-family:var(--mono)}
+.imp-pane{display:none}.imp-pane.act{display:block}
 
-/* calc LED badge */
-.calc-led{
-  display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;
-  font-size:10px;font-weight:700;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;
-}
-.calc-led.ready{background:var(--bg4);color:var(--text2);border:1px solid var(--border)}
-.calc-led.running{background:rgba(45,217,160,.15);color:var(--green);border:1px solid var(--green);animation:pulse 1.2s ease infinite}
-.calc-led.done{background:rgba(61,159,255,.12);color:var(--accent);border:1px solid var(--accent)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+/* DROPZONE */
+.dropzone{border:2px dashed var(--border2);border-radius:var(--r2);padding:18px;text-align:center;color:var(--text2);font-size:11px;cursor:pointer;transition:all var(--t);position:relative;overflow:hidden}
+.dropzone:hover,.dropzone.drag-over{border-color:var(--accent);background:var(--ac-dim);color:var(--text0)}
+.dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.dz-icon{font-size:22px;margin-bottom:5px}
+.dz-main{font-weight:600;font-family:var(--display);font-size:12px;margin-bottom:2px}
 
-#bandsPanel{display:none;margin-top:8px;padding:10px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--border)}
-#bandsPanel.visible{display:block}
+/* SAVED MATERIALS */
+.saved-list{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;max-height:240px;overflow-y:auto}
+.saved-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--t)}
+.saved-item:last-child{border-bottom:none}
+.saved-item:hover{background:var(--bg3)}
+.saved-item.active{background:var(--ac-dim);border-left:2px solid var(--accent)}
+.saved-formula{font-family:var(--display);font-weight:700;color:var(--text0);font-size:12px}
+.saved-meta{font-family:var(--mono);font-size:10px;color:var(--text2)}
+.saved-del{opacity:0;font-size:14px;color:var(--rose);padding:0 4px;transition:opacity var(--t)}
+.saved-item:hover .saved-del{opacity:1}
+.saved-empty{padding:20px;text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono)}
 
-/* HPC box */
-.hpc-box{padding:10px;background:var(--bg2);border-radius:var(--r);border:1px dashed var(--border2);margin-bottom:10px}
-.hpc-box h4{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin:0 0 8px;font-weight:700;font-family:var(--display)}
+/* MP results */
+.mp-result-list{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px;max-height:280px;overflow-y:auto}
+.mp-entry{padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--t);display:flex;justify-content:space-between;align-items:center}
+.mp-entry:last-child{border-bottom:none}
+.mp-entry:hover{background:var(--bg3)}
+.mp-entry.sel{background:var(--ac-dim);border-left:2px solid var(--accent)}
+.mp-formula{font-family:var(--display);font-weight:700;color:var(--text0);font-size:12px}
+.mp-meta{font-family:var(--mono);font-size:10px;color:var(--text2)}
+.mp-badge{font-size:9px;padding:2px 6px;border-radius:10px;font-family:var(--mono);font-weight:600}
+.bg-metal{background:var(--am-dim);color:var(--amber);border:1px solid rgba(245,166,35,.2)}
+.bg-semi{background:var(--gn-dim);color:var(--green);border:1px solid rgba(45,217,160,.2)}
+.bg-insul{background:var(--vi-dim);color:var(--violet);border:1px solid rgba(157,127,255,.2)}
 
-/* tip tooltip */
-.tip-b{
-  width:13px;height:13px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);
-  color:var(--text3);font-size:8px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;
-  cursor:help;position:relative;flex-shrink:0;margin-left:4px;
-}
-.tip-b .tip{
-  position:absolute;left:50%;bottom:calc(100% + 7px);transform:translateX(-50%) translateY(3px);
-  background:var(--bg0);border:1px solid var(--border2);border-radius:var(--r);
-  padding:8px 10px;font-size:10.5px;color:var(--text1);line-height:1.5;
-  width:200px;z-index:400;opacity:0;pointer-events:none;transition:all .14s;
-  box-shadow:var(--shadow);font-weight:400;text-align:left;white-space:normal;
-  text-transform:none;letter-spacing:0;font-family:var(--sans);
-}
+/* CrystalForge builder */
+.cf-lbl{font-size:10px;color:var(--text3);margin-bottom:2px;font-family:var(--mono)}
+.cf-inp{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 7px;color:var(--text0);font-family:var(--mono);font-size:11px;width:100%;outline:none;transition:border-color var(--t)}
+.cf-inp:focus{border-color:var(--accent)}
+
+/* Atom table */
+#atomTable{font-size:11px;width:100%;border-collapse:collapse;font-family:var(--mono)}
+#atomTable th{padding:4px 6px;background:var(--bg3);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.04em;border:1px solid var(--border);font-family:var(--display);font-weight:700}
+#atomTable td{padding:2px;border:1px solid var(--border)}
+#atomTable td input{background:transparent;border:none;outline:none;color:var(--text0);width:100%;padding:3px 5px;font-family:var(--mono);font-size:11px}
+#atomTable td input:focus{background:var(--ac-dim)}
+#atomTable tr:hover td{background:var(--bg3)}
+
+/* Tooltips */
+.tip-b{width:13px;height:13px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);font-size:8px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:help;position:relative;flex-shrink:0;margin-left:3px;vertical-align:middle}
+.tip-b .tip{position:absolute;left:50%;bottom:calc(100% + 7px);transform:translateX(-50%) translateY(3px);background:var(--bg0);border:1px solid var(--border2);border-radius:var(--r);padding:7px 9px;font-size:10.5px;color:var(--text1);line-height:1.5;width:190px;z-index:500;opacity:0;pointer-events:none;transition:all .12s;box-shadow:var(--sh);font-weight:400;text-align:left;white-space:normal;text-transform:none;letter-spacing:0;font-family:var(--sans)}
 .tip-b:hover .tip{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ══ CENTER ══ */
+/* Calc LED */
+.calc-led{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;border:1px solid transparent}
+.calc-led.ready{background:var(--bg4);color:var(--text2);border-color:var(--border)}
+.calc-led.running{background:var(--gn-dim);color:var(--green);border-color:rgba(45,217,160,.3);animation:blink 1.2s ease infinite}
+.calc-led.done{background:var(--ac-dim);color:var(--accent);border-color:rgba(61,159,255,.3)}
+
+/* HPC Box — styled to match screenshot */
+.hpc-box{margin-top:14px;border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden}
+.hpc-head{padding:8px 12px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.hpc-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);font-family:var(--display);font-weight:700}
+.hpc-body{padding:12px}
+.hpc-field{margin-bottom:10px}
+.hpc-field:last-child{margin-bottom:0}
+.hpc-label{font-size:11px;color:var(--text2);margin-bottom:4px}
+.hpc-actions{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.exec-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:var(--r);font-size:11px;font-weight:700;font-family:var(--display);cursor:pointer;transition:all var(--t);border:none}
+.exec-btn-gen{background:linear-gradient(135deg,#3d9fff,#2278cc);color:#fff}
+.exec-btn-gen:hover{filter:brightness(1.1)}
+.exec-btn-run{background:rgba(45,217,160,.15);border:1px solid rgba(45,217,160,.35);color:var(--green)}
+.exec-btn-run:hover{background:rgba(45,217,160,.25)}
+
+/* Spinner */
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Notice */
+.notice{padding:8px 10px;border-radius:var(--r);font-size:11px;line-height:1.5;margin-bottom:10px}
+.notice-info{background:var(--ac-dim);border:1px solid rgba(61,159,255,.2);color:var(--text1)}
+.notice-warn{background:var(--am-dim);border:1px solid rgba(245,166,35,.2);color:var(--amber)}
+.notice-success{background:var(--gn-dim);border:1px solid rgba(45,217,160,.2);color:var(--green)}
+
+/* CENTER */
 #center{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg0)}
-#toolbar{
-  display:flex;align-items:center;gap:6px;padding:5px 10px;
-  background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0;
-}
-.tool-group{display:flex;gap:4px;align-items:center}
-.tool-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-right:2px}
-.vt-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;margin:0 4px}
-.vt-btn{
-  padding:4px 9px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);
-  color:var(--text2);font-size:10.5px;font-weight:600;font-family:var(--display);
-  transition:all var(--t);cursor:pointer;white-space:nowrap;
-}
-.vt-btn:hover{border-color:var(--border2);color:var(--text0)}
-.vt-btn.active{background:var(--accent-glow);border-color:rgba(61,159,255,.4);color:var(--accent)}
+#toolbar{display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0}
+.tgrp{display:flex;gap:3px;align-items:center}
+.tlbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-family:var(--mono);margin-right:1px}
+.tsep{width:1px;height:16px;background:var(--border);flex-shrink:0;margin:0 3px}
+.tvb{padding:4px 8px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:10.5px;font-weight:600;font-family:var(--display);transition:all var(--t);white-space:nowrap;cursor:pointer}
+.tvb:hover{border-color:var(--border2);color:var(--text0)}
+.tvb.act{background:var(--ac-dim);border-color:rgba(61,159,255,.4);color:var(--accent)}
+.sc-inp{width:36px;padding:3px 5px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text0);font-family:var(--mono);font-size:11px;text-align:center;outline:none}
+.sc-inp:focus{border-color:var(--accent)}
 
-#viewer-wrap{flex:1;min-height:220px;position:relative;background:#050810}
-#dft-3dviewer{width:100%;height:100%;min-height:280px}
-.vbtn{
-  position:absolute;top:10px;right:10px;z-index:20;display:flex;gap:6px;
-}
-.vbtn button{
-  background:rgba(13,21,32,.92);border:1px solid var(--border);color:var(--text1);
-  padding:4px 8px;border-radius:5px;font-size:11px;font-family:var(--mono);transition:all var(--t);
-}
-.vbtn button:hover{border-color:var(--accent);color:var(--accent)}
+/* VIEWER — 3Dmol */
+#viewer-wrap{flex:1;min-height:200px;position:relative;background:#030508}
+#dft-3dviewer{width:100%;height:100%;position:absolute;inset:0}
+.vcorner{position:absolute;top:10px;right:10px;z-index:20;display:flex;gap:5px}
+.vcbtn{background:rgba(6,9,15,.88);border:1px solid var(--border);color:var(--text1);padding:3px 8px;border-radius:5px;font-size:11px;font-family:var(--mono);transition:all var(--t);cursor:pointer}
+.vcbtn:hover,.vcbtn.act{border-color:var(--accent);color:var(--accent)}
+.vinfo{position:absolute;bottom:10px;left:10px;z-index:20;background:rgba(6,9,15,.82);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;font-family:var(--mono);font-size:10px;color:var(--text2);pointer-events:none}
+.vinfo span{color:var(--text0)}
 
-/* stats strip */
-.stats-strip{
-  display:flex;flex-wrap:wrap;gap:0;
-  background:var(--bg1);border-top:1px solid var(--border);font-size:11px;font-family:var(--mono);flex-shrink:0;
-}
-.ss-cell{padding:6px 14px;border-right:1px solid var(--border)}
-.ss-cell:last-child{border-right:none}
-.ss-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:1px}
-.ss-val{color:var(--green);font-weight:600}
+/* ISOSURFACE PANEL */
+#isoPanel{position:absolute;bottom:10px;right:10px;z-index:20;width:280px;background:rgba(6,9,15,.92);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(6px)}
+#isoPanelHead{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--border);background:rgba(22,32,48,.6)}
+.iso-file-btn{font-size:10px;color:var(--accent);cursor:pointer;padding:3px 8px;border-radius:5px;background:var(--ac-dim);border:1px solid rgba(61,159,255,.25);font-family:var(--display);font-weight:600;transition:all var(--t)}
+.iso-file-btn:hover{background:var(--ac-med)}
+#isoPanelBody{padding:8px 10px;display:flex;flex-direction:column;gap:7px}
+.iso-row{display:flex;align-items:center;gap:7px}
+.iso-lbl{font-size:10px;color:var(--text2);font-family:var(--mono);width:46px;flex-shrink:0}
+.iso-val{font-size:10px;color:var(--accent);font-family:var(--mono);width:34px;text-align:right;flex-shrink:0}
+.iso-color-btn{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all var(--t);flex-shrink:0}
+.iso-color-btn.act{border-color:#fff;transform:scale(1.25)}
+.iso-color-btn:hover{transform:scale(1.15)}
 
-/* ══ RIGHT PANEL ══ */
-#rpanel{
-  width:var(--rp-w);min-width:280px;background:var(--bg1);border-left:1px solid var(--border);
-  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
-}
-.rp-tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--bg2)}
-.rp-tabs button{
-  padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
-  background:transparent;color:var(--text3);border:none;border-bottom:2px solid transparent;
-  transition:all var(--t);font-family:var(--display);cursor:pointer;
-}
-.rp-tabs button.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg1)}
-.rp-tabs button:hover:not(.active){color:var(--text1)}
+/* STATS STRIP */
+.stats-strip{display:flex;flex-wrap:wrap;background:var(--bg1);border-top:1px solid var(--border);font-family:var(--mono);flex-shrink:0}
+.ss{padding:5px 12px;border-right:1px solid var(--border)}
+.ss-l{font-size:8px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:1px}
+.ss-v{color:var(--green);font-weight:600;font-size:11px}
+
+/* RIGHT PANEL */
+#rpanel{width:var(--rp-w);min-width:270px;background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.rp-tabs{display:flex;flex-wrap:nowrap;border-bottom:1px solid var(--border);background:var(--bg2);overflow:hidden}
+.rp-tabs button{flex:1;padding:7px 4px;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:transparent;color:var(--text3);border:none;border-bottom:2px solid transparent;transition:all var(--t);font-family:var(--display);cursor:pointer;white-space:nowrap;min-width:0}
+.rp-tabs button.act{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg1)}
+.rp-tabs button:hover:not(.act){color:var(--text1)}
 .rp-body{flex:1;display:flex;flex-direction:column;min-height:0}
 .rpane{display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden}
-.rpane.active{display:flex}
-.plot-box{flex:1;min-height:180px;position:relative;background:var(--bg0)}
-#plotConvergence,#plotBands,#plotDos{width:100%;height:100%;min-height:180px}
+.rpane.act{display:flex}
+.plot-box{flex:1;min-height:0;background:var(--bg0);display:flex;flex-direction:column}
+#plotC,#plotB,#plotD{width:100%;flex:1;min-height:0}
+.prop-scroll{flex:1;overflow-y:auto;padding:10px}
+.prop-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:11px;margin-bottom:12px}
+.prop-card{background:var(--bg3);padding:7px 9px;border-radius:6px;border:1px solid var(--border)}
+.prop-k{color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:.3px;font-family:var(--display)}
+.prop-v{font-family:var(--mono);color:var(--green);margin-top:2px;font-size:12px}
+.sec-head{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);font-family:var(--display);font-weight:700;margin:0 0 7px}
 
-.prop-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;font-size:11px;overflow-y:auto}
-.prop-grid div{background:var(--bg3);padding:8px;border-radius:6px;border:1px solid var(--border)}
-.prop-grid .k{color:var(--text3);font-size:9.5px;text-transform:uppercase;letter-spacing:.3px}
-.prop-grid .v{font-family:var(--mono);color:var(--green);margin-top:2px}
+/* INPUT PANE */
+.code-tabs{display:flex;gap:4px;padding:7px 10px 0;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.code-tab{padding:5px 10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:600;font-family:var(--display);background:var(--bg3);border:1px solid var(--border);border-bottom:none;color:var(--text2);transition:all var(--t);cursor:pointer}
+.code-tab.act{background:var(--bg0);color:var(--accent);border-color:var(--border2);position:relative;top:1px}
+.code-tab:hover:not(.act){color:var(--text1)}
+#inputEdit{flex:1;margin:0;padding:11px 13px;background:#050910;border:none;font-family:var(--mono);font-size:11px;line-height:1.6;color:#abb2bf;resize:none;outline:none;overflow:auto;white-space:pre;tab-size:2}
+.input-bar{display:flex;gap:6px;padding:6px 10px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0}
 
-#pseudoTableWrap{overflow:auto;padding:10px;max-height:100%}
-#pseudoTable{font-size:10px;width:100%;border-collapse:collapse;font-family:var(--mono)}
-#pseudoTable th,#pseudoTable td{padding:6px 8px;border:1px solid var(--border);text-align:left}
-#pseudoTable th{background:var(--bg3);color:var(--text2)}
+/* CONSOLE */
+.con-head{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:9px;text-transform:uppercase;color:var(--text3);letter-spacing:.5px;font-family:var(--mono);flex-shrink:0}
+#consoleOut{flex:1;padding:8px 10px;font-family:var(--mono);font-size:10px;line-height:1.6;background:#040710;color:#7ee787;overflow:auto;white-space:pre-wrap}
 
-#inputHighlight{
-  flex:1;margin:10px;padding:12px;background:#06090f;border:1px solid var(--border);border-radius:var(--r);
-  font-family:var(--mono);font-size:11px;line-height:1.5;white-space:pre-wrap;overflow:auto;color:#abb2bf;
-}
-#inputHighlight .kw{color:#c678dd}
-#inputHighlight .str{color:#98c379}
-#inputHighlight .num{color:#d19a66}
-#inputHighlight .com{color:#5c6370;font-style:italic}
+/* MODAL OVERLAY */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{background:var(--bg1);border:1px solid var(--border2);border-radius:14px;width:min(820px,92vw);height:min(600px,85vh);display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.7);transform:scale(.96);transition:transform .2s}
+.modal-overlay.open .modal-box{transform:scale(1)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-title{font-family:var(--display);font-size:15px;font-weight:800;color:var(--text0)}
+.modal-close{width:28px;height:28px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--text1);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--t)}
+.modal-close:hover{background:var(--ro-dim);border-color:rgba(240,96,128,.3);color:var(--rose)}
+.modal-body{flex:1;overflow:hidden;border-radius:0 0 14px 14px}
+.modal-iframe{width:100%;height:100%;border:none;border-radius:0 0 14px 14px;background:var(--bg0)}
 
-/* console */
-.console-head{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:6px 12px;background:var(--bg2);border-bottom:1px solid var(--border);
-  font-size:9px;text-transform:uppercase;color:var(--text3);letter-spacing:.5px;font-family:var(--mono);
-}
-#consoleOut{
-  flex:1;padding:10px 12px;font-family:var(--mono);font-size:10px;line-height:1.6;
-  background:#070a10;color:#7ee787;overflow:auto;white-space:pre-wrap;
-  scrollbar-width:thin;scrollbar-color:var(--bg5) transparent;
+/* atom orbit anims */
+@keyframes o1{from{transform:rotate(0) translate(40px,0) rotate(0)}to{transform:rotate(360deg) translate(40px,0) rotate(-360deg)}}
+@keyframes o2{from{transform:rotate(120deg) translate(40px,0) rotate(-120deg)}to{transform:rotate(480deg) translate(40px,0) rotate(-480deg)}}
+@keyframes o3{from{transform:rotate(240deg) translate(40px,0) rotate(-240deg)}to{transform:rotate(600deg) translate(40px,0) rotate(-600deg)}}
+@media(prefers-reduced-motion:no-preference){
+  .ae1{animation:o1 3s linear infinite;transform-origin:17px 17px}
+  .ae2{animation:o2 3s linear infinite;transform-origin:17px 17px}
+  .ae3{animation:o3 3s linear infinite;transform-origin:17px 17px}
 }
 
 /* responsive */
-@media(max-width:1100px){ #rpanel{display:none!important} #sidebar{max-width:min(100%,420px)}}
-@media(max-width:900px){ #sidebar{width:100%;max-width:100%;min-width:0} #workspace{flex-direction:column} #center{min-height:40vh}}
-@media(max-width:600px){ .sb-tabs button{font-size:8px;padding:8px 2px}}
+@media(max-width:1150px){#rpanel{display:none!important}}
+@media(max-width:900px){#sidebar{width:100%;max-width:100%;min-width:0}#workspace{flex-direction:column}#center{min-height:40vh}}
+
+/* ── Calc type trigger button ── */
+.calc-type-trigger{
+  width:100%;display:flex;align-items:center;gap:8px;
+  padding:7px 10px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text0);cursor:pointer;
+  font-family:var(--sans);font-size:12px;text-align:left;
+  transition:all var(--t);position:relative;
+}
+.calc-type-trigger:hover{border-color:var(--accent);background:var(--ac-dim);}
+.calc-type-trigger:hover .calc-type-arrow{color:var(--accent);}
+#calcTypeIcon{font-size:14px;flex-shrink:0}
+#calcTypeLabel{flex:1;font-weight:500}
+.calc-type-arrow{font-size:14px;color:var(--text3);transform:rotate(180deg);display:inline-block;transition:transform var(--t);flex-shrink:0}
+
+/* ── Fan overlay ── */
+.fan-overlay{
+  position:fixed;inset:0;z-index:2000;
+  background:rgba(4,8,18,0.78);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .22s ease;
+  backdrop-filter:blur(3px);
+}
+.fan-overlay.open{opacity:1;pointer-events:all;}
+
+.fan-menu{
+  position:relative;
+  width:min(520px,90vw);height:min(520px,90vw);
+  transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.fan-overlay.open .fan-menu{transform:scale(1);}
+
+.fan-svg{width:100%;height:100%;overflow:visible}
+
+/* fan segment base styles (applied via JS) */
+.fan-seg{cursor:pointer;transition:filter .15s,transform .15s;}
+.fan-seg:hover .fan-seg-path{filter:brightness(1.12);}
+
+/* tooltip */
+.fan-tooltip{
+  position:absolute;bottom:-44px;left:50%;transform:translateX(-50%);
+  background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);
+  padding:5px 12px;font-size:11px;color:var(--text0);font-family:var(--display);
+  font-weight:600;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .12s;
+}
+.fan-tooltip.show{opacity:1;}
+
+/* close / selected indicator */
+.fan-close{
+  position:absolute;bottom:-80px;right:0;
+  display:flex;align-items:center;gap:7px;
+  padding:8px 16px;border-radius:20px;
+  background:var(--rose);border:none;color:#fff;
+  font-family:var(--display);font-size:12px;font-weight:700;
+  cursor:pointer;transition:all var(--t);
+}
+.fan-close:hover{filter:brightness(1.12);}
+
 </style>
 </head>
 <body>
-
-<!-- ══ LOADING ══ -->
-<div id="loading" onclick="this.classList.add('gone')">
-  <div class="ld-wave">
-    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-      <defs>
-        <radialGradient id="ld-nucl" cx="42%" cy="38%" r="58%">
-          <stop offset="0%" stop-color="#FFB060"/>
-          <stop offset="55%" stop-color="#E85C18"/>
-          <stop offset="100%" stop-color="#9A2E00"/>
-        </radialGradient>
-        <radialGradient id="ld-elec" cx="35%" cy="32%" r="65%">
-          <stop offset="0%" stop-color="#80F0FF"/>
-          <stop offset="100%" stop-color="#1A9FCC"/>
-        </radialGradient>
-        <filter id="ld-ng"><feGaussianBlur stdDeviation="3"/></filter>
-        <filter id="ld-eg"><feGaussianBlur stdDeviation="2"/></filter>
-      </defs>
-      <circle cx="30" cy="30" r="14" fill="#E8581A" opacity="0.15" filter="url(#ld-ng)"/>
-      <ellipse cx="30" cy="30" rx="27" ry="8" fill="none" stroke="#00CCFF" stroke-width="1.4" opacity="0.25" transform="rotate(-8 30 30)"/>
-      <ellipse cx="30" cy="30" rx="27" ry="8" fill="none" stroke="#00CCFF" stroke-width="0.8" opacity="0.9" transform="rotate(-8 30 30)"/>
-      <ellipse cx="30" cy="30" rx="27" ry="8" fill="none" stroke="#3A8FFF" stroke-width="1.4" opacity="0.25" transform="rotate(52 30 30)"/>
-      <ellipse cx="30" cy="30" rx="27" ry="8" fill="none" stroke="#3A8FFF" stroke-width="0.8" opacity="0.9" transform="rotate(52 30 30)"/>
-      <ellipse cx="30" cy="30" rx="27" ry="8" fill="none" stroke="#00CCFF" stroke-width="1.4" opacity="0.25" transform="rotate(112 30 30)"/>
-      <ellipse cx="30" cy="30" rx="27" ry="8" fill="none" stroke="#00CCFF" stroke-width="0.8" opacity="0.9" transform="rotate(112 30 30)"/>
-      <circle cx="30" cy="30" r="7" fill="url(#ld-nucl)"/>
-      <circle cx="27.5" cy="27.8" r="2.2" fill="#FFCC88" opacity="0.45"/>
-      <circle class="ld-e1" cx="30" cy="30" r="5" fill="#00CCFF" opacity="0.2" filter="url(#ld-eg)"/>
-      <circle class="ld-e2" cx="30" cy="30" r="5" fill="#3A8FFF" opacity="0.2" filter="url(#ld-eg)"/>
-      <circle class="ld-e3" cx="30" cy="30" r="4" fill="#00CCFF" opacity="0.2" filter="url(#ld-eg)"/>
-      <circle class="ld-e1" cx="30" cy="30" r="3" fill="url(#ld-elec)"/>
-      <circle class="ld-e2" cx="30" cy="30" r="3" fill="url(#ld-elec)"/>
-      <circle class="ld-e3" cx="30" cy="30" r="2.4" fill="#60E0FF" opacity="0.9"/>
-    </svg>
-  </div>
-  <div class="ld-title">DFT <span>Simulator</span></div>
-  <div class="ld-sub">Initializing plane-wave DFT engine…</div>
-  <div class="ld-bar"><div class="ld-prog"></div></div>
-  <div style="font-size:9px;color:var(--text3);font-family:var(--mono);opacity:.5;margin-top:4px">click to skip</div>
-</div>
-
 <div id="app">
 
-<!-- ══ NAVBAR ══ -->
+<!-- NAV -->
 <header id="nav">
-  <!-- Atom logo -->
-  <div class="logo-mark">
-    <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="nucl" cx="42%" cy="38%" r="58%">
-          <stop offset="0%" stop-color="#FFB060"/>
-          <stop offset="55%" stop-color="#E85C18"/>
-          <stop offset="100%" stop-color="#9A2E00"/>
-        </radialGradient>
-        <radialGradient id="elec" cx="35%" cy="32%" r="65%">
-          <stop offset="0%" stop-color="#80F0FF"/>
-          <stop offset="100%" stop-color="#1A9FCC"/>
-        </radialGradient>
-        <filter id="ng" x="-80%" y="-80%" width="360%" height="360%"><feGaussianBlur stdDeviation="2.2"/></filter>
-        <filter id="eg" x="-100%" y="-100%" width="400%" height="400%"><feGaussianBlur stdDeviation="1.4"/></filter>
-      </defs>
-      <circle cx="19" cy="19" r="9" fill="#E8581A" opacity="0.2" filter="url(#ng)"/>
-      <ellipse cx="19" cy="19" rx="17.5" ry="5" fill="none" stroke="#00CCFF" stroke-width="0.9" opacity="0.22" transform="rotate(-8 19 19)"/>
-      <ellipse cx="19" cy="19" rx="17.5" ry="5" fill="none" stroke="#00CCFF" stroke-width="0.55" opacity="0.9" transform="rotate(-8 19 19)"/>
-      <ellipse cx="19" cy="19" rx="17.5" ry="5" fill="none" stroke="#3A8FFF" stroke-width="0.9" opacity="0.22" transform="rotate(52 19 19)"/>
-      <ellipse cx="19" cy="19" rx="17.5" ry="5" fill="none" stroke="#3A8FFF" stroke-width="0.55" opacity="0.9" transform="rotate(52 19 19)"/>
-      <ellipse cx="19" cy="19" rx="17.5" ry="5" fill="none" stroke="#00CCFF" stroke-width="0.9" opacity="0.22" transform="rotate(112 19 19)"/>
-      <ellipse cx="19" cy="19" rx="17.5" ry="5" fill="none" stroke="#00CCFF" stroke-width="0.55" opacity="0.9" transform="rotate(112 19 19)"/>
-      <circle cx="19" cy="19" r="4.2" fill="url(#nucl)"/>
-      <circle cx="17.4" cy="17.6" r="1.4" fill="#FFCC88" opacity="0.45"/>
-      <circle class="atom-e1" cx="19" cy="19" r="3.2" fill="#00CCFF" opacity="0.25" filter="url(#eg)"/>
-      <circle class="atom-e2" cx="19" cy="19" r="3.2" fill="#3A8FFF" opacity="0.25" filter="url(#eg)"/>
-      <circle class="atom-e3" cx="19" cy="19" r="2.4" fill="#00CCFF" opacity="0.22" filter="url(#eg)"/>
-      <circle class="atom-e1" cx="19" cy="19" r="1.8" fill="url(#elec)"/>
-      <circle class="atom-e2" cx="19" cy="19" r="1.8" fill="url(#elec)"/>
-      <circle class="atom-e3" cx="19" cy="19" r="1.4" fill="#60E0FF" opacity="0.9"/>
-    </svg>
-  </div>
-  <div class="logo-text">
+  <svg viewBox="0 0 34 34" fill="none" width="34" height="34" style="flex-shrink:0">
+    <defs>
+      <radialGradient id="NG" cx="42%" cy="38%" r="58%"><stop offset="0%" stop-color="#FFB060"/><stop offset="55%" stop-color="#E85C18"/><stop offset="100%" stop-color="#9A2E00"/></radialGradient>
+      <radialGradient id="EG" cx="35%" cy="32%" r="65%"><stop offset="0%" stop-color="#80F0FF"/><stop offset="100%" stop-color="#1A9FCC"/></radialGradient>
+      <filter id="nf"><feGaussianBlur stdDeviation="2"/></filter>
+      <filter id="ef"><feGaussianBlur stdDeviation="1.2"/></filter>
+    </defs>
+    <circle cx="17" cy="17" r="8" fill="#E8581A" opacity=".18" filter="url(#nf)"/>
+    <ellipse cx="17" cy="17" rx="16" ry="4.5" fill="none" stroke="#00CCFF" stroke-width=".7" opacity=".85" transform="rotate(-8 17 17)"/>
+    <ellipse cx="17" cy="17" rx="16" ry="4.5" fill="none" stroke="#3A8FFF" stroke-width=".7" opacity=".85" transform="rotate(52 17 17)"/>
+    <ellipse cx="17" cy="17" rx="16" ry="4.5" fill="none" stroke="#00CCFF" stroke-width=".7" opacity=".85" transform="rotate(112 17 17)"/>
+    <circle cx="17" cy="17" r="4" fill="url(#NG)"/>
+    <circle class="ae1" cx="17" cy="17" r="2.8" fill="#00CCFF" opacity=".2" filter="url(#ef)"/>
+    <circle class="ae2" cx="17" cy="17" r="2.8" fill="#3A8FFF" opacity=".2" filter="url(#ef)"/>
+    <circle class="ae1" cx="17" cy="17" r="1.5" fill="url(#EG)"/>
+    <circle class="ae2" cx="17" cy="17" r="1.5" fill="url(#EG)"/>
+    <circle class="ae3" cx="17" cy="17" r="1.3" fill="#60E0FF" opacity=".9"/>
+  </svg>
+  <div style="margin-left:5px">
     <div class="logo-name">SMAD <span style="color:var(--accent)">DFT</span></div>
     <div class="logo-sub">Density Functional Theory</div>
   </div>
-  <div class="nav-divider"></div>
-  <a href="/" class="nav-home-link">⌂ SMAD Home</a>
-  <div class="nav-divider"></div>
+  <div class="ndiv"></div>
+  <div class="nav-link" onclick="location.href='/'">⌂ SMAD Home</div>
+  <div class="ndiv"></div>
   <div class="nav-chips">
-    <div class="nchip">
-      <div class="status-dot" id="statusDot"></div>
-      <span class="nchip-val" id="statusLbl">Ready</span>
-    </div>
-    <div class="nchip">
-      <span class="nchip-lbl">Preset</span>
-      <span class="nchip-val" id="navPreset">cu_fcc</span>
-    </div>
-    <div class="nchip">
-      <span class="nchip-lbl">Ecut</span>
-      <span class="nchip-val" id="navEcut">60 Ry</span>
-    </div>
+    <div class="nchip"><div class="sdot" id="sDot"></div><span class="nchip-v" id="sLbl">Ready</span></div>
+    <div class="nchip"><span class="nchip-l">Structure</span><span class="nchip-v" id="navStruct">Cu</span></div>
+    <div class="nchip"><span class="nchip-l">Code</span><span class="nchip-v" id="navCode">QE</span></div>
+    <div class="nchip"><span class="nchip-l">Ecut</span><span class="nchip-v" id="navEcut">60 Ry</span></div>
   </div>
-  <div class="nav-divider"></div>
-  <button class="theme-toggle" id="themeBtn" type="button">
-    <span id="themeIco">🌙</span><span id="themeLbl">Dark</span>
-  </button>
+  <div class="ndiv"></div>
+  <button class="theme-btn" id="themeBtn"><span id="thIco">🌙</span><span id="thLbl">Dark</span></button>
 </header>
 
-<!-- ══ WORKSPACE ══ -->
 <div id="workspace">
 
-<!-- ══ LEFT SIDEBAR ══ -->
+<!-- ══ SIDEBAR ══ -->
 <aside id="sidebar">
-  <div class="sb-tabs" role="tablist">
-    <button type="button" class="active" data-sbtab="code">Input</button>
-    <button type="button" data-sbtab="elec">Electronic</button>
-    <button type="button" data-sbtab="struct">Structure</button>
+  <div class="sb-tabs">
+    <button class="act" data-sb="struct">Structure</button>
+    <button data-sb="elec">Electronic</button>
+    <button data-sb="calc">Calculation</button>
   </div>
   <div class="sb-scroll">
 
-    <!-- CODE & CALC PANE -->
-    <div class="sb-pane active" id="pane-code">
+    <!-- STRUCTURE PANE -->
+    <div class="sb-pane act" id="pane-struct">
       <div class="fgroup">
-        <h4>DFT Engine</h4>
-        <label class="flabel"><span>Code</span></label>
-        <select id="dftCode" class="inp">
-          <option value="qe" selected>Quantum ESPRESSO</option>
-          <option value="vasp">VASP</option>
-          <option value="abinit">ABINIT</option>
-          <option value="siesta">SIESTA</option>
-        </select>
-      </div>
-      <div class="fgroup">
-        <h4>Calculation</h4>
-        <label class="flabel"><span>Type</span></label>
-        <select id="calcType" class="inp">
-          <option value="scf">SCF (self-consistent)</option>
-          <option value="relax">Relax (ions)</option>
-          <option value="vc-relax">VC-relax</option>
-          <option value="bands">Band structure</option>
-          <option value="nscf">NSCF (DOS/bands)</option>
-          <option value="dos">Density of states</option>
-        </select>
-      </div>
-      <div class="fgroup">
-        <label class="flabel"><span>XC functional</span></label>
-        <select id="xcFunc" class="inp">
-          <option value="pbe" selected>PBE</option>
-          <option value="pbesol">PBEsol</option>
-          <option value="lda">LDA (PZ)</option>
-          <option value="hse">HSE06</option>
-          <option value="scan">SCAN</option>
-        </select>
-      </div>
-      <div id="bandsPanel">
-        <div class="fgroup">
-          <label class="flabel"><span>Band path</span></label>
-          <select id="bandPath" class="inp">
-            <option value="fcc">Γ–X–W–K–Γ–L–U–W–X (FCC)</option>
-            <option value="sc">Γ–X–M–Γ–R–X (simple cubic)</option>
-            <option value="hex">Γ–M–K–Γ–A (hexagonal)</option>
-          </select>
-        </div>
-        <div class="fgroup">
-          <label class="flabel"><span>nbnd</span><span class="flabel-val" id="nbndV">64</span></label>
-          <input type="range" id="nbnd" class="range" min="20" max="200" value="64"/>
+        <h4>Import source</h4>
+        <div class="import-grid">
+          <div class="imp-card active" data-imp="file">
+            <div class="ic">📂</div>
+            <div class="il">Upload file</div>
+            <div class="is">CIF · POSCAR · XYZ</div>
+          </div>
+          <div class="imp-card" data-imp="explorer" id="impExplorer">
+            <div class="ext-badge">↗</div>
+            <div class="ic">🔬</div>
+            <div class="il">Material Explorer</div>
+            <div class="is">Search MP database</div>
+          </div>
+          <div class="imp-card" data-imp="forge" id="impForge">
+            <div class="ext-badge">↗</div>
+            <div class="ic">🔧</div>
+            <div class="il">CrystalForge</div>
+            <div class="is">Build &amp; import</div>
+          </div>
+          <div class="imp-card" data-imp="saved">
+            <div class="ic">💾</div>
+            <div class="il">Saved Materials</div>
+            <div class="is">Your saved library</div>
+          </div>
         </div>
       </div>
-      <div class="fgroup">
-        <span class="calc-led ready" id="calcLed">Ready</span>
+
+      <!-- FILE UPLOAD -->
+      <div class="imp-pane act" id="ip-file">
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".cif,.vasp,.POSCAR,.CONTCAR,.xyz,.in,.pwi,.txt,.pdb,.mol,.mol2,.sdf"/>
+          <div class="dz-icon">⬆</div>
+          <div class="dz-main">Drop structure file here</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">CIF · POSCAR · XYZ · QE input · ABINIT</div>
+        </div>
+        <div id="fileStatus" style="margin-top:8px;font-size:11px;color:var(--text2);min-height:16px"></div>
+        <div class="fgroup" style="margin-top:10px">
+          <label class="flabel"><span>Or paste structure text</span></label>
+          <textarea id="pasteBox" class="inp" rows="6" placeholder="Paste CIF, POSCAR, QE ATOMIC_POSITIONS block, or XYZ…"></textarea>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <button class="btn btn-primary btn-sm" style="flex:1" id="parseBtn">↳ Parse &amp; Load</button>
+          <button class="btn btn-sm" id="clearPasteBtn" style="color:var(--text2)">Clear</button>
+        </div>
+        <div id="parseMsg" style="display:none"></div>
       </div>
+
+      <!-- MATERIAL EXPLORER — opens modal pointing to /databases -->
+      <div class="imp-pane" id="ip-explorer">
+        <div class="notice notice-info">
+          Material Explorer searches the Materials Project database. Opens in a panel below — or click to navigate directly.
+        </div>
+        <button class="btn btn-primary btn-block btn-sm" id="openExplorerBtn" style="margin-bottom:8px">
+          🔬 Open Material Explorer
+        </button>
+        <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px">
+          <div style="padding:6px 10px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;color:var(--text2);font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Quick search (demo)</div>
+          <div style="padding:8px">
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input type="text" id="mpSearch" class="inp" placeholder="e.g. Fe2O3, mp-1234, SrTiO3" style="flex:1"/>
+              <button class="btn btn-primary btn-sm" id="mpSearchBtn">Go</button>
+            </div>
+            <div id="mpResults"></div>
+          </div>
+        </div>
+        <div id="mpSelected" style="display:none;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+            <span id="mpSelName" style="font-family:var(--display);font-weight:700;color:var(--text0);font-size:13px"></span>
+            <span id="mpSelId" style="font-family:var(--mono);font-size:10px;color:var(--accent)"></span>
+          </div>
+          <div id="mpSelProps" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;font-size:11px"></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-green btn-sm" style="flex:1" id="mpLoadBtn">Load into viewer</button>
+            <button class="btn btn-sm" id="mpSaveBtn" style="color:var(--amber);border-color:rgba(245,166,35,.2);background:var(--am-dim)">💾 Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRYSTALFORGE — opens modal -->
+      <div class="imp-pane" id="ip-forge">
+        <div class="notice notice-info">
+          CrystalForge lets you build crystal structures visually. Your structure will be imported back here automatically.
+        </div>
+        <button class="btn btn-primary btn-block btn-sm" style="margin-bottom:10px" id="openForgeBtn">
+          🔧 Open CrystalForge Builder
+        </button>
+        <div style="border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+          <div style="padding:7px 10px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;font-family:var(--display);font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">Quick builder (inline)</div>
+          <div style="padding:10px">
+            <div class="fgroup">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:7px;font-family:var(--display);font-weight:700">Lattice</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:5px">
+                <div><div class="cf-lbl">a (Å)</div><input class="cf-inp" id="cfa" type="number" value="3.615" step="0.01"/></div>
+                <div><div class="cf-lbl">b (Å)</div><input class="cf-inp" id="cfb" type="number" value="3.615" step="0.01"/></div>
+                <div><div class="cf-lbl">c (Å)</div><input class="cf-inp" id="cfc" type="number" value="3.615" step="0.01"/></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
+                <div><div class="cf-lbl">α°</div><input class="cf-inp" id="cfalpha" type="number" value="90" step="0.1"/></div>
+                <div><div class="cf-lbl">β°</div><input class="cf-inp" id="cfbeta" type="number" value="90" step="0.1"/></div>
+                <div><div class="cf-lbl">γ°</div><input class="cf-inp" id="cfgamma" type="number" value="90" step="0.1"/></div>
+              </div>
+            </div>
+            <div class="fgroup">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:5px;font-family:var(--display);font-weight:700">Space group</div>
+              <select id="cfSpg" class="inp">
+                <option value="1">P1 (#1)</option><option value="2">P-1 (#2)</option>
+                <option value="62">Pnma (#62)</option><option value="123">P4/mmm (#123)</option>
+                <option value="166">R-3m (#166)</option><option value="194">P63/mmc (#194)</option>
+                <option value="221">Pm-3m (#221)</option><option value="225" selected>Fm-3m (#225) FCC</option>
+                <option value="227">Fd-3m (#227) Diamond/ZB</option><option value="229">Im-3m (#229) BCC</option>
+              </select>
+            </div>
+            <div class="fgroup">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-family:var(--display);font-weight:700">Atomic basis</div>
+                <button class="btn btn-sm btn-green" id="addAtomBtn" style="padding:2px 7px;font-size:10px">+ Add</button>
+              </div>
+              <table id="atomTable">
+                <thead><tr><th>El</th><th>x</th><th>y</th><th>z</th><th style="width:24px"></th></tr></thead>
+                <tbody id="atomTbody"></tbody>
+              </table>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-primary btn-sm" style="flex:1" id="forgeBuildBtn">⬡ Build &amp; load</button>
+              <button class="btn btn-sm" id="forgeSaveBtn" style="color:var(--amber);border-color:rgba(245,166,35,.2);background:var(--am-dim)">💾 Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAVED MATERIALS -->
+      <div class="imp-pane" id="ip-saved">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:600;font-family:var(--display);color:var(--text1)">Your saved structures</span>
+          <button class="btn btn-sm" id="clearSavedBtn" style="font-size:10px;color:var(--text3)">Clear all</button>
+        </div>
+        <div id="savedList" class="saved-list"></div>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" style="flex:1" id="loadSavedBtn">Load selected</button>
+          <button class="btn btn-sm" id="saveCurrentBtn" style="color:var(--green);border-color:rgba(45,217,160,.2);background:var(--gn-dim)">+ Save current</button>
+        </div>
+        <div id="savedMsg" style="margin-top:6px;font-size:11px;display:none"></div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-family:var(--display);font-weight:700;margin-bottom:8px">Built-in presets</div>
+          <select id="presetSel" class="inp" size="8" style="height:180px"></select>
+          <div id="presetInfo" style="font-size:10px;color:var(--text2);margin:6px 0 8px;padding:6px 8px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);font-family:var(--mono);min-height:44px;line-height:1.5"></div>
+          <button class="btn btn-block btn-sm" id="loadPresetBtn" style="border-color:var(--border2);color:var(--text0)">Load preset</button>
+        </div>
+      </div>
+
+      <!-- PSEUDOPOTENTIALS -->
+      <div class="fgroup" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <h4>Pseudopotentials</h4>
+        <select id="pseudoLib" class="inp">
+          <option value="sssp_eff">SSSP efficiency (recommended)</option>
+          <option value="sssp_prec">SSSP precision</option>
+          <option value="pslibrary">QE PSlibrary 1.0.0</option>
+          <option value="gbrv">GBRV v1.5</option>
+          <option value="oncvpsp">ONCVPSP v4</option>
+        </select>
+      </div>
+      <div id="pseudoDisplay" style="margin-top:4px"></div>
     </div>
 
     <!-- ELECTRONIC PANE -->
     <div class="sb-pane" id="pane-elec">
       <div class="fgroup">
-        <label class="flabel">
-          <span>Ecutwfc (Ry)
-            <span class="tip-b">?<span class="tip">Kinetic energy cutoff for wavefunctions. Higher = more accurate, more expensive. 40–80 Ry typical for PBE.</span></span>
-          </span>
-          <span class="flabel-val" id="ecutwfcV">60</span>
-        </label>
-        <input type="range" id="ecutwfc" class="range" min="20" max="150" value="60"/>
+        <label class="flabel"><span>Ecutwfc (Ry) <span class="tip-b">?<span class="tip">Wavefunction kinetic energy cutoff. 40–80 Ry for PBE norm-conserving. Higher for pseudopotentials with core holes.</span></span></span><span class="flabel-v" id="ecutwfcV">60</span></label>
+        <input type="range" id="ecutwfc" class="range" min="20" max="160" value="60"/>
       </div>
       <div class="fgroup">
-        <label class="flabel"><span>Ecutrho (Ry)</span><span class="flabel-val" id="ecutrhoV">480</span></label>
-        <input type="range" id="ecutrho" class="range" min="100" max="1200" value="480" step="20"/>
+        <label class="flabel"><span>Ecutrho (Ry) <span class="tip-b">?<span class="tip">Charge density cutoff. NC: 4× ecutwfc. USPP/PAW: up to 12× ecutwfc.</span></span></span><span class="flabel-v" id="ecutrhoV">480</span></label>
+        <input type="range" id="ecutrho" class="range" min="80" max="1400" value="480" step="20"/>
       </div>
       <div class="fgroup">
-        <label class="flabel">
-          <span>Smearing σ (Ry)
-            <span class="tip-b">?<span class="tip">Gaussian broadening for metallic systems. Use 0.005–0.02 for metals; set near 0 for insulators.</span></span>
-          </span>
-          <span class="flabel-val" id="sigmaV">0.020</span>
-        </label>
-        <input type="range" id="sigma" class="range" min="1" max="50" value="20"/>
+        <label class="flabel"><span>Smearing σ (Ry)</span><span class="flabel-v" id="sigmaV">0.020</span></label>
+        <input type="range" id="sigma" class="range" min="1" max="60" value="20"/>
       </div>
       <div class="fgroup">
-        <h4>k-mesh (Monkhorst–Pack)
-          <span class="tip-b" style="vertical-align:middle">?<span class="tip">Denser k-mesh = more accurate Brillouin zone sampling. 6×6×6 is a good start for metals.</span></span>
-        </h4>
+        <label class="flabel"><span>Smearing type</span></label>
+        <select id="smearType" class="inp">
+          <option value="gaussian">Gaussian</option>
+          <option value="mp" selected>Methfessel–Paxton</option>
+          <option value="mv">Marzari–Vanderbilt (cold)</option>
+          <option value="fd">Fermi–Dirac</option>
+        </select>
+      </div>
+      <div class="fgroup">
+        <label class="flabel"><span>Occupations</span></label>
+        <select id="occType" class="inp">
+          <option value="smearing" selected>smearing (metals)</option>
+          <option value="fixed">fixed (insulators)</option>
+          <option value="tetrahedra">tetrahedra (DOS)</option>
+        </select>
+      </div>
+      <div class="fgroup">
+        <h4>k-mesh (Monkhorst–Pack)</h4>
         <div class="row3">
-          <div><label class="flabel"><span>nx</span></label><input type="number" id="kx" class="inp" value="6" min="1" max="32"/></div>
-          <div><label class="flabel"><span>ny</span></label><input type="number" id="ky" class="inp" value="6" min="1" max="32"/></div>
-          <div><label class="flabel"><span>nz</span></label><input type="number" id="kz" class="inp" value="6" min="1" max="32"/></div>
+          <div><label class="flabel"><span>nx</span></label><input type="number" id="kx" class="inp" value="6" min="1" max="40"/></div>
+          <div><label class="flabel"><span>ny</span></label><input type="number" id="ky" class="inp" value="6" min="1" max="40"/></div>
+          <div><label class="flabel"><span>nz</span></label><input type="number" id="kz" class="inp" value="6" min="1" max="40"/></div>
         </div>
       </div>
       <div class="fgroup">
-        <label class="flabel"><span>Mixing β</span></label>
-        <input type="number" id="mixingBeta" class="inp" value="0.7" step="0.05" min="0.1" max="1"/>
+        <div class="row3">
+          <div><label class="flabel"><span>s1</span></label><input type="number" id="ks1" class="inp" value="1" min="0" max="1" step="1"/></div>
+          <div><label class="flabel"><span>s2</span></label><input type="number" id="ks2" class="inp" value="1" min="0" max="1" step="1"/></div>
+          <div><label class="flabel"><span>s3</span></label><input type="number" id="ks3" class="inp" value="1" min="0" max="1" step="1"/></div>
+        </div>
+      </div>
+      <div class="fgroup">
+        <h4>SCF convergence</h4>
+        <div class="row2">
+          <div><label class="flabel"><span>Mixing β</span></label><input type="number" id="mixBeta" class="inp" value="0.7" step="0.05" min="0.05" max="1"/></div>
+          <div><label class="flabel"><span>conv_thr (Ry)</span></label><input type="number" id="convThr" class="inp" value="1e-8" step="1e-9"/></div>
+        </div>
+      </div>
+      <div class="fgroup">
+        <label class="flabel"><span>Mixing mode</span></label>
+        <select id="mixMode" class="inp">
+          <option value="plain">plain</option>
+          <option value="TF" selected>Thomas–Fermi</option>
+          <option value="local-TF">local-TF</option>
+        </select>
+      </div>
+      <div class="fgroup">
+        <h4>Spin / magnetism</h4>
+        <div class="row2">
+          <div><label class="flabel"><span>nspin</span></label>
+            <select id="nspin" class="inp"><option value="1" selected>1 (non-spin)</option><option value="2">2 (collinear)</option><option value="4">4 (SOC)</option></select>
+          </div>
+          <div><label class="flabel"><span>tot_mag (μB)</span></label><input type="number" id="totMag" class="inp" value="0" step="0.5"/></div>
+        </div>
+      </div>
+      <div class="fgroup">
+        <h4>DFT+U</h4>
+        <label class="flabel"><span>Hubbard U (eV)</span></label>
+        <input type="number" id="hubbardU" class="inp" value="0" step="0.5" min="0" max="12"/>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">0 = disabled. Applied to d-electrons of first TM element.</div>
       </div>
     </div>
 
-    <!-- STRUCTURE PANE -->
-    <div class="sb-pane" id="pane-struct">
-      <div class="pitnav">
-        <button type="button" class="active" data-pit="presets">Presets</button>
-        <button type="button" data-pit="paste">Paste</button>
-        <button type="button" data-pit="explorer">Explorer</button>
-      </div>
-      <div class="pitpane active" id="pit-presets">
-        <div class="fgroup">
-          <label class="flabel"><span>STRUCTS database</span></label>
-          <select id="structPreset" class="inp"></select>
-        </div>
-        <p style="font-size:10px;color:var(--text3);line-height:1.4;margin:0 0 10px">Preset cells and fractional coordinates for demo visualization. Simplified where noted.</p>
-        <button type="button" class="btn btn-primary btn-block btn-sm" id="loadPresetBtn">Load preset into viewer</button>
-      </div>
-      <div class="pitpane" id="pit-paste">
-        <div class="fgroup">
-          <label class="flabel"><span>CIF / POSCAR / QE</span></label>
-          <textarea id="structPaste" class="inp" rows="8" placeholder="Paste structure text…"></textarea>
-        </div>
-        <button type="button" class="btn btn-block btn-sm" id="parseStructBtn">↳ Parse structure</button>
-      </div>
-      <div class="pitpane" id="pit-explorer">
-        <p style="font-size:11px;color:var(--text2);margin-bottom:10px">Link to <a href="/databases">Materials Explorer</a> for MP-style lookup.</p>
-        <button type="button" class="btn btn-block btn-sm" onclick="location.href='/databases'">Open explorer</button>
-      </div>
-      <div class="fgroup" style="margin-top:14px">
-        <h4>Pseudopotentials</h4>
-        <select id="pseudoLib" class="inp">
-          <option value="sssp_eff">SSSP (efficiency)</option>
-          <option value="sssp_prec">SSSP (precision)</option>
-          <option value="pslibrary">Quantum ESPRESSO PSlibrary</option>
-          <option value="gbrv">GBRV</option>
+    <!-- CALCULATION PANE -->
+    <div class="sb-pane" id="pane-calc">
+      <div class="fgroup">
+        <h4>DFT code</h4>
+        <select id="dftCode" class="inp">
+          <option value="qe" selected>Quantum ESPRESSO (pw.x)</option>
+          <option value="vasp">VASP (INCAR/POSCAR)</option>
+          <option value="abinit">ABINIT</option>
+          <option value="siesta">SIESTA (FDF)</option>
+          <option value="cp2k">CP2K</option>
         </select>
       </div>
+      <div class="fgroup">
+        <label class="flabel"><span>XC functional</span></label>
+        <select id="xcFunc" class="inp">
+          <option value="pbe" selected>PBE (GGA)</option>
+          <option value="pbesol">PBEsol</option>
+          <option value="lda">LDA (PZ)</option>
+          <option value="hse06">HSE06 (hybrid)</option>
+          <option value="scan">SCAN (meta-GGA)</option>
+          <option value="r2scan">r²SCAN</option>
+          <option value="pbe0">PBE0 (hybrid)</option>
+        </select>
+      </div>
+      <div class="fgroup">
+        <label class="flabel"><span>Calculation type</span></label>
+        <select id="calcType" style="display:none">
+          <option value="scf">SCF</option>
+          <option value="relax">Optimize</option>
+          <option value="vc-relax">VC-relax</option>
+          <option value="bands">Band structure</option>
+          <option value="nscf">NSCF</option>
+          <option value="dos">DOS</option>
+          <option value="phonon">Phonon</option>
+          <option value="md">MD</option>
+          <option value="tddft">TD-DFT</option>
+          <option value="neb">NEB</option>
+          <option value="geom">Geometry</option>
+        </select>
+        <button id="calcTypeTrigger" class="calc-type-trigger">
+          <span id="calcTypeIcon">⚡</span>
+          <span id="calcTypeLabel">SCF &mdash; self-consistent field</span>
+          <span class="calc-type-arrow">&#8963;</span>
+        </button>
+      </div>
+      <div id="bandsExtra" style="display:none">
+        <div class="fgroup">
+          <label class="flabel"><span>k-path</span></label>
+          <select id="bandPath" class="inp">
+            <option value="fcc">Γ–X–W–K–Γ–L–U–W–X (FCC)</option>
+            <option value="bcc">Γ–H–N–Γ–P–H (BCC)</option>
+            <option value="sc">Γ–X–M–Γ–R–X (SC)</option>
+            <option value="hex">Γ–M–K–Γ–A–L–H (HEX)</option>
+            <option value="tet">Γ–Z–M–A–R–Z (TET)</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <label class="flabel"><span>nbnd</span><span class="flabel-v" id="nbndV">64</span></label>
+          <input type="range" id="nbnd" class="range" min="10" max="300" value="64"/>
+        </div>
+      </div>
+      <div class="fgroup">
+        <div class="row2">
+          <div><label class="flabel"><span>Verbosity</span></label>
+            <select id="verbosity" class="inp"><option value="low" selected>low</option><option value="medium">medium</option><option value="high">high</option></select>
+          </div>
+          <div><label class="flabel"><span>nstep</span></label><input type="number" id="nstep" class="inp" value="200" min="10" max="1000"/></div>
+        </div>
+      </div>
+      <div class="fgroup">
+        <h4>Relaxation options</h4>
+        <div class="row2">
+          <div><label class="flabel"><span>ion dynamics</span></label>
+            <select id="ionDyn" class="inp"><option value="bfgs" selected>BFGS</option><option value="damp">damped</option><option value="verlet">Verlet</option></select>
+          </div>
+          <div><label class="flabel"><span>forc_conv</span></label><input type="number" id="forcConv" class="inp" value="1e-4" step="1e-5"/></div>
+        </div>
+      </div>
+
     </div>
 
   </div><!-- /sb-scroll -->
 
-  <!-- SIDEBAR BOTTOM -->
-  <div style="padding:12px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0">
-    <div class="hpc-box">
-      <h4>HPC Execution</h4>
-      <div class="fgroup">
-        <label class="flabel"><span>Host</span></label>
-        <input type="text" id="loginNode" class="inp" placeholder="login.example.edu"/>
-      </div>
-      <div class="fgroup">
-        <label class="flabel"><span>Command</span></label>
-        <input type="text" id="dftCommand" class="inp" value="pw.x -in scf.in &gt; scf.out"/>
-      </div>
-      <div class="fgroup" style="margin-bottom:0">
-        <label class="flabel"><span>Workdir</span></label>
-        <input type="text" id="workDir" class="inp" placeholder="/scratch/$USER/qe_run"/>
+  <!-- ══ HPC EXECUTION FOOTER — always visible across all tabs ══ -->
+  <div style="flex-shrink:0;border-top:1px solid var(--border);background:var(--bg1)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px 5px">
+      <span class="hpc-title">HPC Execution</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="calc-led ready" id="calcLed">Ready</span>
+        <div class="sdot" id="hpcDot"></div>
+        <span style="font-size:10px;color:var(--text2);font-family:var(--mono)" id="hpcStatus">Idle</span>
       </div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button type="button" class="btn btn-primary btn-sm" style="flex:1" id="genInputBtn">Generate input</button>
-      <button type="button" class="btn btn-green btn-sm" style="flex:1" id="runDftBtn">▶ Run DFT (demo)</button>
+    <div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:7px">
+      <div>
+        <div class="hpc-label">Host</div>
+        <input type="text" id="loginNode" class="inp" placeholder="login.example.edu"/>
+      </div>
+      <div>
+        <div class="hpc-label">Command</div>
+        <input type="text" id="dftCmd" class="inp" value="pw.x -in scf.in &gt; scf.out"/>
+      </div>
+      <div>
+        <div class="hpc-label">Workdir</div>
+        <input type="text" id="workDir" class="inp" placeholder="/scratch/$USER/qe_run"/>
+      </div>
+      <div style="display:flex;gap:8px;padding-top:2px">
+        <button class="exec-btn exec-btn-gen" id="genBtn">⬡ Generate input</button>
+        <button class="exec-btn exec-btn-run" id="runBtn">▶ Run DFT (demo)</button>
+      </div>
     </div>
   </div>
 </aside>
@@ -576,536 +751,1780 @@ a:hover{text-decoration:underline}
 <!-- ══ CENTER ══ -->
 <main id="center">
   <div id="toolbar">
-    <div class="tool-group">
-      <span class="tool-label">View</span>
-      <button type="button" class="vt-btn active" id="btnSphere">Spheres</button>
-      <button type="button" class="vt-btn" id="btnStick">Ball&amp;stick</button>
-      <button type="button" class="vt-btn active" id="btnBox">Unit cell</button>
-      <button type="button" class="vt-btn" id="btnReset">Reset cam</button>
+    <div class="tgrp">
+      <span class="tlbl">Style</span>
+      <button class="tvb act" id="btnSphere">Spheres</button>
+      <button class="tvb" id="btnStick">Ball+stick</button>
+      <button class="tvb" id="btnLine">Line</button>
+      <button class="tvb act" id="btnBox">Unit cell</button>
+      <button class="tvb" id="btnSurf">Surface</button>
     </div>
-    <div class="vt-sep"></div>
-    <div class="tool-group">
-      <span class="tool-label">Export</span>
-      <button type="button" class="vt-btn" id="btnCopyIn">Copy QE input</button>
+    <div class="tsep"></div>
+    <div class="tgrp">
+      <span class="tlbl">View</span>
+      <button class="tvb" id="vbX">±X</button>
+      <button class="tvb" id="vbY">±Y</button>
+      <button class="tvb" id="vbZ">±Z</button>
+      <button class="tvb" id="vbReset">⊙ Reset</button>
+    </div>
+    <div class="tsep"></div>
+    <div class="tgrp">
+      <span class="tlbl">Supercell</span>
+      <input type="number" class="sc-inp" id="scX" value="1" min="1" max="6" title="nx"/>
+      <span style="font-size:10px;color:var(--text3)">×</span>
+      <input type="number" class="sc-inp" id="scY" value="1" min="1" max="6" title="ny"/>
+      <span style="font-size:10px;color:var(--text3)">×</span>
+      <input type="number" class="sc-inp" id="scZ" value="1" min="1" max="6" title="nz"/>
+      <button class="tvb" id="scApply" style="margin-left:2px">Apply</button>
+    </div>
+    <div class="tsep"></div>
+    <div class="tgrp">
+      <span class="tlbl">Export</span>
+      <button class="tvb" id="btnCopyin">Copy input</button>
+      <button class="tvb" id="btnDlIn">↓ Download</button>
     </div>
   </div>
+
+  <!-- 3Dmol.js Viewer -->
   <div id="viewer-wrap">
     <div id="dft-3dviewer"></div>
-    <div class="vbtn">
-      <button type="button" id="vbtnX">X</button>
-      <button type="button" id="vbtnY">Y</button>
-      <button type="button" id="vbtnZ">Z</button>
+
+    <!-- top-right corner buttons -->
+    <div class="vcorner">
+      <button class="vcbtn" id="vbPNG">PNG</button>
+      <button class="vcbtn" id="vbSpin" title="Toggle spin">⟳ Spin</button>
+    </div>
+
+    <!-- bottom-left structure info -->
+    <div class="vinfo">
+      <span id="vFormula">Cu</span> &nbsp;·&nbsp; <span id="vAtoms">1</span> atoms &nbsp;·&nbsp; <span id="vCell">a=3.615Å</span>
+    </div>
+
+    <!-- isosurface / volumetric panel -->
+    <div id="isoPanel">
+      <div id="isoPanelHead">
+        <span style="font-size:10px;font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)">Isosurface</span>
+        <label class="iso-file-btn" title="Load .cube or .xsf charge density file">
+          <input type="file" id="cubeFileInput" accept=".cube,.xsf" style="display:none"/>
+          ↑ Load .cube/.xsf
+        </label>
+      </div>
+      <div id="isoPanelBody">
+        <div class="iso-row">
+          <span class="iso-lbl">Isovalue</span>
+          <input type="range" id="isoSlider" min="1" max="100" value="20" style="flex:1;accent-color:var(--accent)"/>
+          <span class="iso-val" id="isoVal">0.020</span>
+        </div>
+        <div class="iso-row">
+          <span class="iso-lbl">Color</span>
+          <div style="display:flex;gap:5px">
+            <button class="iso-color-btn act" data-color="teal" style="background:#2dd9a0"></button>
+            <button class="iso-color-btn" data-color="blue" style="background:#3d9fff"></button>
+            <button class="iso-color-btn" data-color="violet" style="background:#9d7fff"></button>
+            <button class="iso-color-btn" data-color="rose" style="background:#f06080"></button>
+            <button class="iso-color-btn" data-color="amber" style="background:#f5a623"></button>
+          </div>
+          <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);cursor:pointer;margin-left:auto">
+            <input type="checkbox" id="isoNeg" style="accent-color:var(--rose)"/> −lobe
+          </label>
+        </div>
+        <div class="iso-row">
+          <span class="iso-lbl">Opacity</span>
+          <input type="range" id="isoOpacity" min="10" max="100" value="65" style="flex:1;accent-color:var(--violet)"/>
+          <span class="iso-val" id="isoOpacityVal">0.65</span>
+        </div>
+        <div id="isoStatus" style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:2px 0">No volumetric data loaded</div>
+      </div>
     </div>
   </div>
+
   <div class="stats-strip">
-    <div class="ss-cell"><div class="ss-lbl">Formula</div><div class="ss-val" id="statFormula">Cu</div></div>
-    <div class="ss-cell"><div class="ss-lbl">Ecutwfc</div><div class="ss-val" id="statEcut">60 Ry</div></div>
-    <div class="ss-cell"><div class="ss-lbl">k-mesh</div><div class="ss-val" id="statKmesh">6×6×6</div></div>
-    <div class="ss-cell"><div class="ss-lbl">XC</div><div class="ss-val" id="statXc">PBE</div></div>
-    <div class="ss-cell"><div class="ss-lbl">Calc</div><div class="ss-val" id="statCalc">SCF</div></div>
-    <div class="ss-cell"><div class="ss-lbl">Preset</div><div class="ss-val" id="statPreset">cu_fcc</div></div>
+    <div class="ss"><div class="ss-l">Formula</div><div class="ss-v" id="stFormula">Cu</div></div>
+    <div class="ss"><div class="ss-l">Space group</div><div class="ss-v" id="stSpg">Fm-3m</div></div>
+    <div class="ss"><div class="ss-l">Ecutwfc</div><div class="ss-v" id="stEcut">60 Ry</div></div>
+    <div class="ss"><div class="ss-l">k-mesh</div><div class="ss-v" id="stK">6×6×6</div></div>
+    <div class="ss"><div class="ss-l">XC</div><div class="ss-v" id="stXc">PBE</div></div>
+    <div class="ss"><div class="ss-l">Code</div><div class="ss-v" id="stCode">QE</div></div>
+    <div class="ss"><div class="ss-l">Calc</div><div class="ss-v" id="stCalc">SCF</div></div>
+    <div class="ss" style="border:none"><div class="ss-l">Atoms/cell</div><div class="ss-v" id="stNat">1</div></div>
   </div>
 </main>
 
 <!-- ══ RIGHT PANEL ══ -->
 <aside id="rpanel">
-  <div class="rp-tabs" role="tablist">
-    <button type="button" class="active" data-rptab="conv">Convergence</button>
-    <button type="button" data-rptab="bands">Bands</button>
-    <button type="button" data-rptab="dos">DOS</button>
-    <button type="button" data-rptab="prop">Properties</button>
-    <button type="button" data-rptab="input">Input</button>
-    <button type="button" data-rptab="console">Console</button>
+  <div class="rp-tabs">
+    <button class="act" data-rp="conv">Convergence</button>
+    <button data-rp="bands">Bands</button>
+    <button data-rp="dos">DOS</button>
+    <button data-rp="prop">Props</button>
+    <button data-rp="input">Input</button>
+    <button data-rp="con">Console</button>
   </div>
   <div class="rp-body">
-    <div class="rpane active" id="rp-conv"><div class="plot-box"><div id="plotConvergence"></div></div></div>
-    <div class="rpane" id="rp-bands"><div class="plot-box"><div id="plotBands"></div></div></div>
-    <div class="rpane" id="rp-dos"><div class="plot-box"><div id="plotDos"></div></div></div>
+    <div class="rpane act" id="rp-conv"><div class="plot-box"><div id="plotC"></div></div></div>
+    <div class="rpane" id="rp-bands"><div class="plot-box"><div id="plotB"></div></div></div>
+    <div class="rpane" id="rp-dos"><div class="plot-box"><div id="plotD"></div></div></div>
     <div class="rpane" id="rp-prop">
-      <div class="prop-grid" id="propGrid"></div>
-      <div style="padding:0 12px 12px">
-        <h4 style="font-size:10px;color:var(--text3);margin:0 0 8px;font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Pseudopotentials (QE names)</h4>
-        <div id="pseudoTableWrap">
-          <table id="pseudoTable">
-            <thead><tr><th>Element</th><th>UPF (illustrative)</th><th>Valence e⁻</th></tr></thead>
-            <tbody id="pseudoTbody"></tbody>
-          </table>
-        </div>
+      <div class="prop-scroll">
+        <div class="prop-grid" id="propGrid"></div>
+        <div class="sec-head">Pseudopotentials</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono);margin-bottom:12px">
+          <thead><tr style="background:var(--bg3)">
+            <th style="padding:5px 7px;border:1px solid var(--border);color:var(--text2);text-align:left">El</th>
+            <th style="padding:5px 7px;border:1px solid var(--border);color:var(--text2);text-align:left">PP file</th>
+            <th style="padding:5px 7px;border:1px solid var(--border);color:var(--text2);text-align:left">Val. e⁻</th>
+          </tr></thead>
+          <tbody id="pseudoTbody"></tbody>
+        </table>
+        <div class="sec-head">Convergence hints</div>
+        <div class="prop-grid" id="convHints"></div>
       </div>
     </div>
-    <div class="rpane" id="rp-input"><div id="inputHighlight"></div></div>
-    <div class="rpane" id="rp-console">
-      <div class="console-head">
-        <span>Console</span>
-        <button type="button" class="btn btn-sm" id="clearConsole" style="padding:3px 8px;font-size:10px">Clear</button>
+    <div class="rpane" id="rp-input" style="flex-direction:column">
+      <div class="code-tabs" id="codeTabs">
+        <button class="code-tab act" data-ct="qe">QE (pw.x)</button>
+        <button class="code-tab" data-ct="vasp">VASP</button>
+        <button class="code-tab" data-ct="abinit">ABINIT</button>
+        <button class="code-tab" data-ct="siesta">SIESTA</button>
       </div>
-      <pre id="consoleOut">SMAD DFT Simulator — client-side demo (no real pw.x).
+      <textarea id="inputEdit" spellcheck="false"></textarea>
+      <div class="input-bar">
+        <button class="btn btn-sm btn-primary" id="regenBtn">⟳ Regen</button>
+        <button class="btn btn-sm" id="copyInBtn">⎘ Copy</button>
+        <button class="btn btn-sm" id="dlInBtn">↓ Download</button>
+        <span style="flex:1"></span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono)" id="infoLines"></span>
+      </div>
+    </div>
+    <div class="rpane" id="rp-con" style="flex-direction:column">
+      <div class="con-head">
+        <span>Console</span>
+        <button class="btn btn-sm" id="clearBtn" style="padding:2px 7px;font-size:10px">Clear</button>
+      </div>
+      <pre id="consoleOut">SMAD DFT Simulator — iRASPA-style viewer, canvas-based.
 Ready.
 </pre>
     </div>
   </div>
 </aside>
-
 </div><!-- /workspace -->
 </div><!-- /app -->
 
-<script>
-(function(){
-'use strict';
+<!-- ══ CRYSTALFORGE MODAL ══ -->
+<div class="modal-overlay" id="forgeModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">🔧 CrystalForge Builder</span>
+      <button class="modal-close" id="forgeClose">×</button>
+    </div>
+    <div class="modal-body">
+      <iframe class="modal-iframe" id="forgeFrame" src="about:blank"
+        title="CrystalForge structure builder">
+      </iframe>
+      <div id="forgeInlineBody" style="width:100%;height:100%;overflow:auto;padding:20px;background:var(--bg0);display:flex;flex-direction:column;gap:16px">
+        <div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--text0)">CrystalForge — Full Builder</div>
+        <div class="notice notice-info">CrystalForge is a companion tool. When hosted alongside SMAD, structures built here are auto-imported. For now, use the inline quick builder in the sidebar, or paste a structure below to import.</div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Import structure from CrystalForge (paste output)</div>
+          <textarea id="forgeImportBox" style="width:100%;height:140px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);font-family:var(--mono);font-size:11px;padding:8px;outline:none;resize:vertical" placeholder="Paste CIF, POSCAR, or QE block from CrystalForge…"></textarea>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" id="forgeImportBtn">↳ Import structure</button>
+          <button class="btn btn-sm" id="forgeOpenExternalBtn" style="color:var(--accent);border-color:rgba(61,159,255,.25);background:var(--ac-dim)">↗ Open CrystalForge externally</button>
+        </div>
+        <div id="forgeImportMsg" style="display:none"></div>
+        <!-- Minimal live builder inside modal -->
+        <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden">
+          <div style="padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:10px;font-family:var(--display);font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">Live builder preview</div>
+          <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:10px;font-family:var(--display);font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Lattice constants</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px">
+                <div><div class="cf-lbl">a</div><input class="cf-inp" id="mca" type="number" value="3.615" step="0.01"/></div>
+                <div><div class="cf-lbl">b</div><input class="cf-inp" id="mcb" type="number" value="3.615" step="0.01"/></div>
+                <div><div class="cf-lbl">c</div><input class="cf-inp" id="mcc" type="number" value="3.615" step="0.01"/></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
+                <div><div class="cf-lbl">α°</div><input class="cf-inp" id="mcalpha" type="number" value="90" step="0.5"/></div>
+                <div><div class="cf-lbl">β°</div><input class="cf-inp" id="mcbeta" type="number" value="90" step="0.5"/></div>
+                <div><div class="cf-lbl">γ°</div><input class="cf-inp" id="mcgamma" type="number" value="90" step="0.5"/></div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--display);font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Elements</div>
+              <textarea id="mcAtoms" style="width:100%;height:88px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text0);font-family:var(--mono);font-size:11px;padding:6px;outline:none;resize:none" placeholder="Cu 0 0 0&#10;Cu 0.5 0.5 0&#10;Cu 0.5 0 0.5&#10;Cu 0 0.5 0.5"></textarea>
+            </div>
+          </div>
+          <div style="padding:0 12px 12px;display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" id="modalBuildBtn">⬡ Build &amp; import to DFT</button>
+            <button class="btn btn-sm btn-amber" id="modalSaveBtn">💾 Save to library</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-/* ══ STRUCTS — full set from original ══ */
-const STRUCTS = {
-  cu_fcc:{name:'Copper FCC',formula:'Cu',bravais:'FCC',a:3.615,cell:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms:[{el:'Cu',f:[0,0,0]}],notes:'fcc Cu, one atom basis'},
-  fe_bcc:{name:'Iron BCC',formula:'Fe',bravais:'BCC',a:2.866,cell:[[-.5,.5,.5],[.5,-.5,.5],[.5,.5,-.5]],atoms:[{el:'Fe',f:[0,0,0]}],notes:'bcc Fe, paramagnetic cell'},
-  al_fcc:{name:'Aluminum FCC',formula:'Al',bravais:'FCC',a:4.05,cell:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms:[{el:'Al',f:[0,0,0]}],notes:'fcc Al'},
-  ni_fcc:{name:'Nickel FCC',formula:'Ni',bravais:'FCC',a:3.524,cell:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms:[{el:'Ni',f:[0,0,0]}],notes:'fcc Ni'},
-  au_fcc:{name:'Gold FCC',formula:'Au',bravais:'FCC',a:4.078,cell:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms:[{el:'Au',f:[0,0,0]}],notes:'fcc Au'},
-  ti_hcp:{name:'Titanium HCP',formula:'Ti',bravais:'HEX',a:2.951,c:4.684,cell:[[1,0,0],[-.5,.8660254,0],[0,0,1.585]],atoms:[{el:'Ti',f:[0,0,0]},{el:'Ti',f:[1/3,2/3,.5]}],notes:'hcp Ti, 2-atom cell (scaled c/a)'},
-  si_diamond:{name:'Silicon diamond',formula:'Si',bravais:'FCC',a:5.431,cell:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms:[{el:'Si',f:[0,0,0]},{el:'Si',f:[.25,.25,.25]}],notes:'diamond Si conventional cell'},
-  ge_diamond:{name:'Germanium diamond',formula:'Ge',bravais:'FCC',a:5.658,cell:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms:[{el:'Ge',f:[0,0,0]},{el:'Ge',f:[.25,.25,.25]}],notes:'diamond Ge'},
-  gaas_zb:{name:'GaAs zincblende',formula:'GaAs',bravais:'FCC',a:5.653,cell:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms:[{el:'Ga',f:[0,0,0]},{el:'As',f:[.25,.25,.25]}],notes:'zincblende GaAs'},
-  gan_wz:{name:'GaN wurtzite',formula:'GaN',bravais:'HEX',a:3.189,c:5.185,cell:[[1,0,0],[-.5,.8660254,0],[0,0,1.626]],atoms:[{el:'Ga',f:[1/3,2/3,0]},{el:'N',f:[1/3,2/3,.375]},{el:'Ga',f:[0,0,.5]},{el:'N',f:[0,0,.875]}],notes:'simplified wz GaN (4 atoms)'},
-  mgo_rs:{name:'MgO rocksalt',formula:'MgO',bravais:'FCC',a:4.212,cell:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms:[{el:'Mg',f:[0,0,0]},{el:'O',f:[.5,.5,.5]}],notes:'rocksalt MgO'},
-  tio2_rutile:{name:'TiO₂ rutile',formula:'TiO2',bravais:'TET',a:4.594,c:2.959,cell:[[1,0,0],[0,1,0],[0,0,.644]],atoms:[{el:'Ti',f:[0,0,0]},{el:'Ti',f:[.5,.5,.5]},{el:'O',f:[.305,.305,0]},{el:'O',f:[.695,.695,0]},{el:'O',f:[.195,.805,.5]},{el:'O',f:[.805,.195,.5]}],notes:'simplified rutile (6 atoms), fractional scaled'},
-  fe2o3:{name:'Fe₂O₃ corundum-like',formula:'Fe2O3',bravais:'HEX',a:5.035,c:13.75,cell:[[1,0,0],[-.5,.8660254,0],[0,0,2.73]],atoms:[{el:'Fe',f:[0,0,.355]},{el:'Fe',f:[0,0,.645]},{el:'Fe',f:[1/3,2/3,.145]},{el:'O',f:[.31,0,.25]},{el:'O',f:[0,.31,.25]},{el:'O',f:[.69,.69,.25]}],notes:'illustrative Fe2O3 — not DFT-relaxed'},
-  batio3:{name:'BaTiO₃ cubic',formula:'BaTiO3',bravais:'CUB',a:4.0,cell:[[1,0,0],[0,1,0],[0,0,1]],atoms:[{el:'Ba',f:[0,0,0]},{el:'Ti',f:[.5,.5,.5]},{el:'O',f:[.5,.5,0]},{el:'O',f:[.5,0,.5]},{el:'O',f:[0,.5,.5]}],notes:'cubic perovskite sketch'},
-  srtio3:{name:'SrTiO₃ cubic',formula:'SrTiO3',bravais:'CUB',a:3.905,cell:[[1,0,0],[0,1,0],[0,0,1]],atoms:[{el:'Sr',f:[0,0,0]},{el:'Ti',f:[.5,.5,.5]},{el:'O',f:[.5,.5,0]},{el:'O',f:[.5,0,.5]},{el:'O',f:[0,.5,.5]}],notes:'cubic STO'},
+<!-- ══ MATERIAL EXPLORER MODAL ══ -->
+<div class="modal-overlay" id="explorerModal">
+  <div class="modal-box" style="width:min(900px,94vw);height:min(680px,88vh)">
+    <div class="modal-head">
+      <span class="modal-title">🔬 Material Explorer</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm" id="explorerExtBtn" style="font-size:10px;color:var(--accent);border-color:rgba(61,159,255,.25);background:var(--ac-dim)">↗ Open externally</button>
+        <button class="modal-close" id="explorerClose">×</button>
+      </div>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;overflow:hidden;padding:14px;gap:10px">
+      <div class="notice notice-info" style="flex-shrink:0">Searching the Materials Project database (demo mode). Provide an API key for live data. Select a result to load it into the DFT viewer.</div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <input type="text" id="exSearch" class="inp" placeholder="Formula (Fe2O3), element (Fe), or mp-id (mp-1234)" style="flex:1;font-size:12px"/>
+        <input type="password" id="exApiKey" class="inp" placeholder="MP API key (optional)" style="width:160px"/>
+        <button class="btn btn-primary" id="exSearchBtn">Search</button>
+      </div>
+      <div id="exResults" style="flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);background:var(--bg2)"></div>
+      <div id="exSelected" style="display:none;padding:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span id="exSelName" style="font-family:var(--display);font-weight:800;font-size:15px;color:var(--text0)"></span>
+          <div style="display:flex;gap:6px">
+            <span id="exSelId" style="font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;background:var(--ac-dim);color:var(--accent);border:1px solid rgba(61,159,255,.2)"></span>
+            <button class="btn btn-sm btn-green" id="exLoadBtn">Load into DFT</button>
+            <button class="btn btn-sm" id="exSaveBtn" style="color:var(--amber);background:var(--am-dim);border-color:rgba(245,166,35,.2)">💾 Save</button>
+          </div>
+        </div>
+        <div id="exSelProps" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){'use strict';
+
+/* ═══════════════ STRUCTURES DATABASE ═══════════════ */
+const STRUCTS={
+  cu_fcc:{name:'Copper FCC',formula:'Cu',spg:'Fm-3m (#225)',bravais:'FCC',a:3.615,atoms:[{el:'Cu',f:[0,0,0]}],notes:'fcc Cu, 1-atom primitive'},
+  fe_bcc:{name:'Iron BCC',formula:'Fe',spg:'Im-3m (#229)',bravais:'BCC',a:2.866,atoms:[{el:'Fe',f:[0,0,0]}],notes:'bcc Fe, 1-atom'},
+  al_fcc:{name:'Aluminum FCC',formula:'Al',spg:'Fm-3m (#225)',bravais:'FCC',a:4.05,atoms:[{el:'Al',f:[0,0,0]}],notes:'fcc Al'},
+  ni_fcc:{name:'Nickel FCC',formula:'Ni',spg:'Fm-3m (#225)',bravais:'FCC',a:3.524,atoms:[{el:'Ni',f:[0,0,0]}],notes:'fcc Ni'},
+  au_fcc:{name:'Gold FCC',formula:'Au',spg:'Fm-3m (#225)',bravais:'FCC',a:4.078,atoms:[{el:'Au',f:[0,0,0]}],notes:'fcc Au'},
+  ti_hcp:{name:'Titanium HCP',formula:'Ti',spg:'P63/mmc (#194)',bravais:'HEX',a:2.951,c:4.684,atoms:[{el:'Ti',f:[0,0,0]},{el:'Ti',f:[0.333,0.667,0.5]}],notes:'hcp Ti, 2-atom'},
+  si_diamond:{name:'Silicon diamond',formula:'Si',spg:'Fd-3m (#227)',bravais:'FCC',a:5.431,atoms:[{el:'Si',f:[0,0,0]},{el:'Si',f:[0.25,0.25,0.25]}],notes:'diamond Si, 2-atom'},
+  ge_diamond:{name:'Germanium diamond',formula:'Ge',spg:'Fd-3m (#227)',bravais:'FCC',a:5.658,atoms:[{el:'Ge',f:[0,0,0]},{el:'Ge',f:[0.25,0.25,0.25]}],notes:'diamond Ge'},
+  gaas_zb:{name:'GaAs zincblende',formula:'GaAs',spg:'F-43m (#216)',bravais:'FCC',a:5.653,atoms:[{el:'Ga',f:[0,0,0]},{el:'As',f:[0.25,0.25,0.25]}],notes:'zincblende GaAs'},
+  gan_wz:{name:'GaN wurtzite',formula:'GaN',spg:'P63mc (#186)',bravais:'HEX',a:3.189,c:5.185,atoms:[{el:'Ga',f:[0.333,0.667,0]},{el:'N',f:[0.333,0.667,0.375]},{el:'Ga',f:[0,0,0.5]},{el:'N',f:[0,0,0.875]}],notes:'wurtzite GaN, 4 atoms'},
+  mgo_rs:{name:'MgO rocksalt',formula:'MgO',spg:'Fm-3m (#225)',bravais:'FCC',a:4.212,atoms:[{el:'Mg',f:[0,0,0]},{el:'O',f:[0.5,0.5,0.5]}],notes:'rocksalt MgO'},
+  tio2:{name:'TiO₂ rutile',formula:'TiO2',spg:'P42/mnm (#136)',bravais:'TET',a:4.594,c:2.959,atoms:[{el:'Ti',f:[0,0,0]},{el:'Ti',f:[0.5,0.5,0.5]},{el:'O',f:[0.305,0.305,0]},{el:'O',f:[0.695,0.695,0]},{el:'O',f:[0.195,0.805,0.5]},{el:'O',f:[0.805,0.195,0.5]}],notes:'rutile TiO2, 6 atoms'},
+  batio3:{name:'BaTiO₃ cubic',formula:'BaTiO3',spg:'Pm-3m (#221)',bravais:'CUB',a:4.0,atoms:[{el:'Ba',f:[0,0,0]},{el:'Ti',f:[0.5,0.5,0.5]},{el:'O',f:[0.5,0.5,0]},{el:'O',f:[0.5,0,0.5]},{el:'O',f:[0,0.5,0.5]}],notes:'cubic perovskite BaTiO3'},
+  srtio3:{name:'SrTiO₃ cubic',formula:'SrTiO3',spg:'Pm-3m (#221)',bravais:'CUB',a:3.905,atoms:[{el:'Sr',f:[0,0,0]},{el:'Ti',f:[0.5,0.5,0.5]},{el:'O',f:[0.5,0.5,0]},{el:'O',f:[0.5,0,0.5]},{el:'O',f:[0,0.5,0.5]}],notes:'cubic STO'},
+  mos2:{name:'MoS₂ 2H',formula:'MoS2',spg:'P63/mmc (#194)',bravais:'HEX',a:3.16,c:12.3,atoms:[{el:'Mo',f:[0.333,0.667,0.25]},{el:'S',f:[0.333,0.667,0.621]},{el:'S',f:[0.333,0.667,0.879]}],notes:'2H-MoS2'},
+  graphene:{name:'Graphene',formula:'C2',spg:'P6/mmm (#191)',bravais:'HEX',a:2.461,c:20.0,atoms:[{el:'C',f:[0,0,0.5]},{el:'C',f:[0.333,0.667,0.5]}],notes:'graphene slab in vacuum'},
+  nacl:{name:'NaCl rocksalt',formula:'NaCl',spg:'Fm-3m (#225)',bravais:'FCC',a:5.64,atoms:[{el:'Na',f:[0,0,0]},{el:'Cl',f:[0.5,0.5,0.5]}],notes:'rocksalt NaCl'},
+  fe2o3:{name:'Fe₂O₃ hematite',formula:'Fe2O3',spg:'R-3c (#167)',bravais:'HEX',a:5.035,c:13.75,atoms:[{el:'Fe',f:[0,0,0.355]},{el:'Fe',f:[0,0,0.645]},{el:'O',f:[0.31,0,0.25]},{el:'O',f:[0,0.31,0.25]},{el:'O',f:[0.69,0.69,0.25]}],notes:'hematite, simplified'},
 };
 
-let dftViewer = null;
-let dftShowBox = true;
-let currentPresetKey = 'cu_fcc';
-let lastQEInput = '';
-const demoAbort = { active: false };
+const CELL_VECS={
+  FCC:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],
+  BCC:[[-.5,.5,.5],[.5,-.5,.5],[.5,.5,-.5]],
+  HEX:[[1,0,0],[-.5,.8660254,0],[0,0,1]],
+  TET:[[1,0,0],[0,1,0],[0,0,1]],
+  CUB:[[1,0,0],[0,1,0],[0,0,1]],
+};
 
-/* ── helpers ── */
-function fracToCart(cell, fx, fy, fz) {
-  const [a,b,c] = cell;
-  return {
-    x: fx*a[0]+fy*b[0]+fz*c[0],
-    y: fx*a[1]+fy*b[1]+fz*c[1],
-    z: fx*a[2]+fy*b[2]+fz*c[2],
-  };
-}
+/* ═══════════════ 3DMOL VIEWER ENGINE ═══════════════ */
+let mol3d = null;           // $3Dmol viewer instance
+let isoSurface = null;      // current isosurface shape id
+let cubeData = null;        // parsed volumetric data string
+let isoColor = '#2dd9a0';   // current isosurface color
+let isoOpacity = 0.65;
+let isoValue = 0.020;
+let showSurface = false;
+let surfaceShown = false;   // Van der Waals surface toggle
 
-function wireRange(id, opts) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const valEl = document.getElementById(id+'V');
-  function update() {
-    let v = parseFloat(el.value);
-    if (opts && opts.transform) v = opts.transform(v);
-    const str = (opts && opts.format) ? opts.format(v) : String(v);
-    if (valEl) valEl.textContent = str;
-    if (opts && opts.onChange) opts.onChange(v);
+/* ═══════════════ STATE ═══════════════ */
+let currentStruct=JSON.parse(JSON.stringify(STRUCTS.cu_fcc));
+let supercell=[1,1,1];
+let showBox=true, viewMode='sphere';
+let activeCodeTab='qe';
+let selectedSavedIdx=-1;
+let forgeAtoms=[{el:'Cu',x:0,y:0,z:0}];
+let mpCache=[];
+let exCache=[];
+let demoAbort={active:false};
+
+/* ── init 3Dmol viewer ── */
+function init3Dmol(){
+  const container=document.getElementById('dft-3dviewer');
+  if(typeof $3Dmol === 'undefined'){
+    container.style.cssText='display:flex;align-items:center;justify-content:center;color:#52728e;font-size:11px;font-family:monospace;padding:20px;text-align:center';
+    container.textContent='3Dmol.js unavailable — check network/CDN access.';
+    log('[viewer] 3Dmol.js not loaded.');
+    return;
   }
-  el.addEventListener('input', update);
-  update();
-}
-
-function setCalcState(state) {
-  const led = document.getElementById('calcLed');
-  const dot = document.getElementById('statusDot');
-  const lbl = document.getElementById('statusLbl');
-  if (!led) return;
-  led.className = 'calc-led ' + state;
-  if (state === 'ready')   { led.textContent = 'Ready';   dot.className='status-dot'; lbl.textContent='Ready'; }
-  if (state === 'running') { led.textContent = 'Running'; dot.className='status-dot running'; lbl.textContent='Running'; }
-  if (state === 'done')    { led.textContent = 'Done';    dot.className='status-dot done'; lbl.textContent='Done'; }
-}
-
-function logConsole(line) {
-  const out = document.getElementById('consoleOut');
-  if (!out) return;
-  out.textContent += line + '\n';
-  out.scrollTop = out.scrollHeight;
-}
-
-/* ── QE input builder ── */
-function buildQEInput() {
-  const preset = STRUCTS[currentPresetKey];
-  const calc   = document.getElementById('calcType').value;
-  const xc     = document.getElementById('xcFunc').value;
-  const ecutwfc= document.getElementById('ecutwfc').value;
-  const ecutrho= document.getElementById('ecutrho').value;
-  const kx     = document.getElementById('kx').value;
-  const ky     = document.getElementById('ky').value;
-  const kz     = document.getElementById('kz').value;
-  const mixing = document.getElementById('mixingBeta').value;
-  const sigma  = (parseInt(document.getElementById('sigma').value)/1000).toFixed(3);
-  const nbnd   = (document.getElementById('nbnd') || {value:'64'}).value;
-
-  const seen={}, atsym=[];
-  preset.atoms.forEach(function(at){ if(!seen[at.el]){seen[at.el]=true;atsym.push(at.el);} });
-  const nat=preset.atoms.length, ntyp=atsym.length;
-
-  let ibrav=0, cellblock='';
-  if (preset.bravais==='CUB') {
-    ibrav=1; cellblock='  A = '+preset.a+'\n';
-  } else {
-    const c=preset.cell;
-    cellblock='  CELL_PARAMETERS angstrom\n'+
-      '  '+c[0].map(function(x){return x*(preset.a||1);}).join(' ')+'\n'+
-      '  '+c[1].map(function(x){return x*(preset.a||1);}).join(' ')+'\n'+
-      '  '+c[2].map(function(x,i){return x*(preset.c&&i===2?preset.c:(preset.a||1));}).join(' ')+'\n';
-  }
-  let controlCalc='scf';
-  if(calc==='relax') controlCalc='relax';
-  if(calc==='vc-relax') controlCalc='vc-relax';
-  if(calc==='bands') controlCalc='bands';
-  if(calc==='nscf'||calc==='dos') controlCalc='nscf';
-
-  let txt='&CONTROL\n  calculation = \''+controlCalc+'\'\n  prefix = \'smad\'\n  outdir = \'./out\'\n  pseudo_dir = \'./pseudo\'\n/\n';
-  txt+='&SYSTEM\n  ibrav = '+ibrav+'\n'+cellblock+'  nat = '+nat+'\n  ntyp = '+ntyp+'\n';
-  txt+='  ecutwfc = '+ecutwfc+'\n  ecutrho = '+ecutrho+'\n';
-  txt+='  occupations = \'smearing\'\n  smearing = \'gaussian\'\n  degauss = '+sigma+'\n';
-  if(xc==='pbe') txt+='  input_dft = \'PBE\'\n';
-  txt+='/\n&ELECTRONS\n  mixing_beta = '+mixing+'\n/\n';
-  if(calc==='bands'||calc==='nscf'){txt+='&SYSTEM\n  nbnd = '+nbnd+'\n/\n';}
-  txt+='ATOMIC_SPECIES\n';
-  atsym.forEach(function(sym){txt+='  '+sym+' 1.0 '+sym.toLowerCase()+'.upf\n';});
-  txt+='ATOMIC_POSITIONS crystal\n';
-  preset.atoms.forEach(function(at){txt+='  '+at.el+' '+at.f.map(function(x){return x.toFixed(6);}).join(' ')+'\n';});
-  txt+='K_POINTS automatic\n  '+kx+' '+ky+' '+kz+' 1 1 1\n';
-  lastQEInput=txt;
-  return txt;
-}
-
-function highlightQE(src) {
-  const esc=function(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
-  return src.split('\n').map(function(line){
-    let t=esc(line);
-    if(/^\s*[!#]/.test(line)) return '<span class="com">'+t+'</span>';
-    t=t.replace(/('[\s\S]*?')/g,'<span class="str">$1</span>');
-    t=t.replace(/\b(\d+\.?\d*)\b/g,'<span class="num">$1</span>');
-    t=t.replace(/\b(CONTROL|SYSTEM|ELECTRONS|ATOMIC_SPECIES|ATOMIC_POSITIONS|K_POINTS|CELL_PARAMETERS)\b/g,'<span class="kw">$1</span>');
-    return t;
-  }).join('\n');
-}
-
-function refreshInputPane() {
-  const el=document.getElementById('inputHighlight');
-  if(el){buildQEInput();el.innerHTML=highlightQE(lastQEInput);}
-}
-
-function fillPseudoTable() {
-  const preset=STRUCTS[currentPresetKey];
-  const tb=document.getElementById('pseudoTbody');
-  if(!tb) return;
-  const elems={};
-  preset.atoms.forEach(function(a){elems[a.el]=(elems[a.el]||0)+1;});
-  tb.innerHTML=Object.keys(elems).sort().map(function(sym){
-    const pseudo=sym.toLowerCase()+'.pbe-n-rrkjus.UPF';
-    let ve='d';
-    if(['O','N','C'].indexOf(sym)>=0) ve='6';
-    else if(['Si','Ge'].indexOf(sym)>=0) ve='4';
-    else if(['Ba','Sr'].indexOf(sym)>=0) ve='10';
-    return '<tr><td>'+sym+'</td><td>'+pseudo+'</td><td>'+ve+'</td></tr>';
-  }).join('');
-}
-
-function fillProperties() {
-  const preset=STRUCTS[currentPresetKey];
-  const grid=document.getElementById('propGrid');
-  if(!grid) return;
-  const ecut=document.getElementById('ecutwfc').value;
-  grid.innerHTML=
-    '<div><div class="k">Crystal system</div><div class="v">'+preset.bravais+'</div></div>'+
-    '<div><div class="k">Formula</div><div class="v">'+preset.formula+'</div></div>'+
-    '<div><div class="k">a (Å)</div><div class="v">'+(preset.a||'—')+'</div></div>'+
-    '<div><div class="k">c (Å)</div><div class="v">'+(preset.c||'—')+'</div></div>'+
-    '<div><div class="k">Atoms/cell</div><div class="v">'+preset.atoms.length+'</div></div>'+
-    '<div><div class="k">Ecutwfc</div><div class="v">'+ecut+' Ry</div></div>'+
-    '<div style="grid-column:1/-1"><div class="k">Notes</div><div class="v" style="color:var(--text2);font-size:10px">'+preset.notes+'</div></div>';
-  fillPseudoTable();
-}
-
-/* ── plots ── */
-function plotTheme() {
-  const light=document.documentElement.getAttribute('data-theme')==='light';
-  return {
-    paper_bgcolor:light?'#ffffff':'#080c14',
-    plot_bgcolor:light?'#f3f6fb':'#111d2e',
-    font:{color:light?'#2a4060':'#99b8d8',size:10,family:'JetBrains Mono, monospace'},
-    xaxis:{gridcolor:light?'#ccd8eb':'#253550',tickfont:{size:8}},
-    yaxis:{gridcolor:light?'#ccd8eb':'#253550',tickfont:{size:8}},
-    margin:{t:28,r:12,b:40,l:48},
-  };
-}
-
-function initPlots() {
-  const pt=plotTheme();
-  const steps=[], convy=[];
-  for(let i=1;i<=12;i++){steps.push(i);convy.push(0.8*Math.exp(-0.45*i)+0.002*Math.random());}
-  Plotly.newPlot('plotConvergence',[{x:steps,y:convy,type:'scatter',mode:'lines+markers',line:{color:'#3d9fff',width:2},name:'ΔE (demo)'}],
-    Object.assign({title:'SCF convergence (demo)',xaxis:Object.assign({title:'iteration'},pt.xaxis),yaxis:Object.assign({title:'ΔE (Ry)',type:'log'},pt.yaxis),showlegend:false},pt),
-    {responsive:true,displayModeBar:true});
-
-  const kdist=[],E=[];
-  for(let i=0;i<80;i++){kdist.push(i);E.push(-12+8*Math.sin(i*0.08)+0.3*Math.sin(i*0.25));}
-  Plotly.newPlot('plotBands',[{x:kdist,y:E,type:'scatter',mode:'lines',line:{color:'#2dd9a0',width:1.5}}],
-    Object.assign({title:'Bands (demo)',xaxis:Object.assign({title:'k (arb.)'},pt.xaxis),yaxis:Object.assign({title:'E − E_F (eV)'},pt.yaxis),showlegend:false},pt),
-    {responsive:true,displayModeBar:true});
-
-  const egrid=[],d=[];
-  for(let i=-8;i<=8;i+=0.1){egrid.push(i);d.push(8*Math.exp(-i*i/6)+2*Math.exp(-(i-3)*(i-3)));}
-  Plotly.newPlot('plotDos',[{x:d,y:egrid,type:'scatter',mode:'lines',fill:'tozerox',line:{color:'#f5a623',width:1}}],
-    Object.assign({title:'DOS (demo)',xaxis:Object.assign({title:'DOS (arb.)'},pt.xaxis),yaxis:Object.assign({title:'E (eV)'},pt.yaxis),showlegend:false},pt),
-    {responsive:true,displayModeBar:true});
-}
-
-function redrawPlotsResize() {
-  ['plotConvergence','plotBands','plotDos'].forEach(function(id){
-    const el=document.getElementById(id);
-    if(el&&typeof Plotly!=='undefined') Plotly.Plots.resize(el);
+  const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+  mol3d=$3Dmol.createViewer(container,{
+    backgroundColor:isDark?'#030508':'#f0f4fa',
+    antialias:true,
+    id:'dft3dv'
   });
+  mol3d.setViewStyle({style:'outline',color:'black',width:0.04});
+  log('[viewer] 3Dmol.js viewer ready.');
 }
 
-/* ── 3Dmol viewer ── */
-function loadStructureIntoViewer() {
-  if(!dftViewer) return;
-  dftViewer.removeAllModels();
-  dftViewer.removeAllShapes();
-  const preset=STRUCTS[currentPresetKey];
-  const cell=preset.cell, a0=preset.a||1, c0=preset.c||a0;
-  const model=dftViewer.addModel();
-  preset.atoms.forEach(function(at){
-    const p=fracToCart(cell,at.f[0],at.f[1],at.f[2]);
-    model.addAtom({elem:at.el,x:p.x*a0,y:p.y*a0,z:p.z*(preset.bravais==='HEX'&&preset.c?c0/(preset.cell[2][2]||1):a0)});
-  });
-  dftViewer.setStyle({},{sphere:{radius:0.35,colorscheme:'Jmol'}});
-  if(dftShowBox){
-    const vx=fracToCart(cell,1,0,0),vy=fracToCart(cell,0,1,0),vz=fracToCart(cell,0,0,1);
-    const sx=[vx.x*a0,vx.y*a0,vx.z*a0];
-    const sy=[vy.x*a0,vy.y*a0,vy.z*a0];
-    const sz=[vz.x*a0,vz.y*a0,vz.z*(preset.bravais==='HEX'?c0:a0)];
-    const corners=[[0,0,0],sx,sy,sz,[sx[0]+sy[0],sx[1]+sy[1],sx[2]+sy[2]],[sx[0]+sz[0],sx[1]+sz[1],sx[2]+sz[2]],[sy[0]+sz[0],sy[1]+sz[1],sy[2]+sz[2]],[sx[0]+sy[0]+sz[0],sx[1]+sy[1]+sz[1],sx[2]+sy[2]+sz[2]]];
-    [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(function(e){
-      dftViewer.addCylinder({start:{x:corners[e[0]][0],y:corners[e[0]][1],z:corners[e[0]][2]},end:{x:corners[e[1]][0],y:corners[e[1]][1],z:corners[e[1]][2]},radius:0.04,color:'#3d9fff',fromCap:true,toCap:true});
+/* ── build XYZ string for current struct + supercell ── */
+function structToXYZ(s,sc){
+  const brav=s.bravais||'FCC';
+  const cell=s.cell||CELL_VECS[brav]||CELL_VECS.CUB;
+  const a0=s.a||4; const c0=s.c||a0;
+  const cz=brav==='HEX'||brav==='TET'?c0:a0;
+  const rows=[];
+  for(let ix=0;ix<sc[0];ix++)for(let iy=0;iy<sc[1];iy++)for(let iz=0;iz<sc[2];iz++){
+    s.atoms.forEach(at=>{
+      const fx=at.f[0]+ix, fy=at.f[1]+iy, fz=at.f[2]+iz;
+      const x=(cell[0][0]*fx+cell[1][0]*fy+cell[2][0]*fz)*a0*sc[0]/sc[0];
+      const y=(cell[0][1]*fx+cell[1][1]*fy+cell[2][1]*fz)*a0*sc[1]/sc[1];
+      const z=(cell[0][2]*fx+cell[1][2]*fy+cell[2][2]*fz)*cz*sc[2]/sc[2];
+      rows.push(`${at.el} ${x.toFixed(6)} ${y.toFixed(6)} ${z.toFixed(6)}`);
     });
   }
-  dftViewer.zoomTo();
-  dftViewer.render();
-  document.getElementById('statFormula').textContent=STRUCTS[currentPresetKey].formula;
-  document.getElementById('statPreset').textContent=currentPresetKey;
-  document.getElementById('navPreset').textContent=currentPresetKey;
-  fillProperties();
+  const nat=s.atoms.length*sc[0]*sc[1]*sc[2];
+  return `${nat}\n${s.formula||'structure'} sc=${sc.join('x')}\n${rows.join('\n')}`;
 }
 
-function updateStatsBar() {
+/* ── draw unit-cell box as cylinders ── */
+function drawBox3Dmol(s,sc){
+  if(!mol3d) return;
+  const brav=s.bravais||'FCC';
+  const cell=s.cell||CELL_VECS[brav]||CELL_VECS.CUB;
+  const a0=s.a||4; const c0=s.c||a0;
+  const cz=brav==='HEX'||brav==='TET'?c0:a0;
+  const v=(i)=>({
+    x:cell[i][0]*a0*sc[0],
+    y:cell[i][1]*a0*sc[1],
+    z:cell[i][2]*cz*sc[2]
+  });
+  const O={x:0,y:0,z:0};
+  const ax=v(0),ay=v(1),az=v(2);
+  const add=(p,q)=>({x:p.x+q.x,y:p.y+q.y,z:p.z+q.z});
+  const corners=[O,ax,ay,az,add(ax,ay),add(ax,az),add(ay,az),add(ax,add(ay,az))];
+  const edges=[[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]];
+  edges.forEach(([a,b])=>{
+    mol3d.addCylinder({
+      start:corners[a],end:corners[b],
+      radius:0.05,color:'#3d9fff',fromCap:1,toCap:1,opacity:0.85
+    });
+  });
+}
+
+/* ── apply atom style ── */
+function applyAtomStyle(){
+  if(!mol3d) return;
+  if(viewMode==='sphere'){
+    mol3d.setStyle({},{sphere:{colorscheme:'Jmol',radius:0.4}});
+  } else if(viewMode==='stick'){
+    mol3d.setStyle({},{stick:{colorscheme:'Jmol',radius:0.15},sphere:{colorscheme:'Jmol',radius:0.25}});
+  } else if(viewMode==='line'){
+    mol3d.setStyle({},{line:{colorscheme:'Jmol'}});
+  }
+  mol3d.render();
+}
+
+/* ── draw isosurface from cube data ── */
+function drawIsosurface(){
+  if(!mol3d||!cubeData) return;
+  /* remove old isosurface */
+  if(isoSurface!==null){mol3d.removeShape(isoSurface);isoSurface=null;}
+  const neg=document.getElementById('isoNeg').checked;
+  const val=isoValue*(neg?-1:1);
+  try{
+    isoSurface=mol3d.addVolumetricData(cubeData,'cube',{
+      isoval:val,
+      color:isoColor,
+      opacity:isoOpacity,
+      smoothness:5,
+    });
+    if(neg){
+      /* add negative lobe in complementary color */
+      mol3d.addVolumetricData(cubeData,'cube',{
+        isoval:-isoValue,
+        color:'#f06080',
+        opacity:isoOpacity*0.8,
+        smoothness:5,
+      });
+    }
+    mol3d.render();
+    document.getElementById('isoStatus').textContent=`Isosurface drawn at ±${isoValue.toFixed(3)} e/Å³`;
+    document.getElementById('isoStatus').style.color='var(--green)';
+  }catch(e){
+    log('[iso] Error: '+e.message);
+    document.getElementById('isoStatus').textContent='Error drawing isosurface: '+e.message;
+    document.getElementById('isoStatus').style.color='var(--rose)';
+  }
+}
+
+/* ── Van der Waals surface ── */
+function toggleVdWSurface(){
+  if(!mol3d) return;
+  if(surfaceShown){
+    mol3d.removeSurface();surfaceShown=false;
+    document.getElementById('btnSurf').classList.remove('act');
+  } else {
+    mol3d.addSurface($3Dmol.SurfaceType.VWS,{opacity:0.55,colorscheme:'Jmol'});
+    surfaceShown=true;
+    document.getElementById('btnSurf').classList.add('act');
+    mol3d.render();
+  }
+}
+
+/* ── main viewer load function ── */
+function load3DmolStructure(){
+  if(!mol3d) return;
+  mol3d.removeAllModels();
+  mol3d.removeAllShapes();
+  mol3d.removeAllSurfaces();
+  surfaceShown=false;
+  isoSurface=null;
+  document.getElementById('btnSurf').classList.remove('act');
+
+  const xyz=structToXYZ(currentStruct,supercell);
+  mol3d.addModel(xyz,'xyz');
+  applyAtomStyle();
+
+  if(showBox) drawBox3Dmol(currentStruct,supercell);
+
+  /* re-draw isosurface if cube data is loaded */
+  if(cubeData) drawIsosurface();
+
+  mol3d.zoomTo();
+  mol3d.render();
+}
+
+function resize(){
+  /* 3Dmol handles its own resize — just re-render */
+  if(mol3d) mol3d.render();
+}
+
+function loadStructure(s){
+  currentStruct=JSON.parse(JSON.stringify(s));
+  load3DmolStructure();
+  /* update vinfo labels */
+  const nat=s.atoms.length*supercell[0]*supercell[1]*supercell[2];
+  document.getElementById('vFormula').textContent=s.formula||'?';
+  document.getElementById('vAtoms').textContent=nat;
+  document.getElementById('vCell').textContent='a='+s.a.toFixed(3)+'Å'+(s.c?', c='+s.c.toFixed(3)+'Å':'');
+  updateInputPane();
+  updateStatsBar();
+  updateProps();
+}
+
+function updateViewer(){
+  const s=currentStruct;
+  const nat=s.atoms.length*supercell[0]*supercell[1]*supercell[2];
+  document.getElementById('vFormula').textContent=s.formula||'?';
+  document.getElementById('vAtoms').textContent=nat;
+  document.getElementById('vCell').textContent='a='+s.a.toFixed(3)+'Å'+(s.c?', c='+s.c.toFixed(3)+'Å':'');
+  load3DmolStructure();
+}
+
+/* ═══════════════ STATS / PROPS ═══════════════ */
+function updateStatsBar(){
+  const s=currentStruct;
   const ecut=document.getElementById('ecutwfc').value;
-  const kx=document.getElementById('kx').value;
-  const ky=document.getElementById('ky').value;
-  const kz=document.getElementById('kz').value;
+  const kx=document.getElementById('kx').value,ky=document.getElementById('ky').value,kz=document.getElementById('kz').value;
   const xc=document.getElementById('xcFunc');
   const calc=document.getElementById('calcType');
-  const p=STRUCTS[currentPresetKey];
-  document.getElementById('statFormula').textContent=p.formula;
-  document.getElementById('statEcut').textContent=ecut+' Ry';
-  document.getElementById('statKmesh').textContent=kx+'×'+ky+'×'+kz;
-  document.getElementById('statXc').textContent=xc.options[xc.selectedIndex].text;
-  document.getElementById('statCalc').textContent=calc.options[calc.selectedIndex].text;
+  const code=document.getElementById('dftCode');
+  document.getElementById('stFormula').textContent=s.formula||'?';
+  document.getElementById('stSpg').textContent=s.spg||'—';
+  document.getElementById('stEcut').textContent=ecut+' Ry';
+  document.getElementById('stK').textContent=kx+'×'+ky+'×'+kz;
+  document.getElementById('stXc').textContent=xc.value.toUpperCase();
+  document.getElementById('stCode').textContent={qe:'QE',vasp:'VASP',abinit:'ABINIT',siesta:'SIESTA',cp2k:'CP2K'}[code.value]||code.value;
+  document.getElementById('stCalc').textContent=calc.value.toUpperCase();
+  document.getElementById('stNat').textContent=s.atoms.length;
+  document.getElementById('navStruct').textContent=s.formula||'?';
   document.getElementById('navEcut').textContent=ecut+' Ry';
-  document.getElementById('navPreset').textContent=currentPresetKey;
-  fillProperties();
+  document.getElementById('navCode').textContent={qe:'QE',vasp:'VASP',abinit:'ABINIT',siesta:'SIESTA',cp2k:'CP2K'}[code.value]||code.value;
 }
 
-function toggleBandsPanel() {
+function updateProps(){
+  const s=currentStruct;
+  const g=document.getElementById('propGrid');
+  if(!g) return;
+  const ecut=document.getElementById('ecutwfc').value;
+  const kx=document.getElementById('kx').value,ky=document.getElementById('ky').value,kz=document.getElementById('kz').value;
+  g.innerHTML=[
+    ['Crystal','',s.bravais||'—'],['Space group','',s.spg||'—'],
+    ['a (Å)','',s.a.toFixed(4)],['c (Å)','',(s.c||'—')],
+    ['Atoms/cell','',s.atoms.length],['k-pts','',parseInt(kx)*parseInt(ky)*parseInt(kz)],
+    ['Ecutwfc','',ecut+' Ry'],['Notes','',s.notes||'—'],
+  ].map(([k,,v])=>`<div class="prop-card"><div class="prop-k">${k}</div><div class="prop-v">${v}</div></div>`).join('');
+  /* pseudo table */
+  const seen={};s.atoms.forEach(a=>{seen[a.el]=true;});
+  const V={O:6,N:5,C:4,Si:4,Ge:4,F:7,Cl:7,S:6,P:5,H:1,Li:1,Na:1,K:1,B:3,Ba:10,Sr:10,Ca:10,Mg:2,Be:2};
+  const tb=document.getElementById('pseudoTbody');
+  if(tb){tb.innerHTML=Object.keys(seen).sort().map(sym=>`<tr>
+    <td style="padding:5px 7px;border:1px solid var(--border)">${sym}</td>
+    <td style="padding:5px 7px;border:1px solid var(--border);font-size:10px;color:var(--text2)">${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF</td>
+    <td style="padding:5px 7px;border:1px solid var(--border)">${V[sym]||'d'}</td>
+  </tr>`).join('');}
+  const ch=document.getElementById('convHints');
+  if(ch){ch.innerHTML=[
+    ['Suggested Ecut',s.bravais==='FCC'?'40 Ry':s.atoms.some(a=>['O','N','F'].includes(a.el))?'80 Ry':'60 Ry'],
+    ['Suggested k-mesh',s.atoms.length>4?'4×4×4':'6×6×6'],
+    ['Metal smearing','0.01–0.02 Ry'],
+    ['PP type',s.atoms.some(a=>['Fe','Ni','Co','Mn'].includes(a.el))?'PAW/USPP':'NC/USPP'],
+  ].map(([k,v])=>`<div class="prop-card"><div class="prop-k">${k}</div><div class="prop-v" style="color:var(--amber)">${v}</div></div>`).join('');}
+}
+
+/* ═══════════════ INPUT GENERATORS ═══════════════ */
+function buildQEInput(){
+  const s=currentStruct;
   const calc=document.getElementById('calcType').value;
-  const bp=document.getElementById('bandsPanel');
-  if(bp) bp.classList.toggle('visible',calc==='bands'||calc==='nscf');
+  const xc=document.getElementById('xcFunc').value;
+  const ecut=document.getElementById('ecutwfc').value;
+  const rho=document.getElementById('ecutrho').value;
+  const kx=document.getElementById('kx').value,ky=document.getElementById('ky').value,kz=document.getElementById('kz').value;
+  const ks1=document.getElementById('ks1').value,ks2=document.getElementById('ks2').value,ks3=document.getElementById('ks3').value;
+  const mix=document.getElementById('mixBeta').value;
+  const mixm=document.getElementById('mixMode').value;
+  const sigma=(parseInt(document.getElementById('sigma').value)/1000).toFixed(3);
+  const smear=document.getElementById('smearType').value;
+  const occ=document.getElementById('occType').value;
+  const nspin=document.getElementById('nspin').value;
+  const totMag=document.getElementById('totMag').value;
+  const hubb=parseFloat(document.getElementById('hubbardU').value);
+  const conv=document.getElementById('convThr').value;
+  const nstep=document.getElementById('nstep').value;
+  const nbnd=document.getElementById('nbnd')?document.getElementById('nbnd').value:64;
+  const verb=document.getElementById('verbosity').value;
+  const ionDyn=document.getElementById('ionDyn').value;
+  const fc=document.getElementById('forcConv').value;
+  const brav=s.bravais||'FCC'; const a0=s.a||4; const c0=s.c||a0;
+  const cell=s.cell||CELL_VECS[brav]||CELL_VECS.CUB;
+  const seen={},atsym=[];
+  s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
+  const nat=s.atoms.length,ntyp=atsym.length;
+  const calcStr={'scf':'scf','relax':'relax','vc-relax':'vc-relax','bands':'bands','nscf':'nscf','dos':'nscf','phonon':'scf','md':'md'}[calc]||calc;
+  const MASS={H:1.008,C:12.011,N:14.007,O:15.999,F:18.998,Na:22.990,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.065,Cl:35.45,K:39.098,Ca:40.078,Ti:47.867,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.63,As:74.922,Mo:95.96,Ag:107.87,Ba:137.33,W:183.84,Au:196.97,Sr:87.62};
+  let t=`! Generated by SMAD DFT Simulator\n! ${s.formula||''} · ${s.spg||''}\n\n`;
+  t+=`&CONTROL\n  calculation = '${calcStr}'\n  prefix = 'smad'\n  outdir = './out'\n  pseudo_dir = './pseudo'\n  verbosity = '${verb}'\n`;
+  if(calc==='relax'||calc==='vc-relax') t+=`  forc_conv_thr = ${fc}\n`;
+  t+=`/\n&SYSTEM\n  ibrav = 0\n  nat = ${nat}\n  ntyp = ${ntyp}\n  ecutwfc = ${ecut}\n  ecutrho = ${rho}\n`;
+  t+=`  occupations = '${occ}'\n`;
+  if(occ==='smearing') t+=`  smearing = '${smear}'\n  degauss = ${sigma}\n`;
+  t+=`  nspin = ${nspin}\n`;
+  if(parseInt(nspin)>1) t+=`  tot_magnetization = ${totMag}\n`;
+  if(['hse06','pbe0'].includes(xc)) t+=`  input_dft = '${xc==='hse06'?'HSE':'PBE0'}'\n`;
+  if(hubb>0) t+=`  lda_plus_u = .true.\n  Hubbard_U(1) = ${hubb}\n`;
+  if(['bands','nscf','dos'].includes(calc)) t+=`  nbnd = ${nbnd}\n`;
+  t+=`/\n&ELECTRONS\n  conv_thr = ${conv}\n  mixing_beta = ${mix}\n  mixing_mode = '${mixm}'\n  nstep = ${nstep}\n/\n`;
+  if(['relax','vc-relax','md'].includes(calc)) t+=`&IONS\n  ion_dynamics = '${ionDyn}'\n/\n`;
+  if(calc==='vc-relax') t+=`&CELL\n  cell_dynamics = 'bfgs'\n/\n`;
+  t+=`CELL_PARAMETERS angstrom\n`;
+  cell.forEach((v,i)=>{const sc=i===2&&(brav==='HEX'||brav==='TET')?c0:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
+  t+=`ATOMIC_SPECIES\n`;
+  atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||1).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
+  t+=`ATOMIC_POSITIONS crystal\n`;
+  s.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
+  t+=`K_POINTS automatic\n  ${kx} ${ky} ${kz}  ${ks1} ${ks2} ${ks3}\n`;
+  return t;
 }
 
-/* ── demo SCF ── */
-async function runDemoDftLoop() {
-  demoAbort.active=false;
-  setCalcState('running');
-  logConsole('['+new Date().toLocaleTimeString()+'] Demo SCF loop starting…');
-  const convDiv=document.getElementById('plotConvergence');
-  const xs=[],ys=[];
-  for(let step=1;step<=15;step++){
-    if(demoAbort.active) break;
-    await new Promise(function(r){setTimeout(r,120);});
-    xs.push(step);
-    ys.push(0.5*Math.exp(-0.35*step)+0.0005*Math.random());
-    const pt=plotTheme();
-    Plotly.react(convDiv,[{x:xs,y:ys,type:'scatter',mode:'lines+markers',line:{color:'#3d9fff',width:2}}],
-      Object.assign({title:'SCF convergence (live)',xaxis:Object.assign({title:'SCF step'},pt.xaxis),yaxis:Object.assign({title:'ΔE (Ry)',type:'log'},pt.yaxis),showlegend:false},pt));
-    logConsole('  SCF iter '+step+'  ΔE = '+ys[ys.length-1].toExponential(3)+' Ry');
-    if(step===1){const b=document.querySelector('[data-rptab="conv"]');if(b)b.click();}
+function buildVaspInput(){
+  const s=currentStruct;
+  const xc=document.getElementById('xcFunc').value;
+  const ecut=(parseFloat(document.getElementById('ecutwfc').value)*13.606).toFixed(0);
+  const kx=document.getElementById('kx').value,ky=document.getElementById('ky').value,kz=document.getElementById('kz').value;
+  const sigma=(parseInt(document.getElementById('sigma').value)/1000*13.606).toFixed(3);
+  const nspin=document.getElementById('nspin').value;
+  const calc=document.getElementById('calcType').value;
+  const ibrion={'scf':-1,'relax':2,'vc-relax':3}[calc]||-1;
+  const brav=s.bravais||'FCC'; const a0=s.a||4; const c0=s.c||a0;
+  const cell=s.cell||CELL_VECS[brav]||CELL_VECS.CUB;
+  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
+  let incar=`! INCAR — SMAD DFT Simulator\nSYSTEM = ${s.formula||'SMAD'}\nALGO = Fast\nENCUT = ${ecut}\nSIGMA = ${sigma}\nISMEAR = 1\nISPIN = ${nspin}\nIBRION = ${ibrion}\nNSW = ${calc==='scf'?0:100}\n`;
+  const gga={'pbe':'PE','pbesol':'PS','lda':'CA','scan':'MF'}[xc]||'PE';
+  incar+=`GGA = ${gga}\n`;
+  let poscar=`${s.formula||'SMAD'}\n1.0\n`;
+  cell.forEach((v,i)=>{const sc=i===2&&(brav==='HEX'||brav==='TET')?c0:a0;poscar+=`  ${v.map(x=>(x*sc).toFixed(8)).join('  ')}\n`;});
+  poscar+=atsym.join('  ')+'\n'+atsym.map(sym=>s.atoms.filter(a=>a.el===sym).length).join('  ')+'\nDirect\n';
+  atsym.forEach(sym=>{s.atoms.filter(a=>a.el===sym).forEach(a=>{poscar+=`  ${a.f.map(x=>x.toFixed(8)).join('  ')}\n`;});});
+  let kpoints=`Automatic\n0\nMonkhorst-Pack\n${kx} ${ky} ${kz}\n0 0 0\n`;
+  return`! === INCAR ===\n${incar}\n! === POSCAR ===\n${poscar}\n! === KPOINTS ===\n${kpoints}`;
+}
+
+function buildAbinitInput(){
+  const s=currentStruct;
+  const ecut=document.getElementById('ecutwfc').value;
+  const kx=document.getElementById('kx').value,ky=document.getElementById('ky').value,kz=document.getElementById('kz').value;
+  const brav=s.bravais||'FCC'; const a0=s.a||4; const c0=s.c||a0;
+  const cell=s.cell||CELL_VECS[brav]||CELL_VECS.CUB;
+  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
+  const ZN={H:1,C:6,N:7,O:8,Al:13,Si:14,Ti:22,Fe:26,Cu:29,Ga:31,As:33,Mo:42,Ba:56,Au:79};
+  const AB=1.8897259886;
+  let t=`# ABINIT — SMAD DFT Simulator\n# ${s.formula||''}\n\nacell ${[a0*AB,a0*AB,(s.c||a0)*AB].map(x=>x.toFixed(6)).join(' ')} Bohr\nrprim\n`;
+  cell.forEach(v=>{t+=`  ${v.map(x=>x.toFixed(8)).join('  ')}\n`;});
+  t+=`natom ${s.atoms.length}\nntypat ${atsym.length}\nznucl ${atsym.map(sym=>ZN[sym]||0).join(' ')}\n`;
+  t+=`typat ${s.atoms.map(a=>atsym.indexOf(a.el)+1).join(' ')}\nxred\n`;
+  s.atoms.forEach(a=>{t+=`  ${a.f.map(x=>x.toFixed(8)).join('  ')}\n`;});
+  t+=`ecut ${ecut} Ry\nkptopt 1\nngkpt ${kx} ${ky} ${kz}\nnshiftk 1\nshiftk 0.5 0.5 0.5\n`;
+  t+=`pp_dirpath "./pseudo"\npseudos "${atsym.map(s=>s.toLowerCase()+'.psp8').join(', ')}"\n`;
+  t+=`ixc -101130\ntolvrs 1.0d-12\nnstep 100\n`;
+  return t;
+}
+
+function buildSiestaInput(){
+  const s=currentStruct;
+  const ecut=document.getElementById('ecutwfc').value;
+  const kx=document.getElementById('kx').value,ky=document.getElementById('ky').value,kz=document.getElementById('kz').value;
+  const brav=s.bravais||'FCC'; const a0=s.a||4; const c0=s.c||a0;
+  const cell=s.cell||CELL_VECS[brav]||CELL_VECS.CUB;
+  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
+  const ZN={H:1,C:6,N:7,O:8,Si:14,Fe:26,Cu:29};
+  let t=`# SIESTA FDF — SMAD DFT Simulator\nSystemName ${s.formula||'SMAD'}\nSystemLabel smad\nNumberOfAtoms ${s.atoms.length}\nNumberOfSpecies ${atsym.length}\n\n%block ChemicalSpeciesLabel\n`;
+  atsym.forEach((sym,i)=>{t+=`  ${i+1} ${ZN[sym]||i+1} ${sym}\n`;});
+  t+=`%endblock ChemicalSpeciesLabel\nLatticeConstant 1.0 Ang\n%block LatticeVectors\n`;
+  cell.forEach((v,i)=>{const sc=i===2&&(brav==='HEX'||brav==='TET')?c0:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8)).join('  ')}\n`;});
+  t+=`%endblock LatticeVectors\nAtomicCoordinatesFormat Fractional\n%block AtomicCoordinatesAndAtomicSpecies\n`;
+  s.atoms.forEach(a=>{t+=`  ${a.f.map(x=>x.toFixed(8)).join('  ')} ${atsym.indexOf(a.el)+1} # ${a.el}\n`;});
+  t+=`%endblock AtomicCoordinatesAndAtomicSpecies\nMeshCutoff ${parseInt(ecut)*2} Ry\nXC.functional GGA\nXC.authors PBE\n%block kgrid_Monkhorst_Pack\n  ${kx} 0 0 0.5\n  0 ${ky} 0 0.5\n  0 0 ${kz} 0.5\n%endblock kgrid_Monkhorst_Pack\n`;
+  return t;
+}
+
+function buildInput(code){
+  const c=code||activeCodeTab;
+  if(c==='vasp') return buildVaspInput();
+  if(c==='abinit') return buildAbinitInput();
+  if(c==='siesta') return buildSiestaInput();
+  return buildQEInput();
+}
+
+function updateInputPane(){
+  const txt=buildInput(activeCodeTab);
+  const el=document.getElementById('inputEdit');
+  if(el){el.value=txt;document.getElementById('infoLines').textContent=txt.split('\n').length+' lines';}
+}
+
+/* ═══════════════ SAVED MATERIALS ═══════════════ */
+function getSaved(){try{return JSON.parse(localStorage.getItem('smad-saved-materials')||'[]');}catch(e){return[];}}
+function setSaved(arr){try{localStorage.setItem('smad-saved-materials',JSON.stringify(arr));}catch(e){}}
+function renderSavedList(){
+  const list=document.getElementById('savedList');
+  const items=getSaved();
+  if(!items.length){list.innerHTML=`<div class="saved-empty">No saved structures yet.<br>Load a structure and click "Save current".</div>`;return;}
+  list.innerHTML=items.map((item,i)=>`
+    <div class="saved-item${selectedSavedIdx===i?' active':''}" data-si="${i}">
+      <div>
+        <div class="saved-formula">${item.formula||'?'}</div>
+        <div class="saved-meta">${item.spg||item.bravais||''} · ${item.notes||''}</div>
+      </div>
+      <button class="saved-del" data-del="${i}" title="Delete">×</button>
+    </div>`).join('');
+  list.querySelectorAll('.saved-item').forEach(el=>{
+    el.addEventListener('click',e=>{
+      if(e.target.classList.contains('saved-del')) return;
+      selectedSavedIdx=parseInt(el.getAttribute('data-si'));
+      renderSavedList();
+    });
+  });
+  list.querySelectorAll('.saved-del').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const idx=parseInt(btn.getAttribute('data-del'));
+      const arr=getSaved();arr.splice(idx,1);setSaved(arr);
+      if(selectedSavedIdx>=arr.length) selectedSavedIdx=arr.length-1;
+      renderSavedList();
+    });
+  });
+}
+function saveCurrentMaterial(s,name){
+  const arr=getSaved();
+  arr.unshift({...JSON.parse(JSON.stringify(s)),savedName:name||s.formula||'Structure',savedAt:new Date().toISOString()});
+  if(arr.length>50) arr.pop();
+  setSaved(arr);renderSavedList();
+}
+
+/* ═══════════════ MP DEMO DATA ═══════════════ */
+const MP_DB=[
+  {id:'mp-30',formula:'Cu',name:'Cu FCC',sg:'Fm-3m',Eg:0,type:'metal',struct:STRUCTS.cu_fcc},
+  {id:'mp-13',formula:'Fe',name:'Fe BCC',sg:'Im-3m',Eg:0,type:'metal',struct:STRUCTS.fe_bcc},
+  {id:'mp-1',formula:'Si',name:'Si diamond',sg:'Fd-3m',Eg:1.17,type:'semi',struct:STRUCTS.si_diamond},
+  {id:'mp-2858',formula:'GaAs',name:'GaAs zincblende',sg:'F-43m',Eg:1.42,type:'semi',struct:STRUCTS.gaas_zb},
+  {id:'mp-804',formula:'MgO',name:'MgO rocksalt',sg:'Fm-3m',Eg:7.8,type:'insul',struct:STRUCTS.mgo_rs},
+  {id:'mp-2657',formula:'TiO2',name:'TiO2 rutile',sg:'P42/mnm',Eg:3.05,type:'semi',struct:STRUCTS.tio2},
+  {id:'mp-5020',formula:'Fe2O3',name:'Fe2O3 hematite',sg:'R-3c',Eg:2.2,type:'semi',struct:STRUCTS.fe2o3},
+  {id:'mp-5986',formula:'BaTiO3',name:'BaTiO3 cubic',sg:'Pm-3m',Eg:1.9,type:'insul',struct:STRUCTS.batio3},
+  {id:'mp-5229',formula:'SrTiO3',name:'SrTiO3 cubic',sg:'Pm-3m',Eg:3.2,type:'insul',struct:STRUCTS.srtio3},
+  {id:'mp-3748',formula:'MoS2',name:'MoS2 2H',sg:'P63/mmc',Eg:1.8,type:'semi',struct:STRUCTS.mos2},
+  {id:'mp-568806',formula:'C2',name:'Graphene',sg:'P6/mmm',Eg:0,type:'semi',struct:STRUCTS.graphene},
+  {id:'mp-22851',formula:'NaCl',name:'NaCl rocksalt',sg:'Fm-3m',Eg:8.5,type:'insul',struct:STRUCTS.nacl},
+  {id:'mp-804',formula:'Ni',name:'Ni FCC',sg:'Fm-3m',Eg:0,type:'metal',struct:STRUCTS.ni_fcc},
+  {id:'mp-2133',formula:'GaN',name:'GaN wurtzite',sg:'P63mc',Eg:3.4,type:'semi',struct:STRUCTS.gan_wz},
+  {id:'mp-66',formula:'Al',name:'Al FCC',sg:'Fm-3m',Eg:0,type:'metal',struct:STRUCTS.al_fcc},
+];
+function mpSearch(q){
+  q=(q||'').toLowerCase().replace(/\s/g,'');
+  if(!q) return MP_DB.slice(0,8);
+  return MP_DB.filter(d=>d.formula.toLowerCase().includes(q)||d.id.includes(q)||d.name.toLowerCase().includes(q));
+}
+function renderMpResults(results,containerEl,onSelect){
+  if(!results.length){containerEl.innerHTML=`<div style="padding:10px;font-size:11px;color:var(--text3);font-family:var(--mono)">No results.</div>`;return;}
+  containerEl.innerHTML=`<div class="mp-result-list">${results.map((r,i)=>`
+    <div class="mp-entry" data-ri="${i}">
+      <div><div class="mp-formula">${r.formula}</div><div class="mp-meta">${r.id} · ${r.sg}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        <span class="mp-badge bg-${r.type}">${r.type}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text2)">Eg=${r.Eg.toFixed(2)}eV</span>
+      </div>
+    </div>`).join('')}</div>`;
+  containerEl.querySelectorAll('.mp-entry').forEach(el=>{
+    el.addEventListener('click',()=>{
+      containerEl.querySelectorAll('.mp-entry').forEach(e=>e.classList.remove('sel'));
+      el.classList.add('sel');
+      onSelect(results[parseInt(el.getAttribute('data-ri'))]);
+    });
+  });
+}
+
+/* ═══════════════ FILE PARSING ═══════════════ */
+/* ═══════════════ STRUCTURE PARSING ═══════════════ */
+
+/* Master dispatcher — tries 3Dmol native first for CIF/mol2/sdf, then our parsers */
+function parseAndLoad(txt, filename){
+  filename = filename || '';
+  const ext = filename.split('.').pop().toLowerCase();
+
+  /* ── 3Dmol native formats: CIF, MOL2, SDF, PDB ── */
+  const nativeFmts = {cif:'cif', mol2:'mol2', sdf:'sdf', pdb:'pdb', ent:'pdb'};
+  if(nativeFmts[ext] && mol3d){
+    return load3DmolNative(txt, nativeFmts[ext], filename);
   }
-  setCalcState('done');
-  logConsole('Demo finished. (No HPC job was submitted.)');
+
+  /* ── Try to detect CIF from content even without extension ── */
+  if(isCIF(txt) && mol3d){
+    return load3DmolNative(txt, 'cif', filename);
+  }
+
+  /* ── POSCAR / CONTCAR ── */
+  if(ext==='vasp'||ext==='poscar'||ext==='contcar'||isPOSCAR(txt)){
+    return parsePOSCAR(txt);
+  }
+
+  /* ── QE pw.x input ── */
+  if(parseQEInput(txt)) return true;
+
+  /* ── XYZ ── */
+  if(parseXYZ(txt)) return true;
+
+  /* ── Last-resort CIF text parser (metadata only, fallback) ── */
+  if(parseCIF(txt)) return true;
+
+  return false;
 }
 
-function initPresetSelect() {
-  const sel=document.getElementById('structPreset');
-  sel.innerHTML=Object.keys(STRUCTS).sort().map(function(k){return '<option value="'+k+'">'+k+' — '+STRUCTS[k].name+'</option>';}).join('');
-  sel.value=currentPresetKey;
+/* Detect CIF by content */
+function isCIF(txt){
+  return /data_\S+/.test(txt) && /_cell_length_a/.test(txt);
 }
 
-function setViewStyle(style) {
-  if(!dftViewer) return;
-  document.getElementById('btnSphere').classList.toggle('active',style==='sphere');
-  document.getElementById('btnStick').classList.toggle('active',style==='stick');
-  if(style==='sphere') dftViewer.setStyle({},{sphere:{radius:0.38,colorscheme:'Jmol'}});
-  else dftViewer.setStyle({},{stick:{radius:0.12,colorscheme:'Jmol'},sphere:{radius:0.22,colorscheme:'Jmol'}});
-  dftViewer.render();
+/* Detect POSCAR by content */
+function isPOSCAR(txt){
+  const lines = txt.trim().split('\n');
+  if(lines.length < 7) return false;
+  const scale = parseFloat(lines[1]);
+  const v1 = lines[2].trim().split(/\s+/).map(Number);
+  return !isNaN(scale) && v1.length >= 3 && !isNaN(v1[0]);
 }
 
-function applyTheme() {
-  const t=document.documentElement.getAttribute('data-theme')||'dark';
-  const isDark=t==='dark';
-  document.getElementById('themeIco').textContent=isDark?'🌙':'☀️';
-  document.getElementById('themeLbl').textContent=isDark?'Dark':'Light';
-  localStorage.setItem('smad-dft-theme',t);
-  refreshInputPane();
-  redrawPlotsResize();
+/* Load via 3Dmol native parser — handles real CIF symmetry, bonds, etc. */
+function load3DmolNative(txt, fmt, filename){
+  if(!mol3d) return false;
+  try{
+    mol3d.removeAllModels();
+    mol3d.removeAllShapes();
+    mol3d.removeAllSurfaces();
+    surfaceShown=false; isoSurface=null;
+    document.getElementById('btnSurf').classList.remove('act');
+
+    const model = mol3d.addModel(txt, fmt);
+    if(!model) throw new Error('3Dmol returned null model');
+
+    applyAtomStyle();
+    if(showBox) drawBoxFrom3DmolModel(model);
+    mol3d.zoomTo();
+    mol3d.render();
+
+    /* Extract metadata from the CIF text for stats bar */
+    extractCIFMeta(txt, filename);
+    updateStatsBar();
+    updateProps();
+    log('[3Dmol] Loaded '+fmt.toUpperCase()+': '+filename+' ('+model.selectedAtoms({}).length+' atoms)');
+    return true;
+  } catch(e){
+    log('[3Dmol] '+fmt.toUpperCase()+' load error: '+e.message+' — trying fallback parser');
+    return false;
+  }
 }
 
-/* ── wire UI ── */
-function wireUi() {
-  /* sidebar tabs */
-  document.querySelectorAll('.sb-tabs button').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      document.querySelectorAll('.sb-tabs button').forEach(function(b){b.classList.remove('active');});
-      document.querySelectorAll('.sb-pane').forEach(function(p){p.classList.remove('active');});
-      btn.classList.add('active');
-      const pane=document.getElementById('pane-'+btn.getAttribute('data-sbtab'));
-      if(pane) pane.classList.add('active');
-    });
-  });
+/* Draw box using lattice params extracted from CIF */
+function drawBoxFrom3DmolModel(model){
+  /* Use currentStruct cell if we have it, otherwise skip */
+  if(currentStruct && currentStruct.a) drawBox3Dmol(currentStruct, supercell);
+}
 
-  /* structure sub-tabs */
-  document.querySelectorAll('.pitnav button').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      document.querySelectorAll('.pitnav button').forEach(function(b){b.classList.remove('active');});
-      document.querySelectorAll('.pitpane').forEach(function(p){p.classList.remove('active');});
-      btn.classList.add('active');
-      const p=document.getElementById('pit-'+btn.getAttribute('data-pit'));
-      if(p) p.classList.add('active');
-    });
-  });
+/* Extract CIF metadata for the stats/props panels */
+function extractCIFMeta(txt, filename){
+  const get = (key) => {
+    /* handles: _key value, _key 'value', _key   value(uncertainty) */
+    const m = txt.match(new RegExp(key + '[\\s\'"]+([\\d.]+)(?:\\(\\d+\\))?'));
+    return m ? parseFloat(m[1]) : null;
+  };
+  const getString = (key) => {
+    const m = txt.match(new RegExp(key + "[\\s]+['\"]?([^'\"\\n]+)['\"]?"));
+    return m ? m[1].trim() : null;
+  };
 
-  /* right-panel tabs */
-  document.querySelectorAll('.rp-tabs button').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      document.querySelectorAll('.rp-tabs button').forEach(function(b){b.classList.remove('active');});
-      document.querySelectorAll('.rpane').forEach(function(p){p.classList.remove('active');});
-      btn.classList.add('active');
-      const pane=document.getElementById('rp-'+btn.getAttribute('data-rptab'));
-      if(pane) pane.classList.add('active');
-      redrawPlotsResize();
-    });
-  });
+  const a  = get('_cell_length_a')  || get('_cell\\.length_a')  || 4;
+  const b  = get('_cell_length_b')  || a;
+  const c  = get('_cell_length_c')  || a;
+  const al = get('_cell_angle_alpha') || 90;
+  const be = get('_cell_angle_beta')  || 90;
+  const ga = get('_cell_angle_gamma') || 90;
 
-  wireRange('ecutwfc',{});
-  wireRange('ecutrho',{});
-  wireRange('sigma',{transform:function(v){return v/1000;},format:function(v){return v.toFixed(3);}});
-  wireRange('nbnd',{});
+  const spgHM  = getString('_symmetry_space_group_name_H-M')
+              || getString('_space_group_name_H-M_alt')
+              || getString('_symmetry_space_group_name_Hall')
+              || 'Unknown';
+  const spgNum = get('_symmetry_Int_Tables_number')
+              || get('_space_group_IT_number');
+  const formula = getString('_chemical_formula_sum')
+               || getString('_chemical_formula_structural')
+               || filename.replace(/\.[^.]+$/,'');
 
-  ['ecutwfc','ecutrho','kx','ky','kz'].forEach(function(id){
-    document.getElementById(id).addEventListener('input',updateStatsBar);
-  });
-  document.getElementById('xcFunc').addEventListener('change',updateStatsBar);
-  document.getElementById('calcType').addEventListener('change',function(){updateStatsBar();toggleBandsPanel();});
+  /* Detect bravais from angles */
+  const isHex  = Math.abs(ga-120)<1 && Math.abs(al-90)<1 && Math.abs(be-90)<1;
+  const isCub  = Math.abs(a-b)<0.05 && Math.abs(a-c)<0.05 && Math.abs(al-90)<1;
+  const isTet  = Math.abs(a-b)<0.05 && Math.abs(al-90)<1;
+  const bravais = isHex?'HEX':isCub?'CUB':isTet?'TET':'TRI';
 
-  document.getElementById('loadPresetBtn').addEventListener('click',function(){
-    currentPresetKey=document.getElementById('structPreset').value;
-    loadStructureIntoViewer();
-    refreshInputPane();
-  });
-  document.getElementById('structPreset').addEventListener('change',function(){currentPresetKey=this.value;});
-  document.getElementById('parseStructBtn').addEventListener('click',function(){
-    const txt=(document.getElementById('structPaste').value||'').trim();
-    if(!txt){logConsole('[parse] Paste empty.');return;}
-    let note='Heuristic: ';
-    if(/CELL_PARAMETERS/i.test(txt)||/ATOMIC_SPECIES/i.test(txt)) note+='detected QE blocks; ';
-    if(/_cell_length/i.test(txt)) note+='CIF-like tokens; ';
-    note+='full parse not implemented (demo).';
-    logConsole('[parse] '+note);
-  });
-  document.getElementById('genInputBtn').addEventListener('click',function(){
-    buildQEInput();refreshInputPane();
-    const b=document.querySelector('[data-rptab="input"]');if(b)b.click();
-    logConsole('[generate] QE input updated ('+currentPresetKey+').');
-    setCalcState('ready');
-  });
-  document.getElementById('runDftBtn').addEventListener('click',function(){runDemoDftLoop();});
-  document.getElementById('clearConsole').addEventListener('click',function(){
-    document.getElementById('consoleOut').textContent='Cleared.\n';
-  });
+  /* Count atoms from loop_ block */
+  const atomLines = extractCIFAtomSites(txt);
 
-  /* viewer controls */
-  document.getElementById('btnSphere').addEventListener('click',function(){setViewStyle('sphere');});
-  document.getElementById('btnStick').addEventListener('click',function(){setViewStyle('stick');});
-  document.getElementById('btnBox').addEventListener('click',function(){
-    dftShowBox=!dftShowBox;
-    this.classList.toggle('active',dftShowBox);
-    loadStructureIntoViewer();
-  });
-  document.getElementById('btnReset').addEventListener('click',function(){if(dftViewer){dftViewer.zoomTo();dftViewer.render();}});
-  document.getElementById('btnCopyIn').addEventListener('click',function(){
-    buildQEInput();
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(lastQEInput).then(function(){logConsole('[clipboard] QE input copied.');});
+  currentStruct = {
+    name: filename || 'CIF import',
+    formula: formula.replace(/'/g,'').trim(),
+    spg: spgHM.replace(/'/g,'').trim() + (spgNum?' (#'+spgNum+')':''),
+    bravais,
+    a, b, c, al, be, ga,
+    cell: CELL_VECS[bravais] || CELL_VECS.CUB,
+    atoms: atomLines,
+    notes: 'Loaded via 3Dmol CIF parser'
+  };
+}
+
+/* Parse _atom_site loop_ block robustly */
+function extractCIFAtomSites(txt){
+  const atoms = [];
+  /* Find all loop_ blocks */
+  const loopBlocks = txt.split(/^loop_/m);
+  for(const block of loopBlocks){
+    const lines = block.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
+    /* collect column headers */
+    const headers = [];
+    let dataStart = 0;
+    for(let i=0;i<lines.length;i++){
+      if(lines[i].startsWith('_atom_site')||lines[i].startsWith('_atom_site_')){
+        headers.push(lines[i].toLowerCase()); dataStart=i+1;
+      } else if(headers.length>0 && !lines[i].startsWith('_')){
+        dataStart=i; break;
+      }
+    }
+    if(!headers.some(h=>h.includes('_atom_site'))) continue;
+    /* find column indices */
+    const iLabel = headers.findIndex(h=>h.includes('label')||h.includes('type_symbol'));
+    const iX = headers.findIndex(h=>h.includes('fract_x'));
+    const iY = headers.findIndex(h=>h.includes('fract_y'));
+    const iZ = headers.findIndex(h=>h.includes('fract_z'));
+    if(iX<0||iY<0||iZ<0) continue;
+    /* parse data rows */
+    for(let i=dataStart;i<lines.length;i++){
+      const row=lines[i];
+      if(!row||row.startsWith('_')||row.startsWith('loop_')) break;
+      const cols=row.split(/\s+/);
+      if(cols.length<=Math.max(iX,iY,iZ)) continue;
+      const rawEl=cols[iLabel>=0?iLabel:0];
+      /* strip digits and uncertainty from element symbol */
+      const el=(rawEl||'X').replace(/\d+.*$/,'').replace(/[^A-Za-z]/g,'');
+      const sym=el.charAt(0).toUpperCase()+(el.slice(1).toLowerCase()||'');
+      const fx=parseFloat(cols[iX].replace(/\(\d+\)/,''));
+      const fy=parseFloat(cols[iY].replace(/\(\d+\)/,''));
+      const fz=parseFloat(cols[iZ].replace(/\(\d+\)/,''));
+      if(!isNaN(fx)) atoms.push({el:sym||'X',f:[fx,fy,fz]});
+    }
+    if(atoms.length>0) break;
+  }
+  return atoms.length>0 ? atoms : [{el:'X',f:[0,0,0]}];
+}
+
+function parseStructure(txt){
+  if(isCIF(txt) && mol3d) return load3DmolNative(txt,'cif','unknown.cif');
+  if(parsePOSCAR(txt)) return true;
+  if(parseQEInput(txt)) return true;
+  if(parseXYZ(txt)) return true;
+  if(parseCIF(txt)) return true;
+  return false;
+}
+
+function parsePOSCAR(txt){
+  const lines=txt.trim().split('\n').map(l=>l.trim());
+  if(lines.length<8) return false;
+  const scale=parseFloat(lines[1]);if(isNaN(scale)) return false;
+  const v1=lines[2].split(/\s+/).map(Number);if(v1.length<3||isNaN(v1[0])) return false;
+  const v2=lines[3].split(/\s+/).map(Number);const v3=lines[4].split(/\s+/).map(Number);
+  const maybeEl=lines[5].split(/\s+/);const isAlpha=maybeEl.every(s=>/^[A-Za-z]+$/.test(s));
+  const countLine=isAlpha?6:5,posLine=isAlpha?8:7;
+  const counts=lines[countLine].split(/\s+/).map(Number);
+  if(counts.some(isNaN)||!counts.length) return false;
+  const elems=isAlpha?maybeEl:['X'];
+  const isDirect=/^[DF]/i.test(lines[posLine-1]||'D');
+  const atoms=[];let idx=posLine;
+  counts.forEach((cnt,i)=>{const sym=elems[i]||elems[0];for(let j=0;j<cnt;j++){const p=(lines[idx++]||'').split(/\s+/).map(Number);atoms.push({el:sym,f:[p[0]||0,p[1]||0,p[2]||0]});}});
+  if(!atoms.length) return false;
+  const aLen=Math.sqrt(v1.reduce((s,b)=>s+b*b,0))*scale;
+  const formula=counts.map((c,i)=>(elems[i]||'X')+c).join('');
+  currentStruct={name:'POSCAR import',formula,spg:'Unknown',bravais:'CUB',a:aLen,
+    cell:[[v1[0]/aLen,v1[1]/aLen,v1[2]/aLen],[v2[0]/aLen,v2[1]/aLen,v2[2]/aLen],[v3[0]/aLen,v3[1]/aLen,v3[2]/aLen]],
+    atoms,notes:'Imported from POSCAR'};
+  load3DmolStructure(); return true;
+}
+function parseQEInput(txt){
+  const atMatch=txt.match(/ATOMIC_POSITIONS\s+\w+\s*([\s\S]*?)(?=K_POINTS|CELL_PARAMETERS|$)/i);
+  const cellMatch=txt.match(/CELL_PARAMETERS\s+\w+\s*([\s\S]*?)(?=ATOMIC_SPECIES|ATOMIC_POSITIONS|$)/i);
+  const ecuMatch=txt.match(/ecutwfc\s*=\s*([\d.]+)/i);
+  if(!atMatch) return false;
+  const atoms=[];
+  atMatch[1].trim().split('\n').forEach(line=>{const p=line.trim().split(/\s+/);if(p.length>=4&&/^[A-Z]/i.test(p[0])) atoms.push({el:p[0],f:[parseFloat(p[1]),parseFloat(p[2]),parseFloat(p[3])]});});
+  if(!atoms.length) return false;
+  let a0=4,cell=CELL_VECS.CUB;
+  if(cellMatch){const rows=cellMatch[1].trim().split('\n').slice(0,3).map(l=>l.trim().split(/\s+/).map(Number));if(rows.length===3&&rows[0].length>=3){a0=Math.sqrt(rows[0].reduce((s,b)=>s+b*b,0));cell=rows.map(r=>[r[0]/a0,r[1]/a0,r[2]/a0]);}}
+  const seen={};atoms.forEach(a=>{seen[a.el]=true;});
+  const formula=Object.keys(seen).map(k=>k+atoms.filter(a=>a.el===k).length).join('');
+  currentStruct={name:'QE import',formula,spg:'Unknown',bravais:'CUB',a:a0,cell,atoms,notes:'Imported from QE input'};
+  if(ecuMatch) document.getElementById('ecutwfc').value=parseInt(ecuMatch[1]);
+  load3DmolStructure(); return true;
+}
+function parseXYZ(txt){
+  const lines=txt.trim().split('\n');
+  const natom=parseInt(lines[0]);if(isNaN(natom)||natom<1||natom>50000) return false;
+  if(lines.length<natom+2) return false;
+  const atoms=[];
+  for(let i=2;i<2+natom&&i<lines.length;i++){const p=lines[i].trim().split(/\s+/);if(p.length>=4) atoms.push({el:p[0],f:[parseFloat(p[1]),parseFloat(p[2]),parseFloat(p[3])]});}
+  if(!atoms.length) return false;
+  const xs=atoms.map(a=>a.f[0]),ys=atoms.map(a=>a.f[1]),zs=atoms.map(a=>a.f[2]);
+  const a0=Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys),Math.max(...zs)-Math.min(...zs))+4;
+  const minX=Math.min(...xs),minY=Math.min(...ys),minZ=Math.min(...zs);
+  atoms.forEach(a=>{a.f=[(a.f[0]-minX+2)/a0,(a.f[1]-minY+2)/a0,(a.f[2]-minZ+2)/a0];});
+  const seen={};atoms.forEach(a=>{seen[a.el]=true;});
+  const formula=Object.keys(seen).map(k=>k+atoms.filter(a=>a.el===k).length).join('');
+  currentStruct={name:'XYZ import',formula,spg:'P1',bravais:'CUB',a:a0,cell:CELL_VECS.CUB,atoms,notes:'XYZ import'};
+  load3DmolStructure(); return true;
+}
+function parseCIF(txt){
+  /* Fallback text-only CIF parser — metadata + atom positions */
+  const get=(key)=>{const m=txt.match(new RegExp(key+'[\\s\'"]+([\\d.]+)(?:\\(\\d+\\))?'));return m?parseFloat(m[1]):null;};
+  const a=get('_cell_length_a')||4;if(!a) return false;
+  const c=get('_cell_length_c')||a;
+  const spgM=txt.match(/_symmetry_space_group_name_H-M\s+['"]?([^'"\n]+)['"]?/);
+  const formM=txt.match(/_chemical_formula_sum\s+['"]([^'"]+)['"]/)||txt.match(/_chemical_formula_sum\s+(\S+)/);
+  const atoms=extractCIFAtomSites(txt);
+  const formula=formM?formM[1].trim():atoms.map(a=>a.el).join('');
+  currentStruct={name:'CIF (text fallback)',formula,spg:spgM?spgM[1].trim():'Unknown',bravais:'CUB',a,c,cell:CELL_VECS.CUB,atoms,notes:'CIF fallback parser'};
+  load3DmolStructure(); return true;
+}
+
+/* ═══════════════ DEMO SCF ═══════════════ */
+async function runDemoSCF(){
+  demoAbort.active=false;
+  setStatus('run');setLed('run');
+  setHpcStatus('Running…',true);
+  log('['+new Date().toLocaleTimeString()+'] Demo SCF: '+currentStruct.formula);
+  log('  Code: '+document.getElementById('dftCode').value.toUpperCase()+', XC: '+document.getElementById('xcFunc').value.toUpperCase());
+  const xs=[],ys=[];
+  const plotEl=document.getElementById('plotC');
+  for(let step=1;step<=18;step++){
+    if(demoAbort.active) break;
+    await new Promise(r=>setTimeout(r,95));
+    xs.push(step);ys.push(0.6*Math.exp(-0.42*step)+0.0003*Math.random());
+    const pt=plotTheme();
+    const h=Math.max(getPlotH('plotC'),240);
+    const liveData=[{x:xs,y:ys,type:'scatter',mode:'lines+markers',line:{color:'#3d9fff',width:2},marker:{size:5,color:'#3d9fff'}}];
+    const liveLayout=Object.assign({title:{text:'SCF convergence (live)',font:{size:11}},xaxis:Object.assign({title:{text:'SCF step'}},pt.xaxis),yaxis:Object.assign({title:{text:'ΔE (Ry)'},type:'log'},pt.yaxis),height:h,showlegend:false},pt);
+    PLOT_DATA['plotC']=liveData;
+    if(plotsInited.has('plotC')){Plotly.react(plotEl,liveData,liveLayout,{displayModeBar:false});}
+    else{Plotly.newPlot(plotEl,liveData,liveLayout,{responsive:true,displayModeBar:false});plotsInited.add('plotC');}
+    log('  iter '+String(step).padStart(3)+'  ΔE = '+ys[ys.length-1].toExponential(3)+' Ry');
+    if(step===2){const b=document.querySelector('[data-rp="conv"]');if(b)b.click();}
+  }
+  setStatus('done');setLed('done');setHpcStatus('Done',false);
+  log('['+new Date().toLocaleTimeString()+'] Finished. E_total = −'+(1000+Math.random()*10).toFixed(5)+' Ry');
+}
+function setStatus(s){
+  const d=document.getElementById('sDot'),l=document.getElementById('sLbl');
+  d.className='sdot'+(s==='run'?' run':s==='done'?' done':'');
+  l.textContent=s==='run'?'Running':s==='done'?'Done':'Ready';
+}
+function setLed(s){
+  const e=document.getElementById('calcLed');
+  e.className='calc-led '+{ready:'ready',run:'running',done:'done'}[s];
+  e.textContent={ready:'Ready',run:'Running…',done:'Done'}[s];
+}
+function setHpcStatus(txt,running){
+  const d=document.getElementById('hpcDot'),l=document.getElementById('hpcStatus');
+  if(d){d.className='sdot'+(running?' run':'');}
+  if(l) l.textContent=txt;
+}
+function log(s){const o=document.getElementById('consoleOut');if(o){o.textContent+=s+'\n';o.scrollTop=o.scrollHeight;}}
+
+/* ═══════════════ PLOTS ═══════════════ */
+function plotTheme(){
+  const l=document.documentElement.getAttribute('data-theme')==='light';
+  return{paper_bgcolor:l?'#fff':'#040710',plot_bgcolor:l?'#f4f7fc':'#0c1320',font:{color:l?'#2a4260':'#92b4d4',size:10,family:'JetBrains Mono,monospace'},xaxis:{gridcolor:l?'#cdd8ee':'#1c2a3e',tickfont:{size:9}},yaxis:{gridcolor:l?'#cdd8ee':'#1c2a3e',tickfont:{size:9}},margin:{t:30,r:12,b:40,l:50}};
+}
+/* Plot data store — built once, rendered on demand */
+const PLOT_DATA={};
+const PLOT_LAYOUT={};
+const plotsInited=new Set();
+
+function getPlotH(id){
+  /* Get the actual rendered height of the parent .plot-box, fallback 320 */
+  const el=document.getElementById(id);
+  if(!el) return 320;
+  const box=el.closest('.plot-box')||el.parentElement;
+  const h=box?box.getBoundingClientRect().height:0;
+  return h>40?h:320;
+}
+
+function initPlots(){
+  const pt=plotTheme();
+  const xs=[],ys=[];for(let i=1;i<=10;i++){xs.push(i);ys.push(0.5*Math.exp(-0.45*i)+0.001*Math.random());}
+  PLOT_DATA['plotC']=[{x:xs,y:ys,type:'scatter',mode:'lines+markers',line:{color:'#3d9fff',width:2},marker:{size:5,color:'#3d9fff'}}];
+  PLOT_LAYOUT['plotC']=Object.assign({title:{text:'SCF convergence',font:{size:11}},xaxis:Object.assign({title:{text:'SCF iteration'}},pt.xaxis),yaxis:Object.assign({title:{text:'ΔE (Ry)'},type:'log'},pt.yaxis),showlegend:false},pt);
+
+  const kd=[],b1=[],b2=[],b3=[];for(let i=0;i<80;i++){kd.push(i);b1.push(-12+7*Math.sin(i*.08)+0.4*Math.sin(i*.24));b2.push(-6+4*Math.sin(i*.09+1));b3.push(-2+3*Math.cos(i*.06));}
+  PLOT_DATA['plotB']=[
+    {x:kd,y:b1,type:'scatter',mode:'lines',line:{color:'#2dd9a0',width:1.5},showlegend:false},
+    {x:kd,y:b2,type:'scatter',mode:'lines',line:{color:'#3d9fff',width:1.5},showlegend:false},
+    {x:kd,y:b3,type:'scatter',mode:'lines',line:{color:'#9d7fff',width:1.5},showlegend:false},
+  ];
+  PLOT_LAYOUT['plotB']=Object.assign({title:{text:'Band structure (demo)'},xaxis:Object.assign({title:{text:'k-path'},tickvals:[0,20,40,60,79],ticktext:['Γ','X','K','L','Γ']},pt.xaxis),yaxis:Object.assign({title:{text:'E − E_F (eV)'}},pt.yaxis),showlegend:false},pt);
+
+  const eg=[],dos=[];for(let i=-10;i<=10;i+=.1){eg.push(i);dos.push(6*Math.exp(-i*i/5)+2*Math.exp(-(i-3.5)*(i-3.5)/1.2)+0.5*Math.exp(-(i+2)*(i+2)/0.4));}
+  PLOT_DATA['plotD']=[
+    {x:dos,y:eg,type:'scatter',mode:'lines',fill:'tozerox',fillcolor:'rgba(245,166,35,0.14)',line:{color:'#f5a623',width:1.8},showlegend:false},
+    {x:[0,0],y:[-10,10],type:'scatter',mode:'lines',line:{color:'rgba(61,159,255,.5)',width:1,dash:'dot'},showlegend:false},
+  ];
+  PLOT_LAYOUT['plotD']=Object.assign({title:{text:'DOS (demo)'},xaxis:Object.assign({title:{text:'DOS (states/eV)'}},pt.xaxis),yaxis:Object.assign({title:{text:'Energy (eV)'}},pt.yaxis),showlegend:false},pt);
+
+  /* Render the convergence plot immediately (it's the default active tab) */
+  renderPlot('plotC');
+}
+
+function renderPlot(id){
+  if(!PLOT_DATA[id]) return;
+  const el=document.getElementById(id);
+  if(!el) return;
+  /* Force the container to have a real height */
+  const box=el.closest('.plot-box')||el.parentElement;
+  if(box&&!box.style.height){
+    const rpBody=document.getElementById('rp-'+{plotC:'conv',plotB:'bands',plotD:'dos'}[id]);
+    const rph=rpBody?rpBody.getBoundingClientRect().height:0;
+    const h=rph>40?rph:340;
+    box.style.height=h+'px';
+    el.style.height=h+'px';
+  }
+  const h=getPlotH(id);
+  const layout=Object.assign({},PLOT_LAYOUT[id],{height:Math.max(h,240),autosize:true});
+  if(plotsInited.has(id)){
+    Plotly.react(id,PLOT_DATA[id],layout,{displayModeBar:false});
+  } else {
+    Plotly.newPlot(id,PLOT_DATA[id],layout,{responsive:true,displayModeBar:false});
+    plotsInited.add(id);
+  }
+}
+
+function rp(){
+  ['plotC','plotB','plotD'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el||typeof Plotly==='undefined') return;
+    if(plotsInited.has(id)){
+      const h=getPlotH(id);
+      if(h>40) Plotly.relayout(id,{height:Math.max(h,240)});
+    } else {
+      /* render for the first time when tab becomes visible */
+      const pane=el.closest('.rpane');
+      if(pane&&pane.classList.contains('act')) renderPlot(id);
     }
   });
-  document.getElementById('vbtnX').addEventListener('click',function(){if(dftViewer){dftViewer.rotate(1.4,0);dftViewer.render();}});
-  document.getElementById('vbtnY').addEventListener('click',function(){if(dftViewer){dftViewer.rotate(0,1.4);dftViewer.render();}});
-  document.getElementById('vbtnZ').addEventListener('click',function(){if(dftViewer){dftViewer.rotate(0.7,0.7);dftViewer.render();}});
+}
+
+/* ═══════════════ FORGE ATOMS ═══════════════ */
+window.FA=forgeAtoms;
+function renderForgeAtoms(){
+  const tb=document.getElementById('atomTbody');if(!tb) return;
+  tb.innerHTML=forgeAtoms.map((a,i)=>`<tr>
+    <td><input type="text" value="${a.el}" maxlength="2" onchange="FA[${i}].el=this.value.trim()||'X'" style="width:36px;padding:2px 5px;background:transparent;border:none;outline:none;color:var(--text0);font-family:var(--mono);font-size:11px"/></td>
+    <td><input type="number" value="${a.x.toFixed(4)}" step="0.001" min="0" max="1" onchange="FA[${i}].x=parseFloat(this.value)||0" style="width:56px;padding:2px 5px;background:transparent;border:none;outline:none;color:var(--text0);font-family:var(--mono);font-size:11px"/></td>
+    <td><input type="number" value="${a.y.toFixed(4)}" step="0.001" min="0" max="1" onchange="FA[${i}].y=parseFloat(this.value)||0" style="width:56px;padding:2px 5px;background:transparent;border:none;outline:none;color:var(--text0);font-family:var(--mono);font-size:11px"/></td>
+    <td><input type="number" value="${a.z.toFixed(4)}" step="0.001" min="0" max="1" onchange="FA[${i}].z=parseFloat(this.value)||0" style="width:56px;padding:2px 5px;background:transparent;border:none;outline:none;color:var(--text0);font-family:var(--mono);font-size:11px"/></td>
+    <td><button onclick="FA.splice(${i},1);renderForgeAtoms()" style="width:22px;height:22px;border-radius:4px;background:var(--ro-dim);border:1px solid rgba(240,96,128,.2);color:var(--rose);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button></td>
+  </tr>`).join('');
+}
+function buildForge(aEl,bEl,cEl,alphaEl,betaEl,gammaEl,atomsData){
+  const a=parseFloat((aEl||{value:3.615}).value)||3.615;
+  const b=parseFloat((bEl||{value:a}).value)||a;
+  const c=parseFloat((cEl||{value:a}).value)||a;
+  const spgN=parseInt((document.getElementById('cfSpg')||{value:'225'}).value)||225;
+  const brav=spgN>=225?'FCC':spgN===229?'BCC':spgN===194?'HEX':spgN>=195?'CUB':'CUB';
+  const cell=CELL_VECS[brav]||CELL_VECS.CUB;
+  const atoms=atomsData.map(a=>({el:a.el,f:[a.x,a.y,a.z]}));
+  const seen={};atoms.forEach(x=>{seen[x.el]=true;});
+  const formula=Object.keys(seen).map(k=>k+atoms.filter(x=>x.el===k).length).join('');
+  return{name:'CrystalForge',formula,spg:'#'+spgN,bravais:brav,a,b,c,cell,atoms,notes:'Built with CrystalForge'};
+}
+
+/* ═══════════════ PRESETS ═══════════════ */
+function initPresets(){
+  const sel=document.getElementById('presetSel');
+  if(!sel) return;
+  sel.innerHTML=Object.entries(STRUCTS).map(([k,v])=>`<option value="${k}">${k} — ${v.name}</option>`).join('');
+  sel.value='cu_fcc';
+  sel.addEventListener('change',()=>{
+    const k=sel.value,s=STRUCTS[k];
+    if(s) document.getElementById('presetInfo').textContent=`${s.formula} · ${s.spg||s.bravais} · a=${s.a}Å${s.c?', c='+s.c+'Å':''} · ${s.atoms.length} atom(s)\n${s.notes}`;
+  });
+  sel.dispatchEvent(new Event('change'));
+}
+
+/* ═══════════════ WIRE UI ═══════════════ */
+function wireUi(){
+  /* sidebar tabs */
+  document.querySelectorAll('.sb-tabs button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.sb-tabs button').forEach(b=>b.classList.remove('act'));
+      document.querySelectorAll('.sb-pane').forEach(p=>p.classList.remove('act'));
+      btn.classList.add('act');
+      const pane=document.getElementById('pane-'+btn.getAttribute('data-sb'));
+      if(pane) pane.classList.add('act');
+    });
+  });
+
+  /* right panel tabs */
+  document.querySelectorAll('.rp-tabs button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.rp-tabs button').forEach(b=>b.classList.remove('act'));
+      document.querySelectorAll('.rpane').forEach(p=>p.classList.remove('act'));
+      btn.classList.add('act');
+      const rp_id=btn.getAttribute('data-rp');
+      const pane=document.getElementById('rp-'+rp_id);
+      if(pane) pane.classList.add('act');
+      /* render plots lazily now that the pane is visible */
+      const plotMap={conv:'plotC',bands:'plotB',dos:'plotD'};
+      if(plotMap[rp_id]) setTimeout(()=>renderPlot(plotMap[rp_id]),30);
+      else rp();
+      if(rp_id==='input') updateInputPane();
+    });
+  });
+
+  /* code tabs */
+  document.querySelectorAll('.code-tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.code-tab').forEach(b=>b.classList.remove('act'));
+      btn.classList.add('act');activeCodeTab=btn.getAttribute('data-ct');updateInputPane();
+    });
+  });
+
+  /* import cards */
+  document.querySelectorAll('.imp-card').forEach(card=>{
+    card.addEventListener('click',()=>{
+      const imp=card.getAttribute('data-imp');
+      /* CrystalForge → open modal */
+      if(imp==='forge'){openModal('forgeModal');return;}
+      /* Material Explorer → open modal */
+      if(imp==='explorer'){openModal('explorerModal');return;}
+      document.querySelectorAll('.imp-card').forEach(c=>c.classList.remove('active'));
+      document.querySelectorAll('.imp-pane').forEach(p=>p.classList.remove('act'));
+      card.classList.add('active');
+      const pane=document.getElementById('ip-'+imp);if(pane) pane.classList.add('act');
+      if(imp==='saved') renderSavedList();
+    });
+  });
+
+  /* ranges */
+  [['ecutwfc',v=>v],['ecutrho',v=>v],['sigma',v=>(v/1000).toFixed(3)],['nbnd',v=>v]].forEach(([id,fn])=>{
+    const el=document.getElementById(id);const vEl=document.getElementById(id+'V');
+    if(!el) return;
+    el.addEventListener('input',()=>{if(vEl)vEl.textContent=fn(parseInt(el.value));updateStatsBar();updateInputPane();});
+    if(vEl) vEl.textContent=fn(parseInt(el.value));
+  });
+  ['kx','ky','kz','xcFunc','dftCode','calcType','smearType','occType','nspin','mixBeta','mixMode','convThr','nstep','ionDyn','forcConv','verbosity'].forEach(id=>{
+    const el=document.getElementById(id);if(el) el.addEventListener('change',()=>{updateStatsBar();updateInputPane();});
+  });
+  document.getElementById('calcType').addEventListener('change',()=>{
+    const v=document.getElementById('calcType').value;
+    const ex=document.getElementById('bandsExtra');if(ex) ex.style.display=(v==='bands'||v==='nscf')?'block':'none';
+  });
+
+  /* FILE */
+  const dz=document.getElementById('dropzone');const fi=document.getElementById('fileInput');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);});
+  fi.addEventListener('change',()=>{if(fi.files[0]) processFile(fi.files[0]);});
+  document.getElementById('parseBtn').addEventListener('click',()=>{
+    const txt=(document.getElementById('pasteBox').value||'').trim();
+    if(!txt){showMsg('parseMsg','error','Nothing to parse.');return;}
+    /* Detect format from content to pass right hint */
+    const hint = isCIF(txt)?'pasted.cif':
+                 txt.trim().startsWith('ATOM')||txt.trim().startsWith('HETATM')?'pasted.pdb':
+                 'pasted.txt';
+    const ok=parseAndLoad(txt, hint);
+    if(ok){
+      showMsg('parseMsg','ok','Loaded: '+currentStruct.formula+' ('+currentStruct.atoms.length+' sym. sites)');
+      log('[paste] '+currentStruct.formula);
+    } else {
+      showMsg('parseMsg','error','Could not parse. Supported: CIF, POSCAR, QE input, XYZ, PDB, SDF.');
+    }
+  });
+  document.getElementById('clearPasteBtn').addEventListener('click',()=>{document.getElementById('pasteBox').value='';document.getElementById('parseMsg').style.display='none';});
+
+  /* MP quick search (sidebar) */
+  document.getElementById('mpSearchBtn').addEventListener('click',doSidebarMpSearch);
+  document.getElementById('mpSearch').addEventListener('keydown',e=>{if(e.key==='Enter') doSidebarMpSearch();});
+
+  /* Explorer modal open */
+  document.getElementById('openExplorerBtn').addEventListener('click',()=>openModal('explorerModal'));
+
+  /* CrystalForge sidebar quick build */
+  document.getElementById('addAtomBtn').addEventListener('click',()=>{forgeAtoms.push({el:'X',x:0.5,y:0.5,z:0.5});renderForgeAtoms();});
+  document.getElementById('forgeBuildBtn').addEventListener('click',()=>{
+    const s=buildForge(document.getElementById('cfa'),document.getElementById('cfb'),document.getElementById('cfc'),null,null,null,forgeAtoms);
+    loadStructure(s);log('[CrystalForge] Built: '+s.formula);
+  });
+  document.getElementById('forgeSaveBtn').addEventListener('click',()=>{
+    const s=buildForge(document.getElementById('cfa'),document.getElementById('cfb'),document.getElementById('cfc'),null,null,null,forgeAtoms);
+    saveCurrentMaterial(s,s.formula);showMsg('savedMsg','ok','Saved to library.');
+  });
+
+  /* CrystalForge modal */
+  document.getElementById('openForgeBtn').addEventListener('click',()=>openModal('forgeModal'));
+  document.getElementById('forgeClose').addEventListener('click',()=>closeModal('forgeModal'));
+  document.getElementById('forgeOpenExternalBtn').addEventListener('click',()=>window.open('/crystalforge','_blank'));
+  document.getElementById('forgeImportBtn').addEventListener('click',()=>{
+    const txt=(document.getElementById('forgeImportBox').value||'').trim();
+    if(!txt){showMsg('forgeImportMsg','error','Nothing to import.');return;}
+    if(parseStructure(txt)){closeModal('forgeModal');loadStructure(currentStruct);showMsg('forgeImportMsg','ok','Imported: '+currentStruct.formula);log('[forge import] '+currentStruct.formula);}
+    else showMsg('forgeImportMsg','error','Could not parse structure.');
+  });
+  document.getElementById('modalBuildBtn').addEventListener('click',()=>{
+    const txt=document.getElementById('mcAtoms').value;
+    const atoms=[];
+    txt.trim().split('\n').forEach(line=>{const p=line.trim().split(/\s+/);if(p.length>=4) atoms.push({el:p[0],x:parseFloat(p[1])||0,y:parseFloat(p[2])||0,z:parseFloat(p[3])||0});});
+    if(!atoms.length){alert('Add at least one atom (e.g. "Cu 0 0 0")');return;}
+    const a=parseFloat(document.getElementById('mca').value)||3.615;
+    const b=parseFloat(document.getElementById('mcb').value)||a;
+    const c=parseFloat(document.getElementById('mcc').value)||a;
+    const seen={};atoms.forEach(x=>{seen[x.el]=true;});
+    const formula=Object.keys(seen).map(k=>k+atoms.filter(x=>x.el===k).length).join('');
+    const s={name:'CrystalForge modal',formula,spg:'Unknown',bravais:'CUB',a,b,c,cell:CELL_VECS.CUB,atoms:atoms.map(a=>({el:a.el,f:[a.x,a.y,a.z]})),notes:'Built in CrystalForge modal'};
+    closeModal('forgeModal');loadStructure(s);log('[forge modal] Built: '+s.formula);
+  });
+  document.getElementById('modalSaveBtn').addEventListener('click',()=>{
+    const txt=document.getElementById('mcAtoms').value;
+    const atoms=[];txt.trim().split('\n').forEach(line=>{const p=line.trim().split(/\s+/);if(p.length>=4) atoms.push({el:p[0],f:[parseFloat(p[1])||0,parseFloat(p[2])||0,parseFloat(p[3])||0]});});
+    if(!atoms.length) return;
+    const a=parseFloat(document.getElementById('mca').value)||3.615;
+    const formula=atoms.map(a=>a.el).join('');
+    saveCurrentMaterial({name:'CrystalForge',formula,spg:'Unknown',bravais:'CUB',a,cell:CELL_VECS.CUB,atoms,notes:'CrystalForge modal'},formula);
+  });
+
+  /* Explorer modal */
+  document.getElementById('explorerClose').addEventListener('click',()=>closeModal('explorerModal'));
+  document.getElementById('explorerExtBtn').addEventListener('click',()=>window.open('https://next-gen.materialsproject.org/','_blank'));
+  document.getElementById('exSearchBtn').addEventListener('click',doExplorerSearch);
+  document.getElementById('exSearch').addEventListener('keydown',e=>{if(e.key==='Enter') doExplorerSearch();});
+
+  /* saved materials */
+  document.getElementById('loadSavedBtn').addEventListener('click',()=>{
+    if(selectedSavedIdx<0){alert('Select a saved structure first.');return;}
+    const arr=getSaved();const item=arr[selectedSavedIdx];
+    if(item){loadStructure(item);log('[saved] Loaded: '+item.formula);showMsg('savedMsg','ok','Loaded: '+item.formula);}
+  });
+  document.getElementById('saveCurrentBtn').addEventListener('click',()=>{saveCurrentMaterial(currentStruct);showMsg('savedMsg','ok','Saved: '+currentStruct.formula);});
+  document.getElementById('clearSavedBtn').addEventListener('click',()=>{if(confirm('Delete all saved structures?')){setSaved([]);selectedSavedIdx=-1;renderSavedList();}});
+  document.getElementById('loadPresetBtn').addEventListener('click',()=>{
+    const k=document.getElementById('presetSel').value;
+    if(STRUCTS[k]){loadStructure(STRUCTS[k]);log('[preset] Loaded: '+k);}
+  });
+
+  /* viewer toolbar */
+  /* ── 3Dmol viewer style controls ── */
+  document.getElementById('btnSphere').addEventListener('click',()=>{
+    viewMode='sphere';
+    document.getElementById('btnSphere').classList.add('act');
+    document.getElementById('btnStick').classList.remove('act');
+    document.getElementById('btnLine').classList.remove('act');
+    applyAtomStyle();
+  });
+  document.getElementById('btnStick').addEventListener('click',()=>{
+    viewMode='stick';
+    document.getElementById('btnStick').classList.add('act');
+    document.getElementById('btnSphere').classList.remove('act');
+    document.getElementById('btnLine').classList.remove('act');
+    applyAtomStyle();
+  });
+  document.getElementById('btnLine').addEventListener('click',()=>{
+    viewMode='line';
+    document.getElementById('btnLine').classList.add('act');
+    document.getElementById('btnSphere').classList.remove('act');
+    document.getElementById('btnStick').classList.remove('act');
+    applyAtomStyle();
+  });
+  document.getElementById('btnBox').addEventListener('click',()=>{
+    showBox=!showBox;
+    document.getElementById('btnBox').classList.toggle('act',showBox);
+    load3DmolStructure();
+  });
+  document.getElementById('btnSurf').addEventListener('click',toggleVdWSurface);
+
+  /* ── view axis buttons ── */
+  document.getElementById('vbX').addEventListener('click',()=>{if(mol3d){mol3d.setView([-0,0,0,0,1,0,0,0]);mol3d.render();}});
+  document.getElementById('vbY').addEventListener('click',()=>{if(mol3d){mol3d.setView([0,-0,0,0,0,1,0,0]);mol3d.render();}});
+  document.getElementById('vbZ').addEventListener('click',()=>{if(mol3d){mol3d.setView([0,0,-0,0,0,0,1,0]);mol3d.render();}});
+  document.getElementById('vbReset').addEventListener('click',()=>{if(mol3d){mol3d.zoomTo();mol3d.render();}});
+
+  /* ── supercell ── */
+  document.getElementById('scApply').addEventListener('click',()=>{
+    const nx=Math.max(1,Math.min(6,parseInt(document.getElementById('scX').value)||1));
+    const ny=Math.max(1,Math.min(6,parseInt(document.getElementById('scY').value)||1));
+    const nz=Math.max(1,Math.min(6,parseInt(document.getElementById('scZ').value)||1));
+    supercell=[nx,ny,nz];
+    document.getElementById('scX').value=nx;document.getElementById('scY').value=ny;document.getElementById('scZ').value=nz;
+    updateViewer();
+    log('[supercell] '+nx+'×'+ny+'×'+nz+' ('+currentStruct.atoms.length*nx*ny*nz+' atoms)');
+  });
+
+  /* ── isosurface controls ── */
+  document.getElementById('isoSlider').addEventListener('input',e=>{
+    isoValue=parseFloat(e.target.value)/1000;
+    document.getElementById('isoVal').textContent=isoValue.toFixed(3);
+    if(cubeData) drawIsosurface();
+  });
+  document.getElementById('isoOpacity').addEventListener('input',e=>{
+    isoOpacity=parseFloat(e.target.value)/100;
+    document.getElementById('isoOpacityVal').textContent=isoOpacity.toFixed(2);
+    if(cubeData) drawIsosurface();
+  });
+  document.getElementById('isoNeg').addEventListener('change',()=>{if(cubeData) drawIsosurface();});
+  document.querySelectorAll('.iso-color-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.iso-color-btn').forEach(b=>b.classList.remove('act'));
+      btn.classList.add('act');
+      const colorMap={teal:'#2dd9a0',blue:'#3d9fff',violet:'#9d7fff',rose:'#f06080',amber:'#f5a623'};
+      isoColor=colorMap[btn.getAttribute('data-color')]||'#2dd9a0';
+      if(cubeData) drawIsosurface();
+    });
+  });
+
+  /* ── .cube / .xsf file upload ── */
+  document.getElementById('cubeFileInput').addEventListener('change',e=>{
+    const file=e.target.files[0];if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      cubeData=ev.target.result;
+      document.getElementById('isoStatus').textContent='Loaded: '+file.name+' ('+Math.round(cubeData.length/1024)+' KB)';
+      document.getElementById('isoStatus').style.color='var(--accent)';
+      log('[cube] Loaded '+file.name);
+      drawIsosurface();
+    };
+    reader.readAsText(file);
+  });
+
+  /* ── PNG screenshot ── */
+  document.getElementById('vbPNG').addEventListener('click',()=>{
+    if(mol3d){
+      const png=mol3d.pngURI();
+      const a=document.createElement('a');a.href=png;a.download=(currentStruct.formula||'structure')+'.png';a.click();
+      log('[PNG] Screenshot saved.');
+    }
+  });
+
+  /* ── spin toggle ── */
+  let spinning=false;
+  document.getElementById('vbSpin').addEventListener('click',()=>{
+    spinning=!spinning;
+    document.getElementById('vbSpin').classList.toggle('act',spinning);
+    if(mol3d){if(spinning) mol3d.spin('y',1); else mol3d.spin(false);}
+  });
+
+  /* input / export */
+  document.getElementById('genBtn').addEventListener('click',()=>{updateInputPane();const b=document.querySelector('[data-rp="input"]');if(b)b.click();log('[generate] '+activeCodeTab.toUpperCase()+' input generated.');});
+  document.getElementById('regenBtn').addEventListener('click',updateInputPane);
+  document.getElementById('copyInBtn').addEventListener('click',()=>{const el=document.getElementById('inputEdit');if(el&&navigator.clipboard)navigator.clipboard.writeText(el.value).then(()=>log('[copy] Input copied.'));});
+  document.getElementById('btnCopyin').addEventListener('click',()=>document.getElementById('copyInBtn').click());
+  document.getElementById('dlInBtn').addEventListener('click',downloadInput);
+  document.getElementById('btnDlIn').addEventListener('click',downloadInput);
+  document.getElementById('runBtn').addEventListener('click',runDemoSCF);
+  document.getElementById('clearBtn').addEventListener('click',()=>{document.getElementById('consoleOut').textContent='Cleared.\n';});
 
   /* theme */
-  document.getElementById('themeBtn').addEventListener('click',function(){
+  document.getElementById('themeBtn').addEventListener('click',()=>{
     const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
     document.documentElement.setAttribute('data-theme',next);
-    applyTheme();
+    document.getElementById('thIco').textContent=next==='dark'?'🌙':'☀️';
+    document.getElementById('thLbl').textContent=next==='dark'?'Dark':'Light';
+    localStorage.setItem('smad-dft-theme',next);
+    if(mol3d){mol3d.setBackgroundColor(next==='light'?'#f0f4fa':'#030508');mol3d.render();}
+    rp();updateInputPane();
   });
-
-  window.addEventListener('resize',function(){redrawPlotsResize();});
+  window.addEventListener('resize',()=>{if(mol3d) mol3d.render();rp();});
+  /* modal backdrop click */
+  ['forgeModal','explorerModal'].forEach(id=>{
+    document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id)) closeModal(id);});
+  });
 }
 
-/* ── dismiss loading ── */
-function dismissLoading(){
-  const el=document.getElementById('loading');
-  if(el) el.classList.add('gone');
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function doSidebarMpSearch(){
+  const q=(document.getElementById('mpSearch').value||'').trim();
+  const results=mpSearch(q);mpCache=results;
+  renderMpResults(results,document.getElementById('mpResults'),r=>{
+    document.getElementById('mpSelected').style.display='block';
+    document.getElementById('mpSelName').textContent=r.formula+' ('+r.name+')';
+    document.getElementById('mpSelId').textContent=r.id;
+    document.getElementById('mpSelProps').innerHTML=[['Space group',r.sg],['Band gap',r.Eg.toFixed(2)+' eV'],['Type',r.type],['ID',r.id]]
+      .map(([k,v])=>`<div class="prop-card" style="font-size:11px"><div class="prop-k">${k}</div><div class="prop-v">${v}</div></div>`).join('');
+    document.getElementById('mpLoadBtn').onclick=()=>{if(r.struct){loadStructure(r.struct);log('[MP] Loaded '+r.formula);} else log('[MP] Full struct requires API key.');};
+    document.getElementById('mpSaveBtn').onclick=()=>{if(r.struct){saveCurrentMaterial(r.struct);log('[MP save] '+r.formula);}};
+  });
 }
 
-/* ── init ── */
+function doExplorerSearch(){
+  const q=(document.getElementById('exSearch').value||'').trim();
+  const key=(document.getElementById('exApiKey').value||'').trim();
+  const resultsEl=document.getElementById('exResults');
+  resultsEl.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:12px;font-size:11px;color:var(--text2)"><div class="spinner"></div> Searching${key?' Materials Project':'  demo database'}…</div>`;
+  setTimeout(async()=>{
+    let results=mpSearch(q);
+    if(key){
+      try{
+        const url=`https://api.materialsproject.org/materials/summary/?formula=${encodeURIComponent(q)}&fields=material_id,formula_pretty,symmetry,band_gap,is_metal&_limit=12`;
+        const resp=await fetch(url,{headers:{'X-API-KEY':key}});
+        if(resp.ok){
+          const data=await resp.json();
+          results=(data.data||[]).map(d=>({id:d.material_id,formula:d.formula_pretty,name:d.formula_pretty,sg:d.symmetry?.symbol||'—',Eg:d.band_gap||0,type:d.is_metal?'metal':'semi',struct:null}));
+          log(`[MP API] ${results.length} results for "${q}"`);
+        }
+      }catch(e){log('[MP API] '+e.message);}
+    }
+    exCache=results;
+    renderMpResults(results,resultsEl,r=>{
+      document.getElementById('exSelected').style.display='block';
+      document.getElementById('exSelName').textContent=r.formula+' — '+r.name;
+      document.getElementById('exSelId').textContent=r.id;
+      document.getElementById('exSelProps').innerHTML=[['Space group',r.sg],['Band gap',r.Eg.toFixed(2)+' eV'],['Type',r.type],['MP ID',r.id],['Source',key?'MP API':'demo']]
+        .map(([k,v])=>`<div class="prop-card"><div class="prop-k">${k}</div><div class="prop-v">${v}</div></div>`).join('');
+      document.getElementById('exLoadBtn').onclick=()=>{if(r.struct){closeModal('explorerModal');loadStructure(r.struct);log('[Explorer] Loaded '+r.formula);} else log('[Explorer] Struct requires API key.');};
+      document.getElementById('exSaveBtn').onclick=()=>{if(r.struct){saveCurrentMaterial(r.struct);log('[Explorer save] '+r.formula);}};
+    });
+  },350);
+}
+
+function downloadInput(){
+  const txt=document.getElementById('inputEdit').value;
+  const ext={qe:'in',vasp:'INCAR',abinit:'abi',siesta:'fdf'}[activeCodeTab]||'txt';
+  const fname=(currentStruct.formula||'smad')+'_'+activeCodeTab+'.'+ext;
+  const blob=new Blob([txt],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
+  log('[download] '+fname);
+}
+
+function processFile(file){
+  const st=document.getElementById('fileStatus');
+  if(st){st.style.color='var(--text2)';st.textContent='Reading '+file.name+'…';}
+  const r=new FileReader();
+  r.onload=e=>{
+    const txt=e.target.result;
+    /* Show in paste box for reference (truncate if huge) */
+    document.getElementById('pasteBox').value=txt.length>20000?txt.slice(0,20000)+'\n…(truncated)':txt;
+    const ok=parseAndLoad(txt, file.name);
+    if(ok){
+      const nat=currentStruct.atoms?currentStruct.atoms.length:0;
+      if(st){st.style.color='var(--green)';st.textContent='✓ '+file.name+' — '+currentStruct.formula+' ('+nat+' sym. sites)';}
+      updateInputPane();
+      updateStatsBar();
+      updateProps();
+      log('[file] Loaded '+file.name+' → '+currentStruct.formula);
+    } else {
+      if(st){st.style.color='var(--rose)';st.textContent='✗ Could not parse '+file.name+'. Supported: CIF, POSCAR, XYZ, QE input, SDF, PDB';}
+      log('[file] Failed to parse '+file.name);
+    }
+  };
+  r.onerror=()=>{if(st){st.style.color='var(--rose)';st.textContent='File read error: '+file.name;}};
+  r.readAsText(file);
+}
+
+function showMsg(id,type,msg){
+  const el=document.getElementById(id);if(!el) return;
+  el.style.display='block';
+  const ok=type==='ok';
+  el.style.cssText=`display:block;font-size:11px;padding:6px 9px;border-radius:5px;margin-top:6px;background:${ok?'var(--gn-dim)':'var(--ro-dim)'};color:${ok?'var(--green)':'var(--rose)'};border:1px solid ${ok?'rgba(45,217,160,.2)':'rgba(240,96,128,.2)'}`;
+  el.textContent=msg;
+  setTimeout(()=>{el.style.display='none';},4000);
+}
+
+/* ═══════════════ INIT ═══════════════ */
 function init(){
   const saved=localStorage.getItem('smad-dft-theme');
-  if(saved==='light'||saved==='dark') document.documentElement.setAttribute('data-theme',saved);
+  if(saved) document.documentElement.setAttribute('data-theme',saved);
+  document.getElementById('thIco').textContent=saved==='light'?'☀️':'🌙';
+  document.getElementById('thLbl').textContent=saved==='light'?'Light':'Dark';
 
-  initPresetSelect();
+  initPresets();
+  renderForgeAtoms();
+  renderSavedList();
   wireUi();
+  wireFanMenu();
 
-  try {
-    const container=document.getElementById('dft-3dviewer');
-    if(typeof $3Dmol!=='undefined'){
-      dftViewer=$3Dmol.createViewer(container,{backgroundColor:'#050810',antialias:true});
-      loadStructureIntoViewer();
-    } else {
-      container.style.cssText='display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;font-family:var(--mono);padding:20px;text-align:center';
-      container.textContent='3Dmol unavailable — 3D viewer requires CDN access';
-      logConsole('3Dmol not loaded — 3D viewer disabled.');
-    }
-  } catch(e){logConsole('3D viewer error: '+e.message);}
+  /* Init 3Dmol viewer */
+  init3Dmol();
 
-  try{initPlots();}catch(e){logConsole('Plot init error: '+e.message);}
+  try{initPlots();}catch(e){log('Plot error: '+e.message);}
+  setTimeout(()=>renderPlot('plotC'),80);
 
-  toggleBandsPanel();
-  updateStatsBar();
-  refreshInputPane();
-  applyTheme();
-  logConsole('SMAD DFT Simulator — ready.');
-  logConsole('Select a preset and click Generate input or Run DFT (demo).');
-  dismissLoading();
+  /* Load default structure */
+  loadStructure(currentStruct);
+  updateInputPane();
+  updateProps();
+  log('SMAD DFT Simulator — 3Dmol.js viewer active.');
+  log('Drag to rotate · Scroll to zoom · Load .cube for isosurfaces.');
+  rp();
 }
 
-window.addEventListener('load', init);
-setTimeout(dismissLoading, 5000); /* hard fallback */
+/* ═══════════════ RADIAL FAN MENU ═══════════════ */
+const FAN_ITEMS = [
+  {value:'bands',  label:'Band',     desc:'Band structure (pw.x + bands.x)', icon:'📊', color:'#3d9fff'},
+  {value:'dos',    label:'DOS',      desc:'Density of states (dos.x)',        icon:'📈', color:'#2dd9a0'},
+  {value:'md',     label:'MD',       desc:'Ab-initio molecular dynamics',     icon:'🔄', color:'#f5a623'},
+  {value:'relax',  label:'Optimize', desc:'Ionic geometry optimization',      icon:'⚙️', color:'#9d7fff'},
+  {value:'scf',    label:'SCF',      desc:'Self-consistent field ground state',icon:'⚡', color:'#3d9fff'},
+  {value:'phonon', label:'Phonon',   desc:'Lattice dynamics (ph.x)',          icon:'🎵', color:'#2dd9a0'},
+  {value:'tddft',  label:'TD-DFT',   desc:'Time-dependent DFT (turbo_eels)', icon:'💡', color:'#f5a623'},
+  {value:'neb',    label:'NEB',      desc:'Nudged elastic band (neb.x)',      icon:'⛓', color:'#9d7fff'},
+  {value:'geom',   label:'Geometry', desc:'VC-relax: cell + ions',            icon:'🔷', color:'#f06080'},
+];
 
+const ICON_MAP = {
+  bands:'📊', dos:'📈', md:'🔄', relax:'⚙️', scf:'⚡',
+  phonon:'🎵', tddft:'💡', neb:'⛓', geom:'🔷', 'vc-relax':'🔷',
+  nscf:'📊',
+};
+const DESC_MAP = {
+  bands:'Band structure (pw.x + bands.x)',
+  dos:'Density of states (dos.x)',
+  md:'Ab-initio molecular dynamics',
+  relax:'Ionic geometry optimization',
+  scf:'Self-consistent field ground state',
+  phonon:'Lattice dynamics (ph.x)',
+  tddft:'Time-dependent DFT',
+  neb:'Nudged elastic band (neb.x)',
+  geom:'VC-relax: cell + ions',
+  nscf:'Non-SCF for DOS/bands',
+  'vc-relax':'Variable-cell relaxation',
+};
+
+let fanOpen = false;
+
+function buildFanSVG() {
+  const svg = document.getElementById('fanSvg');
+  svg.innerHTML = '';
+  const N = FAN_ITEMS.length;
+  const cx = 260, cy = 260;         // SVG centre
+  const R1 = 90,  R2 = 240;         // inner / outer radius
+  const startAngle = -15;           // degrees — fan opens toward top-right
+  const spanAngle  = 175;           // total sweep
+  const gap = 2;                    // degrees gap between segments
+
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+
+  FAN_ITEMS.forEach((item, i) => {
+    const segSpan = spanAngle / N;
+    const a1 = startAngle + i * segSpan + gap / 2;
+    const a2 = startAngle + (i + 1) * segSpan - gap / 2;
+    const toRad = d => d * Math.PI / 180;
+
+    const x1 = cx + R1 * Math.cos(toRad(a1)), y1 = cy + R1 * Math.sin(toRad(a1));
+    const x2 = cx + R2 * Math.cos(toRad(a1)), y2 = cy + R2 * Math.sin(toRad(a1));
+    const x3 = cx + R2 * Math.cos(toRad(a2)), y3 = cy + R2 * Math.sin(toRad(a2));
+    const x4 = cx + R1 * Math.cos(toRad(a2)), y4 = cy + R1 * Math.sin(toRad(a2));
+
+    const largeArc = (a2 - a1) > 180 ? 1 : 0;
+    const d = [
+      `M ${x1} ${y1}`,
+      `L ${x2} ${y2}`,
+      `A ${R2} ${R2} 0 ${largeArc} 1 ${x3} ${y3}`,
+      `L ${x4} ${y4}`,
+      `A ${R1} ${R1} 0 ${largeArc} 0 ${x1} ${y1}`,
+      'Z'
+    ].join(' ');
+
+    // mid angle for label
+    const mid = (a1 + a2) / 2;
+    const Rm  = (R1 + R2) / 2;
+    const lx  = cx + Rm * Math.cos(toRad(mid));
+    const ly  = cy + Rm * Math.sin(toRad(mid));
+
+    // group
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','fan-seg');
+    g.setAttribute('data-value', item.value);
+    g.style.transformOrigin = `${cx}px ${cy}px`;
+
+    // path
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', isDark ? '#141e2e' : '#f0f3fa');
+    path.setAttribute('stroke', isDark ? '#1e2d44' : '#d0d8ea');
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('rx', '6');
+    path.style.transition = 'fill .15s, filter .15s';
+    g.appendChild(path);
+
+    // drop shadow filter def (once)
+    if (i === 0) {
+      const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+      defs.innerHTML = `
+        <filter id="fanShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="2" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,0.28)"/>
+        </filter>`;
+      svg.appendChild(defs);
+    }
+    path.setAttribute('filter','url(#fanShadow)');
+
+    // label text — rotated to follow the arc mid-angle
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x', lx);
+    text.setAttribute('y', ly);
+    text.setAttribute('text-anchor','middle');
+    text.setAttribute('dominant-baseline','middle');
+    text.setAttribute('font-size','13');
+    text.setAttribute('font-weight','700');
+    text.setAttribute('font-family','Syne,sans-serif');
+    text.setAttribute('fill', isDark ? '#ddeeff' : '#1a2a3a');
+    text.setAttribute('pointer-events','none');
+    // rotate label along arc
+    text.setAttribute('transform',`rotate(${mid + 90},${lx},${ly})`);
+    text.textContent = item.label;
+    g.appendChild(text);
+
+    // hover interactions
+    g.addEventListener('mouseenter', () => {
+      path.setAttribute('fill', item.color + (isDark ? '33' : '22'));
+      path.setAttribute('stroke', item.color);
+      text.setAttribute('fill', item.color);
+      g.style.transform = `scale(1.04)`;
+      const tt = document.getElementById('fanTooltip');
+      tt.textContent = item.icon + '  ' + item.desc;
+      tt.classList.add('show');
+    });
+    g.addEventListener('mouseleave', () => {
+      path.setAttribute('fill', isDark ? '#141e2e' : '#f0f3fa');
+      path.setAttribute('stroke', isDark ? '#1e2d44' : '#d0d8ea');
+      text.setAttribute('fill', isDark ? '#ddeeff' : '#1a2a3a');
+      g.style.transform = '';
+      document.getElementById('fanTooltip').classList.remove('show');
+    });
+    g.addEventListener('click', () => {
+      selectCalcType(item.value);
+      closeFanMenu();
+    });
+
+    svg.appendChild(g);
+  });
+
+  // centre circle
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', R1 - 8);
+  circle.setAttribute('fill', isDark ? '#0c1320' : '#ffffff');
+  circle.setAttribute('stroke', isDark ? '#1e2d44' : '#d0d8ea');
+  circle.setAttribute('stroke-width','1.5');
+  svg.appendChild(circle);
+
+  // centre icon
+  const ci = document.createElementNS('http://www.w3.org/2000/svg','text');
+  ci.setAttribute('x', cx); ci.setAttribute('y', cy + 2);
+  ci.setAttribute('text-anchor','middle'); ci.setAttribute('dominant-baseline','middle');
+  ci.setAttribute('font-size','28'); ci.setAttribute('pointer-events','none');
+  ci.textContent = '⚗️';
+  svg.appendChild(ci);
+}
+
+function selectCalcType(value) {
+  const sel = document.getElementById('calcType');
+  sel.value = value;
+  sel.dispatchEvent(new Event('change'));
+
+  const item = FAN_ITEMS.find(f => f.value === value) || {label: value, icon:'⚡', desc: ''};
+  document.getElementById('calcTypeIcon').textContent  = item.icon || '⚡';
+  document.getElementById('calcTypeLabel').textContent = item.label + ' — ' + (item.desc || value);
+  document.getElementById('fanCloseLabel').textContent  = item.label;
+  log('[calc] Selected: ' + item.label);
+}
+
+function openFanMenu() {
+  fanOpen = true;
+  buildFanSVG();
+  const overlay = document.getElementById('fanOverlay');
+  overlay.classList.add('open');
+  document.getElementById('calcTypeTrigger').querySelector('.calc-type-arrow').style.transform = 'rotate(0deg)';
+}
+
+function closeFanMenu() {
+  fanOpen = false;
+  document.getElementById('fanOverlay').classList.remove('open');
+  document.getElementById('calcTypeTrigger').querySelector('.calc-type-arrow').style.transform = 'rotate(180deg)';
+}
+
+function wireFanMenu() {
+  document.getElementById('calcTypeTrigger').addEventListener('click', () => {
+    if (fanOpen) closeFanMenu(); else openFanMenu();
+  });
+  document.getElementById('fanOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('fanOverlay')) closeFanMenu();
+  });
+  document.getElementById('fanClose').addEventListener('click', closeFanMenu);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && fanOpen) closeFanMenu(); });
+  // set initial trigger label
+  selectCalcType('scf');
+}
+
+window.addEventListener('load',init);
+(function(){
+  const vw=document.getElementById('viewer-wrap');
+  if(vw) new ResizeObserver(()=>{if(mol3d) mol3d.render();rp();}).observe(vw);
+})();
 })();
 </script>
+
+<!-- ══ RADIAL FAN MENU ══ -->
+<div id="fanOverlay" class="fan-overlay">
+  <div id="fanMenu" class="fan-menu">
+    <svg id="fanSvg" class="fan-svg" viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="fanTooltip" class="fan-tooltip"></div>
+    <button id="fanClose" class="fan-close">&#10005; <span id="fanCloseLabel">Geometry</span></button>
+  </div>
+</div>
 </body>
 </html>
