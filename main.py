@@ -242,9 +242,9 @@ async def home(request: Request):
     token = generate_token()
     superconductors_data = _load_superconductors_data()
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "ws_path": WS_PATH,
             "token": token,
             "superconductors_data": superconductors_data,
@@ -254,17 +254,11 @@ async def home(request: Request):
 
 @app.get("/about", response_class=HTMLResponse)
 async def about(request: Request):
-    return templates.TemplateResponse(
-        "about.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse(request, "about.html")
 
 @app.get("/md", response_class=HTMLResponse)
 async def md_page(request: Request):
-    return templates.TemplateResponse(
-        "md.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse(request, "md.html")
 
 @app.get("/structures", response_class=HTMLResponse)
 async def structures_page():
@@ -284,58 +278,41 @@ async def analysis_page():
 
 @app.get("/dft", response_class=HTMLResponse)
 async def dft_page(request: Request):
-    return templates.TemplateResponse(
-        "dft.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse(request, "dft.html")
 
 
 @app.get("/montecarlo", response_class=HTMLResponse)
 async def montecarlo_page(request: Request):
-    return templates.TemplateResponse(
-        "montecarlo.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse(request, "montecarlo.html")
 
 
 @app.get("/raman", response_class=HTMLResponse)
 async def raman_page(request: Request):
-    return templates.TemplateResponse(
-        "raman.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse(request, "raman.html")
 
 
 @app.get("/vibrations", response_class=HTMLResponse)
 async def vibrations_page(request: Request):
-    return templates.TemplateResponse(
-        "vibrations.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse(request, "vibrations.html")
 
 
 @app.get("/seekpath", response_class=HTMLResponse)
 async def seekpath_page(request: Request):
-    return templates.TemplateResponse(
-        "seekpath.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse(request, "seekpath.html")
 
 
 @app.get("/phonons", response_class=HTMLResponse)
 async def phonons_page(request: Request):
-    return templates.TemplateResponse(
-        "phonons.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse(request, "phonons.html")
 
 
 @app.get("/databases", response_class=HTMLResponse)
 async def databases_page(request: Request):
     embed = request.query_params.get("embed") in ("1", "true", "yes")
     return templates.TemplateResponse(
+        request,
         "databases.html",
-        {"request": request, "embed": embed},
+        {"embed": embed},
     )
 
 
