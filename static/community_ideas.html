@@ -102,18 +102,25 @@ input,textarea,select{font-family:var(--sans)}
 .bsub svg{width:14px;height:14px}
 
 /* IDEA ITEMS */
-.ilist{display:flex;flex-direction:column;gap:12px}
-.iitem{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;transition:border-color .2s}
+.ilist{display:flex;flex-direction:column;gap:8px}
+.iitem{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:14px;transition:border-color .2s,padding .2s}
 .iitem:hover{border-color:var(--bd2)}
+.ilist.msgs-on .iitem{padding:16px 20px;align-items:flex-start}
 .vcol{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;min-width:32px}
 .vbtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--t2);display:flex;align-items:center;justify-content:center;transition:all .15s;cursor:pointer}
 .vbtn:hover,.vbtn.voted{border-color:var(--ac);color:var(--ac);background:rgba(61,127,255,.1)}
 .vbtn svg{width:13px;height:13px}
 .vcnt{font-family:var(--mono);font-size:12px;color:var(--t2)}
-.ibody{flex:1;min-width:0}
-.ititle{font-size:15px;font-weight:600;color:var(--t0);margin-bottom:5px}
-.idesc{font-size:13px;color:var(--t1);line-height:1.6;margin-bottom:10px}
-.imeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--t2)}
+.ibody{flex:1;min-width:0;overflow:hidden}
+.ititle{font-size:14px;font-weight:600;color:var(--t0);margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ilist.msgs-on .ititle{white-space:normal;overflow:visible;text-overflow:unset;margin-bottom:5px}
+.idesc{font-size:13px;color:var(--t1);line-height:1.6;margin-bottom:8px;display:none}
+.ilist.msgs-on .idesc{display:block}
+.imeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--t2);margin-top:3px}
+.msg-toggle{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap;cursor:pointer}
+.msg-toggle:hover{border-color:var(--bd2);color:var(--t1)}
+.msg-toggle.act{border-color:rgba(61,127,255,.35);color:var(--ac);background:rgba(61,127,255,.08)}
+.msg-toggle svg{width:12px;height:12px;flex-shrink:0}
 .msep{opacity:.4}
 .ibadges{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
 .bdg{padding:3px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:var(--mono)}
@@ -143,7 +150,7 @@ input,textarea,select{font-family:var(--sans)}
   .bhead{flex-direction:column}
   .frow{flex-direction:column;align-items:flex-start}
   .srch input{width:120px}
-  .ibadges{margin-left:0;margin-top:6px}
+  .ibadges{margin-left:0;margin-top:4px}
 }
 
 /* ── ADMIN MODAL ── */
@@ -261,6 +268,10 @@ input,textarea,select{font-family:var(--sans)}
         <option value="newest">Newest</option>
         <option value="votes">Most voted</option>
       </select>
+      <button type="button" class="msg-toggle" id="msgToggle" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Messages
+      </button>
     </div>
   </div>
 
@@ -307,14 +318,14 @@ input,textarea,select{font-family:var(--sans)}
 
 <div class="modal-bg" id="adminModal">
   <div class="modal-box">
-    <div id="stepSending">
+    <div id="stepConfirm">
       <h3>Admin access</h3>
-      <p>Sending a 6-digit verification code to <strong style="color:var(--t0)">itetejayrwaka@gmail.com</strong>…</p>
-      <div style="display:flex;align-items:center;gap:10px;color:var(--t2);font-size:13px">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        Sending code…
+      <p>A one-time code is emailed to the site administrator.<br><strong style="color:var(--t0)">Send code</strong> to continue.</p>
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
+        <button type="button" class="modal-verify" id="btnSendCode" style="width:160px">Send code</button>
+        <button type="button" class="modal-cancel" id="cancelConfirm" style="width:160px">Cancel</button>
       </div>
-      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+      <div class="modal-status" id="sendStatus"></div>
     </div>
 
     <div id="stepCode" style="display:none">
@@ -360,12 +371,11 @@ input,textarea,select{font-family:var(--sans)}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 (function(){
 'use strict';
 var SK='smad_ideas_v3', VK='smad_votes_v3', AK='smad_ideas_admin_sess';
-var fCat='all', fSt='all', fQ='', fSort='newest', pubOn=true;
+var fCat='all', fSt='all', fQ='', fSort='newest', pubOn=true, showMsgs=false;
 var adminVerified=false;
 
 var _db=null;
@@ -529,7 +539,7 @@ function renderList(){
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>';
       };
 
-      var h='<div class="ilist">';
+      var h='<div class="ilist'+(showMsgs?' msgs-on':'')+'">';
       ideas.forEach(function(idea){
         var sb=statusBdg(idea.status);
         h+='<div class="iitem">'+
@@ -617,6 +627,14 @@ document.querySelectorAll('.st').forEach(function(t){
 });
 document.getElementById('searchInput').addEventListener('input',function(e){fQ=e.target.value.trim();renderList();});
 document.getElementById('sortSel').addEventListener('change',function(e){fSort=e.target.value;renderList();});
+document.getElementById('msgToggle').addEventListener('click',function(){
+  showMsgs=!showMsgs;
+  this.classList.toggle('act',showMsgs);
+  this.setAttribute('aria-pressed',showMsgs?'true':'false');
+  var ic=this.querySelector('svg');
+  if(ic)ic.style.color=showMsgs?'var(--ac)':'';
+  renderList();
+});
 
 document.querySelectorAll('.cpill').forEach(function(t){
   t.addEventListener('click',function(){
@@ -704,56 +722,109 @@ adminVerified=readAdminSess();
 
 (function(){
   var ADMIN_EMAIL='itetejayrwaka@gmail.com';
+  var W3F_KEY='YOUR_WEB3FORMS_KEY';
   var _code=null;
   var _expiry=0;
-  var EJS_PUBLIC='YOUR_EMAILJS_PUBLIC_KEY';
-  var EJS_SERVICE='YOUR_SERVICE_ID';
-  var EJS_TMPL='YOUR_TEMPLATE_ID';
 
-  function generateCode(){return String(Math.floor(100000+Math.random()*900000));}
+  function genCode(){return String(Math.floor(100000+Math.random()*900000));}
 
   function showStep(id){
-    ['stepSending','stepCode','stepAdmin'].forEach(function(s){
+    ['stepConfirm','stepCode','stepAdmin'].forEach(function(s){
       var el=document.getElementById(s);
       if(el)el.style.display=s===id?'block':'none';
     });
   }
 
+  function setSendStatus(msg,type){
+    var el=document.getElementById('sendStatus');
+    if(!el)return;
+    el.textContent=msg||'';
+    el.className='modal-status'+(type?' '+type:'');
+  }
+
+  function clearCodeCells(){
+    for(var i=0;i<6;i++){var c=document.getElementById('c'+i);if(c)c.value='';}
+  }
+
+  function sendCode(){
+    _code=genCode();
+    _expiry=Date.now()+10*60*1000;
+    var btn=document.getElementById('btnSendCode');
+    btn.disabled=true;
+    btn.textContent='Sending…';
+    setSendStatus('','');
+
+    if(W3F_KEY==='YOUR_WEB3FORMS_KEY'){
+      console.log('%c SMAD Admin Code: '+_code,'font-size:28px;font-weight:900;color:#3d7fff;background:#050a14;padding:10px 20px;border-radius:8px');
+      setTimeout(function(){
+        btn.disabled=false;
+        btn.textContent='Send code';
+        setSendStatus('Dev mode — code in console (F12).','ok');
+        setTimeout(function(){
+          showStep('stepCode');
+          clearCodeCells();
+          document.getElementById('modalStatus').textContent='';
+          document.getElementById('modalStatus').className='modal-status';
+          document.getElementById('c0').focus();
+        },1200);
+      },600);
+      return;
+    }
+
+    fetch('https://api.web3forms.com/submit',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        access_key:W3F_KEY,
+        subject:'SMAD Admin Code: '+_code,
+        from_name:'SMAD Community',
+        email:ADMIN_EMAIL,
+        message:'Your SMAD admin verification code is:\n\n'+_code+'\n\nExpires in 10 minutes.'
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      btn.disabled=false;
+      btn.textContent='Send code';
+      if(data.success){
+        setSendStatus('Code sent! Check your email.','ok');
+        setTimeout(function(){
+          showStep('stepCode');
+          clearCodeCells();
+          document.getElementById('modalStatus').textContent='';
+          document.getElementById('modalStatus').className='modal-status';
+          document.getElementById('c0').focus();
+        },900);
+      }else{
+        setSendStatus('Failed to send. Try again.','err');
+      }
+    })
+    .catch(function(){
+      btn.disabled=false;
+      btn.textContent='Send code';
+      setSendStatus('Network error. Check connection.','err');
+    });
+  }
+
   function openModal(){
     document.getElementById('adminModal').classList.add('open');
-    showStep('stepSending');
+    showStep('stepConfirm');
+    setSendStatus('','');
+    var btn=document.getElementById('btnSendCode');
+    if(btn){btn.disabled=false;btn.textContent='Send code';}
     document.getElementById('modalStatus').textContent='';
     document.getElementById('modalStatus').className='modal-status';
-    for(var i=0;i<6;i++){var c=document.getElementById('c'+i);if(c)c.value='';}
-
-    _code=generateCode();
-    _expiry=Date.now()+10*60*1000;
-
-    if(EJS_PUBLIC!=='YOUR_EMAILJS_PUBLIC_KEY'&&typeof emailjs!=='undefined'){
-      emailjs.init({publicKey:EJS_PUBLIC});
-      emailjs.send(EJS_SERVICE,EJS_TMPL,{to_email:ADMIN_EMAIL,code:_code,site:'SMAD Community'}).then(function(){
-        showStep('stepCode');
-        document.getElementById('c0').focus();
-      },function(err){
-        console.warn('EmailJS error:',err);
-        showStep('stepCode');
-        document.getElementById('c0').focus();
-      });
-    }else{
-      console.log('%c SMAD Admin Code: '+_code,'font-size:24px;font-weight:bold;color:#3d7fff;background:#050a14;padding:8px 16px;border-radius:8px');
-      setTimeout(function(){
-        showStep('stepCode');
-        document.getElementById('c0').focus();
-        var st=document.getElementById('modalStatus');
-        st.textContent='Dev mode: code printed to console (F12)';
-        st.className='modal-status ok';
-      },600);
-    }
+    clearCodeCells();
+    _code=null;
+    _expiry=0;
   }
 
   function closeModal(){
     document.getElementById('adminModal').classList.remove('open');
-    _code=null;_expiry=0;
+    _code=null;
+    _expiry=0;
+    var b=document.getElementById('btnSendCode');
+    if(b){b.disabled=false;b.textContent='Send code';}
   }
 
   for(var i=0;i<6;i++){
@@ -761,8 +832,7 @@ adminVerified=readAdminSess();
       var cell=document.getElementById('c'+idx);
       if(!cell)return;
       cell.addEventListener('keydown',function(e){
-        if(e.key==='Backspace'&&!cell.value&&idx>0)
-          document.getElementById('c'+(idx-1)).focus();
+        if(e.key==='Backspace'&&!cell.value&&idx>0)document.getElementById('c'+(idx-1)).focus();
         if(e.key==='ArrowLeft'&&idx>0)document.getElementById('c'+(idx-1)).focus();
         if(e.key==='ArrowRight'&&idx<5)document.getElementById('c'+(idx+1)).focus();
         if(e.key==='Enter')document.getElementById('modalVerify').click();
@@ -770,9 +840,8 @@ adminVerified=readAdminSess();
       cell.addEventListener('input',function(){
         var v=cell.value.replace(/\D/g,'');
         if(v.length>1){
-          for(var j=0;j<6&&j<v.length;j++)
-            document.getElementById('c'+j).value=v[j];
-          document.getElementById('c5').focus();
+          for(var j=0;j<6&&j<v.length;j++)document.getElementById('c'+j).value=v[j];
+          document.getElementById('c'+Math.min(5,v.length-1)).focus();
           return;
         }
         cell.value=v.slice(-1);
@@ -785,24 +854,23 @@ adminVerified=readAdminSess();
     var entered='';
     for(var i=0;i<6;i++)entered+=document.getElementById('c'+i).value;
     var st=document.getElementById('modalStatus');
-    if(entered.length<6){
-      st.textContent='Please enter all 6 digits.';st.className='modal-status err';return;
-    }
-    if(Date.now()>_expiry){
-      st.textContent='Code expired. Close and try again.';st.className='modal-status err';return;
-    }
+    if(entered.length<6){st.textContent='Enter all 6 digits.';st.className='modal-status err';return;}
+    if(Date.now()>_expiry){st.textContent='Code expired. Go back and resend.';st.className='modal-status err';return;}
     if(entered===_code){
       st.textContent='';
+      st.className='modal-status';
       writeAdminSess(true);
       showStep('stepAdmin');
       renderList();
     }else{
       st.textContent='Incorrect code. Try again.';st.className='modal-status err';
-      for(var j=0;j<6;j++)document.getElementById('c'+j).value='';
+      clearCodeCells();
       document.getElementById('c0').focus();
     }
   });
 
+  document.getElementById('btnSendCode').addEventListener('click',sendCode);
+  document.getElementById('cancelConfirm').addEventListener('click',closeModal);
   document.getElementById('admExport').addEventListener('click',function(){
     loadIdeas(function(ideas){
       var blob=new Blob([JSON.stringify(ideas,null,2)],{type:'application/json'});
@@ -810,16 +878,18 @@ adminVerified=readAdminSess();
       var a=document.createElement('a');
       a.href=url;a.download='smad-ideas-'+new Date().toISOString().slice(0,10)+'.json';
       a.click();URL.revokeObjectURL(url);
-      var st=document.getElementById('admStatus');
-      st.textContent='Exported '+ideas.length+' ideas.';st.className='modal-status ok';
+      var el=document.getElementById('admStatus');
+      el.textContent='Exported '+ideas.length+' idea(s).';
+      el.className='modal-status ok';
     });
   });
   document.getElementById('admClear').addEventListener('click',function(){
     if(!confirm('Delete ALL ideas permanently? This cannot be undone.'))return;
     clearAll(function(){
       renderList();updateCounts();
-      var st=document.getElementById('admStatus');
-      st.textContent='All ideas deleted.';st.className='modal-status ok';
+      var el=document.getElementById('admStatus');
+      el.textContent='All ideas deleted.';
+      el.className='modal-status ok';
     });
   });
   document.getElementById('admLogout').addEventListener('click',function(){
