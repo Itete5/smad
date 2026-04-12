@@ -52,7 +52,7 @@ input,textarea,select{font-family:var(--sans)}
 .st{padding:6px 15px;border-radius:20px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:13px;transition:all .15s}
 .st:hover{border-color:var(--bd2);color:var(--t1)}
 .st.act{border-color:var(--ac);color:var(--ac)}
-.rctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rctrl{display:flex;align-items:center;gap:8px}
 .srch{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:8px 13px;transition:border-color .2s}
 .srch:focus-within{border-color:var(--bd2)}
 .srch svg{width:13px;height:13px;color:var(--t3);flex-shrink:0}
@@ -117,6 +117,7 @@ input,textarea,select{font-family:var(--sans)}
 .idesc{font-size:13px;color:var(--t1);line-height:1.6;margin-bottom:8px;display:none}
 .ilist.msgs-on .idesc{display:block}
 .imeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--t2);margin-top:3px}
+/* toggle messages button */
 .msg-toggle{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap;cursor:pointer}
 .msg-toggle:hover{border-color:var(--bd2);color:var(--t1)}
 .msg-toggle.act{border-color:rgba(61,127,255,.35);color:var(--ac);background:rgba(61,127,255,.08)}
@@ -169,7 +170,7 @@ input,textarea,select{font-family:var(--sans)}
 @keyframes modalIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 .modal-box h3{font-family:var(--disp);font-size:20px;font-weight:800;color:#fff;margin-bottom:8px}
 .modal-box p{font-size:13.5px;color:var(--t1);line-height:1.6;margin-bottom:24px}
-/* 6-digit code: single field — look & focus ring via inline style + JS */
+/* 6-digit code input — single field; focus via inline style + JS */
 .modal-row{display:flex;gap:12px}
 .modal-cancel{
   flex:1;padding:13px;border-radius:12px;
@@ -313,9 +314,7 @@ input,textarea,select{font-family:var(--sans)}
   <div class="modal-box">
     <div id="stepConfirm">
       <h3>Admin access</h3>
-      <p style="margin-bottom:20px">Enter your email address. A one-time code will be sent if it matches the administrator account.</p>
-      <label class="sr-only" for="adminEmailInput">Administrator email</label>
-      <input type="email" id="adminEmailInput" placeholder="your@email.com" autocomplete="email" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(80,130,220,.35);border-radius:12px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:16px;transition:border-color .2s;font-family:var(--sans)"/>
+      <p style="margin-bottom:20px">Request a one-time verification code. It is emailed to the administrator address configured for SMAD (not shown here). Codes expire in 10 minutes.</p>
       <div style="display:flex;gap:10px">
         <button type="button" class="modal-cancel" id="cancelConfirm" style="flex:1">Cancel</button>
         <button type="button" class="modal-verify" id="btnSendCode" style="flex:1">Send code</button>
@@ -710,14 +709,6 @@ function writeAdminSess(on){
 adminVerified=readAdminSess();
 
 (function(){
-  var ADMIN_EMAIL='itetejayrwaka@gmail.com';
-  /* Web3Forms: https://web3forms.com — create access key for ADMIN_EMAIL, paste below */
-  var W3F_KEY='YOUR_WEB3FORMS_KEY';
-  var _code=null;
-  var _expiry=0;
-
-  function genCode(){return String(Math.floor(100000+Math.random()*900000));}
-
   function showStep(id){
     ['stepConfirm','stepCode','stepAdmin'].forEach(function(s){
       var el=document.getElementById(s);
@@ -738,79 +729,38 @@ adminVerified=readAdminSess();
   }
 
   function sendCode(){
-    var emailInp=document.getElementById('adminEmailInput');
-    var entered=(emailInp&&emailInp.value||'').trim().toLowerCase();
-    var allowed=ADMIN_EMAIL.toLowerCase();
-
-    if(!entered){
-      if(emailInp)emailInp.style.borderColor='#f06080';
-      setSendStatus('Please enter your email address.','err');
-      return;
-    }
-    if(entered!==allowed){
-      if(emailInp)emailInp.style.borderColor='#f06080';
-      setSendStatus('This email is not authorised.','err');
-      return;
-    }
-    if(emailInp)emailInp.style.borderColor='var(--ac2)';
-
-    _code=genCode();
-    _expiry=Date.now()+10*60*1000;
     var btn=document.getElementById('btnSendCode');
     btn.disabled=true;
     btn.textContent='Sending…';
     setSendStatus('','');
-
-    if(W3F_KEY==='YOUR_WEB3FORMS_KEY'){
-      console.log('%c SMAD Admin OTP: '+_code,'font-size:28px;font-weight:900;color:#3d7fff;background:#050a14;padding:10px 20px;border-radius:8px');
-      setTimeout(function(){
-        btn.disabled=false;
-        btn.textContent='Send code';
-        setSendStatus('Dev mode — code printed to console (F12).','ok');
-        setTimeout(function(){
-          showStep('stepCode');
-          clearCodeInput();
-          document.getElementById('modalStatus').textContent='';
-          document.getElementById('modalStatus').className='modal-status';
-          var ci=document.getElementById('codeInput');
-          if(ci)ci.focus();
-        },1400);
-      },700);
-      return;
-    }
-
-    fetch('https://api.web3forms.com/submit',{
+    fetch('/api/community/admin/send-otp',{
       method:'POST',
       headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify({
-        access_key:W3F_KEY,
-        subject:'SMAD Admin Code: '+_code,
-        name:'SMAD Community',
-        email:ADMIN_EMAIL,
-        message:
-          'Hello,\n\n'+
-          'Your SMAD admin verification code is:\n\n'+
-          '  '+_code+'\n\n'+
-          'This code expires in 10 minutes.\n\n'+
-          '— SMAD Community'
-      })
+      body:'{}',
+      credentials:'same-origin'
     })
-    .then(function(r){return r.json();})
-    .then(function(data){
+    .then(function(r){
+      return r.json().then(function(j){return{ok:r.ok,status:r.status,j:j};});
+    })
+    .then(function(o){
       btn.disabled=false;
       btn.textContent='Send code';
-      if(data.success){
-        setSendStatus('Code sent to '+ADMIN_EMAIL+'!','ok');
+      var j=o.j||{};
+      if(j.ok){
+        var msg=j.delivery==='console_fallback'
+          ?'Code issued. If email is not configured, check the server logs for the OTP.'
+          :'Verification code sent. Check the administrator inbox.';
+        setSendStatus(msg,'ok');
         setTimeout(function(){
           showStep('stepCode');
           clearCodeInput();
-          document.getElementById('modalStatus').textContent='';
-          document.getElementById('modalStatus').className='modal-status';
+          var ms=document.getElementById('modalStatus');
+          if(ms){ms.textContent='';ms.className='modal-status';}
           var ci=document.getElementById('codeInput');
           if(ci)ci.focus();
-        },1000);
+        },600);
       }else{
-        setSendStatus('Send failed: '+(data.message||'unknown error')+'. Try again.','err');
+        setSendStatus(j.error||'Could not send code. Try again later.','err');
       }
     })
     .catch(function(){
@@ -823,45 +773,19 @@ adminVerified=readAdminSess();
   function openModal(){
     document.getElementById('adminModal').classList.add('open');
     showStep('stepConfirm');
-    var emailInp=document.getElementById('adminEmailInput');
-    if(emailInp){
-      emailInp.value='';
-      emailInp.style.borderColor='rgba(80,130,220,.35)';
-    }
     setSendStatus('','');
     var btn=document.getElementById('btnSendCode');
     if(btn){btn.disabled=false;btn.textContent='Send code';}
     document.getElementById('modalStatus').textContent='';
     document.getElementById('modalStatus').className='modal-status';
     clearCodeInput();
-    _code=null;
-    _expiry=0;
-    setTimeout(function(){
-      var el=document.getElementById('adminEmailInput');
-      if(el)el.focus();
-    },120);
   }
 
   function closeModal(){
     document.getElementById('adminModal').classList.remove('open');
-    _code=null;
-    _expiry=0;
     var b=document.getElementById('btnSendCode');
     if(b){b.disabled=false;b.textContent='Send code';}
-    var emailInp=document.getElementById('adminEmailInput');
-    if(emailInp)emailInp.style.borderColor='rgba(80,130,220,.35)';
     clearCodeInput();
-  }
-
-  var emailInpEl=document.getElementById('adminEmailInput');
-  if(emailInpEl){
-    emailInpEl.addEventListener('keydown',function(e){
-      if(e.key==='Enter')document.getElementById('btnSendCode').click();
-    });
-    emailInpEl.addEventListener('input',function(){
-      this.style.borderColor='';
-      setSendStatus('','');
-    });
   }
 
   var codeInput=document.getElementById('codeInput');
@@ -882,17 +806,33 @@ adminVerified=readAdminSess();
     var entered=(ci&&ci.value||'').replace(/\D/g,'');
     var st=document.getElementById('modalStatus');
     if(entered.length<6){st.textContent='Enter all 6 digits.';st.className='modal-status err';return;}
-    if(Date.now()>_expiry){st.textContent='Code expired. Go back and resend.';st.className='modal-status err';return;}
-    if(entered===_code){
-      st.textContent='';
-      st.className='modal-status';
-      writeAdminSess(true);
-      showStep('stepAdmin');
-      renderList();
-    }else{
-      st.textContent='Incorrect code. Try again.';st.className='modal-status err';
-      if(ci){ci.value='';ci.focus();}
-    }
+    st.textContent='Verifying…';
+    st.className='modal-status';
+    fetch('/api/community/admin/verify-otp',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({code:entered}),
+      credentials:'same-origin'
+    })
+    .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+    .then(function(o){
+      var j=o.j||{};
+      if(j.ok){
+        st.textContent='';
+        st.className='modal-status';
+        writeAdminSess(true);
+        showStep('stepAdmin');
+        renderList();
+      }else{
+        st.textContent=j.error||'Verification failed.';
+        st.className='modal-status err';
+        if(ci){ci.value='';ci.focus();}
+      }
+    })
+    .catch(function(){
+      st.textContent='Network error.';
+      st.className='modal-status err';
+    });
   });
 
   document.getElementById('btnSendCode').addEventListener('click',sendCode);
