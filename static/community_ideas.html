@@ -195,6 +195,14 @@ input,textarea,select{font-family:var(--sans)}
 .modal-status{font-size:12px;text-align:center;margin-top:14px;min-height:18px;font-family:var(--mono)}
 .modal-status.ok{color:var(--ac2)}
 .modal-status.err{color:#f06080}
+.adm-email-inp{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(80,130,220,.35);
+  border-radius:12px;padding:13px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:16px;
+  transition:border-color .2s;font-family:var(--sans);
+}
+.adm-email-inp::placeholder{color:var(--t3)}
+.adm-email-inp:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(61,127,255,.12);}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .admin-panel{display:none}
 .admin-panel.open{display:block}
 .adm-section{margin-bottom:20px}
@@ -320,10 +328,12 @@ input,textarea,select{font-family:var(--sans)}
   <div class="modal-box">
     <div id="stepConfirm">
       <h3>Admin access</h3>
-      <p>A one-time code is emailed to the site administrator.<br><strong style="color:var(--t0)">Send code</strong> to continue.</p>
-      <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
-        <button type="button" class="modal-verify" id="btnSendCode" style="width:160px">Send code</button>
-        <button type="button" class="modal-cancel" id="cancelConfirm" style="width:160px">Cancel</button>
+      <p style="margin-bottom:20px">Enter your email address. A one-time code will be sent if it matches the administrator account.</p>
+      <label class="sr-only" for="adminEmailInput">Administrator email</label>
+      <input type="email" class="adm-email-inp" id="adminEmailInput" placeholder="your@email.com" autocomplete="email"/>
+      <div style="display:flex;gap:10px">
+        <button type="button" class="modal-cancel" id="cancelConfirm" style="flex:1">Cancel</button>
+        <button type="button" class="modal-verify" id="btnSendCode" style="flex:1">Send code</button>
       </div>
       <div class="modal-status" id="sendStatus"></div>
     </div>
@@ -722,6 +732,7 @@ adminVerified=readAdminSess();
 
 (function(){
   var ADMIN_EMAIL='itetejayrwaka@gmail.com';
+  /* Web3Forms: https://web3forms.com — create access key for ADMIN_EMAIL, paste below */
   var W3F_KEY='YOUR_WEB3FORMS_KEY';
   var _code=null;
   var _expiry=0;
@@ -747,6 +758,22 @@ adminVerified=readAdminSess();
   }
 
   function sendCode(){
+    var emailInp=document.getElementById('adminEmailInput');
+    var entered=(emailInp&&emailInp.value||'').trim().toLowerCase();
+    var allowed=ADMIN_EMAIL.toLowerCase();
+
+    if(!entered){
+      if(emailInp)emailInp.style.borderColor='#f06080';
+      setSendStatus('Please enter your email address.','err');
+      return;
+    }
+    if(entered!==allowed){
+      if(emailInp)emailInp.style.borderColor='#f06080';
+      setSendStatus('This email is not authorised.','err');
+      return;
+    }
+    if(emailInp)emailInp.style.borderColor='var(--ac2)';
+
     _code=genCode();
     _expiry=Date.now()+10*60*1000;
     var btn=document.getElementById('btnSendCode');
@@ -755,19 +782,19 @@ adminVerified=readAdminSess();
     setSendStatus('','');
 
     if(W3F_KEY==='YOUR_WEB3FORMS_KEY'){
-      console.log('%c SMAD Admin Code: '+_code,'font-size:28px;font-weight:900;color:#3d7fff;background:#050a14;padding:10px 20px;border-radius:8px');
+      console.log('%c SMAD Admin OTP: '+_code,'font-size:28px;font-weight:900;color:#3d7fff;background:#050a14;padding:10px 20px;border-radius:8px');
       setTimeout(function(){
         btn.disabled=false;
         btn.textContent='Send code';
-        setSendStatus('Dev mode — code in console (F12).','ok');
+        setSendStatus('Dev mode — code printed to console (F12).','ok');
         setTimeout(function(){
           showStep('stepCode');
           clearCodeCells();
           document.getElementById('modalStatus').textContent='';
           document.getElementById('modalStatus').className='modal-status';
           document.getElementById('c0').focus();
-        },1200);
-      },600);
+        },1400);
+      },700);
       return;
     }
 
@@ -777,9 +804,14 @@ adminVerified=readAdminSess();
       body:JSON.stringify({
         access_key:W3F_KEY,
         subject:'SMAD Admin Code: '+_code,
-        from_name:'SMAD Community',
+        name:'SMAD Community',
         email:ADMIN_EMAIL,
-        message:'Your SMAD admin verification code is:\n\n'+_code+'\n\nExpires in 10 minutes.'
+        message:
+          'Hello,\n\n'+
+          'Your SMAD admin verification code is:\n\n'+
+          '  '+_code+'\n\n'+
+          'This code expires in 10 minutes.\n\n'+
+          '— SMAD Community'
       })
     })
     .then(function(r){return r.json();})
@@ -787,28 +819,33 @@ adminVerified=readAdminSess();
       btn.disabled=false;
       btn.textContent='Send code';
       if(data.success){
-        setSendStatus('Code sent! Check your email.','ok');
+        setSendStatus('Code sent to '+ADMIN_EMAIL+'!','ok');
         setTimeout(function(){
           showStep('stepCode');
           clearCodeCells();
           document.getElementById('modalStatus').textContent='';
           document.getElementById('modalStatus').className='modal-status';
           document.getElementById('c0').focus();
-        },900);
+        },1000);
       }else{
-        setSendStatus('Failed to send. Try again.','err');
+        setSendStatus('Send failed: '+(data.message||'unknown error')+'. Try again.','err');
       }
     })
     .catch(function(){
       btn.disabled=false;
       btn.textContent='Send code';
-      setSendStatus('Network error. Check connection.','err');
+      setSendStatus('Network error. Check your connection.','err');
     });
   }
 
   function openModal(){
     document.getElementById('adminModal').classList.add('open');
     showStep('stepConfirm');
+    var emailInp=document.getElementById('adminEmailInput');
+    if(emailInp){
+      emailInp.value='';
+      emailInp.style.borderColor='';
+    }
     setSendStatus('','');
     var btn=document.getElementById('btnSendCode');
     if(btn){btn.disabled=false;btn.textContent='Send code';}
@@ -817,6 +854,10 @@ adminVerified=readAdminSess();
     clearCodeCells();
     _code=null;
     _expiry=0;
+    setTimeout(function(){
+      var el=document.getElementById('adminEmailInput');
+      if(el)el.focus();
+    },120);
   }
 
   function closeModal(){
@@ -825,6 +866,19 @@ adminVerified=readAdminSess();
     _expiry=0;
     var b=document.getElementById('btnSendCode');
     if(b){b.disabled=false;b.textContent='Send code';}
+    var emailInp=document.getElementById('adminEmailInput');
+    if(emailInp)emailInp.style.borderColor='';
+  }
+
+  var emailInpEl=document.getElementById('adminEmailInput');
+  if(emailInpEl){
+    emailInpEl.addEventListener('keydown',function(e){
+      if(e.key==='Enter')document.getElementById('btnSendCode').click();
+    });
+    emailInpEl.addEventListener('input',function(){
+      this.style.borderColor='';
+      setSendStatus('','');
+    });
   }
 
   for(var i=0;i<6;i++){
