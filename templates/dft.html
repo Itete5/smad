@@ -21,7 +21,7 @@
   --rose:#f06080;--ro-dim:rgba(240,96,128,0.1);
   --violet:#9d7fff;--vi-dim:rgba(157,127,255,0.1);
   --mono:'JetBrains Mono',monospace;--sans:'Instrument Sans',sans-serif;--display:'Syne',sans-serif;
-  --r:7px;--r2:11px;--nav-h:52px;--sb-w:330px;--rp-w:400px;
+  --r:7px;--r2:11px;--nav-h:52px;--sb-w:330px;--rp-w:420px;
   --sh:0 8px 32px rgba(0,0,0,.55);--t:.15s ease;
 }
 [data-theme="light"]{
@@ -222,9 +222,17 @@ a{color:var(--accent);text-decoration:none}
 .ss-v{color:var(--green);font-weight:600;font-size:11px}
 
 /* RIGHT PANEL */
-#rpanel{width:var(--rp-w);min-width:270px;background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+#rpanel{width:var(--rp-w);min-width:320px;background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
 .rp-tabs{display:flex;flex-wrap:nowrap;border-bottom:1px solid var(--border);background:var(--bg2);overflow:hidden}
-.rp-tabs button{flex:1;padding:7px 4px;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;background:transparent;color:var(--text3);border:none;border-bottom:2px solid transparent;transition:all var(--t);font-family:var(--display);cursor:pointer;white-space:nowrap;min-width:0}
+.rp-tabs button{
+  flex:1;min-width:0;padding:8px 2px 7px;
+  background:transparent;border:none;border-bottom:2px solid transparent;
+  color:var(--text3);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  transition:all var(--t);
+}
+.rp-tabs button .rt-ico{font-size:13px;line-height:1}
+.rp-tabs button .rt-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-family:var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .rp-tabs button.act{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg1)}
 .rp-tabs button:hover:not(.act){color:var(--text1)}
 .rp-body{flex:1;display:flex;flex-direction:column;min-height:0}
@@ -274,7 +282,7 @@ a{color:var(--accent);text-decoration:none}
 }
 
 /* responsive */
-@media(max-width:1150px){ #rpanel{display:none!important}}
+@media(max-width:1150px){#rpanel{display:none!important}}
 @media(max-width:900px){ #sidebar{width:100%;max-width:100%;min-width:0}#workspace{flex-direction:column}#center{min-height:40vh}}
 
 /* ── Calc type trigger button ── */
@@ -304,7 +312,7 @@ a{color:var(--accent);text-decoration:none}
 
 .fan-menu{
   position:relative;
-  width:min(520px,90vw);height:min(520px,90vw);
+  width:min(580px,92vw);height:min(580px,92vw);
   transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1);
 }
 .fan-overlay.open .fan-menu{transform:scale(1);}
@@ -853,12 +861,12 @@ a{color:var(--accent);text-decoration:none}
 <!-- ══ RIGHT PANEL ══ -->
 <aside id="rpanel">
   <div class="rp-tabs">
-    <button class="act" data-rp="conv">Convergence</button>
-    <button data-rp="bands">Bands</button>
-    <button data-rp="dos">DOS</button>
-    <button data-rp="prop">Props</button>
-    <button data-rp="input">Input</button>
-    <button data-rp="con">Console</button>
+    <button class="act" data-rp="conv"><span class="rt-ico">📉</span><span class="rt-lbl">Conv.</span></button>
+    <button data-rp="bands"><span class="rt-ico">📊</span><span class="rt-lbl">Bands</span></button>
+    <button data-rp="dos"><span class="rt-ico">📈</span><span class="rt-lbl">DOS</span></button>
+    <button data-rp="prop"><span class="rt-ico">🔬</span><span class="rt-lbl">Props</span></button>
+    <button data-rp="input"><span class="rt-ico">📄</span><span class="rt-lbl">Input</span></button>
+    <button data-rp="con"><span class="rt-ico">💻</span><span class="rt-lbl">Console</span></button>
   </div>
   <div class="rp-body">
     <div class="rpane act" id="rp-conv"><div class="plot-box"><div id="plotC"></div></div></div>
@@ -2315,15 +2323,15 @@ function init(){
 
 /* ═══════════════ RADIAL FAN MENU ═══════════════ */
 const FAN_ITEMS = [
-  {value:'bands',  label:'Band',     desc:'Band structure (pw.x + bands.x)', icon:'📊', color:'#3d9fff'},
-  {value:'dos',    label:'DOS',      desc:'Density of states (dos.x)',        icon:'📈', color:'#2dd9a0'},
-  {value:'md',     label:'MD',       desc:'Ab-initio molecular dynamics',     icon:'🔄', color:'#f5a623'},
-  {value:'relax',  label:'Optimize', desc:'Ionic geometry optimization',      icon:'⚙️', color:'#9d7fff'},
-  {value:'scf',    label:'SCF',      desc:'Self-consistent field ground state',icon:'⚡', color:'#3d9fff'},
-  {value:'phonon', label:'Phonon',   desc:'Lattice dynamics (ph.x)',          icon:'🎵', color:'#2dd9a0'},
-  {value:'tddft',  label:'TD-DFT',   desc:'Time-dependent DFT (turbo_eels)', icon:'💡', color:'#f5a623'},
-  {value:'neb',    label:'NEB',      desc:'Nudged elastic band (neb.x)',      icon:'⛓', color:'#9d7fff'},
-  {value:'geom',   label:'Geometry', desc:'VC-relax: cell + ions',            icon:'🔷', color:'#f06080'},
+  {value:'neb',    label:'NEB',      desc:'Nudged elastic band (neb.x)',           icon:'⛓', color:'#9d7fff'},
+  {value:'tddft',  label:'TD-DFT',   desc:'Time-dependent DFT (turbo_eels.x)',     icon:'💡', color:'#f5a623'},
+  {value:'phonon', label:'Phonon',   desc:'Lattice dynamics via ph.x',             icon:'🎵', color:'#2dd9a0'},
+  {value:'geom',   label:'Geometry', desc:'VC-relax: optimize cell + ions',        icon:'🔷', color:'#f06080'},
+  {value:'scf',    label:'SCF',      desc:'Self-consistent field ground state',    icon:'⚡', color:'#3d9fff'},
+  {value:'relax',  label:'Optimize', desc:'Ionic position optimization (BFGS)',    icon:'⚙️', color:'#9d7fff'},
+  {value:'md',     label:'aiMD',     desc:'Ab initio molecular dynamics',          icon:'🔄', color:'#f5a623'},
+  {value:'dos',    label:'DOS',      desc:'Density of states (dos.x)',             icon:'📈', color:'#2dd9a0'},
+  {value:'bands',  label:'Band',     desc:'Electronic band structure (bands.x)',   icon:'📊', color:'#3d9fff'},
 ];
 
 const ICON_MAP = {
@@ -2351,11 +2359,11 @@ function buildFanSVG() {
   const svg = document.getElementById('fanSvg');
   svg.innerHTML = '';
   const N = FAN_ITEMS.length;
-  const cx = 260, cy = 260;         // SVG centre
-  const R1 = 90,  R2 = 240;         // inner / outer radius
-  const startAngle = -15;           // degrees — fan opens toward top-right
-  const spanAngle  = 175;           // total sweep
-  const gap = 2;                    // degrees gap between segments
+  const cx = 300, cy = 300;         // SVG centre — lower-centre so arc opens upward
+  const R1 = 95,  R2 = 265;         // inner / outer radius
+  const startAngle = -168;          // degrees from 3 o'clock — opens upward
+  const spanAngle  = 156;           // degrees total sweep (fits 9 segs cleanly)
+  const gap = 2.2;                  // degrees gap between segments
 
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
 
@@ -2382,7 +2390,7 @@ function buildFanSVG() {
 
     // mid angle for label
     const mid = (a1 + a2) / 2;
-    const Rm  = (R1 + R2) / 2;
+    const Rm  = R1 + (R2 - R1) * 0.55;  // slightly outer for readability
     const lx  = cx + Rm * Math.cos(toRad(mid));
     const ly  = cy + Rm * Math.sin(toRad(mid));
 
@@ -2419,8 +2427,9 @@ function buildFanSVG() {
     text.setAttribute('y', ly);
     text.setAttribute('text-anchor','middle');
     text.setAttribute('dominant-baseline','middle');
-    text.setAttribute('font-size','13');
+    text.setAttribute('font-size','12');
     text.setAttribute('font-weight','700');
+    text.setAttribute('letter-spacing','0.3');
     text.setAttribute('font-family','Syne,sans-serif');
     text.setAttribute('fill', isDark ? '#ddeeff' : '#1a2a3a');
     text.setAttribute('pointer-events','none');
@@ -2473,7 +2482,8 @@ function buildFanSVG() {
 
 function selectCalcType(value) {
   const sel = document.getElementById('calcType');
-  sel.value = value;
+  const valMap = {'geom':'geom','tddft':'tddft','neb':'neb','phonon':'phonon','scf':'scf','relax':'relax','md':'md','dos':'dos','bands':'bands','vc-relax':'vc-relax'};
+  sel.value = valMap[value] || value;
   sel.dispatchEvent(new Event('change'));
 
   const item = FAN_ITEMS.find(f => f.value === value) || {label: value, icon:'⚡', desc: ''};
@@ -2521,7 +2531,7 @@ window.addEventListener('load',init);
 <!-- ══ RADIAL FAN MENU ══ -->
 <div id="fanOverlay" class="fan-overlay">
   <div id="fanMenu" class="fan-menu">
-    <svg id="fanSvg" class="fan-svg" viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg"></svg>
+    <svg id="fanSvg" class="fan-svg" viewBox="0 0 580 380" xmlns="http://www.w3.org/2000/svg"></svg>
     <div id="fanTooltip" class="fan-tooltip"></div>
     <button id="fanClose" class="fan-close">&#10005; <span id="fanCloseLabel">Geometry</span></button>
   </div>
