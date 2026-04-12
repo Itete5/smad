@@ -48,7 +48,7 @@ input,textarea,select{font-family:var(--sans)}
 
 /* FILTER ROW */
 .frow{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
-.stabs{display:flex;gap:6px;flex-wrap:wrap}
+.stabs{display:flex;gap:6px}
 .st{padding:6px 15px;border-radius:20px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:13px;transition:all .15s}
 .st:hover{border-color:var(--bd2);color:var(--t1)}
 .st.act{border-color:var(--ac);color:var(--ac)}
@@ -123,7 +123,7 @@ input,textarea,select{font-family:var(--sans)}
 .msg-toggle.act{border-color:rgba(61,127,255,.35);color:var(--ac);background:rgba(61,127,255,.08)}
 .msg-toggle svg{width:12px;height:12px;flex-shrink:0}
 .msep{opacity:.4}
-.ibadges{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.ibadges{display:flex;gap:6px;margin-left:auto}
 .bdg{padding:3px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:var(--mono)}
 .bf{background:rgba(61,127,255,.15);color:#7ab4ff;border:1px solid rgba(61,127,255,.2)}
 .bb{background:rgba(240,96,128,.12);color:#f08898;border:1px solid rgba(240,96,128,.2)}
@@ -170,7 +170,8 @@ input,textarea,select{font-family:var(--sans)}
 @keyframes modalIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 .modal-box h3{font-family:var(--disp);font-size:20px;font-weight:800;color:#fff;margin-bottom:8px}
 .modal-box p{font-size:13.5px;color:var(--t1);line-height:1.6;margin-bottom:24px}
-/* 6-digit code input — single field; focus via inline style + JS */
+/* 6-digit code input */
+/* single code input handled via inline style + JS focus handler */
 .modal-row{display:flex;gap:12px}
 .modal-cancel{
   flex:1;padding:13px;border-radius:12px;
@@ -509,7 +510,7 @@ function renderList(){
       else ideas=ideas.slice().sort(function(a,b){return b.ts-a.ts;});
 
       if(!ideas.length){
-        container.innerHTML='<div class="empty"><div class="eico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg></div><p>No ideas yet — be the first to share one.</p><span>Use the form above to submit a feature request, bug report, or question.</span></div>';
+        container.innerHTML='<div class="empty"><div class="eico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg></div><p>No ideas yet \u2014 be the first to share one.</p><span>Use the form above to submit a feature request, bug report, or question.</span></div>';
         return;
       }
 
@@ -790,6 +791,8 @@ adminVerified=readAdminSess();
 
   var codeInput=document.getElementById('codeInput');
   if(codeInput){
+    codeInput.addEventListener('focus',function(){this.style.borderColor='var(--ac)';});
+    codeInput.addEventListener('blur',function(){this.style.borderColor='rgba(80,130,220,.35)';});
     codeInput.addEventListener('input',function(){
       this.value=this.value.replace(/\D/g,'').slice(0,6);
       this.style.borderColor='';
