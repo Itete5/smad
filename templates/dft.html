@@ -299,50 +299,16 @@ a{color:var(--accent);text-decoration:none}
 #calcTypeLabel{flex:1;font-weight:500}
 .calc-type-arrow{font-size:14px;color:var(--text3);transform:rotate(180deg);display:inline-block;transition:transform var(--t);flex-shrink:0}
 
-/* ── Fan overlay ── */
-.fan-overlay{
-  position:fixed;inset:0;z-index:2000;
-  background:rgba(4,8,18,0.78);
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;
-  transition:opacity .22s ease;
-  backdrop-filter:blur(3px);
-}
-.fan-overlay.open{opacity:1;pointer-events:all;}
-
-.fan-menu{
-  position:relative;
-  width:min(580px,92vw);height:min(580px,92vw);
-  transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1);
-}
-.fan-overlay.open .fan-menu{transform:scale(1);}
-
+.fan-overlay{position:fixed;inset:0;z-index:2000;background:rgba(4,8,18,0.78);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s ease;backdrop-filter:blur(3px)}
+.fan-overlay.open{opacity:1;pointer-events:all}
+.fan-menu{position:relative;width:min(680px,96vw);height:min(440px,60vw);transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
+.fan-overlay.open .fan-menu{transform:scale(1)}
 .fan-svg{width:100%;height:100%;overflow:visible}
-
-/* fan segment base styles (applied via JS) */
-.fan-seg{cursor:pointer;transition:filter .15s,transform .15s;}
-.fan-seg:hover .fan-seg-path{filter:brightness(1.12);}
-
-/* tooltip */
-.fan-tooltip{
-  position:absolute;bottom:-44px;left:50%;transform:translateX(-50%);
-  background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);
-  padding:5px 12px;font-size:11px;color:var(--text0);font-family:var(--display);
-  font-weight:600;white-space:nowrap;pointer-events:none;
-  opacity:0;transition:opacity .12s;
-}
-.fan-tooltip.show{opacity:1;}
-
-/* close / selected indicator */
-.fan-close{
-  position:absolute;bottom:-80px;right:0;
-  display:flex;align-items:center;gap:7px;
-  padding:8px 16px;border-radius:20px;
-  background:var(--rose);border:none;color:#fff;
-  font-family:var(--display);font-size:12px;font-weight:700;
-  cursor:pointer;transition:all var(--t);
-}
-.fan-close:hover{filter:brightness(1.12);}
+.fan-seg{cursor:pointer;transition:filter .18s,transform .2s cubic-bezier(.34,1.56,.64,1);}
+.fan-tooltip{position:absolute;bottom:-44px;left:50%;transform:translateX(-50%);background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px;font-size:11px;color:var(--text0);font-family:var(--display);font-weight:600;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s}
+.fan-tooltip.show{opacity:1}
+.fan-close{position:absolute;bottom:-80px;right:0;display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:20px;background:var(--rose);border:none;color:#fff;font-family:var(--display);font-size:12px;font-weight:700;cursor:pointer;transition:all var(--t)}
+.fan-close:hover{filter:brightness(1.12)}
 
 </style>
 </head>
@@ -450,7 +416,7 @@ a{color:var(--accent);text-decoration:none}
       <!-- MATERIAL EXPLORER — opens modal pointing to /databases -->
       <div class="imp-pane" id="ip-explorer">
         <div class="notice notice-info">
-          Material Explorer searches the Materials Project database. Opens in a panel below — or click to navigate directly.
+          Material Explorer searches the Materials Project database.
         </div>
         <button class="btn btn-primary btn-block btn-sm" id="openExplorerBtn" style="margin-bottom:8px">
           🔬 Open Material Explorer
@@ -670,20 +636,15 @@ a{color:var(--accent);text-decoration:none}
         <label class="flabel"><span>Calculation type</span></label>
         <select id="calcType" style="display:none">
           <option value="scf">SCF</option>
-          <option value="relax">Optimize</option>
-          <option value="vc-relax">VC-relax</option>
+          <option value="vc-relax">Optimize (vc-relax)</option>
           <option value="bands">Band structure</option>
-          <option value="nscf">NSCF</option>
-          <option value="dos">DOS</option>
-          <option value="phonon">Phonon</option>
-          <option value="md">MD</option>
-          <option value="tddft">TD-DFT</option>
-          <option value="neb">NEB</option>
-          <option value="geom">Geometry</option>
+          <option value="nscf">NSCF</option><option value="dos">DOS</option>
+          <option value="phonon">Phonon</option><option value="md">MD</option>
+          <option value="tddft">TD-DFT</option><option value="neb">NEB</option>
         </select>
         <button id="calcTypeTrigger" class="calc-type-trigger">
           <span id="calcTypeIcon">⚡</span>
-          <span id="calcTypeLabel">SCF &mdash; self-consistent field</span>
+          <span id="calcTypeLabel">SCF — self-consistent field</span>
           <span class="calc-type-arrow">&#8963;</span>
         </button>
       </div>
@@ -703,6 +664,130 @@ a{color:var(--accent);text-decoration:none}
           <input type="range" id="nbnd" class="range" min="10" max="300" value="64"/>
         </div>
       </div>
+      <div id="optimizeExtra" style="display:none">
+
+        <div class="fgroup" style="border-top:1px solid var(--border);padding-top:11px;margin-top:4px">
+          <h4>Lattice constants (Å)</h4>
+          <div class="row3" style="margin-bottom:5px">
+            <div><label class="flabel"><span>a</span></label><input type="number" id="optA" class="inp" value="3.615" step="0.001" min="0.5"/></div>
+            <div><label class="flabel"><span>b</span></label><input type="number" id="optB" class="inp" value="3.615" step="0.001" min="0.5"/></div>
+            <div><label class="flabel"><span>c</span></label><input type="number" id="optC" class="inp" value="3.615" step="0.001" min="0.5"/></div>
+          </div>
+          <div class="row3">
+            <div><label class="flabel"><span>α°</span></label><input type="number" id="optAlpha" class="inp" value="90" step="0.1"/></div>
+            <div><label class="flabel"><span>β°</span></label><input type="number" id="optBeta"  class="inp" value="90" step="0.1"/></div>
+            <div><label class="flabel"><span>γ°</span></label><input type="number" id="optGamma" class="inp" value="90" step="0.1"/></div>
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <h4>Lattice vectors (direct, Å)</h4>
+          <div style="display:grid;grid-template-columns:14px 1fr 1fr 1fr;gap:3px;align-items:center;font-size:10px;color:var(--text3);font-family:var(--mono)">
+            <span></span><span style="text-align:center">x</span><span style="text-align:center">y</span><span style="text-align:center">z</span>
+            <span>a₁</span>
+            <input type="number" id="lv_a1x" class="inp" value="1" step="0.01" style="padding:4px 5px;font-size:11px"/>
+            <input type="number" id="lv_a1y" class="inp" value="0" step="0.01" style="padding:4px 5px;font-size:11px"/>
+            <input type="number" id="lv_a1z" class="inp" value="0" step="0.01" style="padding:4px 5px;font-size:11px"/>
+            <span>a₂</span>
+            <input type="number" id="lv_a2x" class="inp" value="0" step="0.01" style="padding:4px 5px;font-size:11px"/>
+            <input type="number" id="lv_a2y" class="inp" value="1" step="0.01" style="padding:4px 5px;font-size:11px"/>
+            <input type="number" id="lv_a2z" class="inp" value="0" step="0.01" style="padding:4px 5px;font-size:11px"/>
+            <span>a₃</span>
+            <input type="number" id="lv_a3x" class="inp" value="0" step="0.01" style="padding:4px 5px;font-size:11px"/>
+            <input type="number" id="lv_a3y" class="inp" value="0" step="0.01" style="padding:4px 5px;font-size:11px"/>
+            <input type="number" id="lv_a3z" class="inp" value="1" step="0.01" style="padding:4px 5px;font-size:11px"/>
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <h4>Calculation control</h4>
+          <div class="row2" style="margin-bottom:6px">
+            <div>
+              <label class="flabel"><span>Restart mode</span></label>
+              <select id="restartMode" class="inp">
+                <option value="from_scratch" selected>from_scratch</option>
+                <option value="restart">restart</option>
+              </select>
+            </div>
+            <div>
+              <label class="flabel"><span>Max time (s)</span></label>
+              <input type="number" id="maxTime" class="inp" value="86400" min="60" step="600"/>
+            </div>
+          </div>
+          <div class="row2" style="margin-bottom:6px">
+            <div>
+              <label class="flabel"><span>Max steps</span><span class="tip-b">?<span class="tip">nstep: maximum ionic + cell steps before stopping.</span></span></label>
+              <input type="number" id="optNstep" class="inp" value="200" min="1" max="2000"/>
+            </div>
+            <div>
+              <label class="flabel"><span>Variable cell</span></label>
+              <select id="varCell" class="inp">
+                <option value="vc-relax" selected>Yes (vc-relax)</option>
+                <option value="relax">No (relax only)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <h4>Ion optimization</h4>
+          <div class="row2">
+            <div>
+              <label class="flabel"><span>Dynamics</span></label>
+              <select id="optIonDyn" class="inp">
+                <option value="bfgs" selected>BFGS</option>
+                <option value="damp">Damped MD</option>
+                <option value="fire">FIRE</option>
+                <option value="verlet">Verlet</option>
+              </select>
+            </div>
+            <div>
+              <label class="flabel"><span>Threshold (Ry/Å)</span><span class="tip-b">?<span class="tip">forc_conv_thr: ionic force convergence threshold.</span></span></label>
+              <input type="number" id="ionForcThr" class="inp" value="1e-3" step="1e-4"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <h4>Cell optimization</h4>
+          <div class="row2" style="margin-bottom:6px">
+            <div>
+              <label class="flabel"><span>Method</span></label>
+              <select id="cellDyn" class="inp">
+                <option value="bfgs" selected>BFGS</option>
+                <option value="damp-w">Damped-W</option>
+                <option value="damp-pr">Damped-PR</option>
+              </select>
+            </div>
+            <div>
+              <label class="flabel"><span>Threshold (kbar)</span><span class="tip-b">?<span class="tip">press_conv_thr: stress tensor convergence in kbar.</span></span></label>
+              <input type="number" id="pressConvThr" class="inp" value="0.5" step="0.1" min="0"/>
+            </div>
+          </div>
+          <div class="row2">
+            <div>
+              <label class="flabel"><span>Target pressure (kbar)</span></label>
+              <input type="number" id="targetPressure" class="inp" value="0" step="1"/>
+            </div>
+            <div>
+              <label class="flabel"><span>DOF freedom</span><span class="tip-b">?<span class="tip">cell_dofree: constrain which cell degrees of freedom relax.</span></span></label>
+              <select id="cellDofree" class="inp">
+                <option value="all" selected>all</option>
+                <option value="ibrav">ibrav</option>
+                <option value="x">x only</option>
+                <option value="y">y only</option>
+                <option value="z">z only</option>
+                <option value="xy">xy plane</option>
+                <option value="xz">xz plane</option>
+                <option value="yz">yz plane</option>
+                <option value="volume">volume</option>
+                <option value="shape">shape</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="fgroup">
         <div class="row2">
           <div><label class="flabel"><span>Verbosity</span></label>
@@ -711,16 +796,6 @@ a{color:var(--accent);text-decoration:none}
           <div><label class="flabel"><span>nstep</span></label><input type="number" id="nstep" class="inp" value="200" min="10" max="1000"/></div>
         </div>
       </div>
-      <div class="fgroup">
-        <h4>Relaxation options</h4>
-        <div class="row2">
-          <div><label class="flabel"><span>ion dynamics</span></label>
-            <select id="ionDyn" class="inp"><option value="bfgs" selected>BFGS</option><option value="damp">damped</option><option value="verlet">Verlet</option></select>
-          </div>
-          <div><label class="flabel"><span>forc_conv</span></label><input type="number" id="forcConv" class="inp" value="1e-4" step="1e-5"/></div>
-        </div>
-      </div>
-
     </div>
 
   </div><!-- /sb-scroll -->
@@ -909,8 +984,7 @@ a{color:var(--accent);text-decoration:none}
         <span>Console</span>
         <button class="btn btn-sm" id="clearBtn" style="padding:2px 7px;font-size:10px">Clear</button>
       </div>
-      <pre id="consoleOut">SMAD DFT Simulator — iRASPA-style viewer, canvas-based.
-Ready.
+      <pre id="consoleOut">SMAD DFT Simulator — 3Dmol.js viewer ready.
 </pre>
     </div>
   </div>
@@ -926,15 +1000,12 @@ Ready.
       <button class="modal-close" id="forgeClose">×</button>
     </div>
     <div class="modal-body">
-      <iframe class="modal-iframe" id="forgeFrame" src="about:blank"
-        title="CrystalForge structure builder">
-      </iframe>
       <div id="forgeInlineBody" style="width:100%;height:100%;overflow:auto;padding:20px;background:var(--bg0);display:flex;flex-direction:column;gap:16px">
         <div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--text0)">CrystalForge — Full Builder</div>
-        <div class="notice notice-info">CrystalForge is a companion tool. When hosted alongside SMAD, structures built here are auto-imported. For now, use the inline quick builder in the sidebar, or paste a structure below to import.</div>
+        <div class="notice notice-info">Use the inline quick builder in the sidebar, or paste a structure below.</div>
         <div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Import structure from CrystalForge (paste output)</div>
-          <textarea id="forgeImportBox" style="width:100%;height:140px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);font-family:var(--mono);font-size:11px;padding:8px;outline:none;resize:vertical" placeholder="Paste CIF, POSCAR, or QE block from CrystalForge…"></textarea>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Import structure (paste CIF, POSCAR, or QE block)</div>
+          <textarea id="forgeImportBox" style="width:100%;height:140px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);font-family:var(--mono);font-size:11px;padding:8px;outline:none;resize:vertical" placeholder="Paste CIF, POSCAR, or QE block…"></textarea>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-primary btn-sm" id="forgeImportBtn">↳ Import structure</button>
@@ -984,7 +1055,7 @@ Ready.
       </div>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;overflow:hidden;padding:14px;gap:10px">
-      <div class="notice notice-info" style="flex-shrink:0">Searching the Materials Project database (demo mode). Provide an API key for live data. Select a result to load it into the DFT viewer.</div>
+      <div class="notice notice-info" style="flex-shrink:0">Demo mode — provide an MP API key for live data.</div>
       <div style="display:flex;gap:8px;flex-shrink:0">
         <input type="text" id="exSearch" class="inp" placeholder="Formula (Fe2O3), element (Fe), or mp-id (mp-1234)" style="flex:1;font-size:12px"/>
         <input type="password" id="exApiKey" class="inp" placeholder="MP API key (optional)" style="width:160px"/>
@@ -1003,6 +1074,15 @@ Ready.
         <div id="exSelProps" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- RADIAL FAN MENU OVERLAY -->
+<div id="fanOverlay" class="fan-overlay">
+  <div id="fanMenu" class="fan-menu">
+    <svg id="fanSvg" class="fan-svg" viewBox="-70 60 760 400" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="fanTooltip" class="fan-tooltip"></div>
+    <button id="fanClose" class="fan-close">&#10005; <span id="fanCloseLabel">SCF</span></button>
   </div>
 </div>
 
@@ -1287,39 +1367,38 @@ function updateProps(){
 
 /* ═══════════════ INPUT GENERATORS ═══════════════ */
 function buildQEInput(){
-  const s=currentStruct;
-  const calc=document.getElementById('calcType').value;
-  const xc=document.getElementById('xcFunc').value;
-  const ecut=document.getElementById('ecutwfc').value;
-  const rho=document.getElementById('ecutrho').value;
+  const s=currentStruct,calc=document.getElementById('calcType').value,xc=document.getElementById('xcFunc').value;
+  const ecut=document.getElementById('ecutwfc').value,rho=document.getElementById('ecutrho').value;
   const kx=document.getElementById('kx').value,ky=document.getElementById('ky').value,kz=document.getElementById('kz').value;
   const ks1=document.getElementById('ks1').value,ks2=document.getElementById('ks2').value,ks3=document.getElementById('ks3').value;
-  const mix=document.getElementById('mixBeta').value;
-  const mixm=document.getElementById('mixMode').value;
+  const mix=document.getElementById('mixBeta').value,mixm=document.getElementById('mixMode').value;
   const sigma=(parseInt(document.getElementById('sigma').value)/1000).toFixed(3);
-  const smear=document.getElementById('smearType').value;
-  const occ=document.getElementById('occType').value;
-  const nspin=document.getElementById('nspin').value;
-  const totMag=document.getElementById('totMag').value;
+  const smear=document.getElementById('smearType').value,occ=document.getElementById('occType').value;
+  const nspin=document.getElementById('nspin').value,totMag=document.getElementById('totMag').value;
   const hubb=parseFloat(document.getElementById('hubbardU').value);
-  const conv=document.getElementById('convThr').value;
-  const nstep=document.getElementById('nstep').value;
+  const conv=document.getElementById('convThr').value,nstep=document.getElementById('nstep').value;
   const nbnd=document.getElementById('nbnd')?document.getElementById('nbnd').value:64;
   const verb=document.getElementById('verbosity').value;
-  const ionDyn=document.getElementById('ionDyn').value;
-  const fc=document.getElementById('forcConv').value;
-  const brav=s.bravais||'FCC'; const a0=s.a||4; const c0=s.c||a0;
-  const cell=s.cell||CELL_VECS[brav]||CELL_VECS.CUB;
-  const seen={},atsym=[];
-  s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
-  const nat=s.atoms.length,ntyp=atsym.length;
+  const gv=n=>{const el=document.getElementById(n);return el?el.value:'';};
+  const ionDyn=gv('optIonDyn')||'bfgs';
+  const fc=gv('ionForcThr')||'1e-3';
+  const cellDyn=gv('cellDyn')||'bfgs';
+  const pressConv=gv('pressConvThr')||'0.5';
+  const press=gv('targetPressure')||'0';
+  const dofree=gv('cellDofree')||'all';
+  const restartMode=gv('restartMode')||'from_scratch';
+  const maxTime=gv('maxTime')||'86400';
+  const optNstep=gv('optNstep')||nstep;
+  const brav=s.bravais||'FCC',a0=s.a||4,c0=s.c||a0,cell=s.cell||CELL_VECS[brav]||CELL_VECS.CUB;
+  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
   const calcStr={'scf':'scf','relax':'relax','vc-relax':'vc-relax','bands':'bands','nscf':'nscf','dos':'nscf','phonon':'scf','md':'md'}[calc]||calc;
   const MASS={H:1.008,C:12.011,N:14.007,O:15.999,F:18.998,Na:22.990,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.065,Cl:35.45,K:39.098,Ca:40.078,Ti:47.867,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.63,As:74.922,Mo:95.96,Ag:107.87,Ba:137.33,W:183.84,Au:196.97,Sr:87.62};
   let t=`! Generated by SMAD DFT Simulator\n! ${s.formula||''} · ${s.spg||''}\n\n`;
-  t+=`&CONTROL\n  calculation = '${calcStr}'\n  prefix = 'smad'\n  outdir = './out'\n  pseudo_dir = './pseudo'\n  verbosity = '${verb}'\n`;
-  if(calc==='relax'||calc==='vc-relax') t+=`  forc_conv_thr = ${fc}\n`;
-  t+=`/\n&SYSTEM\n  ibrav = 0\n  nat = ${nat}\n  ntyp = ${ntyp}\n  ecutwfc = ${ecut}\n  ecutrho = ${rho}\n`;
-  t+=`  occupations = '${occ}'\n`;
+  t+=`&CONTROL\n  calculation = '${calcStr}'\n  prefix = 'smad'\n  outdir = './out'\n  pseudo_dir = './pseudo'\n  verbosity = '${verb}'\n  restart_mode = '${restartMode}'\n`;
+  if(calc==='vc-relax'||calc==='relax'){
+    t+=`  forc_conv_thr = ${fc}\n  max_seconds = ${maxTime}\n  nstep = ${optNstep}\n`;
+  }
+  t+=`/\n&SYSTEM\n  ibrav = 0\n  nat = ${s.atoms.length}\n  ntyp = ${atsym.length}\n  ecutwfc = ${ecut}\n  ecutrho = ${rho}\n  occupations = '${occ}'\n`;
   if(occ==='smearing') t+=`  smearing = '${smear}'\n  degauss = ${sigma}\n`;
   t+=`  nspin = ${nspin}\n`;
   if(parseInt(nspin)>1) t+=`  tot_magnetization = ${totMag}\n`;
@@ -1327,8 +1406,12 @@ function buildQEInput(){
   if(hubb>0) t+=`  lda_plus_u = .true.\n  Hubbard_U(1) = ${hubb}\n`;
   if(['bands','nscf','dos'].includes(calc)) t+=`  nbnd = ${nbnd}\n`;
   t+=`/\n&ELECTRONS\n  conv_thr = ${conv}\n  mixing_beta = ${mix}\n  mixing_mode = '${mixm}'\n  nstep = ${nstep}\n/\n`;
-  if(['relax','vc-relax','md'].includes(calc)) t+=`&IONS\n  ion_dynamics = '${ionDyn}'\n/\n`;
-  if(calc==='vc-relax') t+=`&CELL\n  cell_dynamics = 'bfgs'\n/\n`;
+  if(['relax','vc-relax','md'].includes(calc)){
+    t+=`&IONS\n  ion_dynamics = '${ionDyn}'\n/\n`;
+  }
+  if(calc==='vc-relax'){
+    t+=`&CELL\n  cell_dynamics = '${cellDyn}'\n  press = ${press}\n  press_conv_thr = ${pressConv}\n  cell_dofree = '${dofree}'\n/\n`;
+  }
   t+=`CELL_PARAMETERS angstrom\n`;
   cell.forEach((v,i)=>{const sc=i===2&&(brav==='HEX'||brav==='TET')?c0:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
   t+=`ATOMIC_SPECIES\n`;
@@ -1974,13 +2057,10 @@ function wireUi(){
     el.addEventListener('input',()=>{if(vEl)vEl.textContent=fn(parseInt(el.value));updateStatsBar();updateInputPane();});
     if(vEl) vEl.textContent=fn(parseInt(el.value));
   });
-  ['kx','ky','kz','xcFunc','dftCode','calcType','smearType','occType','nspin','mixBeta','mixMode','convThr','nstep','ionDyn','forcConv','verbosity'].forEach(id=>{
+  ['kx','ky','kz','xcFunc','dftCode','calcType','smearType','occType','nspin','mixBeta','mixMode','convThr','nstep','verbosity','optIonDyn','ionForcThr','cellDyn','pressConvThr','targetPressure','cellDofree','restartMode','maxTime','optNstep','varCell'].forEach(id=>{
     const el=document.getElementById(id);if(el) el.addEventListener('change',()=>{updateStatsBar();updateInputPane();});
   });
-  document.getElementById('calcType').addEventListener('change',()=>{
-    const v=document.getElementById('calcType').value;
-    const ex=document.getElementById('bandsExtra');if(ex) ex.style.display=(v==='bands'||v==='nscf')?'block':'none';
-  });
+  document.getElementById('calcType').addEventListener('change',()=>{const v=document.getElementById('calcType').value;const ex=document.getElementById('bandsExtra');if(ex)ex.style.display=(v==='bands'||v==='nscf')?'block':'none';const oe=document.getElementById('optimizeExtra');if(oe)oe.style.display=(v==='vc-relax'||v==='relax')?'block':'none';});
 
   /* FILE */
   const dz=document.getElementById('dropzone');const fi=document.getElementById('fileInput');
@@ -2316,195 +2396,190 @@ function init(){
   loadStructure(currentStruct);
   updateInputPane();
   updateProps();
-  log('SMAD DFT Simulator — 3Dmol.js viewer active.');
+  log('SMAD DFT Simulator ready.');
   log('Drag to rotate · Scroll to zoom · Load .cube for isosurfaces.');
   rp();
 }
 
 /* ═══════════════ RADIAL FAN MENU ═══════════════ */
-const FAN_ITEMS = [
-  {value:'neb',    label:'NEB',      desc:'Nudged elastic band (neb.x)',           icon:'⛓', color:'#9d7fff'},
-  {value:'tddft',  label:'TD-DFT',   desc:'Time-dependent DFT (turbo_eels.x)',     icon:'💡', color:'#f5a623'},
-  {value:'phonon', label:'Phonon',   desc:'Lattice dynamics via ph.x',             icon:'🎵', color:'#2dd9a0'},
-  {value:'geom',   label:'Geometry', desc:'VC-relax: optimize cell + ions',        icon:'🔷', color:'#f06080'},
-  {value:'scf',    label:'SCF',      desc:'Self-consistent field ground state',    icon:'⚡', color:'#3d9fff'},
-  {value:'relax',  label:'Optimize', desc:'Ionic position optimization (BFGS)',    icon:'⚙️', color:'#9d7fff'},
-  {value:'md',     label:'aiMD',     desc:'Ab initio molecular dynamics',          icon:'🔄', color:'#f5a623'},
-  {value:'dos',    label:'DOS',      desc:'Density of states (dos.x)',             icon:'📈', color:'#2dd9a0'},
-  {value:'bands',  label:'Band',     desc:'Electronic band structure (bands.x)',   icon:'📊', color:'#3d9fff'},
+const FAN_ITEMS=[
+  {value:'neb',    label:'NEB',      desc:'Nudged elastic band (neb.x)',              icon:'⛓', color:'#7c5cfc'},
+  {value:'tddft',  label:'TD-DFT',   desc:'Time-dependent DFT (turbo_eels.x)',        icon:'💡', color:'#f5a623'},
+  {value:'phonon', label:'Phonon',   desc:'Lattice dynamics via ph.x',                icon:'🎵', color:'#2dd9a0'},
+  {value:'scf',    label:'SCF',      desc:'Self-consistent field ground state',       icon:'⚡', color:'#3d9fff'},
+  {value:'relax',  label:'Optimize', desc:'Cell + ionic relaxation (vc-relax / BFGS)',icon:'⚙',  color:'#7c5cfc'},
+  {value:'md',     label:'aiMD',     desc:'Ab initio molecular dynamics',             icon:'🔄', color:'#f5a623'},
+  {value:'dos',    label:'DOS',      desc:'Density of states (dos.x)',                icon:'📈', color:'#2dd9a0'},
+  {value:'bands',  label:'Band',     desc:'Electronic band structure (bands.x)',      icon:'📊', color:'#3d9fff'},
 ];
+let fanOpen=false;
+let _fanLogoRaf=null;
 
-const ICON_MAP = {
-  bands:'📊', dos:'📈', md:'🔄', relax:'⚙️', scf:'⚡',
-  phonon:'🎵', tddft:'💡', neb:'⛓', geom:'🔷', 'vc-relax':'🔷',
-  nscf:'📊',
-};
-const DESC_MAP = {
-  bands:'Band structure (pw.x + bands.x)',
-  dos:'Density of states (dos.x)',
-  md:'Ab-initio molecular dynamics',
-  relax:'Ionic geometry optimization',
-  scf:'Self-consistent field ground state',
-  phonon:'Lattice dynamics (ph.x)',
-  tddft:'Time-dependent DFT',
-  neb:'Nudged elastic band (neb.x)',
-  geom:'VC-relax: cell + ions',
-  nscf:'Non-SCF for DOS/bands',
-  'vc-relax':'Variable-cell relaxation',
-};
-
-let fanOpen = false;
-
-function buildFanSVG() {
-  const svg = document.getElementById('fanSvg');
-  svg.innerHTML = '';
-  const N = FAN_ITEMS.length;
-  const cx = 300, cy = 300;         // SVG centre — lower-centre so arc opens upward
-  const R1 = 95,  R2 = 265;         // inner / outer radius
-  const startAngle = -168;          // degrees from 3 o'clock — opens upward
-  const spanAngle  = 156;           // degrees total sweep (fits 9 segs cleanly)
-  const gap = 2.2;                  // degrees gap between segments
-
-  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-
-  FAN_ITEMS.forEach((item, i) => {
-    const segSpan = spanAngle / N;
-    const a1 = startAngle + i * segSpan + gap / 2;
-    const a2 = startAngle + (i + 1) * segSpan - gap / 2;
-    const toRad = d => d * Math.PI / 180;
-
-    const x1 = cx + R1 * Math.cos(toRad(a1)), y1 = cy + R1 * Math.sin(toRad(a1));
-    const x2 = cx + R2 * Math.cos(toRad(a1)), y2 = cy + R2 * Math.sin(toRad(a1));
-    const x3 = cx + R2 * Math.cos(toRad(a2)), y3 = cy + R2 * Math.sin(toRad(a2));
-    const x4 = cx + R1 * Math.cos(toRad(a2)), y4 = cy + R1 * Math.sin(toRad(a2));
-
-    const largeArc = (a2 - a1) > 180 ? 1 : 0;
-    const d = [
-      `M ${x1} ${y1}`,
-      `L ${x2} ${y2}`,
-      `A ${R2} ${R2} 0 ${largeArc} 1 ${x3} ${y3}`,
-      `L ${x4} ${y4}`,
-      `A ${R1} ${R1} 0 ${largeArc} 0 ${x1} ${y1}`,
-      'Z'
-    ].join(' ');
-
-    // mid angle for label
-    const mid = (a1 + a2) / 2;
-    const Rm  = R1 + (R2 - R1) * 0.55;  // slightly outer for readability
-    const lx  = cx + Rm * Math.cos(toRad(mid));
-    const ly  = cy + Rm * Math.sin(toRad(mid));
-
-    // group
-    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+function buildFanSVG(){
+  const svg=document.getElementById('fanSvg');
+  svg.innerHTML='';
+  const N=FAN_ITEMS.length;
+  const cx=310, cy=430;
+  const R1=108;
+  const GAP_DEG=2.6;
+  const SPAN_TOTAL=178;
+  const START_DEG=-180+((180-SPAN_TOTAL)/2);
+  const SEG_DEG=(SPAN_TOTAL-GAP_DEG*(N-1))/N;
+  const R2_MIN=240, R2_MAX=375;
+  const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+  const toRad=d=>d*Math.PI/180;
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML=`<filter id="fanShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(0,0,0,0.45)"/></filter><filter id="fanGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  svg.appendChild(defs);
+  const BASE_FILLS_DARK=['rgba(10,16,28,0.97)','rgba(12,19,34,0.97)','rgba(14,22,38,0.97)','rgba(16,25,42,0.97)','rgba(19,29,48,0.97)','rgba(21,33,54,0.97)','rgba(24,37,60,0.97)','rgba(27,42,66,0.97)','rgba(30,47,74,0.97)'];
+  const BASE_STROKE_DARK='rgba(255,255,255,0.06)';
+  FAN_ITEMS.forEach((item,i)=>{
+    const t_=i/(N-1||1);
+    const R2=Math.round(R2_MIN+(R2_MAX-R2_MIN)*t_);
+    const a1=START_DEG+i*(SEG_DEG+GAP_DEG);
+    const a2=a1+SEG_DEG;
+    const mid=(a1+a2)/2;
+    const x1=cx+R1*Math.cos(toRad(a1)), y1=cy+R1*Math.sin(toRad(a1));
+    const x2=cx+R2*Math.cos(toRad(a1)), y2=cy+R2*Math.sin(toRad(a1));
+    const x3=cx+R2*Math.cos(toRad(a2)), y3=cy+R2*Math.sin(toRad(a2));
+    const x4=cx+R1*Math.cos(toRad(a2)), y4=cy+R1*Math.sin(toRad(a2));
+    const largeArc=(a2-a1)>180?1:0;
+    const d=[`M ${x1} ${y1}`,`L ${x2} ${y2}`,`A ${R2} ${R2} 0 ${largeArc} 1 ${x3} ${y3}`,`L ${x4} ${y4}`,`A ${R1} ${R1} 0 ${largeArc} 0 ${x1} ${y1}`,'Z'].join(' ');
+    const Rm=R1+(R2-R1)*0.72;
+    const lx=cx+Rm*Math.cos(toRad(mid));
+    const ly=cy+Rm*Math.sin(toRad(mid));
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
     g.setAttribute('class','fan-seg');
-    g.setAttribute('data-value', item.value);
-    g.style.transformOrigin = `${cx}px ${cy}px`;
-
-    // path
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d', d);
-    path.setAttribute('fill', isDark ? '#141e2e' : '#f0f3fa');
-    path.setAttribute('stroke', isDark ? '#1e2d44' : '#d0d8ea');
-    path.setAttribute('stroke-width', '1.5');
-    path.setAttribute('rx', '6');
-    path.style.transition = 'fill .15s, filter .15s';
-    g.appendChild(path);
-
-    // drop shadow filter def (once)
-    if (i === 0) {
-      const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-      defs.innerHTML = `
-        <filter id="fanShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="2" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,0.28)"/>
-        </filter>`;
-      svg.appendChild(defs);
-    }
+    g.setAttribute('data-value',item.value);
+    g.style.transformOrigin=`${cx}px ${cy}px`;
+    g.style.transition='transform .2s cubic-bezier(.34,1.56,.64,1)';
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',d);
+    const baseFill=isDark?(BASE_FILLS_DARK[i]||BASE_FILLS_DARK[N-1]):'rgba(230,236,248,0.97)';
+    path.setAttribute('fill',baseFill);
+    path.setAttribute('stroke',isDark?BASE_STROKE_DARK:'rgba(180,195,220,0.5)');
+    path.setAttribute('stroke-width','1');
+    path.style.transition='fill .12s ease, filter .12s ease';
     path.setAttribute('filter','url(#fanShadow)');
-
-    // label text — rotated to follow the arc mid-angle
-    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
-    text.setAttribute('x', lx);
-    text.setAttribute('y', ly);
+    g.appendChild(path);
+    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',lx); text.setAttribute('y',ly);
     text.setAttribute('text-anchor','middle');
     text.setAttribute('dominant-baseline','middle');
-    text.setAttribute('font-size','12');
+    text.setAttribute('font-size','18');
     text.setAttribute('font-weight','700');
-    text.setAttribute('letter-spacing','0.3');
-    text.setAttribute('font-family','Syne,sans-serif');
-    text.setAttribute('fill', isDark ? '#ddeeff' : '#1a2a3a');
+    text.setAttribute('letter-spacing','0.5');
+    text.setAttribute('font-family','Syne,system-ui,sans-serif');
+    text.setAttribute('fill',isDark?'rgba(190,210,240,0.9)':'rgba(20,40,70,0.9)');
     text.setAttribute('pointer-events','none');
-    // rotate label along arc
-    text.setAttribute('transform',`rotate(${mid + 90},${lx},${ly})`);
-    text.textContent = item.label;
+    text.setAttribute('transform',`rotate(${mid+90},${lx},${ly})`);
+    text.textContent=item.label;
     g.appendChild(text);
-
-    // hover interactions
-    g.addEventListener('mouseenter', () => {
-      path.setAttribute('fill', item.color + (isDark ? '33' : '22'));
-      path.setAttribute('stroke', item.color);
-      text.setAttribute('fill', item.color);
-      g.style.transform = `scale(1.04)`;
-      const tt = document.getElementById('fanTooltip');
-      tt.textContent = item.icon + '  ' + item.desc;
+    g.addEventListener('mouseenter',()=>{
+      path.setAttribute('fill',item.color);
+      path.setAttribute('stroke',item.color);
+      path.setAttribute('filter','url(#fanGlow)');
+      text.setAttribute('fill','#ffffff');
+      g.style.transform='scale(1.07)';
+      const tt=document.getElementById('fanTooltip');
+      tt.textContent=item.icon+'  '+item.desc;
       tt.classList.add('show');
     });
-    g.addEventListener('mouseleave', () => {
-      path.setAttribute('fill', isDark ? '#141e2e' : '#f0f3fa');
-      path.setAttribute('stroke', isDark ? '#1e2d44' : '#d0d8ea');
-      text.setAttribute('fill', isDark ? '#ddeeff' : '#1a2a3a');
-      g.style.transform = '';
+    g.addEventListener('mouseleave',()=>{
+      path.setAttribute('fill',baseFill);
+      path.setAttribute('stroke',isDark?BASE_STROKE_DARK:'rgba(180,195,220,0.5)');
+      path.setAttribute('filter','url(#fanShadow)');
+      text.setAttribute('fill',isDark?'rgba(190,210,240,0.9)':'rgba(20,40,70,0.9)');
+      g.style.transform='';
       document.getElementById('fanTooltip').classList.remove('show');
     });
-    g.addEventListener('click', () => {
-      selectCalcType(item.value);
-      closeFanMenu();
-    });
-
+    g.addEventListener('click',()=>{selectCalcType(item.value);closeFanMenu();});
     svg.appendChild(g);
   });
-
-  // centre circle
-  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-  circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', R1 - 8);
-  circle.setAttribute('fill', isDark ? '#0c1320' : '#ffffff');
-  circle.setAttribute('stroke', isDark ? '#1e2d44' : '#d0d8ea');
-  circle.setAttribute('stroke-width','1.5');
-  svg.appendChild(circle);
-
-  // centre icon
-  const ci = document.createElementNS('http://www.w3.org/2000/svg','text');
-  ci.setAttribute('x', cx); ci.setAttribute('y', cy + 2);
-  ci.setAttribute('text-anchor','middle'); ci.setAttribute('dominant-baseline','middle');
-  ci.setAttribute('font-size','28'); ci.setAttribute('pointer-events','none');
-  ci.textContent = '⚗️';
-  svg.appendChild(ci);
+  const DISC_R=R1-6;
+  const fo=document.createElementNS('http://www.w3.org/2000/svg','foreignObject');
+  fo.setAttribute('x',cx-DISC_R); fo.setAttribute('y',cy-DISC_R);
+  fo.setAttribute('width',DISC_R*2); fo.setAttribute('height',DISC_R*2);
+  fo.innerHTML=`<div xmlns="http://www.w3.org/1999/xhtml" style="width:${DISC_R*2}px;height:${DISC_R*2}px;background:${isDark?'#07090f':'#ffffff'};border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;"><canvas id="fanLogoCanvas" width="${DISC_R*2}" height="${DISC_R*2}" style="border-radius:50%;display:block;"></canvas></div>`;
+  svg.appendChild(fo);
+  requestAnimationFrame(()=>startFanLogo(DISC_R*2,isDark));
 }
 
-function selectCalcType(value) {
-  const sel = document.getElementById('calcType');
-  const valMap = {'geom':'geom','tddft':'tddft','neb':'neb','phonon':'phonon','scf':'scf','relax':'relax','md':'md','dos':'dos','bands':'bands','vc-relax':'vc-relax'};
-  sel.value = valMap[value] || value;
+function startFanLogo(size,isDark){
+  if(_fanLogoRaf){cancelAnimationFrame(_fanLogoRaf);_fanLogoRaf=null;}
+  const canvas=document.getElementById('fanLogoCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const cx=size/2,cy=size/2;
+  function draw(t){
+    ctx.clearRect(0,0,size,size);
+    ctx.beginPath();ctx.arc(cx,cy,cx-1,0,Math.PI*2);
+    ctx.fillStyle=isDark?'#0b0f1c':'#ffffff';ctx.fill();
+    const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,cx*0.38);
+    grd.addColorStop(0,'rgba(230,120,40,0.95)');
+    grd.addColorStop(0.5,'rgba(200,70,20,0.8)');
+    grd.addColorStop(1,'rgba(120,30,0,0)');
+    ctx.beginPath();ctx.arc(cx,cy,cx*0.38,0,Math.PI*2);ctx.fillStyle=grd;ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,cx*0.18,0,Math.PI*2);ctx.fillStyle='#e87828';ctx.fill();
+    const orbs=[
+      {rx:cx*0.62,ry:cx*0.17,rot:-0.14, col:'rgba(100,200,255,0.7)'},
+      {rx:cx*0.62,ry:cx*0.17,rot:0.908, col:'rgba(80,160,255,0.65)'},
+      {rx:cx*0.62,ry:cx*0.17,rot:1.955, col:'rgba(100,200,255,0.6)'},
+    ];
+    orbs.forEach(o=>{
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(o.rot);
+      ctx.beginPath();ctx.ellipse(0,0,o.rx,o.ry,0,0,Math.PI*2);
+      ctx.strokeStyle=o.col;ctx.lineWidth=1.4;ctx.stroke();ctx.restore();
+    });
+    const eCols=['#80f0ff','#60c8ff','#a0e0ff'];
+    orbs.forEach((o,oi)=>{
+      const phase=t+(oi*Math.PI*2)/3;
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(o.rot);
+      const ex=Math.cos(phase)*o.rx,ey=Math.sin(phase)*o.ry;
+      const eg=ctx.createRadialGradient(ex,ey,0,ex,ey,cx*0.1);
+      eg.addColorStop(0,eCols[oi]);eg.addColorStop(1,'rgba(80,200,255,0)');
+      ctx.beginPath();ctx.arc(ex,ey,cx*0.1,0,Math.PI*2);ctx.fillStyle=eg;ctx.fill();
+      ctx.beginPath();ctx.arc(ex,ey,cx*0.055,0,Math.PI*2);ctx.fillStyle=eCols[oi];ctx.fill();
+      ctx.restore();
+    });
+    const fs=Math.round(cx*0.22);
+    ctx.font=`800 ${fs}px Syne,system-ui,sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle=isDark?'#ddeeff':'#0c1828';
+    ctx.fillText('SMAD',cx,cy+cx*0.58);
+    ctx.font=`400 ${Math.round(fs*0.55)}px Syne,system-ui,sans-serif`;
+    ctx.fillStyle='rgba(140,170,220,0.55)';
+    ctx.fillText('DFT',cx,cy+cx*0.78);
+  }
+  function tick(ts){draw((ts||0)*0.0012);_fanLogoRaf=requestAnimationFrame(tick);}
+  _fanLogoRaf=requestAnimationFrame(tick);
+}
+
+function selectCalcType(value){
+  const valMap={'relax':'vc-relax','scf':'scf','bands':'bands','dos':'dos','md':'md','phonon':'phonon','tddft':'tddft','neb':'neb','vc-relax':'vc-relax','nscf':'nscf'};
+  const sel=document.getElementById('calcType');
+  sel.value=valMap[value]||value;
   sel.dispatchEvent(new Event('change'));
-
-  const item = FAN_ITEMS.find(f => f.value === value) || {label: value, icon:'⚡', desc: ''};
-  document.getElementById('calcTypeIcon').textContent  = item.icon || '⚡';
-  document.getElementById('calcTypeLabel').textContent = item.label + ' — ' + (item.desc || value);
-  document.getElementById('fanCloseLabel').textContent  = item.label;
-  log('[calc] Selected: ' + item.label);
+  const item=FAN_ITEMS.find(f=>f.value===value)||{label:value,icon:'⚡',desc:''};
+  document.getElementById('calcTypeIcon').textContent=item.icon||'⚡';
+  document.getElementById('calcTypeLabel').textContent=item.label+' — '+(item.desc||value);
+  document.getElementById('fanCloseLabel').textContent=item.label;
+  const optExtra=document.getElementById('optimizeExtra');
+  if(optExtra) optExtra.style.display=(value==='relax')?'block':'none';
+  log('[calc] Selected: '+item.label);
 }
 
-function openFanMenu() {
-  fanOpen = true;
-  buildFanSVG();
-  const overlay = document.getElementById('fanOverlay');
-  overlay.classList.add('open');
-  document.getElementById('calcTypeTrigger').querySelector('.calc-type-arrow').style.transform = 'rotate(0deg)';
+function openFanMenu(){
+  fanOpen=true;buildFanSVG();
+  document.getElementById('fanOverlay').classList.add('open');
+  document.getElementById('calcTypeTrigger').querySelector('.calc-type-arrow').style.transform='rotate(0deg)';
 }
 
-function closeFanMenu() {
-  fanOpen = false;
+function closeFanMenu(){
+  fanOpen=false;
+  if(_fanLogoRaf){cancelAnimationFrame(_fanLogoRaf);_fanLogoRaf=null;}
   document.getElementById('fanOverlay').classList.remove('open');
-  document.getElementById('calcTypeTrigger').querySelector('.calc-type-arrow').style.transform = 'rotate(180deg)';
+  document.getElementById('calcTypeTrigger').querySelector('.calc-type-arrow').style.transform='rotate(180deg)';
 }
 
 function wireFanMenu() {
@@ -2527,14 +2602,5 @@ window.addEventListener('load',init);
 })();
 })();
 </script>
-
-<!-- ══ RADIAL FAN MENU ══ -->
-<div id="fanOverlay" class="fan-overlay">
-  <div id="fanMenu" class="fan-menu">
-    <svg id="fanSvg" class="fan-svg" viewBox="0 0 580 380" xmlns="http://www.w3.org/2000/svg"></svg>
-    <div id="fanTooltip" class="fan-tooltip"></div>
-    <button id="fanClose" class="fan-close">&#10005; <span id="fanCloseLabel">Geometry</span></button>
-  </div>
-</div>
 </body>
 </html>
