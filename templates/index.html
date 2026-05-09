@@ -268,7 +268,28 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
   font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-0.03em;
   background:linear-gradient(130deg,#ddeeff 0%,#90bef8 45%,#34d2f5 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  display:inline-flex;align-items:center;gap:8px;
 }
+/* icon inherits gradient via currentColor override */
+.brand svg{-webkit-text-fill-color:initial;stroke:url(#brandGrad)}
+.btn-doc{
+  display:inline-flex;align-items:center;gap:8px;padding:11px 22px;
+  background:transparent;
+  border:1.5px solid var(--accent);
+  border-radius:9px;
+  color:var(--accent);
+  font-size:15px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;
+  transition:background .18s,color .18s,border-color .18s,box-shadow .18s;
+  text-decoration:none;
+}
+.btn-doc:hover{
+  background:rgba(59,130,246,0.1);
+  color:var(--text);
+  border-color:var(--accent-2);
+  box-shadow:0 0 0 3px rgba(59,130,246,0.12);
+}
+body.light .btn-doc{color:#1a56cc;border-color:#1a56cc}
+body.light .btn-doc:hover{background:rgba(26,86,204,0.08);color:#0f1c35;border-color:#0d9eb5;box-shadow:0 0 0 3px rgba(26,86,204,0.1)}
 .nav-links{display:flex;gap:22px;font-size:15px;color:var(--muted)}
 .nav-links a:hover{color:var(--text)}
 .nav-cta{
@@ -280,11 +301,16 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
 
 /* ── HERO ── */
 .hero{
-  padding:80px clamp(16px,3vw,36px) 88px;
-  display:flex;flex-direction:column;gap:24px;align-items:flex-start;
-  max-width:900px;margin:0 auto;
+  padding:88px clamp(16px,3vw,36px) 96px;
+  display:flex;flex-direction:column;gap:32px;
+  align-items:center;text-align:center;
+  max-width:1100px;margin:0 auto;
 }
-.hero-main{width:100%;display:flex;flex-direction:column;gap:24px;align-items:flex-start}
+.hero-main{display:flex;flex-direction:column;gap:24px;align-items:center;width:100%}
+.hero-right{
+  display:flex;flex-direction:column;gap:24px;
+  align-items:center;width:100%;
+}
 .eyebrow{
   display:inline-flex;align-items:center;gap:8px;
   font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-2);
@@ -296,19 +322,20 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
 }
 @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.65)}}
 .wordmark{
-  font-family:'Syne',sans-serif;font-size:clamp(52px,6.5vw,86px);font-weight:800;
-  letter-spacing:-.04em;line-height:.92;display:inline-block;
+  font-family:'Syne',sans-serif;font-size:clamp(80px,14vw,160px);font-weight:800;
+  letter-spacing:-.04em;line-height:.9;display:inline-block;
   background:linear-gradient(130deg,#ddeeff 0%,#90bef8 36%,#34d2f5 65%,#818cf8 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 .wordmark-sub{
   font-family:'Syne',sans-serif;font-size:13px;font-weight:400;
-  letter-spacing:.3em;text-transform:uppercase;color:var(--dim);margin-top:7px;
+  letter-spacing:.3em;text-transform:uppercase;color:var(--dim);margin-top:10px;
+  text-align:center;
 }
-.descriptor{font-size:17px;font-weight:300;line-height:1.75;color:var(--muted);max-width:560px}
+.descriptor{font-size:18px;font-weight:300;line-height:1.75;color:var(--muted);max-width:680px;text-align:center}
 .descriptor strong{color:#a8c8ef;font-weight:400}
 .search-row{
-  display:flex;max-width:580px;width:100%;border-radius:10px;
+  display:flex;max-width:680px;width:100%;border-radius:12px;
   border:1px solid var(--border);background:rgba(255,255,255,0.035);overflow:hidden;
   transition:border-color .25s,box-shadow .25s;
 }
@@ -327,7 +354,7 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
   transition:opacity .15s,transform .15s;
 }
 .search-btn:hover{opacity:.85;transform:translateY(-1px)}
-.action-row{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.action-row{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;width:100%}
 .btn-primary{
   display:inline-flex;align-items:center;gap:8px;padding:13px 26px;
   background:linear-gradient(135deg,#2563eb,#0ea5e9);border:none;border-radius:9px;
@@ -343,10 +370,10 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
   cursor:pointer;transition:border-color .18s,color .18s,background .18s;text-decoration:none;
 }
 .btn-ghost:hover{border-color:var(--border-2);color:var(--text);background:rgba(255,255,255,0.04)}
-.stat-row{display:flex;gap:0;padding-top:4px}
+.stat-row{display:flex;gap:0;padding-top:0;justify-content:center;width:100%}
 .stat{
-  display:flex;flex-direction:column;gap:2px;
-  padding-right:20px;margin-right:20px;
+  display:flex;flex-direction:column;gap:2px;align-items:center;
+  padding:0 28px;
   border-right:1px solid rgba(100,180,255,0.1);
 }
 .stat:last-child{border-right:none}
@@ -741,10 +768,24 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
 <body>
 <div class="stars"></div>
 
+<!-- SVG gradient defs for brand icon -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ddeeff"/>
+      <stop offset="45%" stop-color="#90bef8"/>
+      <stop offset="100%" stop-color="#34d2f5"/>
+    </linearGradient>
+  </defs>
+</svg>
+
 <!-- NAV -->
 <header class="nav">
   <div class="nav-inner">
-    <a class="brand" href="/">SMAD</a>
+    <a class="brand" href="/">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.75"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/></svg>
+      SMAD
+    </a>
     <nav class="nav-links">
       <a href="#overview">Overview</a>
       <a href="/structures">CrystalForge</a>
@@ -754,13 +795,10 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
       <a href="/analysis">Analysis</a>
       <a href="/about">About</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:10px">
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode" title="Toggle light mode">
-        <svg class="theme-icon-dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <svg class="theme-icon-light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
-      <a class="nav-cta" href="/databases">Launch app →</a>
-    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark mode" title="Toggle light mode">
+      <svg class="theme-icon-dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="theme-icon-light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
   </div>
 </header>
 
@@ -783,12 +821,16 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
       <input class="search-input" type="search" name="search" placeholder="Search materials, structures, formulas…" autocomplete="off"/>
       <button class="search-btn" type="submit">Search →</button>
     </form>
+  </div>
+
+  <!-- Bottom-right: buttons + stats -->
+  <div class="hero-right">
     <div class="action-row">
       <a class="btn-primary" href="/databases">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Material Explorer
       </a>
-      <a class="btn-ghost" href="/about">
+      <a class="btn-doc" href="/about">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Documentation
       </a>
@@ -800,7 +842,6 @@ body.light .modal-close:hover{background:rgba(220,50,50,0.1);color:#cc2222;borde
       <div class="stat"><div class="stat-val">24/7</div><div class="stat-lbl">Uptime</div></div>
     </div>
   </div>
-
 </div>
 
 <hr class="section-divider"/>
