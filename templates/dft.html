@@ -813,7 +813,7 @@ a{color:var(--accent);text-decoration:none}
     <div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:7px">
       <div>
         <div class="hpc-label">Host</div>
-        <input type="text" id="loginNode" class="inp" placeholder="login.example.edu"/>
+        <input type="text" id="loginNode" class="inp" placeholder="http://100.127.228.36:5000"/>
       </div>
       <div>
         <div class="hpc-label">Command</div>
@@ -825,7 +825,7 @@ a{color:var(--accent);text-decoration:none}
       </div>
       <div style="display:flex;gap:8px;padding-top:2px">
         <button class="exec-btn exec-btn-gen" id="genBtn">⬡ Generate input</button>
-        <button class="exec-btn exec-btn-run" id="runBtn">▶ Run DFT (demo)</button>
+        <button class="exec-btn exec-btn-run" id="runBtn">▶ Run DFT</button>
       </div>
     </div>
   </div>
@@ -1859,6 +1859,92 @@ async function runDemoSCF(){
   setStatus('done');setLed('done');setHpcStatus('Done',false);
   log('['+new Date().toLocaleTimeString()+'] Finished. E_total = −'+(1000+Math.random()*10).toFixed(5)+' Ry');
 }
+
+async function runRealHPC(){
+  const host=(document.getElementById('loginNode').value||'').trim();
+  if(!host){
+    log('[HPC] Enter your cluster host (e.g. http://100.127.228.36:5000)');
+    setHpcStatus('No host set',false);
+    return;
+  }
+  const inputText=document.getElementById('inputEdit').value||buildQEInput();
+  if(!inputText.trim()){log('[HPC] No input generated. Click ⬡ Generate first.');return;}
+
+  setStatus('run');setLed('run');setHpcStatus('Submitting…',true);
+  log('[HPC] Submitting to '+host+' …');
+
+  let jobId=null, slurmId=null;
+  try{
+    const fd=new FormData();
+    fd.append('input_text', inputText);
+    fd.append('nodes', '1');
+    fd.append('ntasks', '44');
+    fd.append('job_name', currentStruct.formula||'smad');
+    const resp=await fetch(host+'/submit',{method:'POST',body:fd});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    jobId=data.job_id; slurmId=data.slurm_id;
+    log('[HPC] Submitted — job_id='+jobId+' slurm_id='+slurmId);
+    setHpcStatus('Job '+slurmId+' running',true);
+  }catch(e){
+    log('[HPC] Submit failed: '+e.message);
+    setStatus('ready');setLed('ready');setHpcStatus('Error',false);
+    return;
+  }
+
+  let done=false, iter=0;
+  while(!done && iter<360){
+    await new Promise(r=>setTimeout(r,5000));
+    iter++;
+    try{
+      const resp=await fetch(host+'/status/'+jobId);
+      const data=await resp.json();
+      done=data.status==='done';
+
+      const tail=data.output_tail||'';
+      const iterMatches=[...tail.matchAll(/iteration #\s*(\d+).*?estimated scf accuracy\s*<\s*([\d.E+\-]+)/gs)];
+      if(iterMatches.length>0){
+        const xs=[],ys=[];
+        iterMatches.forEach(m=>{xs.push(parseInt(m[1]));ys.push(parseFloat(m[2]));});
+        const pt=plotTheme();
+        const h=Math.max(getPlotH('plotC'),240);
+        const liveData=[{x:xs,y:ys,type:'scatter',mode:'lines+markers',
+          line:{color:'#2dd9a0',width:2},marker:{size:5,color:'#2dd9a0'},
+          name:'Real SCF'}];
+        const liveLayout=Object.assign({
+          title:{text:'SCF convergence — '+currentStruct.formula,font:{size:11}},
+          xaxis:Object.assign({title:{text:'SCF iteration'}},pt.xaxis),
+          yaxis:Object.assign({title:{text:'ΔE (Ry)'},type:'log'},pt.yaxis),
+          height:h,showlegend:false},pt);
+        PLOT_DATA['plotC']=liveData;
+        if(plotsInited.has('plotC')){Plotly.react('plotC',liveData,liveLayout,{displayModeBar:false});}
+        else{Plotly.newPlot('plotC',liveData,liveLayout,{responsive:true,displayModeBar:false});plotsInited.add('plotC');}
+        if(iter===1){const b=document.querySelector('[data-rp="conv"]');if(b)b.click();}
+      }
+
+      if(data.total_energy) log('[HPC] '+data.total_energy);
+      log('[HPC] poll #'+iter+' — '+data.status+(data.output_lines?' ('+data.output_lines+' lines)':''));
+
+      if(done){
+        log('[HPC] Job done! '+data.total_energy);
+        if(data.converged) log('[HPC] ✓ SCF converged!');
+        const tail50=tail.split('\n').slice(-30).join('\n');
+        log(tail50);
+      }
+    }catch(e){
+      log('[HPC] Poll error: '+e.message);
+    }
+  }
+
+  setStatus('done');setLed('done');setHpcStatus('Done',false);
+}
+
+function runDFT(){
+  const host=(document.getElementById('loginNode').value||'').trim();
+  if(host) runRealHPC();
+  else runDemoSCF();
+}
+
 function setStatus(s){
   const d=document.getElementById('sDot'),l=document.getElementById('sLbl');
   d.className='sdot'+(s==='run'?' run':s==='done'?' done':'');
@@ -2261,7 +2347,7 @@ function wireUi(){
   document.getElementById('btnCopyin').addEventListener('click',()=>document.getElementById('copyInBtn').click());
   document.getElementById('dlInBtn').addEventListener('click',downloadInput);
   document.getElementById('btnDlIn').addEventListener('click',downloadInput);
-  document.getElementById('runBtn').addEventListener('click',runDemoSCF);
+  document.getElementById('runBtn').addEventListener('click',runDFT);
   document.getElementById('clearBtn').addEventListener('click',()=>{document.getElementById('consoleOut').textContent='Cleared.\n';});
 
   /* theme */
