@@ -6,7 +6,7 @@
 <title>SMAD DFT Simulator</title>
 <link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -106,9 +106,6 @@ input,select,textarea{font-family:inherit}
   height:38px;border-radius:50%;font-size:13px;font-weight:700;color:#fff;
   box-shadow:0 2px 6px rgba(0,0,0,.22);padding:0 6px}
 
-/* Axis gizmo */
-#axis-gizmo{position:absolute;bottom:14px;left:14px;z-index:20;width:72px;height:72px;pointer-events:none}
-
 /* ══ RIGHT PANEL ══ */
 #rpanel{width:318px;min-width:260px;background:#e8e8e8;border-left:1px solid #bbb;
   display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
@@ -174,44 +171,58 @@ input,select,textarea{font-family:inherit}
 .sb-dot.done{background:#ff6600}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ══ BOTTOM BAR ══
-   Always shows: ≡ (left) · [spacer] · Console · [spacer] · Italic-bold-mode ≡ (right)
-   The right ≡ icon opens the fan. No × button.
-*/
+/* ══ BOTTOM BAR — matches image: Geometry ≡ ══ */
 #bottombar{
-  height:32px;background:#e8e8e8;border-top:1px solid #c0c0c0;
-  display:flex;align-items:center;padding:0 10px;gap:8px;
+  height:30px;background:#e8e8e8;border-top:1px solid #c8c8c8;
+  display:flex;align-items:center;padding:0 10px;gap:10px;
   flex-shrink:0;position:relative;z-index:200;
 }
-/* LEFT: hamburger ≡ */
 #hb-trigger{
   display:flex;align-items:center;justify-content:center;
-  width:28px;height:28px;cursor:pointer;border-radius:3px;
+  width:26px;height:26px;cursor:pointer;border-radius:3px;
   transition:background .1s;flex-shrink:0;
 }
 #hb-trigger:hover{background:rgba(0,0,0,.08)}
-#hb-trigger svg{display:block}
 .bb-spacer{flex:1}
-/* RIGHT: mode chip — always visible, no × */
+/* RIGHT chip: italic bold mode name + stacked-lines icon */
 #bb-right{
-  display:flex;
-  align-items:center;gap:0;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  cursor:pointer;padding:3px 6px;border-radius:3px;
+  transition:background .1s;
 }
-#bb-right:hover #bb-mode-icon{background:#e0e0e0}
+#bb-right:hover{background:rgba(0,0,0,.06)}
 #bb-mode-label{
-  padding:4px 8px 4px 12px;
-  font-size:13px;font-weight:700;font-style:italic;color:#222;
-  letter-spacing:.01em;background:transparent;
+  font-size:13px;font-weight:700;font-style:italic;
+  color:#222;letter-spacing:.01em;
 }
+/* The icon wrapper toggles between stacked-lines and square close btn */
 #bb-mode-icon{
-  /* the stacked-lines ≡ icon on the right — triggers fan */
-  padding:4px 6px;border-radius:3px;
-  display:flex;align-items:center;transition:background .1s;
+  display:flex;align-items:center;opacity:.75;
+  position:relative;
 }
+/* Stacked-lines — visible when menu closed */
+#bb-icon-lines{display:flex;transition:opacity .15s;}
+/* Square close button — hidden when menu closed, shown when open */
+#bb-icon-close{
+  display:none;
+  width:22px;height:22px;
+  background:#e05520;border-radius:4px;
+  align-items:center;justify-content:center;
+  color:#fff;font-size:15px;font-weight:900;
+  box-shadow:0 1px 4px rgba(0,0,0,.3);
+  transition:background .1s;
+}
+#bb-icon-close:hover{background:#c03d10}
+/* When mode menu is open: hide lines, show square */
+body.mode-menu-open #bb-icon-lines{display:none}
+body.mode-menu-open #bb-icon-close{display:flex}
+/* Also hide the separate × btn when we have the square close */
 #bb-x-btn{
-  width:24px;height:24px;border-radius:50%;background:#e82020;
-  border:2px solid #c01818;display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:14px;font-weight:900;cursor:pointer;margin-left:4px;flex-shrink:0;
+  width:22px;height:22px;border-radius:50%;
+  background:#e82020;border:2px solid #c01818;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:13px;font-weight:900;
+  cursor:pointer;flex-shrink:0;line-height:1;
 }
 #bb-x-btn:hover{background:#c01818}
 
@@ -232,14 +243,47 @@ input,select,textarea{font-family:inherit}
 }
 #console-btn:hover{background:#4a4a4a;color:#fff}
 
-/* ══ BURAI FAN — SVG, pivot bottom-right, hidden until clicked ══ */
-#fan-wrap{
-  position:fixed;bottom:32px;right:0;z-index:600;
-  pointer-events:none;opacity:0;
-  transition:opacity .15s;
+/* ══ MODE MENU — vertical slide-up from bottom-right ══ */
+#mode-menu{
+  position:fixed;
+  bottom:30px;          /* sits just above bottom bar */
+  right:0;
+  z-index:600;
+  width:190px;
+  background:#5a5a5a;
+  border-top:2px solid #444;
+  border-left:2px solid #444;
+  border-radius:6px 0 0 0;
+  overflow:hidden;
+  /* slide up from below */
+  transform:translateY(100%);
+  opacity:0;
+  pointer-events:none;
+  transition:transform .22s cubic-bezier(.4,0,.2,1), opacity .18s ease;
+  box-shadow:-4px -4px 18px rgba(0,0,0,.4);
 }
-#fan-wrap.open{opacity:1;pointer-events:all}
-#fan-wrap svg{display:block;overflow:visible}
+#mode-menu.open{
+  transform:translateY(0);
+  opacity:1;
+  pointer-events:all;
+}
+.mm-item{
+  display:flex;align-items:center;
+  padding:10px 18px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  cursor:pointer;
+  transition:background .1s;
+  gap:10px;
+}
+.mm-item:last-child{border-bottom:none}
+.mm-item:hover{background:rgba(255,255,255,.14)}
+.mm-item:active{background:rgba(255,255,255,.24)}
+.mm-item.active{background:rgba(41,182,210,.28);border-left:3px solid #29b6d2;}
+.mm-lbl{
+  font-size:13px;font-weight:400;font-style:italic;
+  color:#e8e8e8;letter-spacing:.01em;
+}
+.mm-item.active .mm-lbl{color:#29b6d2;font-weight:700;}
 
 /* ══ HAMBURGER MENU — slide-up from bottom-left ══ */
 #hbmenu{
@@ -466,8 +510,9 @@ input,select,textarea{font-family:inherit}
 
     <!-- Atom legend pills -->
     <div id="atom-pills"></div>
-    <!-- Axis gizmo -->
-    <canvas id="axis-gizmo" width="72" height="72"></canvas>
+    <!-- XYZ axis gizmo — fixed bottom-left, canvas updated by Three.js camera sync -->
+    <canvas id="xyz-gizmo" width="88" height="88"
+      style="position:absolute;bottom:12px;left:12px;z-index:20;pointer-events:none;"></canvas>
   </div>
 
   <!-- ══ RIGHT PANEL ══ -->
@@ -570,31 +615,50 @@ input,select,textarea{font-family:inherit}
 
 <!-- ══ BOTTOM BAR ══ -->
 <div id="bottombar">
-  <!-- LEFT: hamburger → opens hamburger menu -->
-  <div id="hb-trigger" onclick="toggleHbMenu(event)">
-    <svg width="18" height="14" viewBox="0 0 18 14"><rect y="0" width="18" height="2" rx="1" fill="#555"/><rect y="6" width="18" height="2" rx="1" fill="#555"/><rect y="12" width="18" height="2" rx="1" fill="#555"/></svg>
+  <!-- LEFT hamburger → hamburger menu -->
+  <div id="hb-trigger" onclick="toggleHbMenu(event)" title="Menu">
+    <svg width="18" height="14" viewBox="0 0 18 14">
+      <rect y="0"  width="18" height="2" rx="1" fill="#555"/>
+      <rect y="6"  width="18" height="2" rx="1" fill="#555"/>
+      <rect y="12" width="18" height="2" rx="1" fill="#555"/>
+    </svg>
   </div>
-  <div class="bb-spacer"></div>
-  <!-- CONSOLE button always visible -->
+
+  <!-- Console -->
   <button id="console-btn" onclick="toggleConsole()">Console ▲</button>
+
   <div class="bb-spacer"></div>
-  <!-- RIGHT: italic mode label + stacked-lines icon → clicks open fan -->
-  <div id="bb-right" onclick="toggleFan()">
+
+  <!-- RIGHT: mode label + toggling icon -->
+  <div id="bb-right" onclick="toggleModeMenu()">
     <span id="bb-mode-label">Geometry</span>
     <div id="bb-mode-icon">
-      <!-- BURAI-style stacked decreasing lines ≡ icon -->
-      <svg width="20" height="16" viewBox="0 0 20 16">
-        <rect y="0"  width="20" height="2.2" rx="1" fill="#444"/>
-        <rect y="4.6" width="14" height="2.2" rx="1" fill="#444"/>
-        <rect y="9.2" width="17" height="2.2" rx="1" fill="#444"/>
-        <rect y="13.8" width="9"  height="2.2" rx="1" fill="#444"/>
-      </svg>
+      <!-- Stacked-lines: shown when menu closed -->
+      <div id="bb-icon-lines">
+        <svg width="20" height="13" viewBox="0 0 20 13">
+          <line x1="0" y1="1"   x2="20" y2="1"   stroke="#555" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="6.5" x2="14" y2="6.5" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="12"  x2="17" y2="12"  stroke="#555" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <!-- Square orange-red close: shown when menu open -->
+      <div id="bb-icon-close">×</div>
     </div>
   </div>
 </div>
 
-<!-- ══ FAN MENU ══ -->
-<div id="fan-wrap"><svg id="fan-svg"></svg></div>
+<!-- ══ VERTICAL MODE MENU — slides up from bottom-right ══ -->
+<div id="mode-menu">
+  <div class="mm-item" data-mode="geometry"  onclick="selectModeItem('geometry')"> <span class="mm-lbl">Geometry</span></div>
+  <div class="mm-item" data-mode="scf"       onclick="selectModeItem('scf')">      <span class="mm-lbl">SCF</span></div>
+  <div class="mm-item" data-mode="optimize"  onclick="selectModeItem('optimize')"> <span class="mm-lbl">Optimize</span></div>
+  <div class="mm-item" data-mode="band"      onclick="selectModeItem('band')">     <span class="mm-lbl">Band</span></div>
+  <div class="mm-item" data-mode="dos"       onclick="selectModeItem('dos')">      <span class="mm-lbl">DOS</span></div>
+  <div class="mm-item" data-mode="md"        onclick="selectModeItem('md')">       <span class="mm-lbl">MD</span></div>
+  <div class="mm-item" data-mode="phonon"    onclick="selectModeItem('phonon')">   <span class="mm-lbl">Phonon</span></div>
+  <div class="mm-item" data-mode="tddft"     onclick="selectModeItem('tddft')">    <span class="mm-lbl">TD-DFT</span></div>
+  <div class="mm-item" data-mode="neb"       onclick="selectModeItem('neb')">      <span class="mm-lbl">NEB</span></div>
+</div>
 
 <!-- ══ HAMBURGER MENU ══ -->
 <div id="hbmenu">
@@ -750,8 +814,8 @@ const FAN_ITEMS=[
 const LABELS={scf:'SCF',optimize:'Optimize',band:'Band',dos:'DOS',md:'MD',phonon:'Phonon',tddft:'TD-DFT',neb:'NEB',geometry:'Geometry'};
 
 /* ════════════ STATE ════════════ */
-let mol3d=null,current=JSON.parse(JSON.stringify(STRUCTS.gaas)),supercell=[1,1,1];
-let showBonds=true,consoleOpen=false,settingsOpen=false,fanOpen=false,hbOpen=false;
+let current=JSON.parse(JSON.stringify(STRUCTS.gaas)),supercell=[1,1,1];
+let showBonds=true,consoleOpen=false,settingsOpen=false,hbOpen=false;
 let activeMode=null; // null = no selection yet (fan not clicked)
 let lastJobId=null,lastJobOut='',pollTimer=null;
 
@@ -766,88 +830,256 @@ function init(){
   // close dropdowns on outside click
   document.addEventListener('click',e=>{
     if(hbOpen&&!document.getElementById('hbmenu').contains(e.target)&&!document.getElementById('hb-trigger').contains(e.target))closeHbMenu();
-    if(fanOpen&&!document.getElementById('fan-wrap').contains(e.target))closeFan();
+    if(modeMenuOpen&&!document.getElementById('mode-menu').contains(e.target)&&!document.getElementById('bb-right').contains(e.target))closeModeMenu();
     ['dd-screenshot','dd-export'].forEach(id=>{const el=document.getElementById(id);if(el&&el.classList.contains('open')&&!el.closest('.ct-btn').contains(e.target))el.classList.remove('open');});
   });
 }
 
 /* ════════════ VIEWER ════════════ */
+/* ════════════ THREE.JS CRYSTAL TOOLKIT VIEWER ════════════
+   Crystal Toolkit style: white bg, ball+stick, element colours,
+   OrbitControls-style mouse, XYZ gizmo synced to camera.
+*/
+let THREE_scene,THREE_camera,THREE_renderer,THREE_animId;
+let THREE_isDragging=false,THREE_lastMouse={x:0,y:0};
+let THREE_spherical={theta:0.6,phi:1.1,r:18}; // camera spherical coords
+let THREE_target={x:0,y:0,z:0}; // orbit target
+let THREE_zoom=1;
+let THREE_atomGroup=null,THREE_bondGroup=null,THREE_cellGroup=null,THREE_axGroup=null;
+
 function initViewer(){
-  const c=document.getElementById('dft-3dviewer');
-  if(typeof $3Dmol==='undefined'){c.style.cssText='display:flex;align-items:center;justify-content:center;color:#888;font-size:12px';c.textContent='3Dmol.js not loaded.';return;}
-  mol3d=$3Dmol.createViewer(c,{backgroundColor:'#ffffff',antialias:true});
-  mol3d.setViewStyle({style:'outline',color:'#555',width:0.025});
-  log('Crystal Toolkit viewer ready.');
+  const container=document.getElementById('dft-3dviewer');
+  if(!window.THREE){container.style.cssText='display:flex;align-items:center;justify-content:center;color:#888;font-size:12px';container.textContent='Three.js not loaded.';return;}
+
+  const W=container.clientWidth||800,H=container.clientHeight||600;
+
+  /* Scene */
+  THREE_scene=new THREE.Scene();
+  THREE_scene.background=new THREE.Color(0xffffff);
+
+  /* Camera */
+  THREE_camera=new THREE.PerspectiveCamera(40,W/H,0.1,1000);
+  updateCameraPos();
+
+  /* Renderer */
+  THREE_renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+  THREE_renderer.setSize(W,H);
+  THREE_renderer.setPixelRatio(window.devicePixelRatio);
+  THREE_renderer.shadowMap.enabled=false;
+  container.appendChild(THREE_renderer.domElement);
+
+  /* Lights — Crystal Toolkit style: ambient + two directional */
+  const ambient=new THREE.AmbientLight(0xffffff,0.55);THREE_scene.add(ambient);
+  const dir1=new THREE.DirectionalLight(0xffffff,0.7);dir1.position.set(1,1,1);THREE_scene.add(dir1);
+  const dir2=new THREE.DirectionalLight(0xffffff,0.3);dir2.position.set(-1,-0.5,-1);THREE_scene.add(dir2);
+
+  /* Mouse controls */
+  const el=THREE_renderer.domElement;
+  el.addEventListener('mousedown',e=>{THREE_isDragging=true;THREE_lastMouse={x:e.clientX,y:e.clientY};});
+  window.addEventListener('mouseup',()=>THREE_isDragging=false);
+  window.addEventListener('mousemove',e=>{
+    if(!THREE_isDragging)return;
+    const dx=(e.clientX-THREE_lastMouse.x)*0.007;
+    const dy=(e.clientY-THREE_lastMouse.y)*0.007;
+    THREE_lastMouse={x:e.clientX,y:e.clientY};
+    if(e.buttons===1){THREE_spherical.theta-=dx;THREE_spherical.phi=Math.max(0.1,Math.min(Math.PI-.1,THREE_spherical.phi+dy));}
+    else if(e.buttons===2){/* pan */
+      const right=new THREE.Vector3();const up=new THREE.Vector3();
+      THREE_camera.getWorldDirection(new THREE.Vector3());
+      right.crossVectors(THREE_camera.getWorldDirection(new THREE.Vector3()),THREE_camera.up).normalize();
+      up.copy(THREE_camera.up);
+      THREE_target.x-=right.x*dx*THREE_spherical.r*0.5;
+      THREE_target.y+=up.y*dy*THREE_spherical.r*0.5;
+      THREE_target.z-=right.z*dx*THREE_spherical.r*0.5;
+    }
+    updateCameraPos();drawGizmo();
+  });
+  el.addEventListener('wheel',e=>{e.preventDefault();THREE_spherical.r=Math.max(3,THREE_spherical.r*Math.exp(e.deltaY*0.001));updateCameraPos();drawGizmo();},{passive:false});
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+
+  /* Resize */
+  new ResizeObserver(()=>{
+    const W=container.clientWidth,H=container.clientHeight;
+    THREE_camera.aspect=W/H;THREE_camera.updateProjectionMatrix();
+    THREE_renderer.setSize(W,H);
+  }).observe(container);
+
+  /* Render loop */
+  (function animate(){THREE_animId=requestAnimationFrame(animate);THREE_renderer.render(THREE_scene,THREE_camera);}());
+  log('Crystal Toolkit viewer (Three.js) ready.');
 }
-function structToXYZ(s,sc){
-  const brav=s.bravais||'FCC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0,rows=[];
-  for(let ix=0;ix<sc[0];ix++)for(let iy=0;iy<sc[1];iy++)for(let iz=0;iz<sc[2];iz++){
-    s.atoms.forEach(at=>{const fx=at.f[0]+ix,fy=at.f[1]+iy,fz=at.f[2]+iz;rows.push(`${at.el} ${(cell[0][0]*fx+cell[1][0]*fy+cell[2][0]*fz)*a0} ${(cell[0][1]*fx+cell[1][1]*fy+cell[2][1]*fz)*a0} ${(cell[0][2]*fx+cell[1][2]*fy+cell[2][2]*fz)*cz}`);});
-  }
-  return `${s.atoms.length*sc[0]*sc[1]*sc[2]}\n${s.formula||''}\n${rows.join('\n')}`;
+
+function updateCameraPos(){
+  if(!THREE_camera)return;
+  const {theta,phi,r}=THREE_spherical;
+  THREE_camera.position.set(
+    THREE_target.x+r*Math.sin(phi)*Math.sin(theta),
+    THREE_target.y+r*Math.cos(phi),
+    THREE_target.z+r*Math.sin(phi)*Math.cos(theta)
+  );
+  THREE_camera.lookAt(THREE_target.x,THREE_target.y,THREE_target.z);
+  THREE_camera.updateMatrixWorld();
 }
-function drawBox(s,sc){
-  if(!mol3d)return;
-  const brav=s.bravais||'FCC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
-  const v=i=>({x:cell[i][0]*a0*sc[0],y:cell[i][1]*a0*sc[1],z:cell[i][2]*cz*sc[2]});
-  const O={x:0,y:0,z:0},ax=v(0),ay=v(1),az=v(2),add=(p,q)=>({x:p.x+q.x,y:p.y+q.y,z:p.z+q.z});
-  const corners=[O,ax,ay,az,add(ax,ay),add(ax,az),add(ay,az),add(ax,add(ay,az))];
-  [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(([a,b])=>{mol3d.addCylinder({start:corners[a],end:corners[b],radius:0.035,color:'#888',fromCap:1,toCap:1,opacity:0.6});});
+
+function clearGroup(g){if(g&&THREE_scene){THREE_scene.remove(g);g.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();});}}
+
+function hexToThree(hex){return new THREE.Color(hex);}
+
+function makeSphere(pos,radius,color){
+  const geo=new THREE.SphereGeometry(radius,20,16);
+  const mat=new THREE.MeshPhongMaterial({color:hexToThree(color),shininess:60});
+  const m=new THREE.Mesh(geo,mat);m.position.set(pos.x,pos.y,pos.z);return m;
 }
+function makeCylinder(p1,p2,radius,color,opacity=1){
+  const dir=new THREE.Vector3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
+  const len=dir.length();if(len<0.001)return null;
+  const geo=new THREE.CylinderGeometry(radius,radius,len,12,1);
+  const mat=new THREE.MeshPhongMaterial({color:hexToThree(color),shininess:40,transparent:opacity<1,opacity});
+  const m=new THREE.Mesh(geo,mat);
+  const mid=new THREE.Vector3((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
+  m.position.copy(mid);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+  return m;
+}
+
 function draw3D(){
-  if(!mol3d)return;
-  mol3d.removeAllModels();mol3d.removeAllShapes();mol3d.removeAllSurfaces();
-  const showAtoms=document.getElementById('chk-atoms')?.checked!==false;
-  const showCell=document.getElementById('chk-cell')?.checked!==false;
-  if(showAtoms)mol3d.addModel(structToXYZ(current,supercell),'xyz');
-  mol3d.setStyle({},{sphere:{colorscheme:'Jmol',radius:.35}});
-  if(showBonds&&document.getElementById('chk-bonds')?.checked!==false){
-    const brav=current.bravais||'FCC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=current.a||4,c0=current.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0,pts=[];
-    for(let ix=0;ix<supercell[0];ix++)for(let iy=0;iy<supercell[1];iy++)for(let iz=0;iz<supercell[2];iz++){current.atoms.forEach(at=>{const fx=at.f[0]+ix,fy=at.f[1]+iy,fz=at.f[2]+iz;pts.push({el:at.el,x:(cell[0][0]*fx+cell[1][0]*fy+cell[2][0]*fz)*a0,y:(cell[0][1]*fx+cell[1][1]*fy+cell[2][1]*fz)*a0,z:(cell[0][2]*fx+cell[1][2]*fy+cell[2][2]*fz)*cz});});}
-    const bc=3.2;
-    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dz=pts[i].z-pts[j].z,d=Math.sqrt(dx*dx+dy*dy+dz*dz);if(d<bc&&d>.1){const mid={x:(pts[i].x+pts[j].x)/2,y:(pts[i].y+pts[j].y)/2,z:(pts[i].z+pts[j].z)/2};mol3d.addCylinder({start:{x:pts[i].x,y:pts[i].y,z:pts[i].z},end:mid,radius:.12,color:EL_COLORS[pts[i].el]||EL_COLORS.default,fromCap:0,toCap:0,opacity:.9});mol3d.addCylinder({start:mid,end:{x:pts[j].x,y:pts[j].y,z:pts[j].z},radius:.12,color:EL_COLORS[pts[j].el]||EL_COLORS.default,fromCap:0,toCap:1,opacity:.9});}}
+  if(!THREE_scene)return;
+  clearGroup(THREE_atomGroup);clearGroup(THREE_bondGroup);clearGroup(THREE_cellGroup);
+  THREE_atomGroup=new THREE.Group();THREE_bondGroup=new THREE.Group();THREE_cellGroup=new THREE.Group();
+
+  const s=current,brav=s.bravais||'FCC',cell=CELL_VECS[brav]||CELL_VECS.SC;
+  const a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
+  const sc=supercell;
+
+  /* Build atom positions in Cartesian coords */
+  const pts=[];
+  for(let ix=0;ix<sc[0];ix++)for(let iy=0;iy<sc[1];iy++)for(let iz=0;iz<sc[2];iz++){
+    s.atoms.forEach(at=>{
+      const fx=at.f[0]+ix,fy=at.f[1]+iy,fz=at.f[2]+iz;
+      pts.push({
+        el:at.el,
+        x:(cell[0][0]*fx+cell[1][0]*fy+cell[2][0]*fz)*a0,
+        y:(cell[0][1]*fx+cell[1][1]*fy+cell[2][1]*fz)*a0,
+        z:(cell[0][2]*fx+cell[1][2]*fy+cell[2][2]*fz)*cz,
+      });
+    });
   }
-  if(showCell)drawBox(current,supercell);
-  mol3d.zoomTo();mol3d.render();drawAxisGizmo();
+
+  /* Centre */
+  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});
+  if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
+  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
+
+  /* Atoms */
+  const showAtoms=document.getElementById('chk-atoms')?.checked!==false;
+  if(showAtoms){
+    pts.forEach(p=>{
+      const c=EL_COLORS[p.el]||EL_COLORS.default;
+      THREE_atomGroup.add(makeSphere({x:p.x,y:p.y,z:p.z},0.38,c));
+    });
+  }
+
+  /* Bonds — Crystal Toolkit: dual-colour cylinders */
+  const showBondsChk=document.getElementById('chk-bonds')?.checked!==false;
+  if(showBonds&&showBondsChk){
+    const BC=3.2;
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dz=pts[i].z-pts[j].z;
+      const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      if(d>0.1&&d<BC){
+        const mid={x:(pts[i].x+pts[j].x)/2,y:(pts[i].y+pts[j].y)/2,z:(pts[i].z+pts[j].z)/2};
+        const c1=makeCylinder({x:pts[i].x,y:pts[i].y,z:pts[i].z},mid,0.11,EL_COLORS[pts[i].el]||EL_COLORS.default);
+        const c2=makeCylinder(mid,{x:pts[j].x,y:pts[j].y,z:pts[j].z},0.11,EL_COLORS[pts[j].el]||EL_COLORS.default);
+        if(c1)THREE_bondGroup.add(c1);if(c2)THREE_bondGroup.add(c2);
+      }
+    }
+  }
+
+  /* Unit cell box */
+  const showCellChk=document.getElementById('chk-cell')?.checked!==false;
+  if(showCellChk){
+    const v=i=>{
+      const cz3=['HEX','TET'].includes(brav)?c0:a0;
+      return {x:cell[i][0]*a0*sc[0]-cx,y:cell[i][1]*a0*sc[1]-cy,z:cell[i][2]*cz3*sc[2]-cz2};
+    };
+    const O={x:-cx,y:-cy,z:-cz2},ax=v(0),ay=v(1),az=v(2);
+    const add=(p,q)=>({x:p.x+q.x,y:p.y+q.y,z:p.z+q.z});
+    const corners=[O,ax,ay,az,add(ax,ay),add(ax,az),add(ay,az),add(ax,add(ay,az))];
+    [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(([a,b])=>{
+      const cyl=makeCylinder(corners[a],corners[b],0.04,'#888888',0.7);
+      if(cyl)THREE_cellGroup.add(cyl);
+    });
+  }
+
+  THREE_scene.add(THREE_atomGroup);THREE_scene.add(THREE_bondGroup);THREE_scene.add(THREE_cellGroup);
+
+  /* Reset camera */
+  THREE_target={x:0,y:0,z:0};THREE_spherical.r=Math.max(8,a0*sc[0]*3.5);
+  updateCameraPos();drawGizmo();updatePills();
 }
-function resetView(){if(mol3d){mol3d.zoomTo();mol3d.render();}}
+
+function resetView(){
+  THREE_target={x:0,y:0,z:0};THREE_spherical={theta:0.6,phi:1.1,r:Math.max(8,(current.a||4)*3.5)};
+  updateCameraPos();drawGizmo();
+}
+
+/* ════════ XYZ GIZMO CANVAS — fixed bottom-left, synced to camera ════════
+   Draws X(red) Y(green) Z(blue) axes projected from camera rotation.
+   Always visible, always in bottom-left corner of the viewer.
+*/
+function drawGizmo(){
+  const cv=document.getElementById('xyz-gizmo');if(!cv||!THREE_camera)return;
+  const ctx=cv.getContext('2d'),W=88,H=88,cx=28,cy=60,L=30;
+  ctx.clearRect(0,0,W,H);
+
+  /* Extract camera rotation to project axes */
+  const camMat=new THREE.Matrix4().extractRotation(THREE_camera.matrixWorldInverse);
+  function proj(v){
+    const w=new THREE.Vector3(v.x,v.y,v.z).applyMatrix4(camMat);
+    return{x:cx+w.x*L,y:cy-w.y*L,z:w.z};
+  }
+
+  const axes=[
+    {v:{x:1,y:0,z:0},c:'#dd2222',l:'X'},
+    {v:{x:0,y:1,z:0},c:'#22aa22',l:'Y'},
+    {v:{x:0,y:0,z:1},c:'#2244cc',l:'Z'},
+  ];
+  /* Draw back-to-front */
+  const projected=axes.map(a=>({...a,p:proj(a.v)}));
+  projected.sort((a,b)=>a.p.z-b.p.z);
+  projected.forEach(({c,l,p})=>{
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(p.x,p.y);
+    ctx.strokeStyle=c;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
+    /* Arrowhead */
+    const ang=Math.atan2(p.y-cy,p.x-cx);const al=7;
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y);
+    ctx.lineTo(p.x-al*Math.cos(ang-0.4),p.y-al*Math.sin(ang-0.4));
+    ctx.lineTo(p.x-al*Math.cos(ang+0.4),p.y-al*Math.sin(ang+0.4));
+    ctx.closePath();ctx.fillStyle=c;ctx.fill();
+    /* Label */
+    ctx.fillStyle=c;ctx.font='bold 11px Roboto,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(l,p.x+(p.x-cx)*0.3,p.y+(p.y-cy)*0.3);
+  });
+}
+
 function toggleFullscreen(){const el=document.getElementById('viewer-area');if(!document.fullscreenElement)el.requestFullscreen?.();else document.exitFullscreen?.();}
-function toggleSettings(){
-  settingsOpen=!settingsOpen;
-  document.getElementById('settings-panel').classList.toggle('open',settingsOpen);
-  document.getElementById('btn-settings').classList.toggle('act',settingsOpen);
-}
+function toggleSettings(){settingsOpen=!settingsOpen;document.getElementById('settings-panel').classList.toggle('open',settingsOpen);document.getElementById('btn-settings').classList.toggle('act',settingsOpen);}
 function closeSettings(){settingsOpen=false;document.getElementById('settings-panel').classList.remove('open');document.getElementById('btn-settings').classList.remove('act');}
-function toggleDropdown(id){
-  document.querySelectorAll('.ct-dropdown').forEach(d=>{if(d.id!==id)d.classList.remove('open');});
-  document.getElementById(id).classList.toggle('open');
-}
+function toggleDropdown(id){document.querySelectorAll('.ct-dropdown').forEach(d=>{if(d.id!==id)d.classList.remove('open');});document.getElementById(id).classList.toggle('open');}
 function doScreenshot(fmt){
   document.querySelectorAll('.ct-dropdown').forEach(d=>d.classList.remove('open'));
-  if(fmt==='png'&&mol3d){const a=document.createElement('a');a.href=mol3d.pngURI();a.download=(current.formula||'structure')+'.png';a.click();}
-  else log('[screenshot] Format: '+fmt+' — '+(fmt==='png'?'done':'3D export not available in browser viewer'));
+  if(fmt==='png'&&THREE_renderer){const a=document.createElement('a');THREE_renderer.render(THREE_scene,THREE_camera);a.href=THREE_renderer.domElement.toDataURL('image/png');a.download=(current.formula||'structure')+'.png';a.click();}
+  else log('[screenshot] '+fmt+' — PNG only available in browser; use dedicated tool for 3D formats.');
 }
 function doExport(fmt){
   document.querySelectorAll('.ct-dropdown').forEach(d=>d.classList.remove('open'));
   const txt=buildQEInputText();
   if(fmt==='poscar'||fmt==='vasp'){const b=new Blob([txt],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.POSCAR';a.click();URL.revokeObjectURL(u);}
-  else if(fmt==='cif'||fmt==='cif-sym'){const b=new Blob([`# SMAD export - ${current.formula}\ndata_${current.formula}\n_cell_length_a ${current.a}\n_cell_length_b ${current.a}\n_cell_length_c ${current.c||current.a}\n_cell_angle_alpha 90\n_cell_angle_beta 90\n_cell_angle_gamma 90\n`],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.cif';a.click();URL.revokeObjectURL(u);}
+  else if(fmt==='cif'||fmt==='cif-sym'){const b=new Blob([`# SMAD export\ndata_${current.formula}\n_cell_length_a ${current.a}\n_cell_length_b ${current.a}\n_cell_length_c ${current.c||current.a}\n_cell_angle_alpha 90\n_cell_angle_beta 90\n_cell_angle_gamma 90\n`],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.cif';a.click();URL.revokeObjectURL(u);}
   else if(fmt==='json'){const b=new Blob([JSON.stringify(current,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.json';a.click();URL.revokeObjectURL(u);}
-  else{try{navigator.clipboard.writeText(txt).then(()=>log('[export] '+fmt+' — QE input copied to clipboard'));}catch(e){log('[export] '+fmt+': '+e.message);}}
-}
-
-/* Axis gizmo */
-function drawAxisGizmo(){
-  const cv=document.getElementById('axis-gizmo');if(!cv)return;
-  const ctx=cv.getContext('2d'),cx=14,cy=58,r=44;
-  ctx.clearRect(0,0,72,72);
-  [{v:[r*.6,-r*.5],c:'#cc2020',l:'X'},{v:[0,-r],c:'#2a9d2a',l:'Y'},{v:[-r*.5,-r*.3],c:'#2020cc',l:'N'}].forEach(ax=>{
-    const ex=cx+ax.v[0],ey=cy+ax.v[1];
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ex,ey);ctx.strokeStyle=ax.c;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
-    const ang=Math.atan2(ey-cy,ex-cx),al=8;
-    ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-al*Math.cos(ang-.4),ey-al*Math.sin(ang-.4));ctx.lineTo(ex-al*Math.cos(ang+.4),ey-al*Math.sin(ang+.4));ctx.closePath();ctx.fillStyle=ax.c;ctx.fill();
-    ctx.fillStyle=ax.c;ctx.font='bold 11px Roboto';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ax.l,ex+(ex-cx)*.25,ey+(ey-cy)*.25);
-  });
+  else{try{navigator.clipboard.writeText(txt).then(()=>log('[export] QE input copied to clipboard.'));}catch(e){log('[export] '+e.message);}}
 }
 
 /* Atom pills */
@@ -997,87 +1229,59 @@ function toggleAcc(bodyId,arrowId){const body=document.getElementById(bodyId),ar
 function log(s){const o=document.getElementById('console-out');if(o){o.textContent+=s+'\n';o.scrollTop=o.scrollHeight;}}
 function toggleConsole(){consoleOpen=!consoleOpen;document.getElementById('console-area').classList.toggle('open',consoleOpen);document.getElementById('console-btn').textContent=consoleOpen?'Console ▼':'Console ▲';}
 
-/* ════════════ BURAI FAN MENU ════════════
-   • Hidden (opacity:0, pointer-events:none) at rest
-   • Opens when user clicks bottom-right corner area
-   • Pivot = SVG bottom-right corner, pinned right:0 bottom:32px
-   • i=0 (Band) at bottom ~268°, i=8 (NEB) upper-right ~183°
-   • Normal = white #f5f5f5, hover = cyan #29b6d2 + white text (on hover/touch only)
-   • Active (selected) = cyan #29b6d2 permanent
-   • Bottom bar shows mode chip only after selection, hides when X clicked
+/* ════════════ VERTICAL MODE MENU ════════════
+   Slides up from bottom-right above the bottom bar.
+   Icon in bottom bar toggles: stacked-lines ↔ square orange-red ×
 */
-function buildFanMenu(){
-  const toR=d=>d*Math.PI/180;
-  const N=FAN_ITEMS.length; // 9
-  const GAP=2.0,TOTAL=85,SEG=(TOTAL-GAP*(N-1))/N;
-  const START=268; // Band's leading edge
-  const R2s=[96,110,124,140,158,178,200,218,238];
-  const R1=46;
-  const SVG_W=252,SVG_H=252,PX=SVG_W,PY=SVG_H;
-  const svg=document.getElementById('fan-svg');
-  svg.setAttribute('width',SVG_W);svg.setAttribute('height',SVG_H);svg.setAttribute('viewBox',`0 0 ${SVG_W} ${SVG_H}`);svg.innerHTML='';
-  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
-  defs.innerHTML=`<filter id="fs" x="-15%" y="-15%" width="140%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,0.13)"/></filter>`;
-  svg.appendChild(defs);
-  const NORMAL='#f5f5f5',ACTIVE='#29b6d2',HOVER='#29b6d2',STROKE='#d0d0d0';
-  FAN_ITEMS.forEach((item,i)=>{
-    const R2=R2s[i],a_lead=START-i*(SEG+GAP),a_trail=a_lead-SEG,mid=(a_lead+a_trail)/2;
-    const xi1=PX+R1*Math.cos(toR(a_trail)),yi1=PY+R1*Math.sin(toR(a_trail));
-    const xo1=PX+R2*Math.cos(toR(a_trail)),yo1=PY+R2*Math.sin(toR(a_trail));
-    const xo2=PX+R2*Math.cos(toR(a_lead)),yo2=PY+R2*Math.sin(toR(a_lead));
-    const xi2=PX+R1*Math.cos(toR(a_lead)),yi2=PY+R1*Math.sin(toR(a_lead));
-    const d=`M ${xi1.toFixed(2)} ${yi1.toFixed(2)} A ${R1} ${R1} 0 0 1 ${xi2.toFixed(2)} ${yi2.toFixed(2)} L ${xo2.toFixed(2)} ${yo2.toFixed(2)} A ${R2} ${R2} 0 0 0 ${xo1.toFixed(2)} ${yo1.toFixed(2)} Z`;
-    const isActive=item.id===activeMode;
-    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d',d);path.setAttribute('fill',isActive?ACTIVE:NORMAL);path.setAttribute('stroke',STROKE);path.setAttribute('stroke-width','1');path.setAttribute('filter','url(#fs)');path.style.cursor='pointer';path.style.transition='fill .08s';
-    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
-    const Rm=R1+(R2-R1)*0.54,lx=PX+Rm*Math.cos(toR(mid)),ly=PY+Rm*Math.sin(toR(mid));
-    text.setAttribute('x',lx.toFixed(2));text.setAttribute('y',ly.toFixed(2));text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','middle');text.setAttribute('font-family','Roboto,sans-serif');text.setAttribute('font-size',isActive?'11':'10.5');text.setAttribute('font-weight',isActive?'700':'400');text.setAttribute('font-style','italic');text.setAttribute('fill',isActive?'#fff':'#444');text.setAttribute('pointer-events','none');
-    /* Parallel to arc: rotate by mid angle so text runs ALONG the arc surface.
-       mid is ~183–268° (upper-right to bottom). Subtracting 180° keeps text readable
-       (avoids upside-down). For segments above 180° we add 90 to get the tangent direction. */
-    const labelRot = mid - 90; // tangent direction = radial - 90 in screen coords (y-down)
-    text.setAttribute('transform',`rotate(${labelRot.toFixed(1)},${lx.toFixed(2)},${ly.toFixed(2)})`);text.textContent=item.label;
-    // Hover: show ACTIVE colour + white text, revert on leave (unless already active)
-    path.addEventListener('mouseenter',()=>{path.setAttribute('fill',HOVER);text.setAttribute('fill','#fff');});
-    path.addEventListener('mouseleave',()=>{path.setAttribute('fill',isActive?ACTIVE:NORMAL);text.setAttribute('fill',isActive?'#fff':'#444');});
-    // Touch
-    path.addEventListener('touchstart',e=>{e.preventDefault();path.setAttribute('fill',HOVER);text.setAttribute('fill','#fff');},{passive:false});
-    path.addEventListener('touchend',e=>{e.preventDefault();selectFanMode(item.id);},{passive:false});
-    path.addEventListener('mouseup',()=>selectFanMode(item.id));
-    g.appendChild(path);g.appendChild(text);svg.appendChild(g);
-  });
-  const wrap=document.getElementById('fan-wrap');wrap.style.width=SVG_W+'px';wrap.style.height=SVG_H+'px';
+let modeMenuOpen=false;
+
+function openModeMenu(){
+  modeMenuOpen=true;
+  document.getElementById('mode-menu').classList.add('open');
+  document.body.classList.add('mode-menu-open');
+}
+function closeModeMenu(){
+  modeMenuOpen=false;
+  document.getElementById('mode-menu').classList.remove('open');
+  document.body.classList.remove('mode-menu-open');
+}
+function toggleModeMenu(){
+  if(modeMenuOpen)closeModeMenu();else openModeMenu();
 }
 
-function openFan(){fanOpen=true;document.getElementById('fan-wrap').classList.add('open');}
-function closeFan(){fanOpen=false;document.getElementById('fan-wrap').classList.remove('open');}
-function toggleFan(){if(fanOpen)closeFan();else openFan();}
+function updateModeMenuActive(){
+  document.querySelectorAll('.mm-item').forEach(el=>{
+    el.classList.toggle('active', el.getAttribute('data-mode')===activeMode);
+  });
+}
 
-function selectFanMode(id){
-  activeMode=id;closeFan();buildFanMenu();
+function selectModeItem(id){
+  activeMode=id;
+  closeModeMenu();
   const label=LABELS[id]||id;
   document.getElementById('bb-mode-label').textContent=label;
-  // Sync run dialog job type
-  const sel=document.getElementById('rd-jobtype');const opts=[...sel.options];const m=opts.findIndex(o=>o.text.toLowerCase()===id);if(m>=0)sel.selectedIndex=m;
-  log('[fan] Mode: '+label);
-}
-function hideFanMode(){
-  activeMode=null;
-  document.getElementById('bb-mode-label').textContent='Geometry';
-  buildFanMenu();
+  updateModeMenuActive();
+  // Sync run dialog
+  const sel=document.getElementById('rd-jobtype');
+  const m=[...sel.options].findIndex(o=>o.text.toLowerCase()===id);
+  if(m>=0)sel.selectedIndex=m;
+  log('[mode] Selected: '+label);
 }
 
-/* Bottom-right corner click area to open fan */
-function initFanTrigger(){
-  // Create an invisible trigger zone at bottom-right of screen
-  const zone=document.createElement('div');
-  zone.style.cssText='position:fixed;bottom:0;right:0;width:60px;height:64px;z-index:499;cursor:pointer;';
-  zone.title='Open calculation mode menu';
-  zone.addEventListener('click',e=>{e.stopPropagation();toggleFan();});
-  document.body.appendChild(zone);
+function hideFanMode(){
+  activeMode='geometry';
+  document.getElementById('bb-mode-label').textContent='Geometry';
+  updateModeMenuActive();
+  closeModeMenu();
 }
+
+/* Keep toggleFan alias so old references don't break */
+function openFan(){openModeMenu();}
+function closeFan(){closeModeMenu();}
+function toggleFan(){toggleModeMenu();}
+function selectFanMode(id){selectModeItem(id);}
+function buildFanMenu(){updateModeMenuActive();}
+function initFanTrigger(){} /* no-op, trigger is now bb-right */
 
 /* ════════════ HAMBURGER MENU ════════════ */
 function toggleHbMenu(e){e.stopPropagation();hbOpen=!hbOpen;document.getElementById('hbmenu').classList.toggle('open',hbOpen);}
