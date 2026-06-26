@@ -243,79 +243,111 @@ body.mode-menu-open #bb-icon-close{display:flex}
 }
 #console-btn:hover{background:#4a4a4a;color:#fff}
 
-/* ══ MODE MENU — vertical slide-up from bottom-right ══ */
+/* ══ MODE MENU — vertical fly-in from bottom-right ══ */
 #mode-menu{
   position:fixed;
-  bottom:30px;          /* sits just above bottom bar */
+  bottom:30px;
   right:0;
   z-index:600;
   width:190px;
-  background:#5a5a5a;
-  border-top:2px solid #444;
-  border-left:2px solid #444;
-  border-radius:6px 0 0 0;
-  overflow:hidden;
-  /* slide up from below */
-  transform:translateY(100%);
-  opacity:0;
   pointer-events:none;
-  transition:transform .22s cubic-bezier(.4,0,.2,1), opacity .18s ease;
-  box-shadow:-4px -4px 18px rgba(0,0,0,.4);
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
 }
-#mode-menu.open{
-  transform:translateY(0);
-  opacity:1;
-  pointer-events:all;
-}
+#mode-menu.open{pointer-events:all;}
+
+/* Each mode item flies in from the right */
 .mm-item{
-  display:flex;align-items:center;
-  padding:10px 18px;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:flex-start;
+  width:100%;
+  padding:9px 18px 9px 16px;
+  background:#5c5c5c;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  border-left:2px solid #444;
   cursor:pointer;
-  transition:background .1s;
+  transition:background .12s;
   gap:10px;
+  /* fly-in start: off-screen right, invisible */
+  transform:translateX(110%);
+  opacity:0;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s ease, background .1s;
 }
-.mm-item:last-child{border-bottom:none}
-.mm-item:hover{background:rgba(255,255,255,.14)}
-.mm-item:active{background:rgba(255,255,255,.24)}
-.mm-item.active{background:rgba(41,182,210,.28);border-left:3px solid #29b6d2;}
+.mm-item:first-child{border-top:2px solid #444;border-radius:6px 0 0 0;}
+.mm-item:last-child{border-bottom:2px solid #444;border-radius:0;}
+.mm-item:hover{background:#4a8f4a;}
+.mm-item:active{background:#3d7a3d;}
+.mm-item.active{background:rgba(41,182,210,.32);border-left:3px solid #29b6d2;}
+/* Fly-in when open: translate back to 0 with stagger via JS */
+.mm-item.fly-in{transform:translateX(0);opacity:1;}
 .mm-lbl{
   font-size:13px;font-weight:400;font-style:italic;
   color:#e8e8e8;letter-spacing:.01em;
+  white-space:nowrap;
 }
 .mm-item.active .mm-lbl{color:#29b6d2;font-weight:700;}
 
-/* ══ HAMBURGER MENU — slide-up from bottom-left ══ */
+/* ══ LEFT MENU — vertical fly-in from bottom-left ══ */
 #hbmenu{
-  position:fixed;bottom:32px;left:0;z-index:600;
-  width:260px;background:#5c5c5c;
-  border-top:2px solid #444;border-right:2px solid #444;border-radius:0 6px 0 0;
-  overflow:hidden;transform:translateY(100%);opacity:0;pointer-events:none;
-  transition:transform .22s cubic-bezier(.4,0,.2,1),opacity .18s;
-  box-shadow:4px -4px 18px rgba(0,0,0,.45);
+  position:fixed;
+  bottom:30px;
+  left:0;
+  z-index:600;
+  width:190px;
+  pointer-events:none;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
 }
-#hbmenu.open{transform:translateY(0);opacity:1;pointer-events:all}
-.hb-item{display:flex;align-items:center;gap:14px;padding:10px 18px;
-  border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;transition:background .1s}
-.hb-item:last-child{border-bottom:none}
-.hb-item:hover{background:rgba(255,255,255,.13)}
-.hb-item:active{background:rgba(255,255,255,.22)}
-/* SVG icon styling */
-.hb-ico{width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.hb-ico svg{width:22px;height:22px;fill:none;stroke:#cccccc;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.hb-lbl{font-size:13px;font-weight:400;color:#e8e8e8;font-style:italic;letter-spacing:.01em}
-.hb-div{height:1px;background:rgba(255,255,255,.14);margin:0}
-/* Close X at bottom of menu */
+#hbmenu.open{pointer-events:all;}
+
+.hb-item{
+  display:flex;align-items:center;
+  width:100%;
+  padding:9px 18px 9px 16px;
+  background:#5c5c5c;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  border-right:2px solid #444;
+  cursor:pointer;
+  gap:10px;
+  /* fly-in start: off-screen left, invisible */
+  transform:translateX(-110%);
+  opacity:0;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s ease, background .1s;
+}
+.hb-item:first-child{border-top:2px solid #444;border-radius:0 6px 0 0;}
+.hb-item:hover{background:rgba(255,255,255,.14);}
+.hb-item:active{background:rgba(255,255,255,.24);}
+/* Fly-in when open */
+.hb-item.fly-in{transform:translateX(0);opacity:1;}
+.hb-lbl{
+  font-size:13px;font-weight:400;font-style:italic;
+  color:#e8e8e8;letter-spacing:.01em;
+  white-space:nowrap;
+}
+/* Square close button at bottom of left menu */
 #hb-close-row{
+  width:100%;
   display:flex;align-items:center;justify-content:flex-start;
-  padding:6px 12px;background:#4a4a4a;border-top:1px solid #444;
+  padding:6px 14px;
+  background:#4a4a4a;
+  border-top:1px solid #444;
+  border-right:2px solid #444;
+  border-bottom:2px solid #444;
+  transform:translateX(-110%);
+  opacity:0;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
 }
+#hb-close-row.fly-in{transform:translateX(0);opacity:1;}
 #hb-close-x{
-  width:26px;height:26px;border-radius:50%;background:#e82020;
-  border:2px solid #c01818;display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:15px;font-weight:900;cursor:pointer;
+  width:26px;height:26px;
+  border-radius:4px;
+  background:#e05520;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:16px;font-weight:900;
+  cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.3);
 }
-#hb-close-x:hover{background:#c01818}
+#hb-close-x:hover{background:#c03d10;}
 
 /* ══ "RUN A JOB" DIALOG ══ */
 #run-dialog-overlay{
@@ -647,61 +679,30 @@ body.mode-menu-open #bb-icon-close{display:flex}
   </div>
 </div>
 
-<!-- ══ VERTICAL MODE MENU — slides up from bottom-right ══ -->
+<!-- ══ VERTICAL MODE MENU — flies in from bottom-right ══ -->
 <div id="mode-menu">
-  <div class="mm-item" data-mode="geometry"  onclick="selectModeItem('geometry')"> <span class="mm-lbl">Geometry</span></div>
-  <div class="mm-item" data-mode="scf"       onclick="selectModeItem('scf')">      <span class="mm-lbl">SCF</span></div>
-  <div class="mm-item" data-mode="optimize"  onclick="selectModeItem('optimize')"> <span class="mm-lbl">Optimize</span></div>
-  <div class="mm-item" data-mode="band"      onclick="selectModeItem('band')">     <span class="mm-lbl">Band</span></div>
-  <div class="mm-item" data-mode="dos"       onclick="selectModeItem('dos')">      <span class="mm-lbl">DOS</span></div>
-  <div class="mm-item" data-mode="md"        onclick="selectModeItem('md')">       <span class="mm-lbl">MD</span></div>
-  <div class="mm-item" data-mode="phonon"    onclick="selectModeItem('phonon')">   <span class="mm-lbl">Phonon</span></div>
-  <div class="mm-item" data-mode="tddft"     onclick="selectModeItem('tddft')">    <span class="mm-lbl">TD-DFT</span></div>
-  <div class="mm-item" data-mode="neb"       onclick="selectModeItem('neb')">      <span class="mm-lbl">NEB</span></div>
+  <div class="mm-item" data-mode="geometry" onclick="selectModeItem('geometry')"><span class="mm-lbl">Geometry</span></div>
+  <div class="mm-item" data-mode="scf"      onclick="selectModeItem('scf')">     <span class="mm-lbl">SCF</span></div>
+  <div class="mm-item" data-mode="optimize" onclick="selectModeItem('optimize')"><span class="mm-lbl">Optimize</span></div>
+  <div class="mm-item" data-mode="abmd"     onclick="selectModeItem('abmd')">    <span class="mm-lbl">ab-MD</span></div>
+  <div class="mm-item" data-mode="dos"      onclick="selectModeItem('dos')">     <span class="mm-lbl">DOS</span></div>
+  <div class="mm-item" data-mode="band"     onclick="selectModeItem('band')">    <span class="mm-lbl">Band</span></div>
+  <div class="mm-item" data-mode="neb"      onclick="selectModeItem('neb')">     <span class="mm-lbl">NEB</span></div>
+  <div class="mm-item" data-mode="tddft"    onclick="selectModeItem('tddft')">   <span class="mm-lbl">TD-DFT</span></div>
+  <div class="mm-item" data-mode="phonon"   onclick="selectModeItem('phonon')">  <span class="mm-lbl">Phonon</span></div>
 </div>
 
-<!-- ══ HAMBURGER MENU ══ -->
+<!-- ══ LEFT MENU — flies in from bottom-left ══ -->
 <div id="hbmenu">
-  <div class="hb-item" onclick="hbAction('result')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M7 21h10M12 17v4"/><path d="M7 9h10M7 12h6"/></svg></div>
-    <div class="hb-lbl">Result</div>
-  </div>
-  <div class="hb-item" onclick="hbAction('run')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 8l8 4-8 4V8z" fill="#ccc" stroke="#ccc"/></svg></div>
-    <div class="hb-lbl">Run</div>
-  </div>
-  <div class="hb-div"></div>
-  <div class="hb-item" onclick="hbAction('screenshot')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
-    <div class="hb-lbl">Screen-shot</div>
-  </div>
-  <div class="hb-item" onclick="hbAction('designer')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="none" fill="none"/><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" stroke="#ccc"/><circle cx="7" cy="12" r="3" fill="#e53" stroke="none"/><circle cx="14" cy="8" r="3" fill="#2ae" stroke="none"/><circle cx="14" cy="16" r="3" fill="#4c4" stroke="none"/></svg></div>
-    <div class="hb-lbl">Designer</div>
-  </div>
-  <div class="hb-div"></div>
-  <div class="hb-item" onclick="hbAction('saveas')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/><path d="M12 21v-4" stroke-width="2.5"/><polyline points="9 17 12 21 15 17" stroke-width="1.5"/></svg></div>
-    <div class="hb-lbl">Save as …</div>
-  </div>
-  <div class="hb-item" onclick="hbAction('save')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></div>
-    <div class="hb-lbl">Save</div>
-  </div>
-  <div class="hb-div"></div>
-  <div class="hb-item" onclick="hbAction('modeler')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></div>
-    <div class="hb-lbl">Modeler</div>
-  </div>
-  <div class="hb-item" onclick="hbAction('inputfile')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
-    <div class="hb-lbl">Input-file</div>
-  </div>
-  <div class="hb-item" onclick="hbAction('showatoms')">
-    <div class="hb-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div>
-    <div class="hb-lbl">Show atoms</div>
-  </div>
-  <!-- Close X row at bottom -->
+  <div class="hb-item" onclick="hbAction('result')">    <span class="hb-lbl">Result</span></div>
+  <div class="hb-item" onclick="hbAction('run')">       <span class="hb-lbl">Run</span></div>
+  <div class="hb-item" onclick="hbAction('screenshot')"><span class="hb-lbl">Screen-shot</span></div>
+  <div class="hb-item" onclick="hbAction('designer')">  <span class="hb-lbl">Designer</span></div>
+  <div class="hb-item" onclick="hbAction('saveas')">    <span class="hb-lbl">Save as</span></div>
+  <div class="hb-item" onclick="hbAction('save')">      <span class="hb-lbl">Save</span></div>
+  <div class="hb-item" onclick="hbAction('modeler')">   <span class="hb-lbl">Modeler</span></div>
+  <div class="hb-item" onclick="hbAction('inputfile')"> <span class="hb-lbl">Input-file</span></div>
+  <div class="hb-item" onclick="hbAction('showatoms')"> <span class="hb-lbl">Show atoms</span></div>
   <div id="hb-close-row">
     <div id="hb-close-x" onclick="closeHbMenu()">×</div>
   </div>
@@ -811,7 +812,7 @@ const FAN_ITEMS=[
   {id:'tddft',   label:'TD-DFT'},
   {id:'neb',     label:'NEB'},
 ];
-const LABELS={scf:'SCF',optimize:'Optimize',band:'Band',dos:'DOS',md:'MD',phonon:'Phonon',tddft:'TD-DFT',neb:'NEB',geometry:'Geometry'};
+const LABELS={scf:'SCF',optimize:'Optimize',band:'Band',dos:'DOS',md:'MD',abmd:'ab-MD',phonon:'Phonon',tddft:'TD-DFT',neb:'NEB',geometry:'Geometry'};
 
 /* ════════════ STATE ════════════ */
 let current=JSON.parse(JSON.stringify(STRUCTS.gaas)),supercell=[1,1,1];
@@ -1229,63 +1230,88 @@ function toggleAcc(bodyId,arrowId){const body=document.getElementById(bodyId),ar
 function log(s){const o=document.getElementById('console-out');if(o){o.textContent+=s+'\n';o.scrollTop=o.scrollHeight;}}
 function toggleConsole(){consoleOpen=!consoleOpen;document.getElementById('console-area').classList.toggle('open',consoleOpen);document.getElementById('console-btn').textContent=consoleOpen?'Console ▼':'Console ▲';}
 
-/* ════════════ VERTICAL MODE MENU ════════════
-   Slides up from bottom-right above the bottom bar.
-   Icon in bottom bar toggles: stacked-lines ↔ square orange-red ×
-*/
-let modeMenuOpen=false;
+/* ════════════ STAGGERED FLY-IN HELPERS ════════════ */
+function flyIn(items, delayBase=30, maxDelay=300){
+  items.forEach((el,i)=>{
+    const delay=Math.min(i*delayBase, maxDelay);
+    setTimeout(()=>el.classList.add('fly-in'), delay);
+  });
+}
+function flyOut(items){
+  items.forEach(el=>el.classList.remove('fly-in'));
+}
 
+/* ════════════ VERTICAL MODE MENU (right) ════════════ */
+let modeMenuOpen=false;
 function openModeMenu(){
   modeMenuOpen=true;
   document.getElementById('mode-menu').classList.add('open');
   document.body.classList.add('mode-menu-open');
+  const items=[...document.querySelectorAll('.mm-item')];
+  // Items fly in bottom-to-top: last item first so it appears lowest
+  flyIn([...items].reverse());
 }
 function closeModeMenu(){
   modeMenuOpen=false;
-  document.getElementById('mode-menu').classList.remove('open');
-  document.body.classList.remove('mode-menu-open');
+  flyOut(document.querySelectorAll('.mm-item'));
+  // Small delay so fly-out is visible before pointer-events removed
+  setTimeout(()=>{
+    document.getElementById('mode-menu').classList.remove('open');
+    document.body.classList.remove('mode-menu-open');
+  }, 80);
 }
-function toggleModeMenu(){
-  if(modeMenuOpen)closeModeMenu();else openModeMenu();
-}
+function toggleModeMenu(){if(modeMenuOpen)closeModeMenu();else openModeMenu();}
 
 function updateModeMenuActive(){
   document.querySelectorAll('.mm-item').forEach(el=>{
     el.classList.toggle('active', el.getAttribute('data-mode')===activeMode);
   });
 }
-
 function selectModeItem(id){
   activeMode=id;
   closeModeMenu();
   const label=LABELS[id]||id;
   document.getElementById('bb-mode-label').textContent=label;
   updateModeMenuActive();
-  // Sync run dialog
   const sel=document.getElementById('rd-jobtype');
   const m=[...sel.options].findIndex(o=>o.text.toLowerCase()===id);
   if(m>=0)sel.selectedIndex=m;
   log('[mode] Selected: '+label);
 }
-
 function hideFanMode(){
   activeMode='geometry';
   document.getElementById('bb-mode-label').textContent='Geometry';
   updateModeMenuActive();
   closeModeMenu();
 }
-
-/* Keep toggleFan alias so old references don't break */
+/* Aliases */
 function openFan(){openModeMenu();}
 function closeFan(){closeModeMenu();}
 function toggleFan(){toggleModeMenu();}
 function selectFanMode(id){selectModeItem(id);}
 function buildFanMenu(){updateModeMenuActive();}
-function initFanTrigger(){} /* no-op, trigger is now bb-right */
+function initFanTrigger(){}
 
-/* ════════════ HAMBURGER MENU ════════════ */
-function toggleHbMenu(e){e.stopPropagation();hbOpen=!hbOpen;document.getElementById('hbmenu').classList.toggle('open',hbOpen);}
-function closeHbMenu(){hbOpen=false;document.getElementById('hbmenu').classList.remove('open');}
+/* ════════════ LEFT MENU (hamburger) ════════════ */
+function toggleHbMenu(e){
+  e.stopPropagation();
+  hbOpen=!hbOpen;
+  if(hbOpen){
+    document.getElementById('hbmenu').classList.add('open');
+    const items=[...document.querySelectorAll('.hb-item'), document.getElementById('hb-close-row')];
+    flyIn([...items].reverse()); // bottom item flies in first
+  } else {
+    closeHbMenu();
+  }
+}
+function closeHbMenu(){
+  hbOpen=false;
+  flyOut(document.querySelectorAll('.hb-item'));
+  const cr=document.getElementById('hb-close-row');if(cr)cr.classList.remove('fly-in');
+  setTimeout(()=>document.getElementById('hbmenu').classList.remove('open'), 80);
+}
+
+/* ════════════ HAMBURGER ACTIONS ════════════ */
 function hbAction(action){
   closeHbMenu();
   switch(action){
