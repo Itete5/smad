@@ -26,9 +26,41 @@ input,select,textarea{font-family:inherit}
 .tab-close:hover{background:#bbb}
 #workspace{display:flex;flex:1;min-height:0}
 
-/* ══ 3D VIEWER (Crystal Toolkit) ══ */
-#viewer-area{flex:1;min-width:0;position:relative;background:#fff;border:1px solid #ddd}
-#dft-3dviewer{width:100%;height:100%;position:absolute;inset:0}
+/* ══ 3D VIEWER (CrystalForge engine) ══ */
+#viewer-area{flex:1;min-width:0;position:relative;background:#fff;border:1px solid #ddd;overflow:hidden}
+#dft-3dviewer{width:100%;height:100%;position:absolute;inset:0;cursor:grab}
+#dft-3dviewer:active{cursor:grabbing}
+
+/* CF Status bar inside viewer */
+#cf-statusbar{
+  position:absolute;bottom:0;left:0;right:0;height:22px;
+  background:rgba(245,245,245,.92);border-top:1px solid #ddd;
+  display:flex;align-items:center;gap:0;z-index:15;
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:#555;
+  pointer-events:none;
+}
+.cf-sb-item{padding:0 10px;border-right:1px solid #ddd;white-space:nowrap;height:100%;display:flex;align-items:center;}
+
+/* CF Selection highlight */
+#cf-selection-info{
+  position:absolute;top:10px;left:10px;z-index:18;
+  background:rgba(255,255,255,.95);border:1px solid #2e7dcc;border-radius:4px;
+  padding:6px 10px;font-size:11px;color:#333;
+  display:none;min-width:160px;box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+#cf-selection-info.vis{display:block}
+#cf-selection-info .cf-si-title{font-weight:700;color:#2e7dcc;font-size:12px;margin-bottom:4px}
+#cf-selection-info .cf-si-row{display:flex;justify-content:space-between;gap:12px;margin:1px 0}
+#cf-selection-info .cf-si-k{color:#888;}
+#cf-selection-info .cf-si-v{font-family:'JetBrains Mono',monospace;color:#333;font-weight:500}
+
+/* Atom label (CSS2D) */
+.cf-atom-label{
+  font-family:'Roboto',sans-serif;font-size:10px;font-weight:700;
+  color:#222;background:rgba(255,255,255,.75);
+  padding:1px 3px;border-radius:2px;pointer-events:none;
+  white-space:nowrap;
+}
 
 /* Crystal Toolkit toolbar — right side, vertical, icon-only with tooltips */
 #ct-toolbar{
@@ -542,9 +574,26 @@ body.mode-menu-open #bb-icon-close{display:flex}
 
     <!-- Atom legend pills -->
     <div id="atom-pills"></div>
-    <!-- XYZ axis gizmo — fixed bottom-left, canvas updated by Three.js camera sync -->
+    <!-- XYZ axis gizmo -->
     <canvas id="xyz-gizmo" width="88" height="88"
-      style="position:absolute;bottom:12px;left:12px;z-index:20;pointer-events:none;"></canvas>
+      style="position:absolute;bottom:26px;left:12px;z-index:20;pointer-events:none;"></canvas>
+    <!-- Selection info panel -->
+    <div id="cf-selection-info">
+      <div class="cf-si-title" id="cf-si-title">—</div>
+      <div class="cf-si-row"><span class="cf-si-k">Z</span><span class="cf-si-v" id="cf-si-z">—</span></div>
+      <div class="cf-si-row"><span class="cf-si-k">Frac</span><span class="cf-si-v" id="cf-si-frac">—</span></div>
+      <div class="cf-si-row"><span class="cf-si-k">Cart (Å)</span><span class="cf-si-v" id="cf-si-cart">—</span></div>
+      <div class="cf-si-row"><span class="cf-si-k">CN</span><span class="cf-si-v" id="cf-si-cn">—</span></div>
+    </div>
+    <!-- Status bar -->
+    <div id="cf-statusbar">
+      <div class="cf-sb-item" id="cf-sb-formula">—</div>
+      <div class="cf-sb-item" id="cf-sb-atoms">0 atoms</div>
+      <div class="cf-sb-item" id="cf-sb-sg">SG: —</div>
+      <div class="cf-sb-item" id="cf-sb-vol">Vol: —</div>
+      <div class="cf-sb-item" id="cf-sb-sel">No selection</div>
+      <div class="cf-sb-item" id="cf-sb-dist" style="flex:1">—</div>
+    </div>
   </div>
 
   <!-- ══ RIGHT PANEL ══ -->
@@ -837,251 +886,359 @@ function init(){
 }
 
 /* ════════════ VIEWER ════════════ */
-/* ════════════ THREE.JS CRYSTAL TOOLKIT VIEWER ════════════
-   Crystal Toolkit style: white bg, ball+stick, element colours,
-   OrbitControls-style mouse, XYZ gizmo synced to camera.
-*/
-let THREE_scene,THREE_camera,THREE_renderer,THREE_animId;
-let THREE_isDragging=false,THREE_lastMouse={x:0,y:0};
-let THREE_spherical={theta:0.6,phi:1.1,r:18}; // camera spherical coords
-let THREE_target={x:0,y:0,z:0}; // orbit target
-let THREE_zoom=1;
-let THREE_atomGroup=null,THREE_bondGroup=null,THREE_cellGroup=null,THREE_axGroup=null;
+/* ═══════════════════════════════════════════════════════════════════════
+   CrystalForge Engine — embedded in SMAD DFT Simulator
+   Full-featured crystal viewer: InstancedMesh, raycasting, selection,
+   bonds, polyhedra, PBR lighting, OrbitControls-style controls, gizmo.
+   Covalent-radius-based bond detection, element CPK colours (full set).
+   ═══════════════════════════════════════════════════════════════════════ */
 
+/* ── Full element datasets ──────────────────────────────────────────── */
+const CF_Z={H:1,He:2,Li:3,Be:4,B:5,C:6,N:7,O:8,F:9,Ne:10,Na:11,Mg:12,Al:13,Si:14,P:15,S:16,Cl:17,Ar:18,K:19,Ca:20,Sc:21,Ti:22,V:23,Cr:24,Mn:25,Fe:26,Co:27,Ni:28,Cu:29,Zn:30,Ga:31,Ge:32,As:33,Se:34,Br:35,Sr:38,Y:39,Zr:40,Nb:41,Mo:42,Ru:44,Rh:45,Pd:46,Ag:47,Cd:48,In:49,Sn:50,Sb:51,Te:52,I:53,Cs:55,Ba:56,La:57,Hf:72,Ta:73,W:74,Re:75,Os:76,Ir:77,Pt:78,Au:79,Hg:80,Tl:81,Pb:82,Bi:83,U:92};
+const CF_CRADII={H:.31,He:.28,Li:1.28,Be:.96,B:.84,C:.77,N:.71,O:.66,F:.57,Ne:.58,Na:1.66,Mg:1.41,Al:1.21,Si:1.11,P:1.07,S:1.05,Cl:1.02,Ar:1.06,K:2.03,Ca:1.76,Sc:1.70,Ti:1.60,V:1.53,Cr:1.39,Mn:1.50,Fe:1.32,Co:1.26,Ni:1.24,Cu:1.32,Zn:1.22,Ga:1.22,Ge:1.20,As:1.19,Se:1.20,Br:1.20,Kr:1.16,Rb:2.20,Sr:1.95,Y:1.90,Zr:1.75,Nb:1.64,Mo:1.54,Tc:1.47,Ru:1.46,Rh:1.42,Pd:1.39,Ag:1.45,Cd:1.44,In:1.42,Sn:1.39,Sb:1.39,Te:1.38,I:1.39,Xe:1.40,Cs:2.44,Ba:2.15,La:2.07,Hf:1.75,Ta:1.70,W:1.62,Re:1.51,Os:1.44,Ir:1.41,Pt:1.36,Au:1.36,Hg:1.32,Tl:1.45,Pb:1.46,Bi:1.48,U:1.96,default:1.20};
+const CF_COLORS={H:'#ffffff',He:'#d9ffff',Li:'#cc80ff',Be:'#c2ff00',B:'#ffb5b5',C:'#909090',N:'#3050f8',O:'#ff0d0d',F:'#90e050',Ne:'#b3e3f5',Na:'#ab5cf2',Mg:'#8aff00',Al:'#bfa6a6',Si:'#f0c8a0',P:'#ff8000',S:'#ffff30',Cl:'#1ff01f',Ar:'#80d1e3',K:'#8f40d4',Ca:'#3dff00',Sc:'#e6e6e6',Ti:'#bfc2c7',V:'#a6a6ab',Cr:'#8a99c7',Mn:'#9c7ac7',Fe:'#e06633',Co:'#f090a0',Ni:'#50d050',Cu:'#c88033',Zn:'#7d80b0',Ga:'#c28f8f',Ge:'#668f8f',As:'#bd80e3',Se:'#ffa100',Br:'#a62929',Kr:'#5cb8d1',Rb:'#702eb0',Sr:'#00ff00',Y:'#94ffff',Zr:'#94e0e0',Nb:'#73c2c9',Mo:'#54b5b5',Ru:'#248f8f',Rh:'#0a7d8c',Pd:'#006985',Ag:'#c0c0c0',Cd:'#ffd98f',In:'#a67573',Sn:'#668080',Sb:'#9e63b5',Te:'#d47a00',I:'#940094',Xe:'#429eb0',Cs:'#57178f',Ba:'#00c900',La:'#70d4ff',Hf:'#4dc2ff',Ta:'#4da6ff',W:'#2194d6',Re:'#267dab',Os:'#266696',Ir:'#175487',Pt:'#d0d0e0',Au:'#ffd123',Hg:'#b8b8d0',Tl:'#a6544d',Pb:'#575961',Bi:'#9e4fb5',U:'#008fff',default:'#888888'};
+const CF_DISPLAY_RADIUS={H:.25,C:.35,N:.33,O:.32,F:.30,Na:.90,Mg:.80,Al:.72,Si:.68,P:.65,S:.64,Cl:.62,K:1.25,Ca:1.10,Ti:1.00,V:.96,Cr:.88,Mn:.95,Fe:.85,Co:.82,Ni:.80,Cu:.83,Zn:.80,Ga:.80,Ge:.78,As:.77,Se:.78,Br:.78,Rb:1.40,Sr:1.25,Zr:1.10,Nb:1.04,Mo:.98,Ru:.93,Rh:.90,Pd:.88,Ag:.93,Cd:.94,Sn:.90,Sb:.90,Te:.89,I:.90,Cs:1.65,Ba:1.40,La:1.35,Hf:1.10,W:1.04,Re:.98,Os:.92,Ir:.90,Pt:.88,Au:.88,Pb:.98,Bi:1.00,U:1.28,default:.78};
+
+/* ── Engine state ─────────────────────────────────────────────────────── */
+const CF={
+  scene:null,camera:null,renderer:null,
+  animId:null,
+  spherical:{theta:.65,phi:1.05,r:20},
+  target:new THREE.Vector3(),
+  isDragging:false,lastMouse:{x:0,y:0},
+  atoms:[],bonds:[],
+  instancedAtoms:{},
+  bondGroup:null,cellGroup:null,
+  selected:[],
+  raycaster:new THREE.Raycaster(),
+  showAtoms:true,showBonds:true,showCell:true,
+  atomScale:0.95,  // multiplied by CF_DISPLAY_RADIUS
+  bondRadius:0.09,
+  bondTol:0.40,    // Angstrom tolerance added to covalent sum
+};
+
+/* ── Init ─────────────────────────────────────────────────────────────── */
 function initViewer(){
   const container=document.getElementById('dft-3dviewer');
-  if(!window.THREE){container.style.cssText='display:flex;align-items:center;justify-content:center;color:#888;font-size:12px';container.textContent='Three.js not loaded.';return;}
+  if(!window.THREE){
+    container.style.cssText='display:flex;align-items:center;justify-content:center;color:#888;font-size:13px';
+    container.textContent='Three.js r128 not loaded.';return;
+  }
+  const W=container.clientWidth||900,H=container.clientHeight||600;
+  CF.scene=new THREE.Scene();
+  CF.scene.background=new THREE.Color(0xffffff);
+  CF.camera=new THREE.PerspectiveCamera(36,W/H,0.05,2000);
+  cfUpdateCamera();
 
-  const W=container.clientWidth||800,H=container.clientHeight||600;
+  /* High-quality renderer */
+  CF.renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+  CF.renderer.setSize(W,H);
+  CF.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  CF.renderer.shadowMap.enabled=true;
+  CF.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  try{CF.renderer.outputEncoding=THREE.sRGBEncoding;}catch(e){}
+  container.appendChild(CF.renderer.domElement);
 
-  /* Scene */
-  THREE_scene=new THREE.Scene();
-  THREE_scene.background=new THREE.Color(0xffffff);
+  /* PBR studio lighting */
+  CF.scene.add(new THREE.AmbientLight(0xffffff,0.45));
+  const key=new THREE.DirectionalLight(0xffffff,0.85);key.position.set(6,9,7);key.castShadow=true;key.shadow.mapSize.set(1024,1024);CF.scene.add(key);
+  const fill=new THREE.DirectionalLight(0xd6e8ff,0.45);fill.position.set(-5,2,-4);CF.scene.add(fill);
+  const back=new THREE.DirectionalLight(0xfff4e0,0.28);back.position.set(1,-6,-5);CF.scene.add(back);
+  CF.scene.add(new THREE.HemisphereLight(0xffffff,0xeeeeee,0.28));
 
-  /* Camera */
-  THREE_camera=new THREE.PerspectiveCamera(40,W/H,0.1,1000);
-  updateCameraPos();
-
-  /* Renderer */
-  THREE_renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
-  THREE_renderer.setSize(W,H);
-  THREE_renderer.setPixelRatio(window.devicePixelRatio);
-  THREE_renderer.shadowMap.enabled=false;
-  container.appendChild(THREE_renderer.domElement);
-
-  /* Lights — Crystal Toolkit style: ambient + two directional */
-  const ambient=new THREE.AmbientLight(0xffffff,0.55);THREE_scene.add(ambient);
-  const dir1=new THREE.DirectionalLight(0xffffff,0.7);dir1.position.set(1,1,1);THREE_scene.add(dir1);
-  const dir2=new THREE.DirectionalLight(0xffffff,0.3);dir2.position.set(-1,-0.5,-1);THREE_scene.add(dir2);
-
-  /* Mouse controls */
-  const el=THREE_renderer.domElement;
-  el.addEventListener('mousedown',e=>{THREE_isDragging=true;THREE_lastMouse={x:e.clientX,y:e.clientY};});
-  window.addEventListener('mouseup',()=>THREE_isDragging=false);
-  window.addEventListener('mousemove',e=>{
-    if(!THREE_isDragging)return;
-    const dx=(e.clientX-THREE_lastMouse.x)*0.007;
-    const dy=(e.clientY-THREE_lastMouse.y)*0.007;
-    THREE_lastMouse={x:e.clientX,y:e.clientY};
-    if(e.buttons===1){THREE_spherical.theta-=dx;THREE_spherical.phi=Math.max(0.1,Math.min(Math.PI-.1,THREE_spherical.phi+dy));}
-    else if(e.buttons===2){/* pan */
-      const right=new THREE.Vector3();const up=new THREE.Vector3();
-      THREE_camera.getWorldDirection(new THREE.Vector3());
-      right.crossVectors(THREE_camera.getWorldDirection(new THREE.Vector3()),THREE_camera.up).normalize();
-      up.copy(THREE_camera.up);
-      THREE_target.x-=right.x*dx*THREE_spherical.r*0.5;
-      THREE_target.y+=up.y*dy*THREE_spherical.r*0.5;
-      THREE_target.z-=right.z*dx*THREE_spherical.r*0.5;
-    }
-    updateCameraPos();drawGizmo();
-  });
-  el.addEventListener('wheel',e=>{e.preventDefault();THREE_spherical.r=Math.max(3,THREE_spherical.r*Math.exp(e.deltaY*0.001));updateCameraPos();drawGizmo();},{passive:false});
+  /* Controls */
+  const el=CF.renderer.domElement;
+  el.addEventListener('mousedown',cfMD);
+  el.addEventListener('click',cfClick);
   el.addEventListener('contextmenu',e=>e.preventDefault());
+  window.addEventListener('mouseup',()=>{CF.isDragging=false;});
+  window.addEventListener('mousemove',cfMM);
+  el.addEventListener('wheel',cfWheel,{passive:false});
+  el.addEventListener('touchstart',cfTS,{passive:false});
+  el.addEventListener('touchmove',cfTM,{passive:false});
+  el.addEventListener('touchend',()=>{CF.isDragging=false;},{passive:false});
 
   /* Resize */
   new ResizeObserver(()=>{
     const W=container.clientWidth,H=container.clientHeight;
-    THREE_camera.aspect=W/H;THREE_camera.updateProjectionMatrix();
-    THREE_renderer.setSize(W,H);
+    CF.camera.aspect=W/H;CF.camera.updateProjectionMatrix();CF.renderer.setSize(W,H);
   }).observe(container);
 
-  /* Render loop */
-  (function animate(){THREE_animId=requestAnimationFrame(animate);THREE_renderer.render(THREE_scene,THREE_camera);}());
-  log('Crystal Toolkit viewer (Three.js) ready.');
+  /* Loop */
+  (function loop(){CF.animId=requestAnimationFrame(loop);CF.renderer.render(CF.scene,CF.camera);drawGizmo();}());
+  log('CrystalForge engine ready — InstancedMesh, PBR lighting, raycasting, bond detection.');
 }
 
-function updateCameraPos(){
-  if(!THREE_camera)return;
-  const {theta,phi,r}=THREE_spherical;
-  THREE_camera.position.set(
-    THREE_target.x+r*Math.sin(phi)*Math.sin(theta),
-    THREE_target.y+r*Math.cos(phi),
-    THREE_target.z+r*Math.sin(phi)*Math.cos(theta)
-  );
-  THREE_camera.lookAt(THREE_target.x,THREE_target.y,THREE_target.z);
-  THREE_camera.updateMatrixWorld();
+/* ── Camera ────────────────────────────────────────────────────────────── */
+function cfUpdateCamera(){
+  if(!CF.camera)return;
+  const {theta,phi,r}=CF.spherical,t=CF.target;
+  CF.camera.position.set(t.x+r*Math.sin(phi)*Math.sin(theta),t.y+r*Math.cos(phi),t.z+r*Math.sin(phi)*Math.cos(theta));
+  CF.camera.lookAt(t);CF.camera.updateMatrixWorld(true);
+}
+function resetView(){
+  const a=current.a||4;
+  CF.spherical={theta:.65,phi:1.05,r:Math.max(6,a*Math.max(...supercell)*3.5)};
+  CF.target.set(0,0,0);cfUpdateCamera();drawGizmo();
 }
 
-function clearGroup(g){if(g&&THREE_scene){THREE_scene.remove(g);g.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();});}}
-
-function hexToThree(hex){return new THREE.Color(hex);}
-
-function makeSphere(pos,radius,color){
-  const geo=new THREE.SphereGeometry(radius,20,16);
-  const mat=new THREE.MeshPhongMaterial({color:hexToThree(color),shininess:60});
-  const m=new THREE.Mesh(geo,mat);m.position.set(pos.x,pos.y,pos.z);return m;
+/* ── Mouse/touch ────────────────────────────────────────────────────────── */
+let CF_clickPending=false,CF_clickEv=null;
+function cfMD(e){CF.isDragging=false;CF.lastMouse={x:e.clientX,y:e.clientY};CF_clickPending=true;CF_clickEv=e;}
+function cfClick(e){/* handled via mousedown+mouseup delta */}
+let CF_tDist=0;
+function cfTS(e){e.preventDefault();if(e.touches.length===2){CF_tDist=Math.hypot(e.touches[1].clientX-e.touches[0].clientX,e.touches[1].clientY-e.touches[0].clientY);}else{CF.isDragging=true;CF.lastMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};}}
+function cfTM(e){e.preventDefault();if(e.touches.length===2){const d=Math.hypot(e.touches[1].clientX-e.touches[0].clientX,e.touches[1].clientY-e.touches[0].clientY);CF.spherical.r=Math.max(1.2,CF.spherical.r*(CF_tDist/d));CF_tDist=d;cfUpdateCamera();}else if(CF.isDragging){const dx=(e.touches[0].clientX-CF.lastMouse.x)*.006,dy=(e.touches[0].clientY-CF.lastMouse.y)*.006;CF.lastMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};CF.spherical.theta-=dx;CF.spherical.phi=Math.max(.06,Math.min(Math.PI-.06,CF.spherical.phi+dy));cfUpdateCamera();}}
+function cfMM(e){
+  if(!CF.isDragging&&CF_clickPending){const dx=e.clientX-CF.lastMouse.x,dy=e.clientY-CF.lastMouse.y;if(Math.hypot(dx,dy)>4){CF.isDragging=true;CF_clickPending=false;}}
+  if(!CF.isDragging)return;
+  const dx=(e.clientX-CF.lastMouse.x)*.006,dy=(e.clientY-CF.lastMouse.y)*.006;
+  CF.lastMouse={x:e.clientX,y:e.clientY};
+  if(e.buttons===1){CF.spherical.theta-=dx;CF.spherical.phi=Math.max(.06,Math.min(Math.PI-.06,CF.spherical.phi+dy));}
+  else if(e.buttons===2){
+    const right=new THREE.Vector3().crossVectors(CF.camera.getWorldDirection(new THREE.Vector3()),CF.camera.up).normalize();
+    const s=CF.spherical.r*.5;
+    CF.target.addScaledVector(right,-dx*s);CF.target.addScaledVector(CF.camera.up,dy*s);
+  }
+  cfUpdateCamera();
 }
-function makeCylinder(p1,p2,radius,color,opacity=1){
+function cfWheel(e){e.preventDefault();CF.spherical.r=Math.max(1.2,CF.spherical.r*Math.exp(e.deltaY*.0009));cfUpdateCamera();drawGizmo();}
+window.addEventListener('mouseup',e=>{
+  if(CF_clickPending&&!CF.isDragging&&CF.atoms.length){cfDoSelect(CF_clickEv||e);}
+  CF_clickPending=false;CF.isDragging=false;
+});
+
+/* ── Raycasting / selection ─────────────────────────────────────────────── */
+function cfDoSelect(e){
+  if(!CF.renderer||!CF.atoms.length)return;
+  const rect=CF.renderer.domElement.getBoundingClientRect();
+  const mx=((e.clientX-rect.left)/rect.width)*2-1;
+  const my=-((e.clientY-rect.top)/rect.height)*2+1;
+  CF.raycaster.setFromCamera(new THREE.Vector2(mx,my),CF.camera);
+  let bestAtom=null,bestD=1e9;
+  CF.atoms.forEach(a=>{
+    const pos=new THREE.Vector3(a.x,a.y,a.z);
+    const d=CF.raycaster.ray.distanceToPoint(pos);
+    const r=(CF_DISPLAY_RADIUS[a.el]||CF_DISPLAY_RADIUS.default)*CF.atomScale;
+    if(d<r*1.2&&d<bestD){bestD=d;bestAtom=a;}
+  });
+  if(bestAtom)cfSelectAtom(bestAtom,e.shiftKey);
+  else cfClearSel();
+}
+function cfSelectAtom(atom,additive){
+  if(!additive)CF.selected=[];
+  const ei=CF.selected.findIndex(a=>a.idx===atom.idx);
+  if(ei>=0)CF.selected.splice(ei,1);else CF.selected.push(atom);
+  cfRefreshColors();cfUpdateSelUI();
+}
+function cfClearSel(){CF.selected=[];cfRefreshColors();cfUpdateSelUI();}
+function cfRefreshColors(){
+  Object.values(CF.instancedAtoms).forEach(({mesh,atoms:ats})=>{
+    ats.forEach((a,i)=>{
+      const base=new THREE.Color(CF_COLORS[a.el]||CF_COLORS.default);
+      if(CF.selected.some(s=>s.idx===a.idx))base.lerp(new THREE.Color(0xffffff),0.55);
+      mesh.setColorAt(i,base);
+    });
+    if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+  });
+}
+function cfUpdateSelUI(){
+  const panel=document.getElementById('cf-selection-info');
+  const sb=document.getElementById('cf-sb-sel');
+  if(!CF.selected.length){panel&&panel.classList.remove('vis');if(sb)sb.textContent='No selection';document.getElementById('cf-sb-dist').textContent='—';return;}
+  const a=CF.selected[0],z=CF_Z[a.el]||'—';
+  const cn=CF.bonds.filter(b=>b.i===a.idx||b.j===a.idx).length;
+  if(panel){panel.classList.add('vis');document.getElementById('cf-si-title').textContent=`${a.el} #${a.idx+1}`;document.getElementById('cf-si-z').textContent=z;document.getElementById('cf-si-frac').textContent=`${a.fx.toFixed(3)}, ${a.fy.toFixed(3)}, ${a.fz.toFixed(3)}`;document.getElementById('cf-si-cart').textContent=`${a.x.toFixed(2)}, ${a.y.toFixed(2)}, ${a.z.toFixed(2)}`;document.getElementById('cf-si-cn').textContent=cn;}
+  if(sb)sb.textContent=`Sel: ${a.el}#${a.idx+1}`;
+  if(CF.selected.length===2){const b=CF.selected[1];const d=Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);document.getElementById('cf-sb-dist').textContent=`d(${a.el}–${b.el})=${d.toFixed(3)}Å`;}
+  else document.getElementById('cf-sb-dist').textContent='Shift+click for distance';
+}
+
+/* ── Build ──────────────────────────────────────────────────────────────── */
+function cfDisposeGroup(g){
+  if(!g||!CF.scene)return;
+  CF.scene.remove(g);
+  g.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material){if(Array.isArray(c.material))c.material.forEach(m=>m.dispose());else c.material.dispose();}});
+}
+function cfBuildPositions(){
+  const s=current,brav=s.bravais||'FCC',cell=CELL_VECS[brav]||CELL_VECS.SC;
+  const a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
+  const sc=supercell;
+  const pts=[];let idx=0;
+  for(let ix=0;ix<sc[0];ix++)for(let iy=0;iy<sc[1];iy++)for(let iz=0;iz<sc[2];iz++){
+    s.atoms.forEach(at=>{
+      const fx=at.f[0]+ix,fy=at.f[1]+iy,fz=at.f[2]+iz;
+      pts.push({el:at.el,idx:idx++,fx:at.f[0],fy:at.f[1],fz:at.f[2],
+        x:(cell[0][0]*fx+cell[1][0]*fy+cell[2][0]*fz)*a0,
+        y:(cell[0][1]*fx+cell[1][1]*fy+cell[2][1]*fz)*a0,
+        z:(cell[0][2]*fx+cell[1][2]*fy+cell[2][2]*fz)*cz});
+    });
+  }
+  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});
+  if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
+  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
+  return pts;
+}
+function cfBuildBonds(atoms){
+  const bonds=[];
+  for(let i=0;i<atoms.length;i++)for(let j=i+1;j<atoms.length;j++){
+    const ri=CF_CRADII[atoms[i].el]||CF_CRADII.default;
+    const rj=CF_CRADII[atoms[j].el]||CF_CRADII.default;
+    const cut=(ri+rj)+CF.bondTol;
+    const dx=atoms[i].x-atoms[j].x,dy=atoms[i].y-atoms[j].y,dz=atoms[i].z-atoms[j].z;
+    const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(d>0.3&&d<=cut)bonds.push({i,j,dist:d});
+  }
+  return bonds;
+}
+
+function draw3D(){
+  if(!CF.scene)return;
+  CF.selected=[];
+  // Dispose
+  Object.values(CF.instancedAtoms).forEach(({mesh})=>{CF.scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();});
+  CF.instancedAtoms={};
+  cfDisposeGroup(CF.bondGroup);cfDisposeGroup(CF.cellGroup);
+
+  CF.atoms=cfBuildPositions();
+  CF.bonds=cfBuildBonds(CF.atoms);
+
+  /* ── InstancedMesh atoms (one per element) ── */
+  if(document.getElementById('chk-atoms')?.checked!==false){
+    const byEl={};
+    CF.atoms.forEach(a=>{(byEl[a.el]||(byEl[a.el]=[])).push(a);});
+    Object.entries(byEl).forEach(([el,ats])=>{
+      const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*CF.atomScale;
+      const geo=new THREE.SphereGeometry(r,24,18);
+      const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||CF_COLORS.default),roughness:0.28,metalness:0.06,envMapIntensity:0.5});
+      const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
+      mesh.castShadow=true;mesh.receiveShadow=true;
+      ats.forEach((a,i)=>{
+        mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z));
+        mesh.setColorAt(i,new THREE.Color(CF_COLORS[el]||CF_COLORS.default));
+      });
+      mesh.instanceMatrix.needsUpdate=true;
+      if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+      CF.scene.add(mesh);
+      CF.instancedAtoms[el]={mesh,count:ats.length,atoms:ats};
+    });
+  }
+
+  /* ── Bonds ── */
+  CF.bondGroup=new THREE.Group();
+  const showB=document.getElementById('chk-bonds')?.checked!==false;
+  if(CF.showBonds&&showB){
+    // For large structures use LineSegments for performance
+    if(CF.atoms.length>2000){
+      const positions=[];
+      CF.bonds.forEach(({i,j})=>{positions.push(CF.atoms[i].x,CF.atoms[i].y,CF.atoms[i].z,CF.atoms[j].x,CF.atoms[j].y,CF.atoms[j].z);});
+      const geo=new THREE.BufferGeometry();
+      geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+      const mat=new THREE.LineBasicMaterial({color:0x888888,opacity:.7,transparent:true});
+      CF.bondGroup.add(new THREE.LineSegments(geo,mat));
+    } else {
+      CF.bonds.forEach(({i,j})=>{
+        const ai=CF.atoms[i],aj=CF.atoms[j];
+        const mid={x:(ai.x+aj.x)/2,y:(ai.y+aj.y)/2,z:(ai.z+aj.z)/2};
+        const c1=cfCyl({x:ai.x,y:ai.y,z:ai.z},mid,CF.bondRadius,CF_COLORS[ai.el]||CF_COLORS.default);
+        const c2=cfCyl(mid,{x:aj.x,y:aj.y,z:aj.z},CF.bondRadius,CF_COLORS[aj.el]||CF_COLORS.default);
+        if(c1)CF.bondGroup.add(c1);if(c2)CF.bondGroup.add(c2);
+      });
+    }
+  }
+  CF.scene.add(CF.bondGroup);
+
+  /* ── Unit cell ── */
+  CF.cellGroup=new THREE.Group();
+  if(document.getElementById('chk-cell')?.checked!==false)cfDrawCell();
+  CF.scene.add(CF.cellGroup);
+
+  cfUpdateStatus();cfUpdateSelUI();resetView();
+}
+
+function cfCyl(p1,p2,radius,colorHex){
   const dir=new THREE.Vector3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
-  const len=dir.length();if(len<0.001)return null;
-  const geo=new THREE.CylinderGeometry(radius,radius,len,12,1);
-  const mat=new THREE.MeshPhongMaterial({color:hexToThree(color),shininess:40,transparent:opacity<1,opacity});
-  const m=new THREE.Mesh(geo,mat);
-  const mid=new THREE.Vector3((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
-  m.position.copy(mid);
+  const len=dir.length();if(len<.001)return null;
+  const geo=new THREE.CylinderGeometry(radius,radius,len,10,1);
+  const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(colorHex),roughness:.5,metalness:0});
+  const m=new THREE.Mesh(geo,mat);m.castShadow=true;
+  m.position.set((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
   return m;
 }
 
-function draw3D(){
-  if(!THREE_scene)return;
-  clearGroup(THREE_atomGroup);clearGroup(THREE_bondGroup);clearGroup(THREE_cellGroup);
-  THREE_atomGroup=new THREE.Group();THREE_bondGroup=new THREE.Group();THREE_cellGroup=new THREE.Group();
-
+function cfDrawCell(){
   const s=current,brav=s.bravais||'FCC',cell=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
-  const sc=supercell;
-
-  /* Build atom positions in Cartesian coords */
-  const pts=[];
-  for(let ix=0;ix<sc[0];ix++)for(let iy=0;iy<sc[1];iy++)for(let iz=0;iz<sc[2];iz++){
-    s.atoms.forEach(at=>{
-      const fx=at.f[0]+ix,fy=at.f[1]+iy,fz=at.f[2]+iz;
-      pts.push({
-        el:at.el,
-        x:(cell[0][0]*fx+cell[1][0]*fy+cell[2][0]*fz)*a0,
-        y:(cell[0][1]*fx+cell[1][1]*fy+cell[2][1]*fz)*a0,
-        z:(cell[0][2]*fx+cell[1][2]*fy+cell[2][2]*fz)*cz,
-      });
-    });
-  }
-
-  /* Centre */
-  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});
-  if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
-  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
-
-  /* Atoms */
-  const showAtoms=document.getElementById('chk-atoms')?.checked!==false;
-  if(showAtoms){
-    pts.forEach(p=>{
-      const c=EL_COLORS[p.el]||EL_COLORS.default;
-      THREE_atomGroup.add(makeSphere({x:p.x,y:p.y,z:p.z},0.38,c));
-    });
-  }
-
-  /* Bonds — Crystal Toolkit: dual-colour cylinders */
-  const showBondsChk=document.getElementById('chk-bonds')?.checked!==false;
-  if(showBonds&&showBondsChk){
-    const BC=3.2;
-    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dz=pts[i].z-pts[j].z;
-      const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
-      if(d>0.1&&d<BC){
-        const mid={x:(pts[i].x+pts[j].x)/2,y:(pts[i].y+pts[j].y)/2,z:(pts[i].z+pts[j].z)/2};
-        const c1=makeCylinder({x:pts[i].x,y:pts[i].y,z:pts[i].z},mid,0.11,EL_COLORS[pts[i].el]||EL_COLORS.default);
-        const c2=makeCylinder(mid,{x:pts[j].x,y:pts[j].y,z:pts[j].z},0.11,EL_COLORS[pts[j].el]||EL_COLORS.default);
-        if(c1)THREE_bondGroup.add(c1);if(c2)THREE_bondGroup.add(c2);
-      }
-    }
-  }
-
-  /* Unit cell box */
-  const showCellChk=document.getElementById('chk-cell')?.checked!==false;
-  if(showCellChk){
-    const v=i=>{
-      const cz3=['HEX','TET'].includes(brav)?c0:a0;
-      return {x:cell[i][0]*a0*sc[0]-cx,y:cell[i][1]*a0*sc[1]-cy,z:cell[i][2]*cz3*sc[2]-cz2};
-    };
-    const O={x:-cx,y:-cy,z:-cz2},ax=v(0),ay=v(1),az=v(2);
-    const add=(p,q)=>({x:p.x+q.x,y:p.y+q.y,z:p.z+q.z});
-    const corners=[O,ax,ay,az,add(ax,ay),add(ax,az),add(ay,az),add(ax,add(ay,az))];
-    [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(([a,b])=>{
-      const cyl=makeCylinder(corners[a],corners[b],0.04,'#888888',0.7);
-      if(cyl)THREE_cellGroup.add(cyl);
-    });
-  }
-
-  THREE_scene.add(THREE_atomGroup);THREE_scene.add(THREE_bondGroup);THREE_scene.add(THREE_cellGroup);
-
-  /* Reset camera */
-  THREE_target={x:0,y:0,z:0};THREE_spherical.r=Math.max(8,a0*sc[0]*3.5);
-  updateCameraPos();drawGizmo();updatePills();
-}
-
-function resetView(){
-  THREE_target={x:0,y:0,z:0};THREE_spherical={theta:0.6,phi:1.1,r:Math.max(8,(current.a||4)*3.5)};
-  updateCameraPos();drawGizmo();
-}
-
-/* ════════ XYZ GIZMO CANVAS — fixed bottom-left, synced to camera ════════
-   Draws X(red) Y(green) Z(blue) axes projected from camera rotation.
-   Always visible, always in bottom-left corner of the viewer.
-*/
-function drawGizmo(){
-  const cv=document.getElementById('xyz-gizmo');if(!cv||!THREE_camera)return;
-  const ctx=cv.getContext('2d'),W=88,H=88,cx=28,cy=60,L=30;
-  ctx.clearRect(0,0,W,H);
-
-  /* Extract camera rotation to project axes */
-  const camMat=new THREE.Matrix4().extractRotation(THREE_camera.matrixWorldInverse);
-  function proj(v){
-    const w=new THREE.Vector3(v.x,v.y,v.z).applyMatrix4(camMat);
-    return{x:cx+w.x*L,y:cy-w.y*L,z:w.z};
-  }
-
-  const axes=[
-    {v:{x:1,y:0,z:0},c:'#dd2222',l:'X'},
-    {v:{x:0,y:1,z:0},c:'#22aa22',l:'Y'},
-    {v:{x:0,y:0,z:1},c:'#2244cc',l:'Z'},
-  ];
-  /* Draw back-to-front */
-  const projected=axes.map(a=>({...a,p:proj(a.v)}));
-  projected.sort((a,b)=>a.p.z-b.p.z);
-  projected.forEach(({c,l,p})=>{
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(p.x,p.y);
-    ctx.strokeStyle=c;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
-    /* Arrowhead */
-    const ang=Math.atan2(p.y-cy,p.x-cx);const al=7;
-    ctx.beginPath();
-    ctx.moveTo(p.x,p.y);
-    ctx.lineTo(p.x-al*Math.cos(ang-0.4),p.y-al*Math.sin(ang-0.4));
-    ctx.lineTo(p.x-al*Math.cos(ang+0.4),p.y-al*Math.sin(ang+0.4));
-    ctx.closePath();ctx.fillStyle=c;ctx.fill();
-    /* Label */
-    ctx.fillStyle=c;ctx.font='bold 11px Roboto,sans-serif';
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(l,p.x+(p.x-cx)*0.3,p.y+(p.y-cy)*0.3);
+  const a0=s.a||4,c0=s.c||a0,sc=supercell;
+  const cz=['HEX','TET'].includes(brav)?c0:a0;
+  const ax=new THREE.Vector3(cell[0][0]*a0*sc[0],cell[0][1]*a0*sc[1],cell[0][2]*cz*sc[2]);
+  const ay=new THREE.Vector3(cell[1][0]*a0*sc[0],cell[1][1]*a0*sc[1],cell[1][2]*cz*sc[2]);
+  const az=new THREE.Vector3(cell[2][0]*a0*sc[0],cell[2][1]*a0*sc[1],cell[2][2]*cz*sc[2]);
+  const O=ax.clone().add(ay).add(az).multiplyScalar(-.5);
+  const corners=[O.clone(),O.clone().add(ax),O.clone().add(ay),O.clone().add(az),O.clone().add(ax).add(ay),O.clone().add(ax).add(az),O.clone().add(ay).add(az),O.clone().add(ax).add(ay).add(az)];
+  [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(([a,b])=>{
+    const dir=new THREE.Vector3().subVectors(corners[b],corners[a]);
+    const len=dir.length();if(len<.001)return;
+    const geo=new THREE.CylinderGeometry(.025,.025,len,8);
+    const mat=new THREE.MeshStandardMaterial({color:0x777777,roughness:.8,transparent:true,opacity:.75});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.copy(new THREE.Vector3().addVectors(corners[a],corners[b]).multiplyScalar(.5));
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+    CF.cellGroup.add(m);
   });
 }
 
+function cfUpdateStatus(){
+  const s=current;
+  const a0=s.a||4,c0=s.c||a0,brav=s.bravais||'FCC';
+  const vol=(a0*a0*c0).toFixed(1);
+  const sgMap={FCC:'Fm-3m(225)',BCC:'Im-3m(229)',SC:'Pm-3m(221)',HEX:'P6₃/mmc(194)',TET:'P4/mmm(123)',ORTH:'Pmmm(47)',MONO:'P2/m(10)',TRI:'P-1(2)'};
+  document.getElementById('cf-sb-formula').textContent=s.formula||'—';
+  document.getElementById('cf-sb-atoms').textContent=CF.atoms.length+' atoms · '+CF.bonds.length+' bonds';
+  document.getElementById('cf-sb-sg').textContent='SG: '+(sgMap[brav]||'—');
+  document.getElementById('cf-sb-vol').textContent='V='+vol+' Å³';
+  document.getElementById('stFormula').textContent=s.formula||'—';
+  document.getElementById('stK').textContent=document.getElementById('kx').value+'×'+document.getElementById('ky').value+'×'+document.getElementById('kz').value;
+  document.getElementById('stEcut').textContent=document.getElementById('ecut').value+' Ry';
+  updatePills();
+}
+
+/* ── Gizmo ─────────────────────────────────────────────────────────────── */
+function drawGizmo(){
+  const cv=document.getElementById('xyz-gizmo');if(!cv||!CF.camera)return;
+  const ctx=cv.getContext('2d'),W=88,H=88,cx=26,cy=62,L=28;
+  ctx.clearRect(0,0,W,H);
+  const inv=new THREE.Matrix4().extractRotation(CF.camera.matrixWorldInverse);
+  const axes=[{v:new THREE.Vector3(1,0,0),c:'#dd2222',l:'a'},{v:new THREE.Vector3(0,1,0),c:'#22aa22',l:'b'},{v:new THREE.Vector3(0,0,1),c:'#2244cc',l:'c'}];
+  axes.map(a=>{const w=a.v.clone().applyMatrix4(inv);return{c:a.c,l:a.l,px:cx+w.x*L,py:cy-w.y*L,z:w.z};})
+    .sort((a,b)=>a.z-b.z)
+    .forEach(({c,l,px,py})=>{
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.strokeStyle=c;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
+      const ang=Math.atan2(py-cy,px-cx),al=7;
+      ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-al*Math.cos(ang-.4),py-al*Math.sin(ang-.4));ctx.lineTo(px-al*Math.cos(ang+.4),py-al*Math.sin(ang+.4));ctx.closePath();ctx.fillStyle=c;ctx.fill();
+      ctx.fillStyle=c;ctx.font='bold 11px Roboto,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(l,px+(px-cx)*.34,py+(py-cy)*.34);
+    });
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────────────── */
 function toggleFullscreen(){const el=document.getElementById('viewer-area');if(!document.fullscreenElement)el.requestFullscreen?.();else document.exitFullscreen?.();}
 function toggleSettings(){settingsOpen=!settingsOpen;document.getElementById('settings-panel').classList.toggle('open',settingsOpen);document.getElementById('btn-settings').classList.toggle('act',settingsOpen);}
 function closeSettings(){settingsOpen=false;document.getElementById('settings-panel').classList.remove('open');document.getElementById('btn-settings').classList.remove('act');}
-function toggleDropdown(id){document.querySelectorAll('.ct-dropdown').forEach(d=>{if(d.id!==id)d.classList.remove('open');});document.getElementById(id).classList.toggle('open');}
+function toggleDropdown(id){document.querySelectorAll('.ct-dropdown').forEach(d=>{if(d.id!==id)d.classList.remove('open');});document.getElementById(id)?.classList.toggle('open');}
 function doScreenshot(fmt){
   document.querySelectorAll('.ct-dropdown').forEach(d=>d.classList.remove('open'));
-  if(fmt==='png'&&THREE_renderer){const a=document.createElement('a');THREE_renderer.render(THREE_scene,THREE_camera);a.href=THREE_renderer.domElement.toDataURL('image/png');a.download=(current.formula||'structure')+'.png';a.click();}
-  else log('[screenshot] '+fmt+' — PNG only available in browser; use dedicated tool for 3D formats.');
+  if(fmt==='png'&&CF.renderer){CF.renderer.render(CF.scene,CF.camera);const a=document.createElement('a');a.href=CF.renderer.domElement.toDataURL('image/png');a.download=(current.formula||'structure')+'.png';a.click();}
+  else log('[screenshot] PNG only in browser; use dedicated tool for '+fmt);
 }
 function doExport(fmt){
   document.querySelectorAll('.ct-dropdown').forEach(d=>d.classList.remove('open'));
   const txt=buildQEInputText();
   if(fmt==='poscar'||fmt==='vasp'){const b=new Blob([txt],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.POSCAR';a.click();URL.revokeObjectURL(u);}
-  else if(fmt==='cif'||fmt==='cif-sym'){const b=new Blob([`# SMAD export\ndata_${current.formula}\n_cell_length_a ${current.a}\n_cell_length_b ${current.a}\n_cell_length_c ${current.c||current.a}\n_cell_angle_alpha 90\n_cell_angle_beta 90\n_cell_angle_gamma 90\n`],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.cif';a.click();URL.revokeObjectURL(u);}
-  else if(fmt==='json'){const b=new Blob([JSON.stringify(current,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.json';a.click();URL.revokeObjectURL(u);}
-  else{try{navigator.clipboard.writeText(txt).then(()=>log('[export] QE input copied to clipboard.'));}catch(e){log('[export] '+e.message);}}
+  else if(fmt==='cif'||fmt==='cif-sym'){const b=new Blob([`# CrystalForge\ndata_${current.formula}\n_cell_length_a ${current.a}\n_cell_length_b ${current.a}\n_cell_length_c ${current.c||current.a}\n_cell_angle_alpha 90\n_cell_angle_beta 90\n_cell_angle_gamma 90\n`],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.cif';a.click();URL.revokeObjectURL(u);}
+  else if(fmt==='json'){const b=new Blob([JSON.stringify({structure:current,cartesian_atoms:CF.atoms,bonds:CF.bonds},null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.json';a.click();URL.revokeObjectURL(u);}
+  else{try{navigator.clipboard.writeText(txt).then(()=>log('[export] QE input copied'));}catch(e){log('[export] '+e.message);}}
 }
+
 
 /* Atom pills */
 function updatePills(){
