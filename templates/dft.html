@@ -2346,44 +2346,90 @@ function evoQEInput(es){
   return t;
 }
 
-/* ── Submit single evo structure to cluster ──────────────────────────── */
+/* ── Submit single evo structure — fire and forget ───────────────────── */
 async function evoSubmitStruct(es){
   const h=getHost();
   es.qeInput=evoQEInput(es);
   if(!h){
-    // Simulate if no cluster
+    // Simulate locally — fast random result
     es.status=EVO_STATUS.RUNNING;evoRenderTable();
-    await sleep(300+Math.random()*400);
+    await sleep(200+Math.random()*300);
     es.energy=-(4.5+Math.random()*1.5)/es.structure.atoms.length;
     es.enthalpy=es.energy+(Math.random()-.5)*0.01;
     es.volume=(15+Math.random()*20)*es.structure.atoms.length;
     es.density=2+Math.random()*4;
     es.sg=['P1','P-1','Pm-3m','Fm-3m','Im-3m','P6/mmm','Fd-3m','R-3m'][Math.floor(Math.random()*8)];
     es.status=EVO_STATUS.DONE;
+    evoRenderTable();
     return true;
   }
+  // Real cluster: submit and start background poll — don't await completion here
   try{
     es.status=EVO_STATUS.RUNNING;evoRenderTable();
     const fd=new FormData();
-    fd.append('input_text',es.qeInput);fd.append('nodes','1');
-    fd.append('ntasks','44');fd.append('job_name',`evo_${es.id}`);
+    fd.append('input_text',es.qeInput);
+    fd.append('nodes','1');
+    fd.append('ntasks','44');
+    fd.append('job_name',`evo_${es.id}`);
     const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},15000);
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
     es.jobId=d.job_id;es.slurmId=d.slurm_id;
-    // Poll for result
-    for(let i=0;i<120;i++){
-      await sleep(5000);
+    logHPC(`[Evo] #${es.id} submitted → job_id=${es.jobId}`);
+    // Start background poller — returns immediately
+    evoPollJob(es,h);
+    return true;
+  }catch(e){
+    es.status=EVO_STATUS.FAILED;EVO.failCount++;
+    logHPC(`[Evo] #${es.id} submit error: ${e.message}`);
+    evoRenderTable();
+    return false;
+  }
+}
+
+/* ── Background job poller (non-blocking) ────────────────────────────── */
+async function evoPollJob(es,h){
+  for(let i=0;i<120;i++){
+    if(!EVO.running)return;
+    await sleep(5000);
+    try{
       const rp=await fetchWithTimeout(`${h}/status/${es.jobId}`,{},8000);
       const dp=await rp.json();
-      if(dp.status==='done'||dp.converged){
+      logHPC(`[Evo] #${es.id} poll ${i+1}: ${dp.status}`);
+      if(dp.status==='done'||dp.status==='completed'||dp.converged){
         evoParseQEOutput(es,dp.output_tail||'');
-        es.status=EVO_STATUS.DONE;return true;
+        es.status=EVO_STATUS.DONE;
+        logHPC(`[Evo] #${es.id} ✓ E=${es.energy?.toFixed(5)} Ry/atom`);
+        FitnessCalculator.calculate(EVO.population);
+        evoRenderTable();evoUpdateCharts();evoUpdateStats();
+        evoUpdateCounters();
+        return;
       }
-      if(dp.status==='failed'){es.status=EVO_STATUS.FAILED;EVO.failCount++;return false;}
+      if(dp.status==='failed'||dp.status==='error'){
+        es.status=EVO_STATUS.FAILED;EVO.failCount++;
+        evoRenderTable();evoUpdateStats();
+        return;
+      }
+      // Still running — update table to show progress
+      evoRenderTable();
+    }catch(e){
+      logHPC(`[Evo] #${es.id} poll error: ${e.message}`);
     }
-    es.status=EVO_STATUS.FAILED;EVO.failCount++;return false;
-  }catch(e){es.status=EVO_STATUS.FAILED;EVO.failCount++;logHPC(`[Evo] Job ${es.id} error: ${e.message}`);return false;}
+  }
+  // Timeout
+  es.status=EVO_STATUS.FAILED;EVO.failCount++;
+  evoRenderTable();evoUpdateStats();
+}
+
+function evoUpdateCounters(){
+  const done=EVO.population.filter(s=>s.status===EVO_STATUS.DONE).length;
+  const poolSize=parseInt(document.getElementById('evo-pool-size').value)||20;
+  document.getElementById('evo-gen-counter').textContent=`Gen: ${EVO.generation}`;
+  document.getElementById('evo-gen-badge').textContent=`Gen ${EVO.generation} / ${EVO.population.length}`;
+  document.getElementById('evo-pool-counter').textContent=`${done} / ${poolSize}`;
+  const best=evoGetBest();
+  if(best?.energy!=null)
+    document.getElementById('evo-best-energy').textContent=best.energy.toFixed(5)+' Ry/atom';
 }
 
 function evoParseQEOutput(es,out){
@@ -2448,75 +2494,101 @@ const PopulationManager={
   },
 };
 
-/* ── Main Evolution Loop ─────────────────────────────────────────────── */
+/* ── Main Evolution Loop — non-blocking ──────────────────────────────── */
 async function evoRunLoop(){
   const maxStructs=parseInt(document.getElementById('evo-max-structs').value)||500;
   const poolSize=parseInt(document.getElementById('evo-pool-size').value)||20;
   const continuous=parseInt(document.getElementById('evo-continuous').value)||3;
   const jobLimit=parseInt(document.getElementById('evo-job-limit').value)||8;
 
-  logHPC('[Evo] Starting evolution loop');
+  logHPC('[Evo] Starting evolution — structures appear as jobs submit');
   evoSetState('running');
 
-  // Phase 1: Initial generation
+  // Phase 1: Generate all initial structures and show them immediately
   await PopulationManager.generateInitial();
-  evoRenderTable();evoUpdateCharts();
+  evoRenderTable();  // Show all as 'new' right away
+  evoUpdateCounters();
 
-  // Submit initial batch (simulate parallel jobs)
+  // Submit initial batch — fire all, don't wait (background pollers update table)
   const initBatch=EVO.population.slice();
-  logHPC(`[Evo] Submitting ${initBatch.length} initial structures`);
-  // Submit in parallel batches
+  logHPC(`[Evo] Submitting ${initBatch.length} structures (job limit: ${jobLimit})`);
+
+  // Submit in waves of jobLimit — each submit is fast, polling happens in background
   for(let i=0;i<initBatch.length;i+=jobLimit){
     if(!EVO.running)break;
-    const batch=initBatch.slice(i,i+Math.min(jobLimit,initBatch.length-i));
-    await Promise.all(batch.map(es=>evoSubmitStruct(es)));
-    FitnessCalculator.calculate(EVO.population);
-    evoRenderTable();evoUpdateCharts();evoUpdateStats();
+    const wave=initBatch.slice(i,i+jobLimit);
+    // Submit wave in parallel (each returns after HTTP POST, not after QE finishes)
+    await Promise.all(wave.map(es=>evoSubmitStruct(es)));
+    evoRenderTable();
+    evoUpdateCounters();
+    // Small gap between waves to avoid overwhelming the cluster
+    if(i+jobLimit<initBatch.length)await sleep(2000);
   }
+
+  logHPC(`[Evo] All ${initBatch.length} initial structures submitted — waiting for results`);
   EVO.generation=1;
 
-  // Phase 2: Evolutionary generations
+  // Phase 2: Wait for initial batch to complete, then evolve
+  // Check every 10s if enough structures are done to start evolving
   let convergenceCount=0;
   let prevBest=null;
+  let genWaitCycles=0;
 
   while(EVO.running&&EVO.population.length<maxStructs){
     if(EVO.paused){await sleep(500);continue;}
 
-    EVO.generation++;
-    logHPC(`[Evo] Generation ${EVO.generation} — pool size ${EVO.population.filter(s=>s.status===EVO_STATUS.DONE).length}`);
+    await sleep(10000);  // Check every 10s
+    if(!EVO.running)break;
 
-    // Generate new structures
+    const done=EVO.population.filter(s=>s.status===EVO_STATUS.DONE).length;
+    const running=EVO.population.filter(s=>s.status===EVO_STATUS.RUNNING).length;
+
+    evoUpdateCounters();
+
+    // Need at least 4 done structures to start evolving (for crossover)
+    if(done<4){
+      genWaitCycles++;
+      if(genWaitCycles%6===0)logHPC(`[Evo] Waiting for results... ${done} done, ${running} running`);
+      continue;
+    }
+    genWaitCycles=0;
+
+    // Only generate next generation if running jobs < jobLimit
+    if(running>=jobLimit)continue;
+
+    // Generate and submit new structures to fill up to jobLimit
+    const slots=Math.min(jobLimit-running,continuous);
+    if(slots<=0)continue;
+
+    EVO.generation++;
+    logHPC(`[Evo] Gen ${EVO.generation} — ${done} done, spawning ${slots} new structures`);
+
     const newBatch=[];
-    for(let i=0;i<continuous;i++){
+    for(let i=0;i<slots;i++){
       const es=await PopulationManager.evolveNext();
       newBatch.push(es);
     }
-
-    // Submit in parallel
+    evoRenderTable();
     await Promise.all(newBatch.map(es=>evoSubmitStruct(es)));
-    FitnessCalculator.calculate(EVO.population);
 
-    // Check convergence
+    FitnessCalculator.calculate(EVO.population);
+    evoRenderTable();evoUpdateCharts();evoUpdateStats();
+
+    // Convergence check
     const bestNow=evoGetBest();
     if(bestNow&&prevBest!==null&&Math.abs(bestNow.energy-prevBest)<0.0001){
       convergenceCount++;
-      if(convergenceCount>=5){logHPC('[Evo] ✓ Converged after '+EVO.generation+' generations');break;}
+      if(convergenceCount>=5){
+        logHPC('[Evo] ✓ Converged after '+EVO.generation+' generations');
+        break;
+      }
     } else {convergenceCount=0;}
     prevBest=bestNow?.energy??null;
-
-    evoRenderTable();evoUpdateCharts();evoUpdateStats();
-    document.getElementById('evo-gen-counter').textContent=`Gen: ${EVO.generation}`;
-    document.getElementById('evo-gen-badge').textContent=`Gen ${EVO.generation} / ${EVO.population.length}`;
-    document.getElementById('evo-pool-counter').textContent=EVO.population.filter(s=>s.status===EVO_STATUS.DONE).length+' / '+poolSize;
-
-    if(bestNow?.energy!=null){
-      document.getElementById('evo-best-energy').textContent=bestNow.energy.toFixed(5)+' Ry/atom';
-    }
   }
 
   EVO.running=false;
   evoSetState(EVO.population.length>=maxStructs?'max-reached':'converged');
-  logHPC(`[Evo] Evolution complete — ${EVO.population.length} structures, ${EVO.generation} generations`);
+  logHPC(`[Evo] Complete — ${EVO.population.length} structures, ${EVO.generation} generations`);
   FitnessCalculator.calculate(EVO.population);
   evoRenderTable();evoUpdateCharts();
 }
