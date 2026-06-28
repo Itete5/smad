@@ -1718,16 +1718,40 @@ async function testConnection(){
   const h=getHost();
   if(!h){logHPC('⚠ No host set — enter cluster URL above');return false;}
   logHPC(`[conn] Testing ${h}/health …`);
+
+  // Step 1: Try a no-cors ping to see if host is reachable at all
   try{
-    const r=await fetchWithTimeout(h+'/health',{},4000);
+    await fetchWithTimeout(h+'/health',{mode:'no-cors'},3000);
+    logHPC('[conn] Host is reachable (network OK)');
+  }catch(netErr){
+    logHPC(`[conn] ✗ Network unreachable: ${netErr.message}`);
+    logHPC('[conn]   → Check: (1) Tailscale running  (2) smad-api started on cluster');
+    logHPC(`[conn]   → Run on cluster:  cd ~/smad-api && uvicorn main:app --host 0.0.0.0 --port 5000`);
+    setStatus('idle','Unreachable');
+    return false;
+  }
+
+  // Step 2: Try real JSON fetch (needs CORS headers on API)
+  try{
+    const r=await fetchWithTimeout(h+'/health',{},5000);
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
     logHPC(`[conn] ✓ Connected — ${JSON.stringify(d)}`);
     setStatus('idle','Connected');
     return true;
   }catch(e){
-    logHPC(`[conn] ✗ ${e.message} — check host, Tailscale, and that smad-api is running`);
-    setStatus('idle','Unreachable');
+    if(e.name==='TypeError'&&e.message.includes('Failed to fetch')){
+      logHPC('[conn] ✗ CORS error — API reachable but missing CORS headers');
+      logHPC('[conn]   → Add to main.py:');
+      logHPC('[conn]     from fastapi.middleware.cors import CORSMiddleware');
+      logHPC('[conn]     app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"],allow_headers=["*"])');
+    } else if(e.name==='AbortError'){
+      logHPC('[conn] ✗ Timeout — API too slow or /health endpoint missing');
+      logHPC('[conn]   → Add to main.py:  @app.get("/health")\n  def health(): return {"status":"ok"}');
+    } else {
+      logHPC(`[conn] ✗ ${e.message}`);
+    }
+    setStatus('idle','CORS/Timeout');
     return false;
   }
 }
@@ -2108,9 +2132,15 @@ window.addEventListener('load',()=>{
       testConnection().then(ok=>{if(ok)fetchJobList();});
     } else {
       log('[info] No cluster host set — enter URL in the "Cluster host" box to connect.');
-      log('[info] FastAPI bridge must have CORS enabled:');
+      log('[info] ══ FastAPI bridge setup ══');
+      log('[info] On your cluster, ensure main.py has CORS:');
       log('[info]   from fastapi.middleware.cors import CORSMiddleware');
-      log('[info]   app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])');
+      log('[info]   app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"],allow_headers=["*"])');
+      log('[info] And a /health endpoint:');
+      log('[info]   @app.get("/health")');
+      log('[info]   def health(): return {"status":"ok","node":socket.gethostname()}');
+      log('[info] Start with: cd ~/smad-api && uvicorn main:app --host 0.0.0.0 --port 5000');
+      log('[info] Then enter the Tailscale IP: http://100.x.x.x:5000');
     }
   },800);
 });
