@@ -763,6 +763,28 @@ body.mode-menu-open #bb-icon-close{display:flex}
 
   </div><!-- /evo-top -->
 
+  <!-- ── CONTROLS BAR ── -->
+  <div id="evo-controls-bar" style="flex-wrap:wrap;row-gap:3px;background:#c8c8e8;border-top:none;border-bottom:2px solid #9090cc;">
+    <button class="evo-run-btn start" id="evo-start-btn" onclick="evoStart()">▶ Start Evolution</button>
+    <button class="evo-run-btn pause" id="evo-pause-btn" onclick="evoPause()" disabled style="opacity:.5">⏸ Pause</button>
+    <button class="evo-run-btn stop"  id="evo-stop-btn"  onclick="evoStop()"  disabled style="opacity:.5">■ Stop</button>
+    <div class="evo-stat-chip" id="evo-state-chip">Idle</div>
+    <span id="evo-gen-counter">Gen: 0</span>
+    <span style="color:#888;font-size:10px">Best:</span>
+    <span id="evo-best-energy">— Ry/atom</span>
+    <span style="color:#888;font-size:10px">Pool:</span>
+    <span id="evo-pool-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
+    <div style="flex:1"></div>
+    <span style="font-size:9px;color:#666;font-weight:700;flex-shrink:0">Host:</span>
+    <input id="evo-host-input" placeholder="http://100.127.228.36:5000"
+      style="padding:3px 6px;font-size:9.5px;font-family:'JetBrains Mono',monospace;border:1px solid #bbb;border-radius:2px;width:190px;background:#fff;flex-shrink:0"
+      oninput="document.getElementById('loginNode').value=this.value"/>
+    <button class="evo-btn-sm" id="evo-test-btn" onclick="evoTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">⚡ Test</button>
+    <span id="evo-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;flex-shrink:0;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
+    <button class="evo-btn-sm" onclick="evoExportResults()">⬇ Export All</button>
+    <button class="evo-btn-sm" onclick="evoLoadSession()">⬆ Load Session</button>
+    <button class="evo-btn-sm danger" onclick="evoResetAll()">✕ Reset</button>
+  </div>
   <!-- ── BOTTOM THREE PANELS ── -->
   <div id="evo-bottom">
 
@@ -855,28 +877,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
 
   </div><!-- /evo-bottom -->
 
-  <!-- ── CONTROLS BAR ── -->
-  <div id="evo-controls-bar" style="flex-wrap:wrap;row-gap:3px;">
-    <button class="evo-run-btn start" id="evo-start-btn" onclick="evoStart()">▶ Start Evolution</button>
-    <button class="evo-run-btn pause" id="evo-pause-btn" onclick="evoPause()" disabled style="opacity:.5">⏸ Pause</button>
-    <button class="evo-run-btn stop"  id="evo-stop-btn"  onclick="evoStop()"  disabled style="opacity:.5">■ Stop</button>
-    <div class="evo-stat-chip" id="evo-state-chip">Idle</div>
-    <span id="evo-gen-counter">Gen: 0</span>
-    <span style="color:#888;font-size:10px">Best:</span>
-    <span id="evo-best-energy">— Ry/atom</span>
-    <span style="color:#888;font-size:10px">Pool:</span>
-    <span id="evo-pool-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
-    <div style="flex:1"></div>
-    <span style="font-size:9px;color:#666;font-weight:700;flex-shrink:0">Host:</span>
-    <input id="evo-host-input" placeholder="http://100.127.228.36:5000"
-      style="padding:3px 6px;font-size:9.5px;font-family:'JetBrains Mono',monospace;border:1px solid #bbb;border-radius:2px;width:190px;background:#fff;flex-shrink:0"
-      oninput="document.getElementById('loginNode').value=this.value"/>
-    <button class="evo-btn-sm" id="evo-test-btn" onclick="evoTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">⚡ Test</button>
-    <span id="evo-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;flex-shrink:0;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
-    <button class="evo-btn-sm" onclick="evoExportResults()">⬇ Export All</button>
-    <button class="evo-btn-sm" onclick="evoLoadSession()">⬆ Load Session</button>
-    <button class="evo-btn-sm danger" onclick="evoResetAll()">✕ Reset</button>
-  </div>
 
 </div><!-- /evo-overlay -->
 
@@ -1860,7 +1860,7 @@ async function runReal(h,mpi,omp){
     fd.append('omp_threads',String(omp));
     fd.append('job_name',(current.formula||'smad').replace(/[^a-zA-Z0-9_]/g,''));
 
-    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},15000);
+    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},30000);
     if(!r.ok){
       const txt=await r.text().catch(()=>'');
       throw new Error(`HTTP ${r.status} — ${txt.slice(0,120)}`);
@@ -2396,7 +2396,7 @@ async function evoSubmitStruct(es){
     fd.append('nodes','1');
     fd.append('ntasks','44');
     fd.append('job_name',`evo_${es.id}`);
-    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},15000);
+    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},30000);
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
     es.jobId=d.job_id;es.slurmId=d.slurm_id;
@@ -2414,13 +2414,24 @@ async function evoSubmitStruct(es){
 
 /* ── Background job poller (non-blocking) ────────────────────────────── */
 async function evoPollJob(es,h){
-  for(let i=0;i<120;i++){
+  let errCount=0;
+  const maxErrs=10;      // allow up to 10 consecutive errors before giving up
+  const maxPolls=360;    // 360 × 10s = 60 minutes max wait
+  const pollInterval=10000; // poll every 10s
+
+  for(let i=0;i<maxPolls;i++){
     if(!EVO.running)return;
-    await sleep(5000);
+    await sleep(pollInterval);
+    if(!EVO.running)return;
     try{
-      const rp=await fetchWithTimeout(`${h}/status/${es.jobId}`,{},8000);
+      const rp=await fetchWithTimeout(`${h}/status/${es.jobId}`,{},15000);
+      if(!rp.ok)throw new Error('HTTP '+rp.status);
       const dp=await rp.json();
-      logHPC(`[Evo] #${es.id} poll ${i+1}: ${dp.status}`);
+      errCount=0; // reset error count on success
+
+      if(i%6===0||dp.status==='done'||dp.status==='failed')
+        logHPC(`[Evo] #${es.id} poll ${i+1}: ${dp.status}`);
+
       if(dp.status==='done'||dp.status==='completed'||dp.converged){
         evoParseQEOutput(es,dp.output_tail||'');
         es.status=EVO_STATUS.DONE;
@@ -2432,16 +2443,29 @@ async function evoPollJob(es,h){
       }
       if(dp.status==='failed'||dp.status==='error'){
         es.status=EVO_STATUS.FAILED;EVO.failCount++;
+        logHPC(`[Evo] #${es.id} ✗ Slurm job failed`);
         evoRenderTable();evoUpdateStats();
         return;
       }
-      // Still running — update table to show progress
+      // Still running — keep polling, show as running
+      es.status=EVO_STATUS.RUNNING;
       evoRenderTable();
     }catch(e){
-      logHPC(`[Evo] #${es.id} poll error: ${e.message}`);
+      errCount++;
+      logHPC(`[Evo] #${es.id} poll error (${errCount}/${maxErrs}): ${e.message}`);
+      if(errCount>=maxErrs){
+        // Too many consecutive errors — mark failed
+        es.status=EVO_STATUS.FAILED;EVO.failCount++;
+        logHPC(`[Evo] #${es.id} ✗ Too many poll errors, giving up`);
+        evoRenderTable();evoUpdateStats();
+        return;
+      }
+      // Wait longer on error before retrying
+      await sleep(Math.min(10000*errCount, 60000));
     }
   }
-  // Timeout
+  // Max polls reached — don't mark failed, just stop polling
+  logHPC(`[Evo] #${es.id} — poll timeout after ${maxPolls} attempts. Job may still be running on cluster.`);
   es.status=EVO_STATUS.FAILED;EVO.failCount++;
   evoRenderTable();evoUpdateStats();
 }
