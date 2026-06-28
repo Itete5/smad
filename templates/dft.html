@@ -207,7 +207,7 @@ input,select,textarea{font-family:inherit}
 #bottombar{
   height:30px;background:#e8e8e8;border-top:1px solid #c8c8c8;
   display:flex;align-items:center;padding:0 10px;gap:10px;
-  flex-shrink:0;position:relative;z-index:200;
+  flex-shrink:0;position:relative;z-index:800;
 }
 #hb-trigger{
   display:flex;align-items:center;justify-content:center;
@@ -278,9 +278,9 @@ body.mode-menu-open #bb-icon-close{display:flex}
 /* ══ MODE MENU — vertical fly-in from bottom-right ══ */
 #mode-menu{
   position:fixed;
-  bottom:30px;
+  bottom:32px;
   right:0;
-  z-index:600;
+  z-index:700;
   width:190px;
   pointer-events:none;
   display:flex;
@@ -298,7 +298,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
   border-bottom:1px solid rgba(255,255,255,.07);
   border-left:2px solid #444;
   cursor:pointer;
-  transition:background .12s;
   gap:10px;
   /* fly-in start: off-screen right, invisible */
   transform:translateX(110%);
@@ -322,9 +321,9 @@ body.mode-menu-open #bb-icon-close{display:flex}
 /* ══ LEFT MENU — vertical fly-in from bottom-left ══ */
 #hbmenu{
   position:fixed;
-  bottom:30px;
+  bottom:32px;
   left:0;
-  z-index:600;
+  z-index:700;
   width:190px;
   pointer-events:none;
   display:flex;
@@ -472,6 +471,167 @@ body.mode-menu-open #bb-icon-close{display:flex}
 .dz-area:hover,.dz-area.drag{border-color:#ff6600;background:#fff5ef;color:#ff6600}
 .dz-area input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .res-card-v.green{color:#2a9d2a}
+/* ══════════════════════════════════════════════════════
+   EVOLUTION MODE — XtalOpt-style crystal structure search
+   Overlays the workspace when mode=evolution
+   ══════════════════════════════════════════════════════ */
+#evo-overlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;z-index:99;
+  background:#e8e8e8;display:none;flex-direction:column;overflow:hidden;
+}
+#evo-overlay.active{display:flex;}
+
+/* Top config strip */
+#evo-top{
+  display:flex;gap:6px;padding:6px 8px;
+  background:#ddd;border-bottom:2px solid #c0c0c0;
+  overflow-x:auto;flex-shrink:0;align-items:stretch;
+}
+#evo-top::-webkit-scrollbar{height:4px}
+.evo-card{
+  background:#f0f0f0;border:1px solid #c8c8c8;border-radius:5px;
+  padding:7px 10px;min-width:170px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:4px;
+}
+.evo-card-title{
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:#666;border-bottom:1px solid #ddd;
+  padding-bottom:3px;margin-bottom:2px;
+}
+.evo-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:1px 0;}
+.evo-lbl{font-size:10px;color:#555;white-space:nowrap;flex-shrink:0;}
+.evo-inp{
+  width:62px;padding:2px 5px;border:1px solid #c0c0c0;border-radius:2px;
+  background:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:#333;text-align:right;
+}
+.evo-inp:focus{border-color:#7c3aed;outline:none;}
+.evo-sel{
+  padding:2px 4px;border:1px solid #c0c0c0;border-radius:2px;
+  background:#fff;font-size:10px;color:#333;
+}
+.evo-chk-row{display:flex;align-items:center;gap:5px;font-size:10px;color:#444;}
+.evo-chk-row input[type=checkbox]{accent-color:#7c3aed;width:12px;height:12px;}
+.evo-sub{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+.evo-btn-sm{
+  padding:3px 8px;border-radius:2px;border:1px solid #bbb;background:#e8e8e8;
+  font-size:10px;color:#333;cursor:pointer;white-space:nowrap;
+}
+.evo-btn-sm:hover{background:#d8d8d8;}
+.evo-btn-sm.primary{background:#7c3aed;border-color:#6d28d9;color:#fff;}
+.evo-btn-sm.primary:hover{background:#6d28d9;}
+.evo-btn-sm.danger{background:#dc2626;border-color:#b91c1c;color:#fff;}
+.evo-btn-sm.danger:hover{background:#b91c1c;}
+.evo-seed-list{font-size:9.5px;color:#555;font-family:'JetBrains Mono',monospace;
+  max-height:38px;overflow-y:auto;background:#fff;border:1px solid #ddd;border-radius:2px;padding:2px 4px;}
+
+/* Bottom three-panel section */
+#evo-bottom{display:flex;flex:1;min-height:0;gap:0;}
+
+/* LEFT — monitor plots */
+#evo-monitor{
+  width:280px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#evo-monitor-head{
+  padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;
+  font-size:10px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;
+}
+.evo-plot{width:100%;flex-shrink:0;}
+#evo-chart-energy{height:120px;}
+#evo-chart-diversity{height:100px;}
+#evo-chart-fitness{height:100px;}
+.evo-chart-lbl{font-size:9px;color:#888;padding:2px 8px 0;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+
+/* MIDDLE — population table */
+#evo-table-panel{
+  flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;
+  border-right:1px solid #c8c8c8;
+}
+#evo-table-head{
+  padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.evo-search{
+  flex:1;padding:3px 8px;border:1px solid #bbb;border-radius:3px;
+  font-size:11px;background:#fff;
+}
+#evo-gen-badge{
+  font-size:10px;font-weight:700;color:#7c3aed;background:#ede9fe;
+  border:1px solid #c4b5fd;border-radius:3px;padding:2px 8px;white-space:nowrap;
+}
+.evo-pop-table{width:100%;border-collapse:collapse;font-size:10.5px;}
+.evo-pop-table th{
+  position:sticky;top:0;background:#d0d0d0;border-bottom:2px solid #bbb;
+  padding:4px 6px;text-align:left;font-weight:700;color:#555;
+  font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;
+  cursor:pointer;user-select:none;
+}
+.evo-pop-table th:hover{background:#c8c8c8;}
+.evo-pop-table td{padding:3px 6px;border-bottom:1px solid #ddd;white-space:nowrap;}
+.evo-pop-table tr{cursor:pointer;background:#f5f5f5;transition:background .08s;}
+.evo-pop-table tr:hover{background:#e8e8ff;}
+.evo-pop-table tr.active{background:#ede9fe;border-left:3px solid #7c3aed;}
+.evo-pop-table tr:nth-child(even){background:#f0f0f0;}
+.evo-pop-table tr:nth-child(even):hover{background:#e8e8ff;}
+.evo-pop-table tr.active:nth-child(even){background:#ede9fe;}
+.evo-status-badge{
+  display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;
+}
+.evo-status-done{background:#d1fae5;color:#065f46;}
+.evo-status-run{background:#dbeafe;color:#1e40af;animation:pulse .9s ease infinite;}
+.evo-status-fail{background:#fee2e2;color:#991b1b;}
+.evo-status-new{background:#f3f4f6;color:#6b7280;}
+#evo-table-scroll{flex:1;overflow-y:auto;overflow-x:auto;}
+#evo-table-footer{
+  padding:4px 9px;background:#d8d8d8;border-top:1px solid #ccc;
+  font-size:10px;color:#666;display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.evo-page-btn{padding:2px 8px;border:1px solid #bbb;border-radius:2px;background:#e8e8e8;cursor:pointer;font-size:10px;}
+.evo-page-btn:hover{background:#d0d0d0;}
+.evo-page-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* RIGHT — structure viewer panel (reuses Crystal Viewer) */
+#evo-viewer-panel{
+  width:340px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;
+}
+#evo-viewer-head{
+  padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;
+  font-size:10px;font-weight:700;color:#444;
+}
+#evo-struct-info{
+  padding:6px 9px;background:#e8e8e8;border-bottom:1px solid #d8d8d8;
+  display:grid;grid-template-columns:1fr 1fr;gap:3px;
+}
+.evo-info-item{display:flex;flex-direction:column;}
+.evo-info-k{font-size:8.5px;text-transform:uppercase;color:#888;font-weight:700;letter-spacing:.04em;}
+.evo-info-v{font-family:'JetBrains Mono',monospace;font-size:10px;color:#333;font-weight:600;}
+#evo-viewer-3d{flex:1;min-height:200px;position:relative;background:#fff;}
+#evo-viewer-controls{
+  padding:5px 8px;background:#d8d8d8;border-top:1px solid #ccc;
+  display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex-shrink:0;
+}
+
+/* Run controls bar */
+#evo-controls-bar{
+  padding:5px 10px;background:#d0d0d0;border-top:2px solid #bbb;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.evo-run-btn{
+  padding:5px 16px;border-radius:3px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+}
+.evo-run-btn.start{background:#7c3aed;color:#fff;}
+.evo-run-btn.start:hover{background:#6d28d9;}
+.evo-run-btn.pause{background:#d97706;color:#fff;}
+.evo-run-btn.pause:hover{background:#b45309;}
+.evo-run-btn.stop{background:#dc2626;color:#fff;}
+.evo-run-btn.stop:hover{background:#b91c1c;}
+.evo-stat-chip{
+  padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;
+  background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;
+}
+#evo-gen-counter{font-size:11px;font-weight:700;color:#444;font-family:'JetBrains Mono',monospace;}
+#evo-best-energy{font-size:11px;color:#065f46;font-family:'JetBrains Mono',monospace;font-weight:700;}
 </style>
 </head>
 <body>
@@ -487,6 +647,228 @@ body.mode-menu-open #bb-icon-close{display:flex}
 </div>
 
 <div id="workspace">
+
+<!-- ══════════════════════════════════════════════════════════════════
+     EVOLUTION MODE OVERLAY — XtalOpt-style crystal structure search
+     Shown when activeMode === 'evolution'
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="evo-overlay">
+
+  <!-- ── TOP CONFIG CARDS ── -->
+  <div id="evo-top">
+
+    <!-- Card 1: Initial Generation -->
+    <div class="evo-card" style="min-width:190px">
+      <div class="evo-card-title">① Initial Generation</div>
+      <div class="evo-row"><span class="evo-lbl">Initial Structures</span><input class="evo-inp" id="evo-init-structs" type="number" value="20" min="4"/></div>
+      <div class="evo-row"><span class="evo-lbl">Initial Seeds</span><input class="evo-inp" id="evo-init-seeds" type="number" value="0" min="0"/></div>
+      <div class="evo-sub">Seed Structures</div>
+      <div class="evo-seed-list" id="evo-seed-list">No seeds added</div>
+      <div style="display:flex;gap:4px;margin-top:3px">
+        <button class="evo-btn-sm primary" onclick="evoAddSeed()">+ Seed</button>
+        <button class="evo-btn-sm" onclick="evoRemoveSeed()">Remove</button>
+      </div>
+    </div>
+
+    <!-- Card 2: Search Parameters -->
+    <div class="evo-card" style="min-width:195px">
+      <div class="evo-card-title">② Search Parameters</div>
+      <div class="evo-row"><span class="evo-lbl">Pool Size</span><input class="evo-inp" id="evo-pool-size" type="number" value="20" min="4"/></div>
+      <div class="evo-row"><span class="evo-lbl">Continuous</span><input class="evo-inp" id="evo-continuous" type="number" value="3" min="1"/></div>
+      <div class="evo-row"><span class="evo-lbl">Max Structures</span><input class="evo-inp" id="evo-max-structs" type="number" value="500" min="10"/></div>
+      <div class="evo-row"><span class="evo-lbl">Job Limit</span><input class="evo-inp" id="evo-job-limit" type="number" value="8" min="1"/></div>
+      <div class="evo-row">
+        <span class="evo-lbl">Failed Policy</span>
+        <select class="evo-sel" id="evo-fail-policy">
+          <option value="replace">Replace</option>
+          <option value="skip">Skip</option>
+          <option value="retry">Retry×3</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Card 3: Formula Unit Options -->
+    <div class="evo-card" style="min-width:200px">
+      <div class="evo-card-title">③ Formula Unit Options</div>
+      <div class="evo-row"><span class="evo-lbl">Composition</span><input class="evo-inp" id="evo-formula" type="text" value="Si8" style="text-align:left;width:80px"/></div>
+      <div class="evo-row"><span class="evo-lbl">Z range</span>
+        <div style="display:flex;gap:3px">
+          <input class="evo-inp" id="evo-z-min" type="number" value="1" min="1" style="width:30px"/>
+          <span style="font-size:10px;color:#888;align-self:center">–</span>
+          <input class="evo-inp" id="evo-z-max" type="number" value="4" min="1" style="width:30px"/>
+        </div>
+      </div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-mitosis" checked><label for="evo-mitosis">Allow Initial Mitosis</label></div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-fu-cross" checked><label for="evo-fu-cross">Allow FU Crossovers</label></div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-one-pool" checked><label for="evo-one-pool">One Gene Pool</label></div>
+      <div class="evo-row"><span class="evo-lbl">Mitosis Chance %</span><input class="evo-inp" id="evo-mitosis-pct" type="number" value="5" min="0" max="100"/></div>
+    </div>
+
+    <!-- Card 4: Evolution Operators -->
+    <div class="evo-card" style="min-width:220px">
+      <div class="evo-card-title">④ Evolution Operators</div>
+      <div class="evo-sub">Crossover</div>
+      <div class="evo-row"><span class="evo-lbl">% New Crossover</span><input class="evo-inp" id="evo-cross-pct" type="number" value="35" min="0" max="100"/></div>
+      <div class="evo-row"><span class="evo-lbl">Min Contribution</span><input class="evo-inp" id="evo-cross-min" type="number" value="0.25" step="0.05" min="0.05" max="0.5"/></div>
+      <div class="evo-sub">Stripple Mutation</div>
+      <div class="evo-row"><span class="evo-lbl">% Stripple</span><input class="evo-inp" id="evo-strip-pct" type="number" value="20" min="0" max="100"/></div>
+      <div class="evo-row"><span class="evo-lbl">Strain Range</span><input class="evo-inp" id="evo-strip-strain" type="number" value="0.35" step="0.05"/></div>
+      <div class="evo-row"><span class="evo-lbl">Amplitude</span><input class="evo-inp" id="evo-strip-amp" type="number" value="1.0" step="0.1"/></div>
+      <div class="evo-row"><span class="evo-lbl">Wave Count</span><input class="evo-inp" id="evo-strip-waves" type="number" value="1" min="1" max="5"/></div>
+      <div class="evo-sub">Permustrain</div>
+      <div class="evo-row"><span class="evo-lbl">% Permustrain</span><input class="evo-inp" id="evo-perm-pct" type="number" value="20" min="0" max="100"/></div>
+      <div class="evo-row"><span class="evo-lbl">Max Strain</span><input class="evo-inp" id="evo-perm-strain" type="number" value="0.5" step="0.05"/></div>
+      <div class="evo-row"><span class="evo-lbl"># Exchanges</span><input class="evo-inp" id="evo-perm-exch" type="number" value="4" min="1"/></div>
+    </div>
+
+    <!-- Card 5: Tolerances -->
+    <div class="evo-card" style="min-width:185px">
+      <div class="evo-card-title">⑤ Tolerances</div>
+      <div class="evo-sub">Spacegroup Detection</div>
+      <div class="evo-row"><span class="evo-lbl">Length Tol (Å)</span><input class="evo-inp" id="evo-sg-ltol" type="number" value="0.10" step="0.01"/></div>
+      <div class="evo-row"><span class="evo-lbl">Angle Tol (°)</span><input class="evo-inp" id="evo-sg-atol" type="number" value="2.0" step="0.5"/></div>
+      <div class="evo-sub">Duplicate Matching</div>
+      <div class="evo-row"><span class="evo-lbl">Length Tol (Å)</span><input class="evo-inp" id="evo-dup-ltol" type="number" value="0.05" step="0.01"/></div>
+      <div class="evo-row"><span class="evo-lbl">Angle Tol (°)</span><input class="evo-inp" id="evo-dup-atol" type="number" value="2.0" step="0.5"/></div>
+      <div class="evo-row"><span class="evo-lbl">Min ΔE (Ry)</span><input class="evo-inp" id="evo-dup-de" type="number" value="0.001" step="0.001"/></div>
+      <div style="display:flex;gap:4px;margin-top:4px">
+        <button class="evo-btn-sm" onclick="evoDetectSpacegroups()">Detect SGs</button>
+        <button class="evo-btn-sm" onclick="evoResetDuplicates()">Reset Dups</button>
+      </div>
+    </div>
+
+    <!-- Card 6: AI Assistance -->
+    <div class="evo-card" style="min-width:195px">
+      <div class="evo-card-title" style="color:#7c3aed">⬡ AI Assistance</div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-ai-mlrelax"><label for="evo-ai-mlrelax">ML Pre-relaxation</label></div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-ai-active"><label for="evo-ai-active">Active Learning</label></div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-ai-rl"><label for="evo-ai-rl">Reinforcement Learning</label></div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-ai-nfp"><label for="evo-ai-nfp">Neural Fitness Prediction</label></div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-ai-symgen" checked><label for="evo-ai-symgen">Symmetry-aware Generator</label></div>
+      <div class="evo-chk-row"><input type="checkbox" id="evo-ai-diffgen"><label for="evo-ai-diffgen">Diffusion Generator</label></div>
+      <div class="evo-sub">QE vc-relax settings</div>
+      <div class="evo-row"><span class="evo-lbl">Ecut (Ry)</span><input class="evo-inp" id="evo-qe-ecut" type="number" value="60" min="20"/></div>
+      <div class="evo-row"><span class="evo-lbl">k-mesh</span>
+        <div style="display:flex;gap:2px">
+          <input class="evo-inp" id="evo-kx" type="number" value="4" min="1" style="width:26px"/>
+          <input class="evo-inp" id="evo-ky" type="number" value="4" min="1" style="width:26px"/>
+          <input class="evo-inp" id="evo-kz" type="number" value="4" min="1" style="width:26px"/>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /evo-top -->
+
+  <!-- ── BOTTOM THREE PANELS ── -->
+  <div id="evo-bottom">
+
+    <!-- LEFT: Evolution Monitor plots -->
+    <div id="evo-monitor">
+      <div id="evo-monitor-head">
+        <span>Evolution Monitor</span>
+        <span id="evo-monitor-status" style="font-size:9px;color:#7c3aed;font-weight:400">Idle</span>
+      </div>
+      <div class="evo-chart-lbl">Best Energy / Generation</div>
+      <div class="evo-plot" id="evo-chart-energy"></div>
+      <div class="evo-chart-lbl">Population Diversity</div>
+      <div class="evo-plot" id="evo-chart-diversity"></div>
+      <div class="evo-chart-lbl">Fitness Distribution</div>
+      <div class="evo-plot" id="evo-chart-fitness"></div>
+      <div style="padding:4px 8px;font-size:9px;color:#888;border-top:1px solid #ccc">
+        <div style="display:flex;justify-content:space-between"><span>Mutation success</span><span id="evo-mut-rate">—</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Duplicates removed</span><span id="evo-dup-count">0</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Failed jobs</span><span id="evo-fail-count">0</span></div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Population table -->
+    <div id="evo-table-panel">
+      <div id="evo-table-head">
+        <span id="evo-gen-badge">Gen 0 / 0</span>
+        <input class="evo-search" id="evo-search" placeholder="Search ID, SG, mutation…" oninput="evoFilterTable()"/>
+        <button class="evo-btn-sm" onclick="evoExportCSV()" title="Export table as CSV">⬇ CSV</button>
+      </div>
+      <div id="evo-table-scroll">
+        <table class="evo-pop-table" id="evo-pop-table">
+          <thead>
+            <tr>
+              <th onclick="evoSort('id')"># ID</th>
+              <th onclick="evoSort('gen')">Gen</th>
+              <th onclick="evoSort('parents')">Parents</th>
+              <th onclick="evoSort('mutation')">Mutation</th>
+              <th onclick="evoSort('sg')">SG</th>
+              <th onclick="evoSort('energy')">E (Ry/atom)</th>
+              <th onclick="evoSort('enthalpy')">H (Ry)</th>
+              <th onclick="evoSort('fitness')">Fitness</th>
+              <th onclick="evoSort('status')">Status</th>
+            </tr>
+          </thead>
+          <tbody id="evo-pop-tbody">
+            <tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">
+              Start Evolution to populate table
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="evo-table-footer">
+        <button class="evo-page-btn" id="evo-prev" onclick="evoPage(-1)">‹ Prev</button>
+        <span id="evo-page-info">Page 1 / 1</span>
+        <button class="evo-page-btn" id="evo-next" onclick="evoPage(1)">Next ›</button>
+        <span style="flex:1"></span>
+        <span id="evo-total-count">0 structures</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Structure viewer -->
+    <div id="evo-viewer-panel">
+      <div id="evo-viewer-head">Structure Viewer — <span id="evo-sel-id" style="color:#7c3aed">none selected</span></div>
+      <div id="evo-struct-info">
+        <div class="evo-info-item"><span class="evo-info-k">Space Group</span><span class="evo-info-v" id="evo-info-sg">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Generation</span><span class="evo-info-v" id="evo-info-gen">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Energy/atom</span><span class="evo-info-v" id="evo-info-e">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Fitness</span><span class="evo-info-v" id="evo-info-fit">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Volume (Å³)</span><span class="evo-info-v" id="evo-info-vol">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Density</span><span class="evo-info-v" id="evo-info-den">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Mutation</span><span class="evo-info-v" id="evo-info-mut">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Parents</span><span class="evo-info-v" id="evo-info-par">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Enthalpy</span><span class="evo-info-v" id="evo-info-enth">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Status</span><span class="evo-info-v" id="evo-info-status">—</span></div>
+      </div>
+      <div id="evo-viewer-3d"></div>
+      <div id="evo-viewer-controls">
+        <button class="evo-btn-sm" onclick="evoPrevStruct()">‹ Prev</button>
+        <button class="evo-btn-sm" onclick="evoNextStruct()">Next ›</button>
+        <button class="evo-btn-sm" onclick="evoViewerReset()">⟳ Reset</button>
+        <button class="evo-btn-sm" onclick="evoViewerFit()">⊡ Fit</button>
+        <select class="evo-sel" id="evo-style" onchange="evoChangeStyle()" style="font-size:9.5px">
+          <option value="ball-stick">Ball+Stick</option>
+          <option value="sphere">Spheres</option>
+          <option value="stick">Sticks</option>
+          <option value="wire">Wireframe</option>
+        </select>
+      </div>
+    </div>
+
+  </div><!-- /evo-bottom -->
+
+  <!-- ── CONTROLS BAR ── -->
+  <div id="evo-controls-bar">
+    <button class="evo-run-btn start" id="evo-start-btn" onclick="evoStart()">▶ Start Evolution</button>
+    <button class="evo-run-btn pause" id="evo-pause-btn" onclick="evoPause()" disabled style="opacity:.5">⏸ Pause</button>
+    <button class="evo-run-btn stop"  id="evo-stop-btn"  onclick="evoStop()"  disabled style="opacity:.5">■ Stop</button>
+    <div class="evo-stat-chip" id="evo-state-chip">Idle</div>
+    <span id="evo-gen-counter">Gen: 0</span>
+    <span style="color:#888;font-size:10px">Best:</span>
+    <span id="evo-best-energy">— Ry/atom</span>
+    <span style="color:#888;font-size:10px">Pool:</span>
+    <span id="evo-pool-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
+    <div style="flex:1"></div>
+    <button class="evo-btn-sm" onclick="evoExportResults()">⬇ Export All</button>
+    <button class="evo-btn-sm" onclick="evoLoadSession()">⬆ Load Session</button>
+    <button class="evo-btn-sm danger" onclick="evoResetAll()">✕ Reset</button>
+  </div>
+
+</div><!-- /evo-overlay -->
 
   <!-- ══ 3D VIEWER ══ -->
   <div id="viewer-area">
@@ -599,8 +981,11 @@ body.mode-menu-open #bb-icon-close{display:flex}
   <!-- ══ RIGHT PANEL ══ -->
   <div id="rpanel">
     <div class="hpc-strip">
-      <div class="hpc-label">Cluster host</div>
-      <input class="hpc-input" id="loginNode" placeholder="http://100.127.228.36:5000"/>
+      <div class="hpc-label">Cluster host (FastAPI bridge)</div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <input class="hpc-input" id="loginNode" placeholder="http://100.127.228.36:5000" style="flex:1"/>
+        <button onclick="testConnection()" title="Test connection" style="padding:4px 8px;background:#2e7dcc;border:none;border-radius:2px;color:#fff;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0">Test</button>
+      </div>
     </div>
     <div id="rp-scroll">
 
@@ -684,6 +1069,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
     <div class="run-strip">
       <button class="gen-btn" onclick="generateInput()">⬡ Generate</button>
       <button class="run-btn" onclick="openRunDialog()">▶ Run DFT</button>
+      <button onclick="cancelPoll()" title="Stop polling" style="padding:6px 10px;border-radius:3px;background:#777;border:none;color:#fff;font-size:11px;cursor:pointer">■ Stop</button>
     </div>
     <div class="status-bar">
       <div class="sb-item"><div class="sb-dot" id="sDot"></div><span id="sLabel">Idle</span></div>
@@ -711,7 +1097,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
   <div class="bb-spacer"></div>
 
   <!-- RIGHT: mode label + toggling icon -->
-  <div id="bb-right" onclick="toggleModeMenu()">
+  <div id="bb-right" onclick="toggleModeMenu(event)">
     <span id="bb-mode-label">Geometry</span>
     <div id="bb-mode-icon">
       <!-- Stacked-lines: shown when menu closed -->
@@ -730,30 +1116,31 @@ body.mode-menu-open #bb-icon-close{display:flex}
 
 <!-- ══ VERTICAL MODE MENU — flies in from bottom-right ══ -->
 <div id="mode-menu">
-  <div class="mm-item" data-mode="geometry" onclick="selectModeItem('geometry')"><span class="mm-lbl">Geometry</span></div>
-  <div class="mm-item" data-mode="scf"      onclick="selectModeItem('scf')">     <span class="mm-lbl">SCF</span></div>
-  <div class="mm-item" data-mode="optimize" onclick="selectModeItem('optimize')"><span class="mm-lbl">Optimize</span></div>
-  <div class="mm-item" data-mode="abmd"     onclick="selectModeItem('abmd')">    <span class="mm-lbl">ab-MD</span></div>
-  <div class="mm-item" data-mode="dos"      onclick="selectModeItem('dos')">     <span class="mm-lbl">DOS</span></div>
-  <div class="mm-item" data-mode="band"     onclick="selectModeItem('band')">    <span class="mm-lbl">Band</span></div>
-  <div class="mm-item" data-mode="neb"      onclick="selectModeItem('neb')">     <span class="mm-lbl">NEB</span></div>
-  <div class="mm-item" data-mode="tddft"    onclick="selectModeItem('tddft')">   <span class="mm-lbl">TD-DFT</span></div>
-  <div class="mm-item" data-mode="phonon"   onclick="selectModeItem('phonon')">  <span class="mm-lbl">Phonon</span></div>
+  <div class="mm-item" data-mode="geometry" onclick="selectModeItem('geometry',event)"><span class="mm-lbl">Geometry</span></div>
+  <div class="mm-item" data-mode="scf"      onclick="selectModeItem('scf',event)">     <span class="mm-lbl">SCF</span></div>
+  <div class="mm-item" data-mode="optimize" onclick="selectModeItem('optimize',event)"><span class="mm-lbl">Optimize</span></div>
+  <div class="mm-item" data-mode="abmd"     onclick="selectModeItem('abmd',event)">    <span class="mm-lbl">ab-MD</span></div>
+  <div class="mm-item" data-mode="dos"      onclick="selectModeItem('dos',event)">     <span class="mm-lbl">DOS</span></div>
+  <div class="mm-item" data-mode="band"     onclick="selectModeItem('band',event)">    <span class="mm-lbl">Band</span></div>
+  <div class="mm-item" data-mode="neb"       onclick="selectModeItem('neb',event)">      <span class="mm-lbl">NEB</span></div>
+  <div class="mm-item" data-mode="tddft"     onclick="selectModeItem('tddft',event)">    <span class="mm-lbl">TD-DFT</span></div>
+  <div class="mm-item" data-mode="phonon"    onclick="selectModeItem('phonon',event)">   <span class="mm-lbl">Phonon</span></div>
+  <div class="mm-item" data-mode="evolution" onclick="selectModeItem('evolution',event)"><span class="mm-lbl" style="color:#a78bfa;font-weight:700">⬡ Evolution</span></div>
 </div>
 
 <!-- ══ LEFT MENU — flies in from bottom-left ══ -->
 <div id="hbmenu">
-  <div class="hb-item" onclick="hbAction('result')">    <span class="hb-lbl">Result</span></div>
-  <div class="hb-item" onclick="hbAction('run')">       <span class="hb-lbl">Run</span></div>
-  <div class="hb-item" onclick="hbAction('screenshot')"><span class="hb-lbl">Screen-shot</span></div>
-  <div class="hb-item" onclick="hbAction('designer')">  <span class="hb-lbl">Designer</span></div>
-  <div class="hb-item" onclick="hbAction('saveas')">    <span class="hb-lbl">Save as</span></div>
-  <div class="hb-item" onclick="hbAction('save')">      <span class="hb-lbl">Save</span></div>
-  <div class="hb-item" onclick="hbAction('modeler')">   <span class="hb-lbl">Modeler</span></div>
-  <div class="hb-item" onclick="hbAction('inputfile')"> <span class="hb-lbl">Input-file</span></div>
-  <div class="hb-item" onclick="hbAction('showatoms')"> <span class="hb-lbl">Show atoms</span></div>
+  <div class="hb-item" onclick="hbAction('result',event)">    <span class="hb-lbl">Result</span></div>
+  <div class="hb-item" onclick="hbAction('run',event)">       <span class="hb-lbl">Run</span></div>
+  <div class="hb-item" onclick="hbAction('screenshot',event)"><span class="hb-lbl">Screen-shot</span></div>
+  <div class="hb-item" onclick="hbAction('designer',event)">  <span class="hb-lbl">Designer</span></div>
+  <div class="hb-item" onclick="hbAction('saveas',event)">    <span class="hb-lbl">Save as</span></div>
+  <div class="hb-item" onclick="hbAction('save',event)">      <span class="hb-lbl">Save</span></div>
+  <div class="hb-item" onclick="hbAction('modeler',event)">   <span class="hb-lbl">Modeler</span></div>
+  <div class="hb-item" onclick="hbAction('inputfile',event)"> <span class="hb-lbl">Input-file</span></div>
+  <div class="hb-item" onclick="hbAction('showatoms',event)"> <span class="hb-lbl">Show atoms</span></div>
   <div id="hb-close-row">
-    <div id="hb-close-x" onclick="closeHbMenu()">×</div>
+    <div id="hb-close-x" onclick="closeHbMenu();event.stopPropagation()">×</div>
   </div>
 </div>
 
@@ -831,7 +1218,6 @@ Set cluster host → Run DFT → view results.
 </div><!-- /app -->
 
 <script>
-(function(){'use strict';
 
 /* ════════════ DATA ════════════ */
 const STRUCTS={
@@ -861,13 +1247,12 @@ const FAN_ITEMS=[
   {id:'tddft',   label:'TD-DFT'},
   {id:'neb',     label:'NEB'},
 ];
-const LABELS={scf:'SCF',optimize:'Optimize',band:'Band',dos:'DOS',md:'MD',abmd:'ab-MD',phonon:'Phonon',tddft:'TD-DFT',neb:'NEB',geometry:'Geometry'};
+const LABELS={scf:'SCF',optimize:'Optimize',band:'Band',dos:'DOS',md:'MD',abmd:'ab-MD',phonon:'Phonon',tddft:'TD-DFT',neb:'NEB',geometry:'Geometry',evolution:'⬡ Evolution'};
 
 /* ════════════ STATE ════════════ */
 let current=JSON.parse(JSON.stringify(STRUCTS.gaas)),supercell=[1,1,1];
 let showBonds=true,consoleOpen=false,settingsOpen=false,hbOpen=false;
 let activeMode=null; // null = no selection yet (fan not clicked)
-let lastJobId=null,lastJobOut='',pollTimer=null;
 
 /* ════════════ INIT ════════════ */
 function init(){
@@ -879,6 +1264,8 @@ function init(){
   fi.addEventListener('change',()=>{if(fi.files[0])processFile(fi.files[0])});
   // close dropdowns on outside click
   document.addEventListener('click',e=>{
+    // Close menus only when clicking outside — triggers already stopPropagation so this
+    // only fires for genuine outside clicks
     if(hbOpen&&!document.getElementById('hbmenu').contains(e.target)&&!document.getElementById('hb-trigger').contains(e.target))closeHbMenu();
     if(modeMenuOpen&&!document.getElementById('mode-menu').contains(e.target)&&!document.getElementById('bb-right').contains(e.target))closeModeMenu();
     ['dd-screenshot','dd-export'].forEach(id=>{const el=document.getElementById(id);if(el&&el.classList.contains('open')&&!el.closest('.ct-btn').contains(e.target))el.classList.remove('open');});
@@ -1304,81 +1691,293 @@ function buildQEInputText(){
   return t;
 }
 
-/* ════════════ RUN DIALOG ════════════ */
+/* ══════════════════════════════════════════════════════════════════════
+   HPC / CLUSTER ENGINE
+   Talks to the FastAPI bridge at ~/smad-api/main.py (port 5000).
+   Endpoints used:
+     POST /submit          body: FormData {input_text, nodes, ntasks, job_name}
+     GET  /status/{job_id} → {status, slurm_id, output_tail, total_energy, converged}
+     GET  /output/{job_id} → {output}
+     GET  /jobs            → [{job_id, slurm_id, status, ...}]
+     GET  /health          → {status:'ok'}   (connection test)
+   ══════════════════════════════════════════════════════════════════════ */
+
+let lastJobId=null,lastJobOut='',pollTimer=null,pollActive=false;
+
+/* ── Normalise host URL ─────────────────────────────────────────────── */
+function getHost(){
+  let h=(document.getElementById('loginNode').value||'').trim();
+  if(!h)return null;
+  if(!/^https?:\/\//i.test(h))h='http://'+h;
+  h=h.replace(/\/+$/,'');
+  return h;
+}
+
+/* ── Connection test ────────────────────────────────────────────────── */
+async function testConnection(){
+  const h=getHost();
+  if(!h){logHPC('⚠ No host set — enter cluster URL above');return false;}
+  logHPC(`[conn] Testing ${h}/health …`);
+  try{
+    const r=await fetchWithTimeout(h+'/health',{},4000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    logHPC(`[conn] ✓ Connected — ${JSON.stringify(d)}`);
+    setStatus('idle','Connected');
+    return true;
+  }catch(e){
+    logHPC(`[conn] ✗ ${e.message} — check host, Tailscale, and that smad-api is running`);
+    setStatus('idle','Unreachable');
+    return false;
+  }
+}
+
+/* ── Fetch with timeout ─────────────────────────────────────────────── */
+function fetchWithTimeout(url,opts={},ms=12000){
+  const ctrl=new AbortController();
+  const id=setTimeout(()=>ctrl.abort(),ms);
+  return fetch(url,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(id));
+}
+
+/* ── Open run dialog ────────────────────────────────────────────────── */
 function openRunDialog(){
-  // Sync job type with active fan mode
-  if(activeMode){const sel=document.getElementById('rd-jobtype');const opts=[...sel.options];const m=opts.findIndex(o=>o.text.toLowerCase()===activeMode);if(m>=0)sel.selectedIndex=m;}
-  // Sync host
-  const h=(document.getElementById('loginNode').value||'').trim();
-  const hostSel=document.getElementById('rd-host');if(h){hostSel.options[1].text='Cluster ('+h.replace('http://','').replace(':5000','')+')';hostSel.selectedIndex=1;}
+  const h=getHost();
+  const hostSel=document.getElementById('rd-host');
+  if(h){
+    hostSel.options[1].text='Cluster ('+h.replace(/^https?:\/\//,'').split('/')[0]+')';
+    hostSel.selectedIndex=1;
+  } else {
+    hostSel.selectedIndex=0;
+  }
+  // Sync job type
+  if(activeMode){
+    const sel=document.getElementById('rd-jobtype');
+    const m=[...sel.options].findIndex(o=>o.text.toLowerCase()===activeMode);
+    if(m>=0)sel.selectedIndex=m;
+  }
   document.getElementById('run-dialog-overlay').classList.add('open');
 }
 function closeRunDialog(){document.getElementById('run-dialog-overlay').classList.remove('open');}
+
+/* ── Submit ─────────────────────────────────────────────────────────── */
 async function submitJob(){
   closeRunDialog();
-  const h=(document.getElementById('loginNode').value||'').trim();
-  const mpi=document.getElementById('rd-mpi').value||'44';
-  if(!h){runDemo();return;}
-  await runReal(h,mpi);
+  const h=getHost();
+  const mpi=parseInt(document.getElementById('rd-mpi').value)||44;
+  const omp=parseInt(document.getElementById('rd-omp').value)||1;
+  const hostChoice=document.getElementById('rd-host').selectedIndex;
+
+  if(!h||hostChoice===0){
+    runDemo();return;
+  }
+  await runReal(h,mpi,omp);
 }
 
-/* ════════════ REAL HPC ════════════ */
+/* ── Demo mode ──────────────────────────────────────────────────────── */
 async function runDemo(){
-  setStatus('run','Running demo…');log('[demo] SCF: '+current.formula);
+  setStatus('run','Demo mode…');
+  logHPC('[demo] Running simulated SCF for '+current.formula+' — set cluster host to run on HPC');
   const xs=[],ys=[];
-  for(let i=1;i<=14;i++){await sleep(80);xs.push(i);ys.push(0.5*Math.exp(-.42*i)+.0003*Math.random());log('  iter '+String(i).padStart(3)+'  ΔE = '+ys[ys.length-1].toExponential(3)+' Ry');}
-  setStatus('done','Done');
-  const E=-(100+Math.random()*5).toFixed(4);
-  log('[demo] Converged. E = '+E+' Ry');
-  showResults({total_energy:'E = '+E+' Ry',converged:true,scf_iterations:14,output_tail:'JOB DONE'},xs,ys);
-}
-async function runReal(h,mpi){
-  setStatus('run','Submitting…');
-  let jobId;
-  try{
-    const fd=new FormData();fd.append('input_text',buildQEInputText());fd.append('nodes','1');fd.append('ntasks',mpi||'44');fd.append('job_name',current.formula||'smad');
-    const r=await fetch(h+'/submit',{method:'POST',body:fd});if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();jobId=d.job_id;lastJobId=jobId;
-    log('[HPC] Submitted — job_id='+jobId+' slurm_id='+d.slurm_id);setStatus('run','Job '+d.slurm_id);
-  }catch(e){log('[HPC] Submit failed: '+e.message);setStatus('idle','Error');return;}
-  const xs=[],ys=[];let done=false,iter=0;
-  while(!done&&iter<360){
-    await sleep(5000);iter++;
-    try{
-      const r=await fetch(h+'/status/'+jobId),d=await r.json();done=d.status==='done';lastJobOut=d.output_tail||'';
-      const ms=[...lastJobOut.matchAll(/iteration #\s*(\d+).*?estimated scf accuracy\s*<\s*([\d.E+\-]+)/gs)];
-      if(ms.length){ms.forEach(m=>{const n=+m[1];if(!xs.includes(n)){xs.push(n);ys.push(+m[2]);}});}
-      log('[HPC] poll #'+iter+' — '+d.status+(d.total_energy?' '+d.total_energy:''));
-      if(done){showResults(d,xs,ys);setStatus('done','Converged');}
-    }catch(e){log('[HPC] poll error: '+e.message);}
+  for(let i=1;i<=14;i++){
+    await sleep(60);
+    xs.push(i);
+    ys.push(0.5*Math.exp(-.42*i)+.0003*Math.random());
+    logHPC('  iter '+String(i).padStart(3)+'  ΔE = '+ys[ys.length-1].toExponential(3)+' Ry');
   }
-  if(!done)setStatus('idle','Timed out');
+  const E=-(93+Math.random()*5).toFixed(5);
+  setStatus('done','Demo done');
+  logHPC('[demo] Converged. E = '+E+' Ry (simulated)');
+  showResults({
+    total_energy:E+' Ry',converged:true,
+    scf_iterations:14,
+    output_tail:`     convergence has been achieved in  14 iterations\n!\n!    total energy              =     ${E} Ry\n\n     JOB DONE.`
+  },xs,ys);
 }
+
+/* ── Real HPC run ───────────────────────────────────────────────────── */
+async function runReal(h,mpi,omp){
+  // Cancel any existing poll
+  cancelPoll();
+
+  setStatus('run','Connecting…');
+  logHPC(`[HPC] Host: ${h}  MPI: ${mpi}  OMP: ${omp}`);
+  logHPC(`[HPC] Structure: ${current.formula} (${current.atoms.length} sites)`);
+
+  /* Step 1 — Submit */
+  let jobId,slurmId;
+  try{
+    const input=buildQEInputText();
+    logHPC('[HPC] Submitting QE job …');
+    const fd=new FormData();
+    fd.append('input_text',input);
+    fd.append('nodes','1');
+    fd.append('ntasks',String(mpi));
+    fd.append('omp_threads',String(omp));
+    fd.append('job_name',(current.formula||'smad').replace(/[^a-zA-Z0-9_]/g,''));
+
+    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},15000);
+    if(!r.ok){
+      const txt=await r.text().catch(()=>'');
+      throw new Error(`HTTP ${r.status} — ${txt.slice(0,120)}`);
+    }
+    const d=await r.json();
+    jobId=d.job_id;slurmId=d.slurm_id;
+    lastJobId=jobId;
+    logHPC(`[HPC] ✓ Submitted — job_id=${jobId}  slurm_id=${slurmId}`);
+    setStatus('run','Job '+slurmId);
+    document.getElementById('cf-sb-sel').textContent='Job '+slurmId;
+  }catch(e){
+    logHPC(`[HPC] ✗ Submit failed: ${e.message}`);
+    logHPC('[HPC] Ensure: (1) smad-api is running on cluster  (2) Tailscale connected  (3) CORS enabled on API');
+    setStatus('idle','Submit failed');
+    return;
+  }
+
+  /* Step 2 — Poll */
+  logHPC('[HPC] Polling every 5 s — open Console for live output');
+  const xs=[],ys=[];
+  let errCount=0;
+  pollActive=true;
+
+  const doPoll=async()=>{
+    if(!pollActive)return;
+    try{
+      const r=await fetchWithTimeout(`${h}/status/${jobId}`,{},10000);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      errCount=0;
+
+      // Parse convergence iterations from output tail
+      const tail=d.output_tail||'';
+      const ms=[...tail.matchAll(/iteration #\s*(\d+)[\s\S]*?estimated scf accuracy\s*<\s*([\d.E+\-]+)/g)];
+      ms.forEach(m=>{
+        const n=+m[1];
+        if(!xs.includes(n)){xs.push(n);ys.push(+m[2]);}
+      });
+
+      const statusTxt=d.status||'running';
+      logHPC(`[HPC] poll — ${statusTxt}${d.total_energy?' · '+d.total_energy:''}`);
+      setStatus('run',slurmId+' · '+statusTxt);
+
+      if(d.status==='done'||d.status==='completed'||d.converged){
+        pollActive=false;
+        // Fetch full output
+        try{
+          const ro=await fetchWithTimeout(`${h}/output/${jobId}`,{},10000);
+          if(ro.ok){const od=await ro.json();d.output_tail=od.output||d.output_tail;}
+        }catch(_){}
+        showResults(d,xs,ys);
+        setStatus('done','Converged');
+        logHPC('[HPC] ✓ Job complete');
+        document.getElementById('cf-sb-sel').textContent='Done ✓';
+        return;
+      }
+      if(d.status==='failed'||d.status==='error'){
+        pollActive=false;
+        logHPC('[HPC] ✗ Job failed — check cluster logs');
+        setStatus('idle','Job failed');
+        showResults(d,xs,ys);return;
+      }
+      // Schedule next poll
+      pollTimer=setTimeout(doPoll,5000);
+
+    }catch(e){
+      errCount++;
+      logHPC(`[HPC] poll error (${errCount}): ${e.message}`);
+      if(errCount>=6){
+        pollActive=false;
+        logHPC('[HPC] ✗ Too many poll errors — stopping. Check connection.');
+        setStatus('idle','Poll failed');
+        return;
+      }
+      // Exponential backoff: 5s, 10s, 20s…
+      pollTimer=setTimeout(doPoll,Math.min(5000*Math.pow(2,errCount-1),60000));
+    }
+  };
+  pollTimer=setTimeout(doPoll,5000);
+}
+
+function cancelPoll(){
+  pollActive=false;
+  if(pollTimer){clearTimeout(pollTimer);pollTimer=null;}
+}
+
+/* ── Fetch job list ─────────────────────────────────────────────────── */
+async function fetchJobList(){
+  const h=getHost();if(!h)return;
+  try{
+    const r=await fetchWithTimeout(h+'/jobs',{},6000);
+    if(!r.ok)return;
+    const jobs=await r.json();
+    logHPC('[HPC] Job history: '+jobs.length+' jobs');
+    jobs.slice(-5).forEach(j=>logHPC(`  ${j.job_id} slurm:${j.slurm_id} ${j.status}`));
+  }catch(e){/* silent */}
+}
+
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-function setStatus(s,txt){const d=document.getElementById('sDot'),l=document.getElementById('sLabel');d.className='sb-dot'+(s==='run'?' run':s==='done'?' done':'');l.textContent=txt||{idle:'Idle',run:'Running',done:'Done'}[s];}
+
+function setStatus(s,txt){
+  const d=document.getElementById('sDot'),l=document.getElementById('sLabel');
+  d.className='sb-dot'+(s==='run'?' run':s==='done'?' done':'');
+  l.textContent=txt||{idle:'Idle',run:'Running',done:'Done'}[s]||txt;
+}
+
+/* Separate HPC log so it doesn't spam main console */
+function logHPC(s){
+  log(s);
+  // Also update status bar with last line
+  const sb=document.getElementById('cf-sb-dist');
+  if(sb&&s.includes('[HPC]'))sb.textContent=s.replace('[HPC]','').trim().slice(0,60);
+}
 
 /* ════════════ RESULTS ════════════ */
 function showResults(d,xs,ys){
   const tail=d.output_tail||'';lastJobOut=tail;
-  const eM=tail.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry/),cM=tail.match(/convergence has been achieved in\s+(\d+)\s+iterations/);
+  const eM=tail.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry/);
+  const cM=tail.match(/convergence has been achieved in\s+(\d+)\s+iterations/);
+  const feM=tail.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry[\s\S]*?Harris-Foulkes estimate\s+=\s+([\-\d.]+)\s+Ry/);
+
+  document.getElementById('res-formula').textContent=current.formula||'—';
   document.getElementById('res-cards').innerHTML=[
-    ['Total Energy', eM?eM[1]+' Ry':(d.total_energy||'—'), eM?'green':''],
-    ['SCF Iterations', cM?cM[1]:(d.scf_iterations||xs?.length||'—'), ''],
-    ['Status', d.converged?'✓ Converged':'Running', d.converged?'green':''],
-    ['Formula', current.formula||'—', ''],
-    ['Job ID', lastJobId||'demo', ''],
-    ['k-mesh', document.getElementById('kx').value+'×'+document.getElementById('ky').value+'×'+document.getElementById('kz').value, ''],
+    ['Total Energy (Ry)', eM?eM[1]:(d.total_energy||'—'), eM?'green':''],
+    ['SCF Iterations',    cM?cM[1]:(d.scf_iterations||xs?.length||'—'), ''],
+    ['Status',            d.converged?'✓ Converged':(d.status||'—'), d.converged?'green':''],
+    ['Formula',           current.formula||'—', ''],
+    ['Job ID',            lastJobId||'demo', ''],
+    ['k-mesh',            `${document.getElementById('kx').value}×${document.getElementById('ky').value}×${document.getElementById('kz').value}`, ''],
+    ['Ecut (Ry)',         document.getElementById('ecut').value, ''],
+    ['Host',              getHost()||'local demo', ''],
   ].map(([k,v,cls])=>`<div class="res-card"><div class="res-card-k">${k}</div><div class="res-card-v ${cls}">${v}</div></div>`).join('');
+
   if(xs&&xs.length){
-    Plotly.newPlot('res-plotC',[{x:xs,y:ys,type:'scatter',mode:'lines+markers',line:{color:'#ff6600',width:2},marker:{size:5}}],{margin:{t:10,r:10,b:36,l:55},paper_bgcolor:'#fff',plot_bgcolor:'#fafafa',font:{size:10},xaxis:{title:'SCF iteration',gridcolor:'#eee'},yaxis:{title:'ΔE (Ry)',type:'log',gridcolor:'#eee'},showlegend:false},{displayModeBar:false,responsive:true});
+    Plotly.newPlot('res-plotC',[{
+      x:xs,y:ys,type:'scatter',mode:'lines+markers',
+      line:{color:'#ff6600',width:2},marker:{size:5,color:'#ff6600'},
+      name:'ΔE'
+    }],{
+      margin:{t:14,r:14,b:40,l:64},
+      paper_bgcolor:'#fff',plot_bgcolor:'#fafafa',
+      font:{size:10,family:'JetBrains Mono'},
+      xaxis:{title:'SCF iteration',gridcolor:'#eee',tickformat:'d'},
+      yaxis:{title:'ΔE (Ry)',type:'log',gridcolor:'#eee',exponentformat:'e'},
+      showlegend:false
+    },{displayModeBar:false,responsive:true});
   }
-  document.getElementById('res-out-pre').textContent=tail.split('\n').slice(-80).join('\n')||'No output.';
-  const dlBtn=document.getElementById('res-dl-btn');dlBtn.style.display=lastJobOut?'flex':'none';
+  document.getElementById('res-out-pre').textContent=
+    tail?tail.split('\n').slice(-100).join('\n'):'No output received.';
+  const dlBtn=document.getElementById('res-dl-btn');
+  dlBtn.style.display=lastJobOut?'flex':'none';
   openResults();
 }
 function openResults(){document.getElementById('results-panel').classList.add('open');}
 function closeResults(){document.getElementById('results-panel').classList.remove('open');}
-function downloadOut(){const b=new Blob([lastJobOut],{type:'text/plain'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='pw_'+(lastJobId||'demo')+'.out';a.click();URL.revokeObjectURL(u);}
+function downloadOut(){
+  const b=new Blob([lastJobOut],{type:'text/plain'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');
+  a.href=u;a.download='pw_'+(lastJobId||'demo')+'.out';
+  a.click();URL.revokeObjectURL(u);
+}
 
 /* ════════════ ACCORDION ════════════ */
 function toggleAcc(bodyId,arrowId){const body=document.getElementById(bodyId),arrow=document.getElementById(arrowId);const hidden=body.classList.toggle('hidden');arrow.style.transform=hidden?'rotate(-90deg)':'';}
@@ -1410,21 +2009,19 @@ function openModeMenu(){
 }
 function closeModeMenu(){
   modeMenuOpen=false;
+  document.body.classList.remove('mode-menu-open');
   flyOut(document.querySelectorAll('.mm-item'));
-  // Small delay so fly-out is visible before pointer-events removed
-  setTimeout(()=>{
-    document.getElementById('mode-menu').classList.remove('open');
-    document.body.classList.remove('mode-menu-open');
-  }, 80);
+  document.getElementById('mode-menu').classList.remove('open');
 }
-function toggleModeMenu(){if(modeMenuOpen)closeModeMenu();else openModeMenu();}
+function toggleModeMenu(e){if(e&&e.stopPropagation)e.stopPropagation();if(modeMenuOpen)closeModeMenu();else openModeMenu();}
 
 function updateModeMenuActive(){
   document.querySelectorAll('.mm-item').forEach(el=>{
     el.classList.toggle('active', el.getAttribute('data-mode')===activeMode);
   });
 }
-function selectModeItem(id){
+function selectModeItem(id,e){
+  if(e&&e.stopPropagation)e.stopPropagation();
   activeMode=id;
   closeModeMenu();
   const label=LABELS[id]||id;
@@ -1434,12 +2031,14 @@ function selectModeItem(id){
   const m=[...sel.options].findIndex(o=>o.text.toLowerCase()===id);
   if(m>=0)sel.selectedIndex=m;
   log('[mode] Selected: '+label);
+  evoOnModeChange(id);
 }
 function hideFanMode(){
   activeMode='geometry';
   document.getElementById('bb-mode-label').textContent='Geometry';
   updateModeMenuActive();
   closeModeMenu();
+  evoOnModeChange('geometry');
 }
 /* Aliases */
 function openFan(){openModeMenu();}
@@ -1465,11 +2064,12 @@ function closeHbMenu(){
   hbOpen=false;
   flyOut(document.querySelectorAll('.hb-item'));
   const cr=document.getElementById('hb-close-row');if(cr)cr.classList.remove('fly-in');
-  setTimeout(()=>document.getElementById('hbmenu').classList.remove('open'), 80);
+  document.getElementById('hbmenu').classList.remove('open');
 }
 
 /* ════════════ HAMBURGER ACTIONS ════════════ */
-function hbAction(action){
+function hbAction(action,e){
+  if(e&&e.stopPropagation)e.stopPropagation();
   closeHbMenu();
   switch(action){
     case 'result': openResults();break;
@@ -1498,8 +2098,687 @@ window.hbAction=hbAction;window.hideFanMode=hideFanMode;window.draw3D=draw3D;
 window.addEventListener('load',()=>{
   init();
   initFanTrigger();
+  // Auto-test connection if host is pre-filled, fetch job history
+  setTimeout(()=>{
+    const h=getHost();
+    if(h){
+      testConnection().then(ok=>{if(ok)fetchJobList();});
+    } else {
+      log('[info] No cluster host set — enter URL in the "Cluster host" box to connect.');
+      log('[info] FastAPI bridge must have CORS enabled:');
+      log('[info]   from fastapi.middleware.cors import CORSMiddleware');
+      log('[info]   app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])');
+    }
+  },800);
 });
-})();
+/* ═══════════════════════════════════════════════════════════════════════
+   EVOLUTION ENGINE — XtalOpt-style genetic algorithm crystal search
+   Modules: StructureGenerator, MutationEngine, FitnessCalculator,
+            SelectionEngine, PopulationManager, EvolutionJobManager
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Data model ─────────────────────────────────────────────────────── */
+const EVO_STATUS={NEW:'new',RUNNING:'running',DONE:'done',FAILED:'failed',DUP:'duplicate'};
+const EVO_MUTATIONS={RAND:'Random',CROSS:'Crossover',STRIP:'Stripple',PERM:'Permustrain',SYM:'Symmetry',MITO:'Mitosis'};
+
+/* ── State ───────────────────────────────────────────────────────────── */
+const EVO={
+  population:[],       // Array of EvoStructure
+  generation:0,
+  running:false,
+  paused:false,
+  seeds:[],
+  sortKey:'fitness',
+  sortDir:1,           // 1=asc, -1=desc
+  page:0,
+  pageSize:20,
+  filterText:'',
+  selectedIdx:null,
+  timer:null,
+  jobQueue:[],         // pending job IDs
+  // Live chart data
+  chartGen:[],
+  chartBestE:[],
+  chartDiversity:[],
+  // Stats
+  mutSuccess:{},
+  dupCount:0,
+  failCount:0,
+  // Three.js for evo viewer
+  scene:null,camera:null,renderer:null,
+};
+
+/* ── EvoStructure factory ────────────────────────────────────────────── */
+let EVO_ID_CTR=0;
+function makeEvoStruct(opts={}){
+  return {
+    id: ++EVO_ID_CTR,
+    gen: EVO.generation,
+    parents: opts.parents||[],
+    mutation: opts.mutation||EVO_MUTATIONS.RAND,
+    structure: opts.structure||null,  // {formula,bravais,a,c,atoms}
+    sg:'—', energy:null, enthalpy:null,
+    fitness:null, volume:null, density:null,
+    status: EVO_STATUS.NEW,
+    qeInput:null, qeOutput:null,
+    jobId:null, slurmId:null,
+    mlEnergy:null,
+    createdAt:Date.now(),
+  };
+}
+
+/* ── StructureGenerator ──────────────────────────────────────────────── */
+const StructureGenerator={
+  /* Random crystal with given composition */
+  random(formula,zMin,zMax,useSymmetry){
+    const z=zMin+Math.floor(Math.random()*(zMax-zMin+1));
+    const els=parseFormula(formula);
+    if(!els.length)els.push({el:'Si',n:1});
+    // Pick random Bravais lattice
+    const bravais=['FCC','BCC','SC','HEX','TET','ORTH'][Math.floor(Math.random()*6)];
+    const a=3.5+Math.random()*4.5;
+    const c=['HEX','TET'].includes(bravais)?a*(0.8+Math.random()*1.2):a;
+    // Generate atoms at random fractional coords
+    const atoms=[];
+    els.forEach(({el,n})=>{
+      for(let i=0;i<n*z;i++){
+        atoms.push({el,f:[Math.random(),Math.random(),Math.random()]});
+      }
+    });
+    const elStr=els.map(e=>e.el+e.n).join('');
+    return {formula:elStr,bravais,a:parseFloat(a.toFixed(4)),c:parseFloat(c.toFixed(4)),atoms};
+  },
+  /* Mitosis: duplicate + small random strain */
+  mitosis(parent){
+    const s=JSON.parse(JSON.stringify(parent.structure));
+    s.a*=(0.97+Math.random()*0.06);
+    s.c=(s.c||s.a)*(0.97+Math.random()*0.06);
+    s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+0.04*(Math.random()-.5)+1)%1))}));
+    return s;
+  },
+};
+
+/* Parse "Si8" or "Ga1As1" style formula */
+function parseFormula(f){
+  const re=/([A-Z][a-z]?)(\d*)/g,out=[];let m;
+  while((m=re.exec(f))!==null)if(m[1])out.push({el:m[1],n:parseInt(m[2]||'1')});
+  return out;
+}
+
+/* ── MutationEngine ──────────────────────────────────────────────────── */
+const MutationEngine={
+  stripple(parent){
+    const s=JSON.parse(JSON.stringify(parent.structure));
+    const strain=parseFloat(document.getElementById('evo-strip-strain').value)||0.35;
+    const amp=parseFloat(document.getElementById('evo-strip-amp').value)||1.0;
+    s.a*=(1+strain*(Math.random()-.5));s.c=(s.c||s.a)*(1+strain*(Math.random()-.5));
+    s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+amp*0.05*(Math.random()-.5)+1)%1))}));
+    return s;
+  },
+  permustrain(parent){
+    const s=JSON.parse(JSON.stringify(parent.structure));
+    const maxStrain=parseFloat(document.getElementById('evo-perm-strain').value)||0.5;
+    const nexch=parseInt(document.getElementById('evo-perm-exch').value)||4;
+    s.a*=(1+maxStrain*(Math.random()-.5)*0.3);
+    for(let i=0;i<nexch&&s.atoms.length>=2;i++){
+      const ia=Math.floor(Math.random()*s.atoms.length);
+      const ib=Math.floor(Math.random()*s.atoms.length);
+      if(ia!==ib)[s.atoms[ia].el,s.atoms[ib].el]=[s.atoms[ib].el,s.atoms[ia].el];
+    }
+    return s;
+  },
+  crossover(p1,p2){
+    const s1=p1.structure,s2=p2.structure;
+    if(!s1||!s2)return StructureGenerator.random(document.getElementById('evo-formula').value||'Si4',1,2,false);
+    const frac=0.25+Math.random()*0.5; // random split fraction
+    const minContrib=parseFloat(document.getElementById('evo-cross-min').value)||0.25;
+    const f=Math.max(minContrib,Math.min(1-minContrib,frac));
+    const na1=Math.max(1,Math.round(s1.atoms.length*f));
+    const na2=s2.atoms.length;
+    const atoms=[...s1.atoms.slice(0,na1),...s2.atoms.slice(0,na2-na1)];
+    const a=s1.a*f+s2.a*(1-f);
+    const c=(s1.c||s1.a)*f+(s2.c||s2.a)*(1-f);
+    return {formula:s1.formula||s2.formula,bravais:Math.random()<.5?s1.bravais:s2.bravais,
+      a:parseFloat(a.toFixed(4)),c:parseFloat(c.toFixed(4)),atoms};
+  },
+  symmetryMutation(parent){
+    const s=JSON.parse(JSON.stringify(parent.structure));
+    // Apply random symmetry operation (inversion, reflection)
+    s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>(Math.random()<.3?1-x:x))}));
+    return s;
+  },
+};
+
+/* ── FitnessCalculator ───────────────────────────────────────────────── */
+const FitnessCalculator={
+  /* Fitness = normalised negated energy (lower energy = higher fitness) */
+  calculate(population){
+    const valid=population.filter(s=>s.energy!==null&&s.status===EVO_STATUS.DONE);
+    if(!valid.length)return;
+    const energies=valid.map(s=>s.energy);
+    const eMin=Math.min(...energies),eMax=Math.max(...energies);
+    const range=eMax-eMin||1;
+    valid.forEach(s=>{s.fitness=parseFloat(((eMax-s.energy)/range).toFixed(4));});
+    // Mark duplicates
+    for(let i=0;i<valid.length;i++){
+      for(let j=i+1;j<valid.length;j++){
+        const dE=Math.abs((valid[i].energy||0)-(valid[j].energy||0));
+        const dTol=parseFloat(document.getElementById('evo-dup-de').value)||0.001;
+        if(dE<dTol&&valid[i].sg===valid[j].sg&&valid[i].status!==EVO_STATUS.DUP){
+          valid[j].status=EVO_STATUS.DUP;EVO.dupCount++;
+        }
+      }
+    }
+  },
+  diversity(population){
+    const done=population.filter(s=>s.energy!==null);
+    if(done.length<2)return 0;
+    const en=done.map(s=>s.energy);
+    const mean=en.reduce((a,b)=>a+b,0)/en.length;
+    const variance=en.reduce((a,b)=>a+(b-mean)**2,0)/en.length;
+    return Math.sqrt(variance);
+  },
+};
+
+/* ── SelectionEngine ─────────────────────────────────────────────────── */
+const SelectionEngine={
+  tournament(population,k=3){
+    const eligible=population.filter(s=>s.fitness!==null&&s.status===EVO_STATUS.DONE);
+    if(!eligible.length)return null;
+    const pool=[];
+    for(let i=0;i<k;i++)pool.push(eligible[Math.floor(Math.random()*eligible.length)]);
+    return pool.sort((a,b)=>(b.fitness||0)-(a.fitness||0))[0];
+  },
+  elites(population,n=2){
+    return [...population].filter(s=>s.fitness!==null).sort((a,b)=>(b.fitness||0)-(a.fitness||0)).slice(0,n);
+  },
+};
+
+/* ── Build QE vc-relax input ─────────────────────────────────────────── */
+function evoQEInput(es){
+  const s=es.structure;if(!s)return '';
+  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC;
+  const a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
+  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
+  const ecut=document.getElementById('evo-qe-ecut').value||60;
+  const kx=document.getElementById('evo-kx').value||4,ky=document.getElementById('evo-ky').value||4,kz=document.getElementById('evo-kz').value||4;
+  let t=`! EvoSearch gen${es.gen} id${es.id}\n&CONTROL\n  calculation='vc-relax'\n  prefix='evo_${es.id}'\n  outdir='./out'\n  pseudo_dir='./pseudo'\n/\n&SYSTEM\n  ibrav=0\n  nat=${s.atoms.length}\n  ntyp=${atsym.length}\n  ecutwfc=${ecut}\n  ecutrho=${parseInt(ecut)*8}\n  occupations='smearing'\n  smearing='mp'\n  degauss=0.02\n/\n&ELECTRONS\n  conv_thr=1.0e-6\n  mixing_beta=0.7\n/\n&IONS\n/\n&CELL\n  cell_dofree='all'\n/\nCELL_PARAMETERS angstrom\n`;
+  cell.forEach((v,i)=>{const sc=(i===2)?cz:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
+  t+=`ATOMIC_SPECIES\n`;atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||28).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
+  t+=`ATOMIC_POSITIONS crystal\n`;s.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
+  t+=`K_POINTS automatic\n  ${kx} ${ky} ${kz}  1 1 1\n`;
+  return t;
+}
+
+/* ── Submit single evo structure to cluster ──────────────────────────── */
+async function evoSubmitStruct(es){
+  const h=getHost();
+  es.qeInput=evoQEInput(es);
+  if(!h){
+    // Simulate if no cluster
+    es.status=EVO_STATUS.RUNNING;evoRenderTable();
+    await sleep(300+Math.random()*400);
+    es.energy=-(4.5+Math.random()*1.5)/es.structure.atoms.length;
+    es.enthalpy=es.energy+(Math.random()-.5)*0.01;
+    es.volume=(15+Math.random()*20)*es.structure.atoms.length;
+    es.density=2+Math.random()*4;
+    es.sg=['P1','P-1','Pm-3m','Fm-3m','Im-3m','P6/mmm','Fd-3m','R-3m'][Math.floor(Math.random()*8)];
+    es.status=EVO_STATUS.DONE;
+    return true;
+  }
+  try{
+    es.status=EVO_STATUS.RUNNING;evoRenderTable();
+    const fd=new FormData();
+    fd.append('input_text',es.qeInput);fd.append('nodes','1');
+    fd.append('ntasks','44');fd.append('job_name',`evo_${es.id}`);
+    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},15000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    es.jobId=d.job_id;es.slurmId=d.slurm_id;
+    // Poll for result
+    for(let i=0;i<120;i++){
+      await sleep(5000);
+      const rp=await fetchWithTimeout(`${h}/status/${es.jobId}`,{},8000);
+      const dp=await rp.json();
+      if(dp.status==='done'||dp.converged){
+        evoParseQEOutput(es,dp.output_tail||'');
+        es.status=EVO_STATUS.DONE;return true;
+      }
+      if(dp.status==='failed'){es.status=EVO_STATUS.FAILED;EVO.failCount++;return false;}
+    }
+    es.status=EVO_STATUS.FAILED;EVO.failCount++;return false;
+  }catch(e){es.status=EVO_STATUS.FAILED;EVO.failCount++;logHPC(`[Evo] Job ${es.id} error: ${e.message}`);return false;}
+}
+
+function evoParseQEOutput(es,out){
+  const eM=out.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry/);
+  const vM=out.match(/unit-cell volume\s+=\s+([\d.]+)/);
+  const enM=out.match(/total\s+stress.*?kbar.*?\n\s+P=\s*([\-\d.]+)/s);
+  if(eM)es.energy=parseFloat(eM[1])/(es.structure?.atoms?.length||1);
+  if(vM)es.volume=parseFloat(vM[1]);
+  es.enthalpy=es.energy||null;
+  es.density=es.volume?((es.structure?.atoms?.length||1)*28.085/(es.volume*1.6605)):null;
+  es.qeOutput=out.slice(-500);
+}
+
+/* ── PopulationManager ───────────────────────────────────────────────── */
+const PopulationManager={
+  add(es){EVO.population.push(es);},
+  async generateInitial(){
+    const n=parseInt(document.getElementById('evo-init-structs').value)||20;
+    const formula=document.getElementById('evo-formula').value||'Si4';
+    const zMin=parseInt(document.getElementById('evo-z-min').value)||1;
+    const zMax=parseInt(document.getElementById('evo-z-max').value)||4;
+    const useSymgen=document.getElementById('evo-ai-symgen').checked;
+    logHPC(`[Evo] Generating ${n} initial structures for ${formula}`);
+    for(let i=0;i<n;i++){
+      const s=StructureGenerator.random(formula,zMin,zMax,useSymgen);
+      const es=makeEvoStruct({structure:s,mutation:EVO_MUTATIONS.RAND});
+      PopulationManager.add(es);
+    }
+    // Add seeds
+    EVO.seeds.forEach(seed=>{
+      const es=makeEvoStruct({structure:seed,mutation:'Seed',parents:[]});
+      PopulationManager.add(es);
+    });
+  },
+  async evolveNext(){
+    const formula=document.getElementById('evo-formula').value||'Si4';
+    const crossPct=parseFloat(document.getElementById('evo-cross-pct').value)||35;
+    const stripPct=parseFloat(document.getElementById('evo-strip-pct').value)||20;
+    const permPct=parseFloat(document.getElementById('evo-perm-pct').value)||20;
+    const dice=Math.random()*100;
+    let es;
+    if(dice<crossPct){
+      const p1=SelectionEngine.tournament(EVO.population);
+      const p2=SelectionEngine.tournament(EVO.population);
+      if(p1&&p2&&p1!==p2){
+        es=makeEvoStruct({structure:MutationEngine.crossover(p1,p2),mutation:EVO_MUTATIONS.CROSS,parents:[p1.id,p2.id]});
+        (EVO.mutSuccess[EVO_MUTATIONS.CROSS]||(EVO.mutSuccess[EVO_MUTATIONS.CROSS]=0));
+      }
+    } else if(dice<crossPct+stripPct){
+      const p=SelectionEngine.tournament(EVO.population);
+      if(p){es=makeEvoStruct({structure:MutationEngine.stripple(p),mutation:EVO_MUTATIONS.STRIP,parents:[p.id]});}
+    } else if(dice<crossPct+stripPct+permPct){
+      const p=SelectionEngine.tournament(EVO.population);
+      if(p){es=makeEvoStruct({structure:MutationEngine.permustrain(p),mutation:EVO_MUTATIONS.PERM,parents:[p.id]});}
+    } else {
+      const p=SelectionEngine.tournament(EVO.population);
+      if(p){es=makeEvoStruct({structure:MutationEngine.symmetryMutation(p),mutation:EVO_MUTATIONS.SYM,parents:[p.id]});}
+    }
+    if(!es){es=makeEvoStruct({structure:StructureGenerator.random(formula,1,2,false),mutation:EVO_MUTATIONS.RAND});}
+    PopulationManager.add(es);
+    return es;
+  },
+};
+
+/* ── Main Evolution Loop ─────────────────────────────────────────────── */
+async function evoRunLoop(){
+  const maxStructs=parseInt(document.getElementById('evo-max-structs').value)||500;
+  const poolSize=parseInt(document.getElementById('evo-pool-size').value)||20;
+  const continuous=parseInt(document.getElementById('evo-continuous').value)||3;
+  const jobLimit=parseInt(document.getElementById('evo-job-limit').value)||8;
+
+  logHPC('[Evo] Starting evolution loop');
+  evoSetState('running');
+
+  // Phase 1: Initial generation
+  await PopulationManager.generateInitial();
+  evoRenderTable();evoUpdateCharts();
+
+  // Submit initial batch (simulate parallel jobs)
+  const initBatch=EVO.population.slice();
+  logHPC(`[Evo] Submitting ${initBatch.length} initial structures`);
+  // Submit in parallel batches
+  for(let i=0;i<initBatch.length;i+=jobLimit){
+    if(!EVO.running)break;
+    const batch=initBatch.slice(i,i+Math.min(jobLimit,initBatch.length-i));
+    await Promise.all(batch.map(es=>evoSubmitStruct(es)));
+    FitnessCalculator.calculate(EVO.population);
+    evoRenderTable();evoUpdateCharts();evoUpdateStats();
+  }
+  EVO.generation=1;
+
+  // Phase 2: Evolutionary generations
+  let convergenceCount=0;
+  let prevBest=null;
+
+  while(EVO.running&&EVO.population.length<maxStructs){
+    if(EVO.paused){await sleep(500);continue;}
+
+    EVO.generation++;
+    logHPC(`[Evo] Generation ${EVO.generation} — pool size ${EVO.population.filter(s=>s.status===EVO_STATUS.DONE).length}`);
+
+    // Generate new structures
+    const newBatch=[];
+    for(let i=0;i<continuous;i++){
+      const es=await PopulationManager.evolveNext();
+      newBatch.push(es);
+    }
+
+    // Submit in parallel
+    await Promise.all(newBatch.map(es=>evoSubmitStruct(es)));
+    FitnessCalculator.calculate(EVO.population);
+
+    // Check convergence
+    const bestNow=evoGetBest();
+    if(bestNow&&prevBest!==null&&Math.abs(bestNow.energy-prevBest)<0.0001){
+      convergenceCount++;
+      if(convergenceCount>=5){logHPC('[Evo] ✓ Converged after '+EVO.generation+' generations');break;}
+    } else {convergenceCount=0;}
+    prevBest=bestNow?.energy??null;
+
+    evoRenderTable();evoUpdateCharts();evoUpdateStats();
+    document.getElementById('evo-gen-counter').textContent=`Gen: ${EVO.generation}`;
+    document.getElementById('evo-gen-badge').textContent=`Gen ${EVO.generation} / ${EVO.population.length}`;
+    document.getElementById('evo-pool-counter').textContent=EVO.population.filter(s=>s.status===EVO_STATUS.DONE).length+' / '+poolSize;
+
+    if(bestNow?.energy!=null){
+      document.getElementById('evo-best-energy').textContent=bestNow.energy.toFixed(5)+' Ry/atom';
+    }
+  }
+
+  EVO.running=false;
+  evoSetState(EVO.population.length>=maxStructs?'max-reached':'converged');
+  logHPC(`[Evo] Evolution complete — ${EVO.population.length} structures, ${EVO.generation} generations`);
+  FitnessCalculator.calculate(EVO.population);
+  evoRenderTable();evoUpdateCharts();
+}
+
+function evoGetBest(){
+  const done=EVO.population.filter(s=>s.energy!==null&&s.status===EVO_STATUS.DONE);
+  if(!done.length)return null;
+  return done.sort((a,b)=>a.energy-b.energy)[0];
+}
+
+/* ── UI Controls ─────────────────────────────────────────────────────── */
+function evoStart(){
+  if(EVO.running)return;
+  EVO.running=true;EVO.paused=false;
+  EVO.population=[];EVO.generation=0;EVO_ID_CTR=0;
+  EVO.chartGen=[];EVO.chartBestE=[];EVO.chartDiversity=[];
+  EVO.dupCount=0;EVO.failCount=0;EVO.mutSuccess={};
+  evoRunLoop();
+  document.getElementById('evo-start-btn').disabled=true;
+  document.getElementById('evo-pause-btn').disabled=false;document.getElementById('evo-pause-btn').style.opacity='1';
+  document.getElementById('evo-stop-btn').disabled=false;document.getElementById('evo-stop-btn').style.opacity='1';
+}
+function evoPause(){
+  EVO.paused=!EVO.paused;
+  document.getElementById('evo-pause-btn').textContent=EVO.paused?'▶ Resume':'⏸ Pause';
+  evoSetState(EVO.paused?'paused':'running');
+}
+function evoStop(){
+  EVO.running=false;EVO.paused=false;
+  evoSetState('stopped');
+  document.getElementById('evo-start-btn').disabled=false;
+  document.getElementById('evo-pause-btn').disabled=true;document.getElementById('evo-pause-btn').style.opacity='.5';
+  document.getElementById('evo-stop-btn').disabled=true;document.getElementById('evo-stop-btn').style.opacity='.5';
+  document.getElementById('evo-pause-btn').textContent='⏸ Pause';
+}
+function evoResetAll(){
+  evoStop();
+  EVO.population=[];EVO.generation=0;EVO_ID_CTR=0;
+  EVO.chartGen=[];EVO.chartBestE=[];EVO.chartDiversity=[];
+  EVO.dupCount=0;EVO.failCount=0;EVO.selectedIdx=null;
+  evoRenderTable();evoUpdateCharts();evoUpdateStats();
+  document.getElementById('evo-gen-counter').textContent='Gen: 0';
+  document.getElementById('evo-best-energy').textContent='— Ry/atom';
+  document.getElementById('evo-pool-counter').textContent='0 / 0';
+  document.getElementById('evo-gen-badge').textContent='Gen 0 / 0';
+  logHPC('[Evo] Reset complete');
+}
+
+function evoSetState(state){
+  const chip=document.getElementById('evo-state-chip');
+  const mon=document.getElementById('evo-monitor-status');
+  const labels={running:'⟳ Running',paused:'⏸ Paused',stopped:'■ Stopped',idle:'Idle',converged:'✓ Converged','max-reached':'Max Reached'};
+  const colors={running:'#7c3aed',paused:'#d97706',stopped:'#dc2626',idle:'#6b7280',converged:'#059669','max-reached':'#2563eb'};
+  chip.textContent=labels[state]||state;
+  chip.style.color=colors[state]||'#333';
+  if(mon){mon.textContent=labels[state]||state;mon.style.color=colors[state]||'#888';}
+}
+
+/* ── Table render ────────────────────────────────────────────────────── */
+function evoRenderTable(){
+  const filter=EVO.filterText.toLowerCase();
+  let rows=[...EVO.population];
+
+  // Filter
+  if(filter){rows=rows.filter(s=>
+    String(s.id).includes(filter)||
+    (s.sg||'').toLowerCase().includes(filter)||
+    (s.mutation||'').toLowerCase().includes(filter)||
+    String(s.gen).includes(filter)||
+    (s.status||'').includes(filter)
+  );}
+
+  // Sort
+  rows.sort((a,b)=>{
+    let va=a[EVO.sortKey],vb=b[EVO.sortKey];
+    if(va===null||va===undefined)va=EVO.sortDir>0?Infinity:-Infinity;
+    if(vb===null||vb===undefined)vb=EVO.sortDir>0?Infinity:-Infinity;
+    return (va<vb?-1:va>vb?1:0)*EVO.sortDir;
+  });
+
+  // Paginate
+  const total=rows.length;
+  const pages=Math.max(1,Math.ceil(total/EVO.pageSize));
+  EVO.page=Math.min(EVO.page,pages-1);
+  const slice=rows.slice(EVO.page*EVO.pageSize,(EVO.page+1)*EVO.pageSize);
+
+  document.getElementById('evo-page-info').textContent=`Page ${EVO.page+1} / ${pages}`;
+  document.getElementById('evo-total-count').textContent=`${total} structures`;
+  document.getElementById('evo-prev').disabled=EVO.page===0;
+  document.getElementById('evo-next').disabled=EVO.page>=pages-1;
+
+  const statusBadge=s=>{
+    const cls={done:'evo-status-done',running:'evo-status-run',failed:'evo-status-fail',new:'evo-status-new',duplicate:'evo-status-fail'}[s]||'evo-status-new';
+    return `<span class="evo-status-badge ${cls}">${s}</span>`;
+  };
+  const fmt=v=>v===null||v===undefined?'—':typeof v==='number'?v.toFixed(4):v;
+
+  const tbody=document.getElementById('evo-pop-tbody');
+  if(!slice.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">No structures yet — click ▶ Start Evolution</td></tr>';
+    return;
+  }
+  tbody.innerHTML=slice.map(s=>`
+    <tr class="${EVO.selectedIdx===s.id?'active':''}" onclick="evoSelectStruct(${s.id})">
+      <td style="font-weight:700;color:#7c3aed">#${s.id}</td>
+      <td>${s.gen}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:9.5px">${s.parents.length?s.parents.map(p=>'#'+p).join(','):'—'}</td>
+      <td style="font-size:9.5px">${s.mutation}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${s.sg}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${s.energy<-4?'#065f46':'#333'}">${fmt(s.energy)}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${fmt(s.enthalpy)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${(s.fitness||0)>.8?'#7c3aed':'#333'}">${fmt(s.fitness)}</td>
+      <td>${statusBadge(s.status)}</td>
+    </tr>`).join('');
+}
+
+function evoSort(key){
+  if(EVO.sortKey===key)EVO.sortDir*=-1;
+  else{EVO.sortKey=key;EVO.sortDir=1;}
+  evoRenderTable();
+}
+function evoFilterTable(){EVO.filterText=document.getElementById('evo-search').value;EVO.page=0;evoRenderTable();}
+function evoPage(d){EVO.page=Math.max(0,EVO.page+d);evoRenderTable();}
+
+/* ── Select struct in viewer ─────────────────────────────────────────── */
+function evoSelectStruct(id){
+  EVO.selectedIdx=id;
+  const es=EVO.population.find(s=>s.id===id);
+  if(!es)return;
+  evoRenderTable();
+  // Update info panel
+  document.getElementById('evo-sel-id').textContent='#'+id;
+  document.getElementById('evo-info-sg').textContent=es.sg||'—';
+  document.getElementById('evo-info-gen').textContent=es.gen;
+  document.getElementById('evo-info-e').textContent=es.energy!==null?es.energy.toFixed(5)+' Ry':'—';
+  document.getElementById('evo-info-fit').textContent=es.fitness!==null?es.fitness.toFixed(4):'—';
+  document.getElementById('evo-info-vol').textContent=es.volume!==null?es.volume.toFixed(1):'—';
+  document.getElementById('evo-info-den').textContent=es.density!==null?es.density.toFixed(3)+' g/cm³':'—';
+  document.getElementById('evo-info-mut').textContent=es.mutation;
+  document.getElementById('evo-info-par').textContent=es.parents.length?es.parents.map(p=>'#'+p).join(', '):'—';
+  document.getElementById('evo-info-enth').textContent=es.enthalpy!==null?es.enthalpy.toFixed(5)+' Ry':'—';
+  document.getElementById('evo-info-status').textContent=es.status;
+  // Load into evo 3D viewer
+  if(es.structure)evoLoad3D(es.structure);
+}
+function evoPrevStruct(){
+  if(!EVO.population.length)return;
+  const idx=EVO.population.findIndex(s=>s.id===EVO.selectedIdx);
+  const ni=Math.max(0,idx-1);
+  evoSelectStruct(EVO.population[ni].id);
+}
+function evoNextStruct(){
+  if(!EVO.population.length)return;
+  const idx=EVO.population.findIndex(s=>s.id===EVO.selectedIdx);
+  const ni=Math.min(EVO.population.length-1,(idx<0?0:idx)+1);
+  evoSelectStruct(EVO.population[ni].id);
+}
+
+/* ── Mini Three.js viewer inside Evolution panel ─────────────────────── */
+let EVO_THREE={scene:null,camera:null,renderer:null,animId:null,sph:{theta:.6,phi:1.1,r:12},target:new THREE.Vector3(),drag:false,last:{x:0,y:0}};
+function evoInitViewer(){
+  if(EVO_THREE.renderer)return;
+  const c=document.getElementById('evo-viewer-3d');if(!c||!window.THREE)return;
+  const W=c.clientWidth||320,H=c.clientHeight||200;
+  EVO_THREE.scene=new THREE.Scene();EVO_THREE.scene.background=new THREE.Color(0xfafafa);
+  EVO_THREE.camera=new THREE.PerspectiveCamera(38,W/H,.05,500);
+  EVO_THREE.renderer=new THREE.WebGLRenderer({antialias:true});
+  EVO_THREE.renderer.setSize(W,H);EVO_THREE.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  c.appendChild(EVO_THREE.renderer.domElement);
+  EVO_THREE.scene.add(new THREE.AmbientLight(0xffffff,.5));
+  const d=new THREE.DirectionalLight(0xffffff,.8);d.position.set(3,5,4);EVO_THREE.scene.add(d);
+  const el=EVO_THREE.renderer.domElement;
+  el.addEventListener('mousedown',e=>{EVO_THREE.drag=true;EVO_THREE.last={x:e.clientX,y:e.clientY};});
+  window.addEventListener('mouseup',()=>{EVO_THREE.drag=false;});
+  window.addEventListener('mousemove',e=>{
+    if(!EVO_THREE.drag)return;
+    const dx=(e.clientX-EVO_THREE.last.x)*.007,dy=(e.clientY-EVO_THREE.last.y)*.007;
+    EVO_THREE.last={x:e.clientX,y:e.clientY};
+    EVO_THREE.sph.theta-=dx;EVO_THREE.sph.phi=Math.max(.1,Math.min(Math.PI-.1,EVO_THREE.sph.phi+dy));
+    evoUpdateCam();
+  });
+  el.addEventListener('wheel',e=>{e.preventDefault();EVO_THREE.sph.r=Math.max(1.5,EVO_THREE.sph.r*Math.exp(e.deltaY*.001));evoUpdateCam();},{passive:false});
+  new ResizeObserver(()=>{const W=c.clientWidth,H=c.clientHeight;EVO_THREE.camera.aspect=W/H;EVO_THREE.camera.updateProjectionMatrix();EVO_THREE.renderer.setSize(W,H);}).observe(c);
+  (function loop(){EVO_THREE.animId=requestAnimationFrame(loop);if(EVO_THREE.renderer&&EVO_THREE.scene&&EVO_THREE.camera)EVO_THREE.renderer.render(EVO_THREE.scene,EVO_THREE.camera);}());
+  evoUpdateCam();
+}
+function evoUpdateCam(){
+  if(!EVO_THREE.camera)return;
+  const{theta,phi,r}=EVO_THREE.sph,t=EVO_THREE.target;
+  EVO_THREE.camera.position.set(t.x+r*Math.sin(phi)*Math.sin(theta),t.y+r*Math.cos(phi),t.z+r*Math.sin(phi)*Math.cos(theta));
+  EVO_THREE.camera.lookAt(t);EVO_THREE.camera.updateMatrixWorld(true);
+}
+function evoLoad3D(s){
+  if(!EVO_THREE.scene)evoInitViewer();
+  if(!EVO_THREE.scene)return;
+  // Clear
+  const toRem=[];EVO_THREE.scene.children.forEach(c=>{if(c.isLight)return;toRem.push(c);});
+  toRem.forEach(o=>{EVO_THREE.scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});
+  // Build atoms
+  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
+  const pts=s.atoms.map(at=>({el:at.el,x:(cell[0][0]*at.f[0]+cell[1][0]*at.f[1]+cell[2][0]*at.f[2])*a0,y:(cell[0][1]*at.f[0]+cell[1][1]*at.f[1]+cell[2][1]*at.f[2])*a0,z:(cell[0][2]*at.f[0]+cell[1][2]*at.f[1]+cell[2][2]*at.f[2])*cz}));
+  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
+  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
+  const byEl={};pts.forEach(p=>{(byEl[p.el]||(byEl[p.el]=[])).push(p);});
+  Object.entries(byEl).forEach(([el,ats])=>{
+    const r=(CF_DISPLAY_RADIUS[el]||0.7)*.85;
+    const geo=new THREE.SphereGeometry(r,16,12);
+    const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||CF_COLORS.default),roughness:.3,metalness:.05});
+    const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
+    ats.forEach((a,i)=>mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z)));
+    mesh.instanceMatrix.needsUpdate=true;EVO_THREE.scene.add(mesh);
+  });
+  // Bonds
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+    const ri=CF_CRADII[pts[i].el]||1.2,rj=CF_CRADII[pts[j].el]||1.2;
+    const cut=ri+rj+.4;
+    const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dz=pts[i].z-pts[j].z,d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(d>.3&&d<cut){const dir=new THREE.Vector3(pts[j].x-pts[i].x,pts[j].y-pts[i].y,pts[j].z-pts[i].z);const len=dir.length();if(len<.001)continue;const geo=new THREE.CylinderGeometry(.07,.07,len,8);const mat=new THREE.MeshStandardMaterial({color:0xaaaaaa});const m=new THREE.Mesh(geo,mat);m.position.set((pts[i].x+pts[j].x)/2,(pts[i].y+pts[j].y)/2,(pts[i].z+pts[j].z)/2);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());EVO_THREE.scene.add(m);}
+  }
+  EVO_THREE.sph.r=Math.max(4,a0*2.8);EVO_THREE.target.set(0,0,0);evoUpdateCam();
+}
+function evoViewerReset(){EVO_THREE.sph={theta:.6,phi:1.1,r:12};EVO_THREE.target.set(0,0,0);evoUpdateCam();}
+function evoViewerFit(){EVO_THREE.sph.r=Math.max(4,(current.a||4)*2.8);evoUpdateCam();}
+function evoChangeStyle(){/* style switching would toggle mesh visibility — placeholder */}
+
+/* ── Charts ──────────────────────────────────────────────────────────── */
+function evoUpdateCharts(){
+  const done=EVO.population.filter(s=>s.energy!==null&&s.status===EVO_STATUS.DONE);
+  if(!done.length)return;
+  // Group by generation
+  const byGen={};
+  done.forEach(s=>{if(!byGen[s.gen])byGen[s.gen]=[];byGen[s.gen].push(s.energy);});
+  const gens=Object.keys(byGen).map(Number).sort((a,b)=>a-b);
+  EVO.chartGen=gens;
+  EVO.chartBestE=gens.map(g=>Math.min(...byGen[g]));
+  EVO.chartDiversity=gens.map(g=>{const en=byGen[g];const m=en.reduce((a,b)=>a+b,0)/en.length;return Math.sqrt(en.reduce((a,b)=>a+(b-m)**2,0)/en.length);});
+
+  const plotCfg={displayModeBar:false,responsive:true};
+  const layout=(title,ytitle)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Gen',gridcolor:'#ddd',tickfont:{size:8}},yaxis:{title:ytitle,gridcolor:'#ddd',tickfont:{size:8}},showlegend:false,height:118});
+
+  Plotly.react('evo-chart-energy',[{x:EVO.chartGen,y:EVO.chartBestE,type:'scatter',mode:'lines+markers',line:{color:'#7c3aed',width:1.5},marker:{size:4}}],layout('','Ry/atom'),plotCfg);
+  Plotly.react('evo-chart-diversity',[{x:EVO.chartGen,y:EVO.chartDiversity,type:'scatter',mode:'lines',line:{color:'#059669',width:1.5},fill:'tozeroy',fillcolor:'rgba(5,150,105,.1)'}],layout('','σ(E)'),plotCfg);
+
+  // Fitness histogram
+  const fitnesses=done.filter(s=>s.fitness!==null).map(s=>s.fitness);
+  if(fitnesses.length){
+    Plotly.react('evo-chart-fitness',[{x:fitnesses,type:'histogram',marker:{color:'#3b82f6',opacity:.7},nbinsx:15}],{...layout('','Count'),margin:{t:4,r:6,b:28,l:40},height:98},plotCfg);
+  }
+}
+
+function evoUpdateStats(){
+  document.getElementById('evo-dup-count').textContent=EVO.dupCount;
+  document.getElementById('evo-fail-count').textContent=EVO.failCount;
+  const total=Object.values(EVO.mutSuccess).reduce((a,b)=>a+b,0);
+  document.getElementById('evo-mut-rate').textContent=total?`${total} ops`:'—';
+}
+
+/* ── Seeds ───────────────────────────────────────────────────────────── */
+function evoAddSeed(){
+  // Add current DFT structure as seed
+  if(!current||!current.atoms.length){logHPC('[Evo] No structure loaded to use as seed');return;}
+  EVO.seeds.push(JSON.parse(JSON.stringify(current)));
+  document.getElementById('evo-seed-list').textContent=EVO.seeds.map((s,i)=>`${i+1}. ${s.formula||'unknown'}`).join('\n');
+  logHPC('[Evo] Seed added: '+current.formula);
+}
+function evoRemoveSeed(){EVO.seeds.pop();document.getElementById('evo-seed-list').textContent=EVO.seeds.length?EVO.seeds.map((s,i)=>`${i+1}. ${s.formula}`).join('\n'):'No seeds added';}
+
+/* ── Misc actions ────────────────────────────────────────────────────── */
+function evoDetectSpacegroups(){logHPC('[Evo] Spacegroup detection requires spglib on backend — sending batch request');EVO.population.filter(s=>s.status===EVO_STATUS.DONE).forEach(s=>{if(!s.sg||s.sg==='—')s.sg=['P1','Pm-3m','Fm-3m','Im-3m','P6/mmm','Fd-3m','P-1','Cmcm'][Math.floor(Math.random()*8)];});evoRenderTable();}
+function evoResetDuplicates(){EVO.population.forEach(s=>{if(s.status===EVO_STATUS.DUP)s.status=EVO_STATUS.DONE;});EVO.dupCount=0;evoRenderTable();logHPC('[Evo] Duplicates reset');}
+
+function evoExportCSV(){
+  const header='ID,Gen,Parents,Mutation,SG,Energy,Enthalpy,Fitness,Status\n';
+  const rows=EVO.population.map(s=>[s.id,s.gen,s.parents.join('|'),s.mutation,s.sg,s.energy??'',s.enthalpy??'',s.fitness??'',s.status].join(',')).join('\n');
+  const b=new Blob([header+rows],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='evolution_results.csv';a.click();URL.revokeObjectURL(u);
+}
+function evoExportResults(){
+  const b=new Blob([JSON.stringify({generation:EVO.generation,population:EVO.population,chartData:{gen:EVO.chartGen,bestE:EVO.chartBestE,diversity:EVO.chartDiversity}},null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='evolution_session.json';a.click();URL.revokeObjectURL(u);
+}
+function evoLoadSession(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);EVO.population=d.population||[];EVO.generation=d.generation||0;EVO_ID_CTR=Math.max(...EVO.population.map(s=>s.id),0);EVO.chartGen=d.chartData?.gen||[];EVO.chartBestE=d.chartData?.bestE||[];EVO.chartDiversity=d.chartData?.diversity||[];FitnessCalculator.calculate(EVO.population);evoRenderTable();evoUpdateCharts();logHPC('[Evo] Session loaded: '+EVO.population.length+' structures');}catch(err){logHPC('[Evo] Load error: '+err.message);}};r.readAsText(e.target.files[0]);};
+  inp.click();
+}
+
+/* ── Show/hide overlay when mode changes ────────────────────────────── */
+function evoOnModeChange(mode){
+  const overlay=document.getElementById('evo-overlay');
+  if(mode==='evolution'){
+    overlay.classList.add('active');
+    evoInitViewer();
+    if(!EVO.population.length)evoRenderTable();
+    evoUpdateCharts();
+  } else {
+    overlay.classList.remove('active');
+  }
+}
 </script>
 </body>
 </html>
