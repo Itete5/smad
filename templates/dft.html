@@ -986,6 +986,8 @@ body.mode-menu-open #bb-icon-close{display:flex}
         <input class="hpc-input" id="loginNode" placeholder="http://100.127.228.36:5000" style="flex:1"/>
         <button onclick="testConnection()" title="Test connection" style="padding:4px 8px;background:#2e7dcc;border:none;border-radius:2px;color:#fff;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0">Test</button>
       </div>
+      <div class="hpc-label" style="margin-top:4px">Pseudopotential directory (on cluster)</div>
+      <input class="hpc-input" id="pseudoDir" placeholder="/home/jayrwaka/smad-api/pseudo" value="./pseudo"/>
     </div>
     <div id="rp-scroll">
 
@@ -1683,7 +1685,7 @@ function buildQEInputText(){
   const s=current,ecut=document.getElementById('ecut').value,kx=document.getElementById('kx').value,ky=document.getElementById('ky').value,kz=document.getElementById('kz').value,sig=document.getElementById('sigma').value,conv=document.getElementById('convThr').value;
   const brav=s.bravais||'FCC',a0=s.a||4,c0=s.c||a0,cell=CELL_VECS[brav]||CELL_VECS.SC,cz=['HEX','TET'].includes(brav)?c0:a0;
   const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
-  let t=`! SMAD DFT — ${s.formula||''}\n&CONTROL\n  calculation = 'scf'\n  prefix = 'smad'\n  outdir = './out'\n  pseudo_dir = './pseudo'\n/\n&SYSTEM\n  ibrav = 0\n  nat = ${s.atoms.length}\n  ntyp = ${atsym.length}\n  ecutwfc = ${ecut}\n  ecutrho = ${parseInt(ecut)*8}\n  occupations = 'smearing'\n  smearing = 'mp'\n  degauss = ${sig}\n/\n&ELECTRONS\n  conv_thr = ${conv}\n  mixing_beta = 0.7\n/\nCELL_PARAMETERS angstrom\n`;
+  let t=`! SMAD DFT — ${s.formula||''}\n&CONTROL\n  calculation = 'scf'\n  prefix = 'smad'\n  outdir = '/tmp/smad_out'\n  pseudo_dir = '${getPseudoDir()}'\n/\n&SYSTEM\n  ibrav = 0\n  nat = ${s.atoms.length}\n  ntyp = ${atsym.length}\n  ecutwfc = ${ecut}\n  ecutrho = ${parseInt(ecut)*8}\n  occupations = 'smearing'\n  smearing = 'mp'\n  degauss = ${sig}\n/\n&ELECTRONS\n  conv_thr = ${conv}\n  mixing_beta = 0.7\n/\nCELL_PARAMETERS angstrom\n`;
   cell.forEach((v,i)=>{const sc=(i===2)?cz:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
   t+=`ATOMIC_SPECIES\n`;atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||1).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
   t+=`ATOMIC_POSITIONS crystal\n`;s.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
@@ -1705,6 +1707,7 @@ function buildQEInputText(){
 let lastJobId=null,lastJobOut='',pollTimer=null,pollActive=false;
 
 /* ── Normalise host URL ─────────────────────────────────────────────── */
+function getPseudoDir(){return(document.getElementById('pseudoDir').value||'./pseudo').trim();}
 function getHost(){
   let h=(document.getElementById('loginNode').value||'').trim();
   if(!h)return null;
@@ -2335,7 +2338,7 @@ function evoQEInput(es){
   const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
   const ecut=document.getElementById('evo-qe-ecut').value||60;
   const kx=document.getElementById('evo-kx').value||4,ky=document.getElementById('evo-ky').value||4,kz=document.getElementById('evo-kz').value||4;
-  let t=`! EvoSearch gen${es.gen} id${es.id}\n&CONTROL\n  calculation='vc-relax'\n  prefix='evo_${es.id}'\n  outdir='./out'\n  pseudo_dir='./pseudo'\n/\n&SYSTEM\n  ibrav=0\n  nat=${s.atoms.length}\n  ntyp=${atsym.length}\n  ecutwfc=${ecut}\n  ecutrho=${parseInt(ecut)*8}\n  occupations='smearing'\n  smearing='mp'\n  degauss=0.02\n/\n&ELECTRONS\n  conv_thr=1.0e-6\n  mixing_beta=0.7\n/\n&IONS\n/\n&CELL\n  cell_dofree='all'\n/\nCELL_PARAMETERS angstrom\n`;
+  let t=`! EvoSearch gen${es.gen} id${es.id}\n&CONTROL\n  calculation='vc-relax'\n  prefix='evo_${es.id}'\n  outdir='/tmp/smad_out'\n  pseudo_dir='${getPseudoDir()}'\n/\n&SYSTEM\n  ibrav=0\n  nat=${s.atoms.length}\n  ntyp=${atsym.length}\n  ecutwfc=${ecut}\n  ecutrho=${parseInt(ecut)*8}\n  occupations='smearing'\n  smearing='mp'\n  degauss=0.02\n/\n&ELECTRONS\n  conv_thr=1.0e-6\n  mixing_beta=0.7\n/\n&IONS\n/\n&CELL\n  cell_dofree='all'\n/\nCELL_PARAMETERS angstrom\n`;
   cell.forEach((v,i)=>{const sc=(i===2)?cz:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
   t+=`ATOMIC_SPECIES\n`;atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||28).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
   t+=`ATOMIC_POSITIONS crystal\n`;s.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
