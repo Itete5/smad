@@ -1743,7 +1743,7 @@ function fetchWithTimeout(url,opts={},ms=12000){
 function openRunDialog(){
   const h=getHost();
   const hostSel=document.getElementById('rd-host');
-  if(h){
+  if(h&&hostSel.options.length>1){
     hostSel.options[1].text='Cluster ('+h.replace(/^https?:\/\//,'').split('/')[0]+')';
     hostSel.selectedIndex=1;
   } else {
@@ -1767,7 +1767,10 @@ async function submitJob(){
   const omp=parseInt(document.getElementById('rd-omp').value)||1;
   const hostChoice=document.getElementById('rd-host').selectedIndex;
 
-  if(!h||hostChoice===0){
+  if(!h&&hostChoice===0){
+    runDemo();return;
+  }
+  if(!h){
     runDemo();return;
   }
   await runReal(h,mpi,omp);
