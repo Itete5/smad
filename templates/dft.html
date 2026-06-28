@@ -478,6 +478,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
 #evo-overlay{
   position:absolute;top:0;left:0;right:0;bottom:0;z-index:99;
   background:#e8e8e8;display:none;flex-direction:column;overflow:hidden;
+  pointer-events:all;
 }
 #evo-overlay.active{display:flex;}
 
@@ -618,7 +619,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
 #evo-controls-bar{
   padding:5px 10px;background:#d0d0d0;border-top:2px solid #bbb;
   display:flex;align-items:center;gap:8px;flex-shrink:0;
-  min-height:38px;z-index:10;
+  min-height:38px;z-index:200;position:relative;pointer-events:all;
 }
 .evo-run-btn{
   padding:5px 16px;border-radius:3px;border:none;font-size:12px;font-weight:700;cursor:pointer;
@@ -2129,6 +2130,16 @@ window.toggleDropdown=toggleDropdown;window.doScreenshot=doScreenshot;window.doE
 window.hbAction=hbAction;window.hideFanMode=hideFanMode;window.draw3D=draw3D;
 
 window.addEventListener('load',()=>{
+  // Wire evolution buttons programmatically as backup
+  setTimeout(()=>{
+    const startBtn=document.getElementById('evo-start-btn');
+    if(startBtn)startBtn.addEventListener('click',function(e){e.stopPropagation();evoStart();});
+    const pauseBtn=document.getElementById('evo-pause-btn');
+    if(pauseBtn)pauseBtn.addEventListener('click',function(e){e.stopPropagation();evoPause();});
+    const stopBtn=document.getElementById('evo-stop-btn');
+    if(stopBtn)stopBtn.addEventListener('click',function(e){e.stopPropagation();evoStop();});
+  },1000);
+
   init();
   initFanTrigger();
   // Auto-test connection if host is pre-filled, fetch job history
@@ -2604,15 +2615,24 @@ function evoGetBest(){
 
 /* ── UI Controls ─────────────────────────────────────────────────────── */
 function evoStart(){
-  if(EVO.running)return;
-  EVO.running=true;EVO.paused=false;
-  EVO.population=[];EVO.generation=0;EVO_ID_CTR=0;
-  EVO.chartGen=[];EVO.chartBestE=[];EVO.chartDiversity=[];
-  EVO.dupCount=0;EVO.failCount=0;EVO.mutSuccess={};
-  evoRunLoop();
-  document.getElementById('evo-start-btn').disabled=true;
-  document.getElementById('evo-pause-btn').disabled=false;document.getElementById('evo-pause-btn').style.opacity='1';
-  document.getElementById('evo-stop-btn').disabled=false;document.getElementById('evo-stop-btn').style.opacity='1';
+  try{
+    log('[Evo] evoStart() called');
+    if(EVO.running){log('[Evo] Already running, returning');return;}
+    EVO.running=true;EVO.paused=false;
+    EVO.population=[];EVO.generation=0;EVO_ID_CTR=0;
+    EVO.chartGen=[];EVO.chartBestE=[];EVO.chartDiversity=[];
+    EVO.dupCount=0;EVO.failCount=0;EVO.mutSuccess={};
+    log('[Evo] State reset, calling evoRunLoop...');
+    document.getElementById('evo-start-btn').disabled=true;
+    document.getElementById('evo-pause-btn').disabled=false;document.getElementById('evo-pause-btn').style.opacity='1';
+    document.getElementById('evo-stop-btn').disabled=false;document.getElementById('evo-stop-btn').style.opacity='1';
+    evoSetState('running');
+    evoRunLoop().catch(e=>{log('[Evo] evoRunLoop error: '+e.message);console.error(e);});
+  }catch(e){
+    log('[Evo] evoStart ERROR: '+e.message);
+    console.error('[Evo] evoStart error:',e);
+    alert('evoStart error: '+e.message);
+  }
 }
 function evoPause(){
   EVO.paused=!EVO.paused;
@@ -2789,29 +2809,86 @@ function evoLoad3D(s){
   if(!EVO_THREE.scene)return;
   // Clear
   const toRem=[];EVO_THREE.scene.children.forEach(c=>{if(c.isLight)return;toRem.push(c);});
-  toRem.forEach(o=>{EVO_THREE.scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});
-  // Build atoms
+  toRem.forEach(o=>{EVO_THREE.scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
+  // Build atom positions
   const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
-  const pts=s.atoms.map(at=>({el:at.el,x:(cell[0][0]*at.f[0]+cell[1][0]*at.f[1]+cell[2][0]*at.f[2])*a0,y:(cell[0][1]*at.f[0]+cell[1][1]*at.f[1]+cell[2][1]*at.f[2])*a0,z:(cell[0][2]*at.f[0]+cell[1][2]*at.f[1]+cell[2][2]*at.f[2])*cz}));
-  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
+  const pts=s.atoms.map(at=>({el:at.el,
+    x:(cell[0][0]*at.f[0]+cell[1][0]*at.f[1]+cell[2][0]*at.f[2])*a0,
+    y:(cell[0][1]*at.f[0]+cell[1][1]*at.f[1]+cell[2][1]*at.f[2])*a0,
+    z:(cell[0][2]*at.f[0]+cell[1][2]*at.f[1]+cell[2][2]*at.f[2])*cz}));
+  let cx=0,cy=0,cz2=0;
+  pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});
+  if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
   pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
+
+  // ── Atoms with proper CPK colors (one InstancedMesh per element) ──
   const byEl={};pts.forEach(p=>{(byEl[p.el]||(byEl[p.el]=[])).push(p);});
   Object.entries(byEl).forEach(([el,ats])=>{
-    const r=(CF_DISPLAY_RADIUS[el]||0.7)*.85;
-    const geo=new THREE.SphereGeometry(r,16,12);
-    const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||CF_COLORS.default),roughness:.3,metalness:.05});
+    const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*0.9;
+    const color=new THREE.Color(CF_COLORS[el]||CF_COLORS.default);
+    const geo=new THREE.SphereGeometry(r,20,14);
+    const mat=new THREE.MeshStandardMaterial({color,roughness:0.25,metalness:0.05});
     const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
-    ats.forEach((a,i)=>mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z)));
-    mesh.instanceMatrix.needsUpdate=true;EVO_THREE.scene.add(mesh);
+    mesh.castShadow=true;
+    ats.forEach((a,i)=>{
+      mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z));
+      mesh.setColorAt(i,color);
+    });
+    mesh.instanceMatrix.needsUpdate=true;
+    if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+    EVO_THREE.scene.add(mesh);
   });
-  // Bonds
-  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-    const ri=CF_CRADII[pts[i].el]||1.2,rj=CF_CRADII[pts[j].el]||1.2;
-    const cut=ri+rj+.4;
-    const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dz=pts[i].z-pts[j].z,d=Math.sqrt(dx*dx+dy*dy+dz*dz);
-    if(d>.3&&d<cut){const dir=new THREE.Vector3(pts[j].x-pts[i].x,pts[j].y-pts[i].y,pts[j].z-pts[i].z);const len=dir.length();if(len<.001)continue;const geo=new THREE.CylinderGeometry(.07,.07,len,8);const mat=new THREE.MeshStandardMaterial({color:0xaaaaaa});const m=new THREE.Mesh(geo,mat);m.position.set((pts[i].x+pts[j].x)/2,(pts[i].y+pts[j].y)/2,(pts[i].z+pts[j].z)/2);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());EVO_THREE.scene.add(m);}
+
+  // ── Bonds ──
+  for(let i=0;i<pts.length;i++){
+    for(let j=i+1;j<pts.length;j++){
+      const ri=CF_CRADII[pts[i].el]||CF_CRADII.default;
+      const rj=CF_CRADII[pts[j].el]||CF_CRADII.default;
+      const cut=ri+rj+0.4;
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dz=pts[i].z-pts[j].z;
+      const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      if(d>0.3&&d<cut){
+        const mid={x:(pts[i].x+pts[j].x)/2,y:(pts[i].y+pts[j].y)/2,z:(pts[i].z+pts[j].z)/2};
+        // Two-tone bond (each half element color)
+        [[pts[i],mid],[mid,pts[j]]].forEach(([p1,p2],hi)=>{
+          const el=hi===0?pts[i].el:pts[j].el;
+          const dir=new THREE.Vector3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
+          const len=dir.length();if(len<0.001)return;
+          const geo=new THREE.CylinderGeometry(0.08,0.08,len,10);
+          const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||'#aaaaaa'),roughness:0.4});
+          const m=new THREE.Mesh(geo,mat);
+          m.position.set((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
+          m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+          EVO_THREE.scene.add(m);
+        });
+      }
+    }
   }
-  EVO_THREE.sph.r=Math.max(4,a0*2.8);EVO_THREE.target.set(0,0,0);evoUpdateCam();
+
+  // ── Unit cell box ──
+  const ax=new THREE.Vector3(cell[0][0]*a0,cell[0][1]*a0,cell[0][2]*cz);
+  const ay=new THREE.Vector3(cell[1][0]*a0,cell[1][1]*a0,cell[1][2]*cz);
+  const az=new THREE.Vector3(cell[2][0]*a0,cell[2][1]*a0,cell[2][2]*cz);
+  const O=ax.clone().add(ay).add(az).multiplyScalar(-0.5);
+  const corners=[
+    O.clone(),O.clone().add(ax),O.clone().add(ay),O.clone().add(az),
+    O.clone().add(ax).add(ay),O.clone().add(ax).add(az),
+    O.clone().add(ay).add(az),O.clone().add(ax).add(ay).add(az)
+  ];
+  [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(([a,b])=>{
+    const dir=new THREE.Vector3().subVectors(corners[b],corners[a]);
+    const len=dir.length();if(len<0.001)return;
+    const geo=new THREE.CylinderGeometry(0.025,0.025,len,6);
+    const mat=new THREE.MeshStandardMaterial({color:0x4488cc,roughness:0.8,transparent:true,opacity:0.7});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.copy(new THREE.Vector3().addVectors(corners[a],corners[b]).multiplyScalar(0.5));
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+    EVO_THREE.scene.add(m);
+  });
+
+  EVO_THREE.sph.r=Math.max(4,a0*3.2);
+  EVO_THREE.target.set(0,0,0);
+  evoUpdateCam();
 }
 function evoViewerReset(){EVO_THREE.sph={theta:.6,phi:1.1,r:12};EVO_THREE.target.set(0,0,0);evoUpdateCam();}
 function evoViewerFit(){EVO_THREE.sph.r=Math.max(4,(current.a||4)*2.8);evoUpdateCam();}
