@@ -24,11 +24,11 @@ input,select,textarea{font-family:inherit}
 .file-tab.active{background:#e4e4e4;border-top:2px solid #ff6600}
 .tab-close{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#777;cursor:pointer}
 .tab-close:hover{background:#bbb}
-#workspace{display:flex;flex:1;min-height:0}
+#workspace{display:flex;flex:1;min-height:0;position:relative;}
 
 /* ══ 3D VIEWER (CrystalForge engine) ══ */
-#viewer-area{flex:1;min-width:0;position:relative;background:#fff;border:1px solid #ddd;overflow:hidden}
-#dft-3dviewer{width:100%;height:100%;position:absolute;inset:0;cursor:grab}
+#viewer-area{flex:1;min-width:0;position:relative;background:#fff;border:1px solid #ddd;overflow:hidden;min-height:200px;}
+#dft-3dviewer{width:100%;height:100%;min-height:300px;position:absolute;inset:0;cursor:grab}
 #dft-3dviewer:active{cursor:grabbing}
 
 /* CF Status bar inside viewer */
@@ -478,8 +478,9 @@ body.mode-menu-open #bb-icon-close{display:flex}
 #evo-overlay{
   position:absolute;top:0;left:0;right:0;bottom:0;z-index:99;
   background:#e8e8e8;display:none;flex-direction:column;overflow:hidden;
-  pointer-events:all;
+  pointer-events:none;
 }
+#evo-overlay.active{pointer-events:all;}
 #evo-overlay.active{display:flex;}
 
 /* Top config strip */
@@ -754,9 +755,9 @@ body.mode-menu-open #bb-icon-close{display:flex}
       <div class="evo-row"><span class="evo-lbl">Ecut (Ry)</span><input class="evo-inp" id="evo-qe-ecut" type="number" value="60" min="20"/></div>
       <div class="evo-row"><span class="evo-lbl">k-mesh</span>
         <div style="display:flex;gap:2px">
-          <input class="evo-inp" id="evo-kx" type="number" value="4" min="1" style="width:26px"/>
-          <input class="evo-inp" id="evo-ky" type="number" value="4" min="1" style="width:26px"/>
-          <input class="evo-inp" id="evo-kz" type="number" value="4" min="1" style="width:26px"/>
+          <input class="evo-inp" id="evo-kx" type="number" value="4" min="1" style="width:32px"/>
+          <input class="evo-inp" id="evo-ky" type="number" value="4" min="1" style="width:32px"/>
+          <input class="evo-inp" id="evo-kz" type="number" value="4" min="1" style="width:32px"/>
         </div>
       </div>
     </div>
@@ -1317,13 +1318,84 @@ const CF={
 };
 
 /* ── Init ─────────────────────────────────────────────────────────────── */
+/* ── Canvas 2D fallback renderer ─────────────────────────────── */
+const CF2D={canvas:null,ctx:null,active:false,rot:{x:0.3,y:0.5},drag:false,last:{x:0,y:0}};
+function init2DViewer(container){
+  CF2D.active=true;
+  container.innerHTML='';
+  const cv=document.createElement('canvas');
+  cv.style.cssText='width:100%;height:100%;position:absolute;inset:0;cursor:grab;background:#fff;';
+  container.appendChild(cv);
+  CF2D.canvas=cv;CF2D.ctx=cv.getContext('2d');
+  const resize=()=>{cv.width=container.clientWidth||900;cv.height=container.clientHeight||500;draw2D();};
+  resize();new ResizeObserver(resize).observe(container);
+  cv.addEventListener('mousedown',e=>{CF2D.drag=true;CF2D.last={x:e.clientX,y:e.clientY};cv.style.cursor='grabbing';});
+  window.addEventListener('mouseup',()=>{CF2D.drag=false;cv.style.cursor='grab';});
+  window.addEventListener('mousemove',e=>{
+    if(!CF2D.drag)return;
+    CF2D.rot.y+=(e.clientX-CF2D.last.x)*0.01;
+    CF2D.rot.x+=(e.clientY-CF2D.last.y)*0.01;
+    CF2D.last={x:e.clientX,y:e.clientY};draw2D();
+  });
+  cv.addEventListener('wheel',e=>{e.preventDefault();CF2D.zoom=(CF2D.zoom||1)*Math.exp(-e.deltaY*0.001);draw2D();},{passive:false});
+  log('[CF] Canvas 2D viewer active (WebGL unavailable)');
+}
+function draw2D(){
+  if(!CF2D.active||!CF2D.ctx||!CF.atoms.length)return;
+  const cv=CF2D.canvas,ctx=CF2D.ctx;
+  const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+  const zoom=(CF2D.zoom||1)*Math.min(W,H)/16;
+  const rx=CF2D.rot.x,ry=CF2D.rot.y;
+  const projected=CF.atoms.map(a=>{
+    const x=a.x*Math.cos(ry)-a.z*Math.sin(ry);
+    const z=a.x*Math.sin(ry)+a.z*Math.cos(ry);
+    const y2=a.y*Math.cos(rx)-z*Math.sin(rx);
+    const z2=a.y*Math.sin(rx)+z*Math.cos(rx);
+    const scale=1+z2*0.04;
+    return{...a,px:cx+x*zoom*scale,py:cy-y2*zoom*scale,z:z2,r:(CF_DISPLAY_RADIUS[a.el]||0.7)*zoom*0.9*Math.max(0.5,scale)};
+  }).sort((a,b)=>a.z-b.z);
+  CF.bonds.forEach(({i,j})=>{
+    const a=projected.find(p=>p.idx===CF.atoms[i].idx);
+    const b=projected.find(p=>p.idx===CF.atoms[j].idx);
+    if(!a||!b)return;
+    ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);
+    ctx.strokeStyle='#aaaaaa';ctx.lineWidth=2;ctx.stroke();
+  });
+  projected.forEach(a=>{
+    const col=CF_COLORS[a.el]||CF_COLORS.default;
+    const r=Math.max(4,a.r);
+    const grad=ctx.createRadialGradient(a.px-r*0.3,a.py-r*0.3,r*0.1,a.px,a.py,r);
+    grad.addColorStop(0,'#ffffff');grad.addColorStop(0.3,col);grad.addColorStop(1,col+'88');
+    ctx.beginPath();ctx.arc(a.px,a.py,r,0,Math.PI*2);
+    ctx.fillStyle=grad;ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=0.5;ctx.stroke();
+    if(r>10){ctx.fillStyle='#333';ctx.font=`bold ${Math.round(r*0.8)}px sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(a.el,a.px,a.py);}
+  });
+  ctx.fillStyle='#888';ctx.font='11px monospace';ctx.textAlign='left';
+  ctx.fillText(current.formula+' | drag to rotate | scroll to zoom',8,H-8);
+}
+
 function initViewer(){
   const container=document.getElementById('dft-3dviewer');
-  if(!window.THREE){
-    container.style.cssText='display:flex;align-items:center;justify-content:center;color:#888;font-size:13px';
-    container.textContent='Three.js r128 not loaded.';return;
+  if(!container){log('[CF] ERROR: dft-3dviewer element not found!');return;}
+  const testCanvas=document.createElement('canvas');
+  const testGL=testCanvas.getContext('webgl')||testCanvas.getContext('experimental-webgl');
+  if(!testGL){
+    log('[CF] WebGL not available — using Canvas 2D renderer');
+    init2DViewer(container);
+    return;
   }
+  if(!window.THREE){
+    log('[CF] Three.js not loaded — using Canvas 2D renderer');
+    init2DViewer(container);
+    return;
+  }
+  log('[CF] Three.js loaded ✓, initializing viewer...');
   const W=container.clientWidth||900,H=container.clientHeight||600;
+  log('[CF] Container size: '+W+'×'+H);
   CF.scene=new THREE.Scene();
   CF.scene.background=new THREE.Color(0xffffff);
   CF.camera=new THREE.PerspectiveCamera(36,W/H,0.05,2000);
@@ -1366,6 +1438,16 @@ function initViewer(){
   /* Loop */
   (function loop(){CF.animId=requestAnimationFrame(loop);CF.renderer.render(CF.scene,CF.camera);drawGizmo();}());
   log('CrystalForge engine ready — InstancedMesh, PBR lighting, raycasting, bond detection.');
+  // Force resize after fonts/layout settle
+  setTimeout(()=>{
+    const W=container.clientWidth||900,H=container.clientHeight||600;
+    if(W>0&&H>0){
+      CF.camera.aspect=W/H;CF.camera.updateProjectionMatrix();
+      CF.renderer.setSize(W,H);
+      log('[CF] Renderer resized to '+W+'×'+H);
+    }
+    if(window._pendingStructure){loadStructure(window._pendingStructure);window._pendingStructure=null;}
+  },500);
 }
 
 /* ── Camera ────────────────────────────────────────────────────────────── */
@@ -1492,6 +1574,13 @@ function cfBuildBonds(atoms){
 }
 
 function draw3D(){
+  if(CF2D.active){
+    CF.atoms=cfBuildPositions();
+    CF.bonds=cfBuildBonds(CF.atoms);
+    draw2D();
+    cfUpdateStatus();
+    return;
+  }
   if(!CF.scene)return;
   CF.selected=[];
   // Dispose
@@ -1659,7 +1748,8 @@ function loadStructure(s){
   document.getElementById('tabFilename').textContent=(s.formula||'structure')+'.cif';
   document.getElementById('res-formula').textContent=s.formula||'—';
   updateVecs();updatePills();updateElTable();updateAtomTable();updateStatus();
-  draw3D();log('[load] '+s.formula+' ('+s.atoms.length+' sites, a='+a.toFixed(3)+'Å)');
+  if(CF.scene||CF2D.active){draw3D();}else{window._pendingStructure=s;}
+  log('[load] '+s.formula+' ('+s.atoms.length+' sites, a='+a.toFixed(3)+'Å)');
 }
 function onBravaisChange(){current.bravais=document.getElementById('bravaisLat').value;updateVecs();draw3D();}
 function onLatChange(){updateVecs();}
@@ -2150,6 +2240,11 @@ window.addEventListener('load',()=>{
     const stopBtn=document.getElementById('evo-stop-btn');
     if(stopBtn)stopBtn.addEventListener('click',function(e){e.stopPropagation();evoStop();});
   },1000);
+  // Retry draw3D after delay in case Three.js was slow
+  setTimeout(()=>{
+    if(CF.scene||CF2D.active){draw3D();log('[CF] Delayed draw3D called ✓');}
+    else{log('[CF] Scene still null after 2s — Three.js may have failed to load');}
+  },2000);
 
   init();
   initFanTrigger();
@@ -2790,7 +2885,10 @@ function evoSelectStruct(id){
   document.getElementById('evo-info-enth').textContent=es.enthalpy!==null?es.enthalpy.toFixed(5)+' Ry':'—';
   document.getElementById('evo-info-status').textContent=es.status;
   // Load into evo 3D viewer
-  if(es.structure)evoLoad3D(es.structure);
+  if(es.structure){
+    if(!EVO_THREE.renderer)evoInitViewer();
+    setTimeout(()=>evoLoad3D(es.structure),50);
+  }
 }
 function evoPrevStruct(){
   if(!EVO.population.length)return;
@@ -2832,6 +2930,15 @@ function evoInitViewer(){
   new ResizeObserver(()=>{const W=c.clientWidth,H=c.clientHeight;EVO_THREE.camera.aspect=W/H;EVO_THREE.camera.updateProjectionMatrix();EVO_THREE.renderer.setSize(W,H);}).observe(c);
   (function loop(){EVO_THREE.animId=requestAnimationFrame(loop);if(EVO_THREE.renderer&&EVO_THREE.scene&&EVO_THREE.camera)EVO_THREE.renderer.render(EVO_THREE.scene,EVO_THREE.camera);}());
   evoUpdateCam();
+  // Force resize after layout settles
+  setTimeout(()=>{
+    const W2=c.clientWidth||320,H2=c.clientHeight||200;
+    if(W2>0&&H2>0){
+      EVO_THREE.camera.aspect=W2/H2;
+      EVO_THREE.camera.updateProjectionMatrix();
+      EVO_THREE.renderer.setSize(W2,H2);
+    }
+  },300);
 }
 function evoUpdateCam(){
   if(!EVO_THREE.camera)return;
