@@ -483,22 +483,24 @@ body.mode-menu-open #bb-icon-close{display:flex}
 
 /* Top config strip */
 #evo-top{
-  display:flex;gap:6px;padding:6px 8px;
+  display:flex;gap:4px;padding:3px 6px;
   background:#ddd;border-bottom:2px solid #c0c0c0;
   overflow-x:auto;flex-shrink:0;align-items:stretch;
+  max-height:200px;overflow-y:hidden;
 }
 #evo-top::-webkit-scrollbar{height:4px}
 .evo-card{
-  background:#f0f0f0;border:1px solid #c8c8c8;border-radius:5px;
-  padding:7px 10px;min-width:170px;flex-shrink:0;
-  display:flex;flex-direction:column;gap:4px;
+  background:#f0f0f0;border:1px solid #c8c8c8;border-radius:4px;
+  padding:4px 8px;min-width:155px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:2px;
+  overflow-y:auto;
 }
 .evo-card-title{
   font-size:9px;font-weight:700;text-transform:uppercase;
   letter-spacing:.08em;color:#666;border-bottom:1px solid #ddd;
-  padding-bottom:3px;margin-bottom:2px;
+  padding-bottom:2px;margin-bottom:1px;
 }
-.evo-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:1px 0;}
+.evo-row{display:flex;align-items:center;justify-content:space-between;gap:4px;margin:0;}
 .evo-lbl{font-size:10px;color:#555;white-space:nowrap;flex-shrink:0;}
 .evo-inp{
   width:62px;padding:2px 5px;border:1px solid #c0c0c0;border-radius:2px;
@@ -512,7 +514,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
 }
 .evo-chk-row{display:flex;align-items:center;gap:5px;font-size:10px;color:#444;}
 .evo-chk-row input[type=checkbox]{accent-color:#7c3aed;width:12px;height:12px;}
-.evo-sub{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+.evo-sub{font-size:8px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
 .evo-btn-sm{
   padding:3px 8px;border-radius:2px;border:1px solid #bbb;background:#e8e8e8;
   font-size:10px;color:#333;cursor:pointer;white-space:nowrap;
@@ -616,6 +618,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
 #evo-controls-bar{
   padding:5px 10px;background:#d0d0d0;border-top:2px solid #bbb;
   display:flex;align-items:center;gap:8px;flex-shrink:0;
+  min-height:38px;z-index:10;
 }
 .evo-run-btn{
   padding:5px 16px;border-radius:3px;border:none;font-size:12px;font-weight:700;cursor:pointer;
