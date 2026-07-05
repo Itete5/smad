@@ -613,9 +613,160 @@ body.mode-menu-open #bb-icon-close{display:flex}
 .ctrl-pause { background:#888; } .ctrl-pause:hover { background:#666; }
 .ctrl-stop  { background:#cc3333; } .ctrl-stop:hover { background:#aa2222; }
 .ctrl-btn:disabled { opacity:.4;cursor:not-allowed; }
+
+.evo-card{
+  background:#f0f0f0;border:1px solid #c8c8c8;border-radius:4px;
+  padding:4px 8px;min-width:155px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:2px;
+  overflow-y:auto;
+}
+.evo-card-title{
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:#666;border-bottom:1px solid #ddd;
+  padding-bottom:2px;margin-bottom:1px;
+}
+.evo-row{display:flex;align-items:center;justify-content:space-between;gap:4px;margin:0;}
+.evo-lbl{font-size:10px;color:#555;white-space:nowrap;flex-shrink:0;}
+.evo-inp{
+  width:62px;padding:2px 5px;border:1px solid #c0c0c0;border-radius:2px;
+  background:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:#333;text-align:right;
+}
+.evo-inp:focus{border-color:#7c3aed;outline:none;}
+.evo-sel{
+  padding:2px 4px;border:1px solid #c0c0c0;border-radius:2px;
+  background:#fff;font-size:10px;color:#333;
+}
+.evo-chk-row{display:flex;align-items:center;gap:5px;font-size:10px;color:#444;}
+.evo-chk-row input[type=checkbox]{accent-color:#7c3aed;width:12px;height:12px;}
+.evo-sub{font-size:8px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.evo-btn-sm{
+  padding:3px 8px;border-radius:2px;border:1px solid #bbb;background:#e8e8e8;
+  font-size:10px;color:#333;cursor:pointer;white-space:nowrap;
+}
+.evo-btn-sm:hover{background:#d8d8d8;}
+.evo-btn-sm.primary{background:#7c3aed;border-color:#6d28d9;color:#fff;}
+.evo-btn-sm.primary:hover{background:#6d28d9;}
+.evo-btn-sm.danger{background:#dc2626;border-color:#b91c1c;color:#fff;}
+.evo-btn-sm.danger:hover{background:#b91c1c;}
+.evo-seed-list{font-size:9.5px;color:#555;font-family:'JetBrains Mono',monospace;
+  max-height:38px;overflow-y:auto;background:#fff;border:1px solid #ddd;border-radius:2px;padding:2px 4px;}
+
+/* Bottom three-panel section */
+#evo-bottom{display:flex;flex:1;min-height:0;gap:0;}
+
+/* LEFT — monitor plots */
+#evo-monitor{
+  width:280px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#evo-monitor-head{
+  padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;
+  font-size:10px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;
+}
+.evo-plot{width:100%;flex-shrink:0;}
+#evo-chart-energy{height:120px;}
+#evo-chart-diversity{height:100px;}
+#evo-chart-fitness{height:100px;}
+.evo-chart-lbl{font-size:9px;color:#888;padding:2px 8px 0;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+
+/* MIDDLE — population table */
+#evo-table-panel{
+  flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;
+  border-right:1px solid #c8c8c8;
+}
+#evo-table-head{
+  padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.evo-search{
+  flex:1;padding:3px 8px;border:1px solid #bbb;border-radius:3px;
+  font-size:11px;background:#fff;
+}
+#evo-gen-badge{
+  font-size:10px;font-weight:700;color:#7c3aed;background:#ede9fe;
+  border:1px solid #c4b5fd;border-radius:3px;padding:2px 8px;white-space:nowrap;
+}
+.evo-pop-table{width:100%;border-collapse:collapse;font-size:10.5px;}
+.evo-pop-table th{
+  position:sticky;top:0;background:#d0d0d0;border-bottom:2px solid #bbb;
+  padding:4px 6px;text-align:left;font-weight:700;color:#555;
+  font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;
+  cursor:pointer;user-select:none;
+}
+.evo-pop-table th:hover{background:#c8c8c8;}
+.evo-pop-table td{padding:3px 6px;border-bottom:1px solid #ddd;white-space:nowrap;}
+.evo-pop-table tr{cursor:pointer;background:#f5f5f5;transition:background .08s;}
+.evo-pop-table tr:hover{background:#e8e8ff;}
+.evo-pop-table tr.active{background:#ede9fe;border-left:3px solid #7c3aed;}
+.evo-pop-table tr:nth-child(even){background:#f0f0f0;}
+.evo-pop-table tr:nth-child(even):hover{background:#e8e8ff;}
+.evo-pop-table tr.active:nth-child(even){background:#ede9fe;}
+.evo-status-badge{
+  display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;
+}
+.evo-status-done{background:#d1fae5;color:#065f46;}
+.evo-status-run{background:#dbeafe;color:#1e40af;animation:pulse .9s ease infinite;}
+.evo-status-fail{background:#fee2e2;color:#991b1b;}
+.evo-status-new{background:#f3f4f6;color:#6b7280;}
+#evo-table-scroll{flex:1;overflow-y:auto;overflow-x:auto;}
+#evo-table-footer{
+  padding:4px 9px;background:#d8d8d8;border-top:1px solid #ccc;
+  font-size:10px;color:#666;display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.evo-page-btn{padding:2px 8px;border:1px solid #bbb;border-radius:2px;background:#e8e8e8;cursor:pointer;font-size:10px;}
+.evo-page-btn:hover{background:#d0d0d0;}
+.evo-page-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* RIGHT — structure viewer panel (reuses Crystal Viewer) */
+#evo-viewer-panel{
+  width:340px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;
+}
+#evo-viewer-head{
+  padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;
+  font-size:10px;font-weight:700;color:#444;
+}
+#evo-struct-info{
+  padding:6px 9px;background:#e8e8e8;border-bottom:1px solid #d8d8d8;
+  display:grid;grid-template-columns:1fr 1fr;gap:3px;
+}
+.evo-info-item{display:flex;flex-direction:column;}
+.evo-info-k{font-size:8.5px;text-transform:uppercase;color:#888;font-weight:700;letter-spacing:.04em;}
+.evo-info-v{font-family:'JetBrains Mono',monospace;font-size:10px;color:#333;font-weight:600;}
+#evo-viewer-3d{flex:1;min-height:200px;position:relative;background:#fff;}
+#evo-viewer-controls{
+  padding:5px 8px;background:#d8d8d8;border-top:1px solid #ccc;
+  display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex-shrink:0;
+}
+
+/* Run controls bar */
+#evo-controls-bar{
+  padding:5px 10px;background:#d0d0d0;border-top:2px solid #bbb;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+  min-height:38px;z-index:200;position:relative;pointer-events:all;
+}
+.evo-run-btn{
+  padding:5px 16px;border-radius:3px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+}
+.evo-run-btn.start{background:#7c3aed;color:#fff;}
+.evo-run-btn.start:hover{background:#6d28d9;}
+.evo-run-btn.pause{background:#d97706;color:#fff;}
+.evo-run-btn.pause:hover{background:#b45309;}
+.evo-run-btn.stop{background:#dc2626;color:#fff;}
+.evo-run-btn.stop:hover{background:#b91c1c;}
+.evo-stat-chip{
+  padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;
+  background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;
+}
+#evo-gen-counter{font-size:11px;font-weight:700;color:#444;font-family:'JetBrains Mono',monospace;}
+#evo-best-energy{font-size:11px;color:#065f46;font-family:'JetBrains Mono',monospace;font-weight:700;}
+#mdevo-overlay,#mcevo-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:900;background:#e8e8e8;display:none;flex-direction:column;overflow:hidden;}
+#mdevo-overlay.active,#mcevo-overlay.active{display:flex;}
+#loginNode{display:none;}
 </style>
 </head>
 <body>
+<input id="loginNode" type="hidden" value="http://100.127.228.36:5000"/>
 <div id="app">
 
 <!-- TITLE BAR -->
@@ -1306,6 +1457,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
   <div class="mm-item" data-mode="geometry" onclick="selectModeItem('geometry',event)"><span class="mm-lbl">Geometry</span></div>
   <div class="mm-item" data-mode="aiff" onclick="selectModeItem('aiff',event)"><span class="mm-lbl">AI Force-Field</span></div>
   <div class="mm-item" data-mode="evolution" onclick="selectModeItem('evolution',event)"><span class="mm-lbl" style="color:#34d399;font-weight:700">⬡ MD Evolution</span></div>
+  <div class="mm-item" data-mode="mcevo" onclick="selectModeItem('mcevo',event)"><span class="mm-lbl" style="color:#fb923c;font-weight:700">⬡ Monte Carlo Evolution</span></div>
 </div>
 
 <!-- ══ LEFT MENU (bottom-left fly-in) ══ -->
@@ -1329,6 +1481,347 @@ body.mode-menu-open #bb-icon-close{display:flex}
 Initialize a system and click Start MD.
 </pre></div>
 
+<div id="mdevo-overlay">
+
+  <!-- ── TOP CONFIG CARDS ── -->
+  <div id="mdevo-top">
+
+    <div class="evo-card" style="min-width:180px">
+      <div class="evo-card-title">① Trajectory Pool</div>
+      <div class="evo-row"><span class="evo-lbl">Initial Trajectories</span><input class="evo-inp" id="mdevo-init-trajs" type="number" value="8" min="2"/></div>
+      <div class="evo-row"><span class="evo-lbl">Pool Size</span><input class="evo-inp" id="mdevo-pool-size" type="number" value="12" min="2"/></div>
+      <div class="evo-row"><span class="evo-lbl">Max Trajectories</span><input class="evo-inp" id="mdevo-max-trajs" type="number" value="200" min="10"/></div>
+      <div class="evo-row"><span class="evo-lbl">Job Limit</span><input class="evo-inp" id="mdevo-job-limit" type="number" value="4" min="1"/></div>
+      <div class="evo-row"><span class="evo-lbl">Continuous</span><input class="evo-inp" id="mdevo-continuous" type="number" value="2" min="1"/></div>
+    </div>
+
+    <div class="evo-card" style="min-width:185px">
+      <div class="evo-card-title">② MD Run Settings</div>
+      <div class="evo-row"><span class="evo-lbl">Ensemble</span>
+        <select class="evo-sel" id="mdevo-ensemble"><option value="nve">NVE</option><option value="nvt" selected>NVT</option></select>
+      </div>
+      <div class="evo-row"><span class="evo-lbl">Temp (K)</span><input class="evo-inp" id="mdevo-temp" type="number" value="300" min="0"/></div>
+      <div class="evo-row"><span class="evo-lbl">Temp Range ±</span><input class="evo-inp" id="mdevo-temp-range" type="number" value="200" min="0"/></div>
+      <div class="evo-row"><span class="evo-lbl">Steps</span><input class="evo-inp" id="mdevo-nstep" type="number" value="50" min="5"/></div>
+      <div class="evo-row"><span class="evo-lbl">dt (a.u.)</span><input class="evo-inp" id="mdevo-dt" type="number" value="20" min="1"/></div>
+    </div>
+
+    <div class="evo-card" style="min-width:185px">
+      <div class="evo-card-title">③ Selection</div>
+      <div class="evo-row"><span class="evo-lbl">Snapshot Source</span>
+        <select class="evo-sel" id="mdevo-snapshot"><option value="lowest" selected>Lowest energy</option><option value="final">Final step</option></select>
+      </div>
+      <div class="evo-row"><span class="evo-lbl">Selection</span>
+        <select class="evo-sel" id="mdevo-selection"><option value="tournament" selected>Tournament (k=3)</option><option value="elite">Elite (top 2)</option></select>
+      </div>
+      <div class="evo-row"><span class="evo-lbl">% Perturb Temp</span><input class="evo-inp" id="mdevo-perturb-pct" type="number" value="50" min="0" max="100"/></div>
+      <div class="evo-row"><span class="evo-lbl">% Restart from Best</span><input class="evo-inp" id="mdevo-restart-pct" type="number" value="30" min="0" max="100"/></div>
+    </div>
+
+    <div class="evo-card" style="min-width:190px">
+      <div class="evo-card-title">④ Operators</div>
+      <div class="evo-sub">Velocity Perturbation</div>
+      <div class="evo-row"><span class="evo-lbl">Rescale Range %</span><input class="evo-inp" id="mdevo-rescale" type="number" value="20" min="0" max="100"/></div>
+      <div class="evo-sub">Structural Kick</div>
+      <div class="evo-row"><span class="evo-lbl">% Kick</span><input class="evo-inp" id="mdevo-kick-pct" type="number" value="20" min="0" max="100"/></div>
+      <div class="evo-row"><span class="evo-lbl">Kick Amplitude</span><input class="evo-inp" id="mdevo-kick-amp" type="number" value="0.3" step="0.05"/></div>
+      <div class="evo-row"><span class="evo-lbl">Min ΔE (Ry)</span><input class="evo-inp" id="mdevo-dup-de" type="number" value="0.001" step="0.001"/></div>
+    </div>
+
+    <div class="evo-card" style="min-width:195px">
+      <div class="evo-card-title" style="color:#7c3aed">⬡ QE Settings</div>
+      <div class="evo-row"><span class="evo-lbl">Ecut (Ry)</span><input class="evo-inp" id="mdevo-ecut" type="number" value="40" min="20"/></div>
+      <div class="evo-row"><span class="evo-lbl">k-mesh</span>
+        <div style="display:flex;gap:2px">
+          <input class="evo-inp" id="mdevo-kx" type="number" value="2" min="1" style="width:32px"/>
+          <input class="evo-inp" id="mdevo-ky" type="number" value="2" min="1" style="width:32px"/>
+          <input class="evo-inp" id="mdevo-kz" type="number" value="2" min="1" style="width:32px"/>
+        </div>
+      </div>
+      <div class="evo-chk-row"><input type="checkbox" id="mdevo-use-seed" checked><label for="mdevo-use-seed">Seed from loaded structure</label></div>
+    </div>
+
+  </div><!-- /mdevo-top -->
+
+  <!-- ── CONTROLS BAR ── -->
+  <div id="mdevo-controls-bar" style="flex-wrap:wrap;row-gap:3px;background:#c8e8d8;border-bottom:2px solid #7fbf9f;">
+    <button class="evo-run-btn start" id="mdevo-start-btn" onclick="mdevoStart()">▶ Start MD Evolution</button>
+    <button class="evo-run-btn pause" id="mdevo-pause-btn" onclick="mdevoPause()" disabled style="opacity:.5">⏸ Pause</button>
+    <button class="evo-run-btn stop"  id="mdevo-stop-btn"  onclick="mdevoStop()"  disabled style="opacity:.5">■ Stop</button>
+    <div class="evo-stat-chip" id="mdevo-state-chip" style="background:#d1fae5;color:#065f46;border-color:#6ee7b7;">Idle</div>
+    <span id="mdevo-gen-counter">Gen: 0</span>
+    <span style="color:#888;font-size:10px">Best:</span>
+    <span id="mdevo-best-energy">— Ry/atom</span>
+    <span style="color:#888;font-size:10px">Pool:</span>
+    <span id="mdevo-pool-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
+    <div style="flex:1"></div>
+    <span style="font-size:9px;color:#666;font-weight:700;flex-shrink:0">🖥 Host:</span>
+    <input id="mdevo-host-input" placeholder="http://100.127.228.36:5000"
+      style="padding:3px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;border:1px solid #bbb;border-radius:2px;width:180px;background:#fff;flex-shrink:0"
+      oninput="document.getElementById('loginNode').value=this.value"/>
+    <button class="evo-btn-sm" id="mdevo-test-btn" onclick="mdevoTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">⚡ Test</button>
+    <span id="mdevo-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;flex-shrink:0;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
+    <button class="evo-btn-sm" onclick="mdevoExportCSV()">⬇ CSV</button>
+    <button class="evo-btn-sm danger" onclick="mdevoResetAll()">✕ Reset</button>
+  </div>
+
+  <!-- ── BOTTOM THREE PANELS ── -->
+  <div id="mdevo-bottom" style="display:flex;flex:1;min-height:0;gap:0;">
+
+    <!-- LEFT: Monitor plots (reuses evo-monitor CSS) -->
+    <div id="mdevo-monitor" class="" style="width:280px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;">
+        <span>MD Evolution Monitor</span>
+        <span id="mdevo-monitor-status" style="font-size:9px;color:#059669;font-weight:400">Idle</span>
+      </div>
+      <div class="evo-chart-lbl">Best Snapshot Energy / Generation</div>
+      <div class="evo-plot" id="mdevo-chart-energy" style="height:130px"></div>
+      <div class="evo-chart-lbl">Trajectory Temperature Spread</div>
+      <div class="evo-plot" id="mdevo-chart-temp" style="height:110px"></div>
+      <div style="padding:4px 8px;font-size:9px;color:#888;border-top:1px solid #ccc">
+        <div style="display:flex;justify-content:space-between"><span>Duplicates removed</span><span id="mdevo-dup-count">0</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Failed jobs</span><span id="mdevo-fail-count">0</span></div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Trajectory table -->
+    <div id="mdevo-table-panel" style="flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;border-right:1px solid #c8c8c8;">
+      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <span id="mdevo-gen-badge" style="font-size:10px;font-weight:700;color:#059669;background:#d1fae5;border:1px solid #6ee7b7;border-radius:3px;padding:2px 8px;white-space:nowrap;">Gen 0 / 0</span>
+        <input class="evo-search" id="mdevo-search" placeholder="Search ID, mutation…" oninput="mdevoFilterTable()"/>
+      </div>
+      <div style="flex:1;overflow-y:auto;overflow-x:auto;">
+        <table class="evo-pop-table" id="mdevo-pop-table">
+          <thead>
+            <tr>
+              <th onclick="mdevoSort('id')"># ID</th>
+              <th onclick="mdevoSort('gen')">Gen</th>
+              <th onclick="mdevoSort('parent')">Parent</th>
+              <th onclick="mdevoSort('mutation')">Mutation</th>
+              <th onclick="mdevoSort('temp')">Temp (K)</th>
+              <th onclick="mdevoSort('energy')">E (Ry/atom)</th>
+              <th onclick="mdevoSort('step')">Snap Step</th>
+              <th onclick="mdevoSort('fitness')">Fitness</th>
+              <th onclick="mdevoSort('status')">Status</th>
+            </tr>
+          </thead>
+          <tbody id="mdevo-pop-tbody">
+            <tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">
+              No trajectories yet — click ▶ Start MD Evolution
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:4px 9px;background:#d8d8d8;border-top:1px solid #ccc;font-size:10px;color:#666;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <button class="evo-page-btn" id="mdevo-prev" onclick="mdevoPage(-1)">‹ Prev</button>
+        <span id="mdevo-page-info">Page 1 / 1</span>
+        <button class="evo-page-btn" id="mdevo-next" onclick="mdevoPage(1)">Next ›</button>
+        <span style="flex:1"></span>
+        <span id="mdevo-total-count">0 trajectories</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Snapshot structure viewer -->
+    <div id="mdevo-viewer-panel" style="width:340px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;">
+      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;">Snapshot Viewer — <span id="mdevo-sel-id" style="color:#059669">none selected</span></div>
+      <div style="padding:6px 9px;background:#e8e8e8;border-bottom:1px solid #d8d8d8;display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+        <div class="evo-info-item"><span class="evo-info-k">Energy/atom</span><span class="evo-info-v" id="mdevo-info-e">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Fitness</span><span class="evo-info-v" id="mdevo-info-fit">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Temp (K)</span><span class="evo-info-v" id="mdevo-info-temp">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Snap Step</span><span class="evo-info-v" id="mdevo-info-step">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Mutation</span><span class="evo-info-v" id="mdevo-info-mut">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Parent</span><span class="evo-info-v" id="mdevo-info-par">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Status</span><span class="evo-info-v" id="mdevo-info-status">—</span></div>
+      </div>
+      <div id="mdevo-viewer-3d" style="flex:1;min-height:200px;position:relative;background:#fff;"></div>
+      <div style="padding:5px 8px;background:#d8d8d8;border-top:1px solid #ccc;display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
+        <button class="evo-btn-sm" onclick="mdevoPrevTraj()">‹ Prev</button>
+        <button class="evo-btn-sm" onclick="mdevoNextTraj()">Next ›</button>
+        <button class="evo-btn-sm" onclick="mdevoViewerReset()">⟳ Reset</button>
+      </div>
+    </div>
+
+  </div><!-- /mdevo-bottom -->
+
+</div><!-- /mdevo-overlay -->
+<div id="mcevo-overlay">
+
+  <!-- ── TOP CONFIG CARDS ── -->
+  <div id="mcevo-top">
+
+    <div class="evo-card" style="min-width:185px">
+      <div class="evo-card-title">① Chain Setup</div>
+      <div class="evo-row"><span class="evo-lbl">Composition</span><input class="evo-inp" id="mcevo-formula" type="text" value="Si8" style="text-align:left;width:80px"/></div>
+      <div class="evo-row"><span class="evo-lbl">Z range</span>
+        <div style="display:flex;gap:3px">
+          <input class="evo-inp" id="mcevo-z-min" type="number" value="1" min="1" style="width:30px"/>
+          <span style="font-size:10px;color:#888;align-self:center">–</span>
+          <input class="evo-inp" id="mcevo-z-max" type="number" value="4" min="1" style="width:30px"/>
+        </div>
+      </div>
+      <div class="evo-sub">Seed Structures</div>
+      <div class="evo-seed-list" id="mcevo-seed-list">No seeds added</div>
+      <div style="display:flex;gap:4px;margin-top:3px">
+        <button class="evo-btn-sm primary" onclick="mcevoAddSeed()" style="background:#ea580c;border-color:#c2410c">+ Seed</button>
+        <button class="evo-btn-sm" onclick="mcevoRemoveSeed()">Remove</button>
+      </div>
+    </div>
+
+    <div class="evo-card" style="min-width:195px">
+      <div class="evo-card-title">② Metropolis Settings</div>
+      <div class="evo-row"><span class="evo-lbl">Start Temp T₀ (K)</span><input class="evo-inp" id="mcevo-temp" type="number" value="1000" min="1"/></div>
+      <div class="evo-row"><span class="evo-lbl">Cooling Rate</span><input class="evo-inp" id="mcevo-cooling" type="number" value="0.95" step="0.01" min="0.5" max="1"/></div>
+      <div class="evo-row"><span class="evo-lbl">Steps / Gen</span><input class="evo-inp" id="mcevo-steps" type="number" value="1" min="1"/></div>
+      <div class="evo-row"><span class="evo-lbl">Max Steps</span><input class="evo-inp" id="mcevo-max-steps" type="number" value="200" min="10"/></div>
+      <div class="evo-row"><span class="evo-lbl">Min Temp (K)</span><input class="evo-inp" id="mcevo-min-temp" type="number" value="1" min="0"/></div>
+    </div>
+
+    <div class="evo-card" style="min-width:200px">
+      <div class="evo-card-title">③ Move Set</div>
+      <div class="evo-row"><span class="evo-lbl">Move Type</span>
+        <select class="evo-sel" id="mcevo-move">
+          <option value="mixed" selected>Mixed</option>
+          <option value="stripple">Stripple only</option>
+          <option value="permustrain">Permustrain only</option>
+        </select>
+      </div>
+      <div class="evo-sub">Stripple</div>
+      <div class="evo-row"><span class="evo-lbl">Strain Range</span><input class="evo-inp" id="mcevo-strip-strain" type="number" value="0.35" step="0.05"/></div>
+      <div class="evo-row"><span class="evo-lbl">Amplitude</span><input class="evo-inp" id="mcevo-strip-amp" type="number" value="1.0" step="0.1"/></div>
+      <div class="evo-sub">Permustrain</div>
+      <div class="evo-row"><span class="evo-lbl">Max Strain</span><input class="evo-inp" id="mcevo-perm-strain" type="number" value="0.5" step="0.05"/></div>
+      <div class="evo-row"><span class="evo-lbl"># Exchanges</span><input class="evo-inp" id="mcevo-perm-exch" type="number" value="4" min="1"/></div>
+    </div>
+
+    <div class="evo-card" style="min-width:185px">
+      <div class="evo-card-title">④ Duplicate Matching</div>
+      <div class="evo-row"><span class="evo-lbl">Min ΔE (Ry)</span><input class="evo-inp" id="mcevo-dup-de" type="number" value="0.001" step="0.001"/></div>
+      <div style="display:flex;gap:4px;margin-top:4px">
+        <button class="evo-btn-sm" onclick="mcevoResetDuplicates()">Reset Dups</button>
+      </div>
+    </div>
+
+    <div class="evo-card" style="min-width:195px">
+      <div class="evo-card-title" style="color:#ea580c">⬡ QE Settings</div>
+      <div class="evo-row"><span class="evo-lbl">Ecut (Ry)</span><input class="evo-inp" id="mcevo-ecut" type="number" value="40" min="20"/></div>
+      <div class="evo-row"><span class="evo-lbl">k-mesh</span>
+        <div style="display:flex;gap:2px">
+          <input class="evo-inp" id="mcevo-kx" type="number" value="2" min="1" style="width:32px"/>
+          <input class="evo-inp" id="mcevo-ky" type="number" value="2" min="1" style="width:32px"/>
+          <input class="evo-inp" id="mcevo-kz" type="number" value="2" min="1" style="width:32px"/>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /mcevo-top -->
+
+  <!-- ── CONTROLS BAR ── -->
+  <div id="mcevo-controls-bar" style="flex-wrap:wrap;row-gap:3px;background:#fde0c8;border-bottom:2px solid #f0a868;">
+    <button class="evo-run-btn start" id="mcevo-start-btn" onclick="mcevoStart()" style="background:#ea580c;">▶ Start Monte Carlo</button>
+    <button class="evo-run-btn pause" id="mcevo-pause-btn" onclick="mcevoPause()" disabled style="opacity:.5">⏸ Pause</button>
+    <button class="evo-run-btn stop"  id="mcevo-stop-btn"  onclick="mcevoStop()"  disabled style="opacity:.5">■ Stop</button>
+    <div class="evo-stat-chip" id="mcevo-state-chip" style="background:#ffedd5;color:#9a3412;border-color:#fdba74;">Idle</div>
+    <span id="mcevo-step-counter">Step: 0</span>
+    <span style="color:#888;font-size:10px">Temp:</span>
+    <span id="mcevo-cur-temp">— K</span>
+    <span style="color:#888;font-size:10px">Best:</span>
+    <span id="mcevo-best-energy">— Ry/atom</span>
+    <span style="color:#888;font-size:10px">Accepted:</span>
+    <span id="mcevo-accept-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
+    <div style="flex:1"></div>
+    <span style="font-size:9px;color:#666;font-weight:700;flex-shrink:0">🖥 Host:</span>
+    <input id="mcevo-host-input" placeholder="http://100.127.228.36:5000"
+      style="padding:3px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;border:1px solid #bbb;border-radius:2px;width:180px;background:#fff;flex-shrink:0"
+      oninput="document.getElementById('loginNode').value=this.value"/>
+    <button class="evo-btn-sm" id="mcevo-test-btn" onclick="mcevoTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">⚡ Test</button>
+    <span id="mcevo-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;flex-shrink:0;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
+    <button class="evo-btn-sm" onclick="mcevoExportCSV()">⬇ CSV</button>
+    <button class="evo-btn-sm danger" onclick="mcevoResetAll()">✕ Reset</button>
+  </div>
+
+  <!-- ── BOTTOM THREE PANELS ── -->
+  <div id="mcevo-bottom" style="display:flex;flex:1;min-height:0;gap:0;">
+
+    <!-- LEFT: Monitor plots -->
+    <div id="mcevo-monitor" style="width:280px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;">
+        <span>Monte Carlo Monitor</span>
+        <span id="mcevo-monitor-status" style="font-size:9px;color:#ea580c;font-weight:400">Idle</span>
+      </div>
+      <div class="evo-chart-lbl">Energy vs Step (chain trace)</div>
+      <div class="evo-plot" id="mcevo-chart-energy" style="height:130px"></div>
+      <div class="evo-chart-lbl">Annealing Temperature</div>
+      <div class="evo-plot" id="mcevo-chart-temp" style="height:110px"></div>
+      <div style="padding:4px 8px;font-size:9px;color:#888;border-top:1px solid #ccc">
+        <div style="display:flex;justify-content:space-between"><span>Accepted</span><span id="mcevo-accept-count">0</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Rejected</span><span id="mcevo-reject-count">0</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Duplicates removed</span><span id="mcevo-dup-count">0</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Failed jobs</span><span id="mcevo-fail-count">0</span></div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Chain table -->
+    <div id="mcevo-table-panel" style="flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;border-right:1px solid #c8c8c8;">
+      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <span id="mcevo-step-badge" style="font-size:10px;font-weight:700;color:#ea580c;background:#ffedd5;border:1px solid #fdba74;border-radius:3px;padding:2px 8px;white-space:nowrap;">Step 0 / 0</span>
+        <input class="evo-search" id="mcevo-search" placeholder="Search ID, status…" oninput="mcevoFilterTable()"/>
+        <button class="evo-btn-sm" onclick="mcevoExportCSV()" title="Export table as CSV">⬇ CSV</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;overflow-x:auto;">
+        <table class="evo-pop-table" id="mcevo-pop-table">
+          <thead>
+            <tr>
+              <th onclick="mcevoSort('id')"># ID</th>
+              <th onclick="mcevoSort('step')">Step</th>
+              <th onclick="mcevoSort('parent')">Parent</th>
+              <th onclick="mcevoSort('mutation')">Move</th>
+              <th onclick="mcevoSort('temp')">Temp (K)</th>
+              <th onclick="mcevoSort('energy')">E (Ry/atom)</th>
+              <th onclick="mcevoSort('fitness')">Fitness</th>
+              <th onclick="mcevoSort('accepted')">Accepted</th>
+              <th onclick="mcevoSort('status')">Status</th>
+            </tr>
+          </thead>
+          <tbody id="mcevo-pop-tbody">
+            <tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">
+              No steps yet — click ▶ Start Monte Carlo
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:4px 9px;background:#d8d8d8;border-top:1px solid #ccc;font-size:10px;color:#666;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <button class="evo-page-btn" id="mcevo-prev" onclick="mcevoPage(-1)">‹ Prev</button>
+        <span id="mcevo-page-info">Page 1 / 1</span>
+        <button class="evo-page-btn" id="mcevo-next" onclick="mcevoPage(1)">Next ›</button>
+        <span style="flex:1"></span>
+        <span id="mcevo-total-count">0 steps</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Structure viewer -->
+    <div id="mcevo-viewer-panel" style="width:340px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;">
+      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;">Structure Viewer — <span id="mcevo-sel-id" style="color:#ea580c">none selected</span></div>
+      <div style="padding:6px 9px;background:#e8e8e8;border-bottom:1px solid #d8d8d8;display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+        <div class="evo-info-item"><span class="evo-info-k">Energy/atom</span><span class="evo-info-v" id="mcevo-info-e">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Fitness</span><span class="evo-info-v" id="mcevo-info-fit">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Temp (K)</span><span class="evo-info-v" id="mcevo-info-temp">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Step</span><span class="evo-info-v" id="mcevo-info-step">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Move</span><span class="evo-info-v" id="mcevo-info-mut">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Parent</span><span class="evo-info-v" id="mcevo-info-par">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Accepted</span><span class="evo-info-v" id="mcevo-info-acc">—</span></div>
+        <div class="evo-info-item"><span class="evo-info-k">Status</span><span class="evo-info-v" id="mcevo-info-status">—</span></div>
+      </div>
+      <div id="mcevo-viewer-3d" style="flex:1;min-height:200px;position:relative;background:#fff;"></div>
+      <div style="padding:5px 8px;background:#d8d8d8;border-top:1px solid #ccc;display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
+        <button class="evo-btn-sm" onclick="mcevoPrevStep()">‹ Prev</button>
+        <button class="evo-btn-sm" onclick="mcevoNextStep()">Next ›</button>
+        <button class="evo-btn-sm" onclick="mcevoViewerReset()">⟳ Reset</button>
+      </div>
+    </div>
+
+  </div><!-- /mcevo-bottom -->
+
+</div><!-- /mcevo-overlay -->
 </div><!-- /app -->
 
 <script>
@@ -1968,6 +2461,1417 @@ document.addEventListener('DOMContentLoaded',()=>{
   vecs.forEach(([id0,v0,id1,v1,id2,v2])=>{
     const e0=document.getElementById(id0),e1=document.getElementById(id1),e2=document.getElementById(id2);
     if(e0){e0.value=v0.toFixed(8);e1.value=v1.toFixed(8);e2.value=v2.toFixed(8);}
+  });
+});
+</script>
+
+<script>
+/* ══ Shared cluster / structure utilities (MD Evolution + Monte Carlo) ══ */
+const CELL_VECS={FCC:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],BCC:[[-.5,.5,.5],[.5,-.5,.5],[.5,.5,-.5]],SC:[[1,0,0],[0,1,0],[0,0,1]],HEX:[[1,0,0],[-.5,.866,0],[0,0,1]],TET:[[1,0,0],[0,1,0],[0,0,1]],ORTH:[[1,0,0],[0,1,0],[0,0,1]],MONO:[[1,0,0],[0,1,0],[.1,0,1]],TRI:[[1,0,0],[.2,.98,0],[.1,.1,.99]]};
+const MASS={H:1.008,C:12.011,N:14.007,O:15.999,Li:6.941,Na:22.99,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.065,Cl:35.45,K:39.098,Ca:40.078,Ti:47.867,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.63,As:74.922,Sb:121.76,Mo:95.96,Ba:137.33,Au:196.97,Sr:87.62};
+const CF_CRADII={H:.31,C:.77,N:.71,O:.66,Na:1.66,Mg:1.41,Al:1.21,Si:1.11,Cl:1.02,Fe:1.32,Cu:1.32,Ga:1.22,As:1.19,default:1.20};
+const CF_COLORS={H:'#ffffff',C:'#909090',N:'#3050f8',O:'#ff0d0d',Na:'#ab5cf2',Mg:'#8aff00',Al:'#bfa6a6',Si:'#f0c8a0',Cl:'#1ff01f',Fe:'#e06633',Cu:'#c88033',Ga:'#c28f8f',As:'#bd80e3',default:'#888888'};
+const CF_DISPLAY_RADIUS={H:.25,C:.35,N:.33,O:.32,Na:.90,Mg:.80,Al:.72,Si:.68,Cl:.62,Fe:.85,Cu:.83,Ga:.80,As:.77,default:.78};
+
+let current={formula:'GaAs',bravais:'FCC',a:5.65318,atoms:[{el:'Ga',f:[0,0,0]},{el:'As',f:[.25,.25,.25]}]};
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function fetchWithTimeout(url,opts={},ms=12000){
+  const ctrl=new AbortController();
+  const id=setTimeout(()=>ctrl.abort(),ms);
+  return fetch(url,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(id));
+}
+function getPseudoDir(){
+  const el=document.getElementById('md-pseudoDir')||document.getElementById('pseudoDir');
+  return (el?.value||'./pseudo').trim();
+}
+function getHost(){
+  const ids=['mdevo-host-input','mcevo-host-input','md-loginNode','loginNode'];
+  let h='';
+  for(const id of ids){
+    const el=document.getElementById(id);
+    if(el?.value?.trim()){h=el.value.trim();break;}
+  }
+  if(!h)return null;
+  if(!/^https?:\/\//i.test(h))h='http://'+h;
+  h=h.replace(/\/+$/,'');
+  const ln=document.getElementById('loginNode');
+  if(ln)ln.value=h;
+  return h;
+}
+function logHPC(s){mdLog(s,'inf');}
+
+function parseFormula(f){
+  const re=/([A-Z][a-z]?)(\d*)/g,out=[];let m;
+  while((m=re.exec(f))!==null)if(m[1])out.push({el:m[1],n:parseInt(m[2]||'1')});
+  return out;
+}
+const StructureGenerator={
+  random(formula,zMin,zMax){
+    const z=zMin+Math.floor(Math.random()*(zMax-zMin+1));
+    const els=parseFormula(formula);
+    if(!els.length)els.push({el:'Si',n:1});
+    const bravais=['FCC','BCC','SC','HEX','TET','ORTH'][Math.floor(Math.random()*6)];
+    const a=3.5+Math.random()*4.5;
+    const c=['HEX','TET'].includes(bravais)?a*(0.8+Math.random()*1.2):a;
+    const atoms=[];
+    els.forEach(({el,n})=>{for(let i=0;i<n*z;i++)atoms.push({el,f:[Math.random(),Math.random(),Math.random()]});});
+    return {formula:els.map(e=>e.el+e.n).join(''),bravais,a:parseFloat(a.toFixed(4)),c:parseFloat(c.toFixed(4)),atoms};
+  },
+};
+
+const MDEVO_STATUS={NEW:'new',RUNNING:'running',DONE:'done',FAILED:'failed',DUP:'duplicate'};
+const MDEVO_MUTATIONS={SEED:'Seed',VEL:'Velocity kick',KICK:'Structural kick',RESTART:'Restart best'};
+const MDEVO={
+  population:[],generation:0,running:false,paused:false,
+  sortKey:'id',sortDir:-1,page:0,pageSize:20,filterText:'',
+  selectedIdx:null,chartGen:[],chartBestE:[],chartTempSpread:[],
+  dupCount:0,failCount:0,
+};
+let MDEVO_ID_CTR=0;
+
+function makeMdevoTraj(opts={}){
+  return {
+    id:++MDEVO_ID_CTR,gen:MDEVO.generation,parent:opts.parent??null,
+    mutation:opts.mutation||MDEVO_MUTATIONS.SEED,
+    structure:opts.structure||null,snapshot:opts.snapshot||opts.structure||null,
+    baseStructure:opts.structure||null,temp:opts.temp??300,
+    energy:null,fitness:null,snapStep:opts.snapStep??null,
+    status:MDEVO_STATUS.NEW,qeInput:null,qeOutput:null,jobId:null,slurmId:null,
+    createdAt:Date.now(),
+  };
+}
+
+function mdevoSeedStructure(){
+  if(document.getElementById('mdevo-use-seed')?.checked&&current?.atoms?.length)
+    return JSON.parse(JSON.stringify(current));
+  return StructureGenerator.random('Si4',1,4);
+}
+
+function mdevoQEInput(tr){
+  const s=tr.snapshot||tr.structure;if(!s)return '';
+  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC;
+  const a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
+  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
+  const ecut=document.getElementById('mdevo-ecut')?.value||40;
+  const kx=document.getElementById('mdevo-kx')?.value||2,ky=document.getElementById('mdevo-ky')?.value||2,kz=document.getElementById('mdevo-kz')?.value||2;
+  let t=`! MDEvo gen${tr.gen} id${tr.id}\n&CONTROL\n  calculation='vc-relax'\n  prefix='mdevo_${tr.id}'\n  outdir='/tmp/mdevo_${tr.id}'\n  wf_collect=.false.\n  pseudo_dir='${getPseudoDir()}'\n/\n&SYSTEM\n  ibrav=0\n  nat=${s.atoms.length}\n  ntyp=${atsym.length}\n  ecutwfc=${ecut}\n  ecutrho=${parseInt(ecut)*8}\n  occupations='smearing'\n  smearing='mp'\n  degauss=0.02\n/\n&ELECTRONS\n  conv_thr=1.0e-6\n  mixing_beta=0.7\n/\n&IONS\n/\n&CELL\n  cell_dofree='all'\n/\nCELL_PARAMETERS angstrom\n`;
+  cell.forEach((v,i)=>{const sc=(i===2)?cz:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
+  t+=`ATOMIC_SPECIES\n`;atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||28).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
+  t+=`ATOMIC_POSITIONS crystal\n`;s.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
+  t+=`K_POINTS automatic\n  ${kx} ${ky} ${kz}  1 1 1\n`;
+  return t;
+}
+
+function mdevoParseQEOutput(tr,out){
+  const eM=out.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry/);
+  if(eM)tr.energy=parseFloat(eM[1])/(tr.structure?.atoms?.length||1);
+  tr.qeOutput=out.slice(-500);
+}
+
+const MdevoFitness={
+  calculate(pop){
+    const valid=pop.filter(t=>t.energy!==null&&t.status===MDEVO_STATUS.DONE);
+    if(!valid.length)return;
+    const es=valid.map(t=>t.energy);
+    const eMin=Math.min(...es),eMax=Math.max(...es),range=eMax-eMin||1;
+    valid.forEach(t=>{t.fitness=parseFloat(((eMax-t.energy)/range).toFixed(4));});
+    const dTol=parseFloat(document.getElementById('mdevo-dup-de')?.value)||0.001;
+    for(let i=0;i<valid.length;i++)for(let j=i+1;j<valid.length;j++){
+      if(Math.abs(valid[i].energy-valid[j].energy)<dTol&&valid[j].status!==MDEVO_STATUS.DUP){
+        valid[j].status=MDEVO_STATUS.DUP;MDEVO.dupCount++;
+      }
+    }
+  },
+};
+
+function mdevoGetBest(){
+  const done=MDEVO.population.filter(t=>t.energy!==null&&t.status===MDEVO_STATUS.DONE);
+  if(!done.length)return null;
+  return done.sort((a,b)=>a.energy-b.energy)[0];
+}
+
+function mdevoMutate(parent,mutation){
+  const src=parent.snapshot||parent.structure||parent.baseStructure;
+  const s=JSON.parse(JSON.stringify(src));
+  if(mutation===MDEVO_MUTATIONS.VEL){
+    const rescale=parseFloat(document.getElementById('mdevo-rescale')?.value)||20;
+    s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+rescale*0.0005*(Math.random()-.5)+1)%1))}));
+  } else {
+    const amp=parseFloat(document.getElementById('mdevo-kick-amp')?.value)||0.3;
+    s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+amp*0.05*(Math.random()-.5)+1)%1))}));
+    s.a*=(1+amp*0.02*(Math.random()-.5));s.c=(s.c||s.a)*(1+amp*0.02*(Math.random()-.5));
+  }
+  return s;
+}
+
+function mdevoPickParent(){
+  const done=MDEVO.population.filter(t=>t.status===MDEVO_STATUS.DONE&&t.energy!=null);
+  if(!done.length)return null;
+  const sel=document.getElementById('mdevo-selection')?.value||'tournament';
+  if(sel==='elite')return done.sort((a,b)=>a.energy-b.energy)[0];
+  const pool=[];
+  for(let i=0;i<3;i++)pool.push(done[Math.floor(Math.random()*done.length)]);
+  return pool.sort((a,b)=>a.energy-b.energy)[0];
+}
+
+async function mdevoSubmitTraj(tr){
+  const h=getHost();
+  tr.qeInput=mdevoQEInput(tr);
+  if(!h){
+    tr.status=MDEVO_STATUS.RUNNING;mdevoRenderTable();
+    await sleep(200+Math.random()*400);
+    tr.energy=-(4.5+Math.random()*1.5)/((tr.structure?.atoms?.length)||1);
+    tr.status=MDEVO_STATUS.DONE;
+    mdevoRenderTable();
+    return true;
+  }
+  try{
+    tr.status=MDEVO_STATUS.RUNNING;mdevoRenderTable();
+    const fd=new FormData();
+    fd.append('input_text',tr.qeInput);
+    fd.append('nodes','1');fd.append('ntasks','44');
+    fd.append('job_name',`mdevo_${tr.id}`);
+    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},30000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    tr.jobId=d.job_id;tr.slurmId=d.slurm_id;
+    logHPC(`[MDEvo] #${tr.id} submitted → job_id=${tr.jobId}`);
+    mdevoPollTraj(tr,h);
+    return true;
+  }catch(e){
+    tr.status=MDEVO_STATUS.FAILED;MDEVO.failCount++;
+    logHPC(`[MDEvo] #${tr.id} submit error: ${e.message}`);
+    mdevoRenderTable();
+    return false;
+  }
+}
+
+async function mdevoPollTraj(tr,h){
+  let errCount=0;
+  for(let i=0;i<360;i++){
+    if(!MDEVO.running)return;
+    await sleep(10000);
+    if(!MDEVO.running)return;
+    try{
+      const rp=await fetchWithTimeout(`${h}/status/${tr.jobId}`,{},15000);
+      if(!rp.ok)throw new Error('HTTP '+rp.status);
+      const dp=await rp.json();
+      errCount=0;
+      if(dp.status==='done'||dp.status==='completed'||dp.converged){
+        mdevoParseQEOutput(tr,dp.output_tail||'');
+        tr.status=MDEVO_STATUS.DONE;
+        MdevoFitness.calculate(MDEVO.population);
+        mdevoRenderTable();mdevoUpdateCharts();mdevoUpdateStats();mdevoUpdateCounters();
+        return;
+      }
+      if(dp.status==='failed'||dp.status==='error'){
+        tr.status=MDEVO_STATUS.FAILED;MDEVO.failCount++;
+        mdevoRenderTable();mdevoUpdateStats();
+        return;
+      }
+      tr.status=MDEVO_STATUS.RUNNING;mdevoRenderTable();
+    }catch(e){
+      errCount++;
+      if(errCount>=10){tr.status=MDEVO_STATUS.FAILED;MDEVO.failCount++;mdevoRenderTable();return;}
+      await sleep(Math.min(10000*errCount,60000));
+    }
+  }
+  tr.status=MDEVO_STATUS.FAILED;MDEVO.failCount++;mdevoRenderTable();
+}
+
+function mdevoUpdateCounters(){
+  const poolSize=parseInt(document.getElementById('mdevo-pool-size')?.value)||12;
+  const done=MDEVO.population.filter(t=>t.status===MDEVO_STATUS.DONE).length;
+  const gc=document.getElementById('mdevo-gen-counter');
+  const gb=document.getElementById('mdevo-gen-badge');
+  const pc=document.getElementById('mdevo-pool-counter');
+  const be=document.getElementById('mdevo-best-energy');
+  if(gc)gc.textContent=`Gen: ${MDEVO.generation}`;
+  if(gb)gb.textContent=`Gen ${MDEVO.generation} / ${MDEVO.population.length}`;
+  if(pc)pc.textContent=`${done} / ${poolSize}`;
+  const best=mdevoGetBest();
+  if(be&&best?.energy!=null)be.textContent=best.energy.toFixed(5)+' Ry/atom';
+}
+
+async function mdevoRunLoop(){
+  const maxTrajs=parseInt(document.getElementById('mdevo-max-trajs')?.value)||200;
+  const initN=parseInt(document.getElementById('mdevo-init-trajs')?.value)||8;
+  const jobLimit=parseInt(document.getElementById('mdevo-job-limit')?.value)||4;
+  const continuous=parseInt(document.getElementById('mdevo-continuous')?.value)||2;
+  const baseTemp=parseFloat(document.getElementById('mdevo-temp')?.value)||300;
+  const tempRange=parseFloat(document.getElementById('mdevo-temp-range')?.value)||200;
+  const nstep=parseInt(document.getElementById('mdevo-nstep')?.value)||50;
+
+  logHPC('[MDEvo] Starting MD Evolution');
+  mdevoSetState('running');
+  MDEVO.generation=0;
+
+  for(let i=0;i<initN&&MDEVO.running;i++){
+    const s=mdevoSeedStructure();
+    const temp=baseTemp+(Math.random()-.5)*2*tempRange;
+    MDEVO.population.push(makeMdevoTraj({structure:s,snapshot:s,mutation:MDEVO_MUTATIONS.SEED,temp,parent:null,snapStep:nstep}));
+  }
+  mdevoRenderTable();mdevoUpdateCounters();
+
+  for(let i=0;i<MDEVO.population.length&&MDEVO.running;i+=jobLimit){
+    const wave=MDEVO.population.slice(i,i+jobLimit);
+    await Promise.all(wave.map(t=>mdevoSubmitTraj(t)));
+    mdevoRenderTable();mdevoUpdateCounters();
+    if(i+jobLimit<MDEVO.population.length)await sleep(2000);
+  }
+
+  MDEVO.generation=1;
+  logHPC('[MDEvo] Initial batch submitted — evolving');
+
+  while(MDEVO.running&&MDEVO.population.length<maxTrajs){
+    if(MDEVO.paused){await sleep(500);continue;}
+    await sleep(8000);
+    if(!MDEVO.running)break;
+
+    const done=MDEVO.population.filter(t=>t.status===MDEVO_STATUS.DONE).length;
+    const running=MDEVO.population.filter(t=>t.status===MDEVO_STATUS.RUNNING).length;
+    mdevoUpdateCounters();
+    if(done<2||running>=jobLimit)continue;
+
+    const slots=Math.min(jobLimit-running,continuous);
+    if(!slots)continue;
+
+    MDEVO.generation++;
+    const restartPct=parseFloat(document.getElementById('mdevo-restart-pct')?.value)||30;
+    const perturbPct=parseFloat(document.getElementById('mdevo-perturb-pct')?.value)||50;
+
+    for(let i=0;i<slots&&MDEVO.running;i++){
+      let parent,mutation,structure;
+      if(Math.random()*100<restartPct){
+        parent=mdevoGetBest();
+        if(!parent)continue;
+        mutation=MDEVO_MUTATIONS.RESTART;
+        structure=JSON.parse(JSON.stringify(parent.snapshot||parent.structure));
+      } else {
+        parent=mdevoPickParent();
+        if(!parent)continue;
+        mutation=Math.random()<.5?MDEVO_MUTATIONS.VEL:MDEVO_MUTATIONS.KICK;
+        structure=mdevoMutate(parent,mutation);
+      }
+      const temp=(parent?.temp||baseTemp)+(Math.random()-.5)*2*tempRange*(perturbPct/100);
+      const tr=makeMdevoTraj({structure,snapshot:structure,mutation,temp,parent:parent?.id,snapStep:nstep});
+      MDEVO.population.push(tr);
+      await mdevoSubmitTraj(tr);
+    }
+
+    MdevoFitness.calculate(MDEVO.population);
+    mdevoRenderTable();mdevoUpdateCharts();mdevoUpdateStats();mdevoUpdateCounters();
+  }
+
+  MDEVO.running=false;
+  mdevoSetState(MDEVO.population.length>=maxTrajs?'max-reached':'converged');
+  document.getElementById('mdevo-start-btn').disabled=false;
+  document.getElementById('mdevo-pause-btn').disabled=true;
+  document.getElementById('mdevo-stop-btn').disabled=true;
+  logHPC(`[MDEvo] Complete — ${MDEVO.population.length} trajectories`);
+}
+
+function mdevoInitCharts(){
+  if(typeof Plotly==='undefined')return;
+  const empty=[{x:[0],y:[0],type:'scatter',mode:'lines',line:{color:'#ccc'}}];
+  const layout=(y,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Gen',gridcolor:'#ddd'},yaxis:{title:y,gridcolor:'#ddd'},showlegend:false,height:h});
+  Plotly.react('mdevo-chart-energy',empty,layout('Ry/atom',128),{displayModeBar:false,responsive:true});
+  Plotly.react('mdevo-chart-temp',empty,layout('σ(T) K',108),{displayModeBar:false,responsive:true});
+}
+function mcevoInitCharts(){
+  if(typeof Plotly==='undefined')return;
+  const empty=[{x:[0],y:[0],type:'scatter',mode:'lines',line:{color:'#ccc'}}];
+  const layout=(y,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Step',gridcolor:'#ddd'},yaxis:{title:y,gridcolor:'#ddd'},showlegend:false,height:h});
+  Plotly.react('mcevo-chart-energy',empty,layout('Ry/atom',128),{displayModeBar:false,responsive:true});
+  Plotly.react('mcevo-chart-temp',empty,layout('T (K)',108),{displayModeBar:false,responsive:true});
+}
+</script>
+
+<script>
+/* ══ MD EVOLUTION JS ══ */
+function mdevoStart(){
+  if(MDEVO.running)return;
+  MDEVO.running=true;MDEVO.paused=false;
+  MDEVO.population=[];MDEVO.generation=0;MDEVO_ID_CTR=0;
+  MDEVO.chartGen=[];MDEVO.chartBestE=[];MDEVO.chartTempSpread=[];
+  MDEVO.dupCount=0;MDEVO.failCount=0;
+  mdevoRunLoop().catch(e=>{mdLog('[MDEvo] error: '+e.message,'err');console.error(e);});
+  document.getElementById('mdevo-start-btn').disabled=true;
+  document.getElementById('mdevo-pause-btn').disabled=false;document.getElementById('mdevo-pause-btn').style.opacity='1';
+  document.getElementById('mdevo-stop-btn').disabled=false;document.getElementById('mdevo-stop-btn').style.opacity='1';
+}
+function mdevoPause(){
+  MDEVO.paused=!MDEVO.paused;
+  document.getElementById('mdevo-pause-btn').textContent=MDEVO.paused?'▶ Resume':'⏸ Pause';
+  mdevoSetState(MDEVO.paused?'paused':'running');
+}
+function mdevoStop(){
+  MDEVO.running=false;MDEVO.paused=false;
+  mdevoSetState('stopped');
+  document.getElementById('mdevo-start-btn').disabled=false;
+  document.getElementById('mdevo-pause-btn').disabled=true;document.getElementById('mdevo-pause-btn').style.opacity='.5';
+  document.getElementById('mdevo-stop-btn').disabled=true;document.getElementById('mdevo-stop-btn').style.opacity='.5';
+  document.getElementById('mdevo-pause-btn').textContent='⏸ Pause';
+}
+function mdevoResetAll(){
+  mdevoStop();
+  MDEVO.population=[];MDEVO.generation=0;MDEVO_ID_CTR=0;
+  MDEVO.chartGen=[];MDEVO.chartBestE=[];MDEVO.chartTempSpread=[];
+  MDEVO.dupCount=0;MDEVO.failCount=0;MDEVO.selectedIdx=null;
+  mdevoRenderTable();mdevoUpdateCharts();mdevoUpdateStats();
+  document.getElementById('mdevo-gen-counter').textContent='Gen: 0';
+  document.getElementById('mdevo-best-energy').textContent='— Ry/atom';
+  document.getElementById('mdevo-pool-counter').textContent='0 / 0';
+  document.getElementById('mdevo-gen-badge').textContent='Gen 0 / 0';
+  logHPC('[MDEvo] Reset complete');
+}
+function mdevoSetState(state){
+  const chip=document.getElementById('mdevo-state-chip');
+  const mon=document.getElementById('mdevo-monitor-status');
+  const labels={running:'⟳ Running',paused:'⏸ Paused',stopped:'■ Stopped',idle:'Idle',converged:'✓ Converged','max-reached':'Max Reached'};
+  const colors={running:'#059669',paused:'#d97706',stopped:'#dc2626',idle:'#6b7280',converged:'#047857','max-reached':'#2563eb'};
+  chip.textContent=labels[state]||state;chip.style.color=colors[state]||'#333';
+  if(mon){mon.textContent=labels[state]||state;mon.style.color=colors[state]||'#888';}
+}
+
+/* ── Table render (mirrors evoRenderTable) ─────────────────────────────── */
+function mdevoRenderTable(){
+  const filter=MDEVO.filterText.toLowerCase();
+  let rows=[...MDEVO.population];
+  if(filter){rows=rows.filter(t=>
+    String(t.id).includes(filter)||(t.mutation||'').toLowerCase().includes(filter)||
+    String(t.gen).includes(filter)||(t.status||'').includes(filter)
+  );}
+  rows.sort((a,b)=>{
+    let va=a[MDEVO.sortKey],vb=b[MDEVO.sortKey];
+    if(va===null||va===undefined)va=MDEVO.sortDir>0?Infinity:-Infinity;
+    if(vb===null||vb===undefined)vb=MDEVO.sortDir>0?Infinity:-Infinity;
+    return (va<vb?-1:va>vb?1:0)*MDEVO.sortDir;
+  });
+  const total=rows.length;
+  const pages=Math.max(1,Math.ceil(total/MDEVO.pageSize));
+  MDEVO.page=Math.min(MDEVO.page,pages-1);
+  const slice=rows.slice(MDEVO.page*MDEVO.pageSize,(MDEVO.page+1)*MDEVO.pageSize);
+
+  document.getElementById('mdevo-page-info').textContent=`Page ${MDEVO.page+1} / ${pages}`;
+  document.getElementById('mdevo-total-count').textContent=`${total} trajectories`;
+  document.getElementById('mdevo-prev').disabled=MDEVO.page===0;
+  document.getElementById('mdevo-next').disabled=MDEVO.page>=pages-1;
+
+  const statusBadge=s=>{
+    const cls={done:'evo-status-done',running:'evo-status-run',failed:'evo-status-fail',new:'evo-status-new',duplicate:'evo-status-fail'}[s]||'evo-status-new';
+    return `<span class="evo-status-badge ${cls}">${s}</span>`;
+  };
+  const fmt=v=>v===null||v===undefined?'—':typeof v==='number'?v.toFixed(4):v;
+
+  const tbody=document.getElementById('mdevo-pop-tbody');
+  if(!slice.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">No trajectories yet — click ▶ Start MD Evolution</td></tr>';
+    return;
+  }
+  tbody.innerHTML=slice.map(t=>`
+    <tr class="${MDEVO.selectedIdx===t.id?'active':''}" onclick="mdevoSelectTraj(${t.id})">
+      <td style="font-weight:700;color:#059669">#${t.id}</td>
+      <td>${t.gen}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:9.5px">${t.parent?('#'+t.parent):'—'}</td>
+      <td style="font-size:9.5px">${t.mutation}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${t.temp}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${t.energy<-4?'#065f46':'#333'}">${fmt(t.energy)}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${t.snapStep??'—'}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${(t.fitness||0)>.8?'#059669':'#333'}">${fmt(t.fitness)}</td>
+      <td>${statusBadge(t.status)}</td>
+    </tr>`).join('');
+}
+function mdevoSort(key){
+  if(MDEVO.sortKey===key)MDEVO.sortDir*=-1;else{MDEVO.sortKey=key;MDEVO.sortDir=1;}
+  mdevoRenderTable();
+}
+function mdevoFilterTable(){MDEVO.filterText=document.getElementById('mdevo-search').value;MDEVO.page=0;mdevoRenderTable();}
+function mdevoPage(d){MDEVO.page=Math.max(0,MDEVO.page+d);mdevoRenderTable();}
+
+/* ── Select trajectory in viewer ────────────────────────────────────────── */
+function mdevoSelectTraj(id){
+  MDEVO.selectedIdx=id;
+  const tr=MDEVO.population.find(t=>t.id===id);
+  if(!tr)return;
+  mdevoRenderTable();
+  document.getElementById('mdevo-sel-id').textContent='#'+id;
+  document.getElementById('mdevo-info-e').textContent=tr.energy!=null?tr.energy.toFixed(5)+' Ry':'—';
+  document.getElementById('mdevo-info-fit').textContent=tr.fitness!=null?tr.fitness.toFixed(4):'—';
+  document.getElementById('mdevo-info-temp').textContent=tr.temp+' K';
+  document.getElementById('mdevo-info-step').textContent=tr.snapStep??'—';
+  document.getElementById('mdevo-info-mut').textContent=tr.mutation;
+  document.getElementById('mdevo-info-par').textContent=tr.parent?('#'+tr.parent):'—';
+  document.getElementById('mdevo-info-status').textContent=tr.status;
+  const struct=tr.snapshot||tr.baseStructure;
+  if(struct){
+    if(!EVO_THREE.renderer){
+      // Reuse the same mini Three.js / Canvas2D viewer instance as structure-Evolution,
+      // but it lives in #evo-viewer-3d — for MD-Evolution we need our own container.
+    }
+    mdevoLoad3D(struct);
+  }
+}
+function mdevoPrevTraj(){
+  if(!MDEVO.population.length)return;
+  const idx=MDEVO.population.findIndex(t=>t.id===MDEVO.selectedIdx);
+  mdevoSelectTraj(MDEVO.population[Math.max(0,idx-1)].id);
+}
+function mdevoNextTraj(){
+  if(!MDEVO.population.length)return;
+  const idx=MDEVO.population.findIndex(t=>t.id===MDEVO.selectedIdx);
+  mdevoSelectTraj(MDEVO.population[Math.min(MDEVO.population.length-1,(idx<0?0:idx)+1)].id);
+}
+
+/* ── Dedicated mini-viewer for MD-Evolution snapshot panel (separate
+       Three.js instance, same WebGL/Canvas2D fallback approach) ────────── */
+let MDEVO_THREE={scene:null,camera:null,renderer:null,is2D:false,ctx2d:null,canvas2d:null,
+  sph:{theta:.6,phi:1.1,r:12},target:null,drag:false,last:{x:0,y:0},atoms:[],bonds:[]};
+function mdevoInitViewer(){
+  if(MDEVO_THREE.renderer||MDEVO_THREE.is2D)return;
+  const c=document.getElementById('mdevo-viewer-3d');if(!c)return;
+  const testCanvas=document.createElement('canvas');
+  const testGL=testCanvas.getContext('webgl')||testCanvas.getContext('experimental-webgl');
+  if(!testGL||!window.THREE){
+    MDEVO_THREE.is2D=true;
+    const cv=document.createElement('canvas');
+    cv.style.cssText='width:100%;height:100%;position:absolute;inset:0;cursor:grab;background:#fff;';
+    c.appendChild(cv);
+    MDEVO_THREE.canvas2d=cv;MDEVO_THREE.ctx2d=cv.getContext('2d');
+    const resize=()=>{cv.width=c.clientWidth||320;cv.height=c.clientHeight||200;mdevoDraw2D();};
+    resize();new ResizeObserver(resize).observe(c);
+    cv.addEventListener('mousedown',e=>{MDEVO_THREE.drag=true;MDEVO_THREE.last={x:e.clientX,y:e.clientY};});
+    window.addEventListener('mouseup',()=>{MDEVO_THREE.drag=false;});
+    window.addEventListener('mousemove',e=>{
+      if(!MDEVO_THREE.drag)return;
+      MDEVO_THREE.sph.theta-=(e.clientX-MDEVO_THREE.last.x)*0.01;
+      MDEVO_THREE.sph.phi+=(e.clientY-MDEVO_THREE.last.y)*0.01;
+      MDEVO_THREE.last={x:e.clientX,y:e.clientY};mdevoDraw2D();
+    });
+    logHPC('[MDEvo] Snapshot viewer: Canvas 2D (WebGL unavailable)');
+    return;
+  }
+  const W=c.clientWidth||320,H=c.clientHeight||200;
+  MDEVO_THREE.scene=new THREE.Scene();MDEVO_THREE.scene.background=new THREE.Color(0xfafafa);
+  MDEVO_THREE.camera=new THREE.PerspectiveCamera(38,W/H,.05,500);
+  MDEVO_THREE.target=new THREE.Vector3();
+  MDEVO_THREE.renderer=new THREE.WebGLRenderer({antialias:true});
+  MDEVO_THREE.renderer.setSize(W,H);MDEVO_THREE.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  c.appendChild(MDEVO_THREE.renderer.domElement);
+  MDEVO_THREE.scene.add(new THREE.AmbientLight(0xffffff,.5));
+  const d=new THREE.DirectionalLight(0xffffff,.8);d.position.set(3,5,4);MDEVO_THREE.scene.add(d);
+  const el=MDEVO_THREE.renderer.domElement;
+  el.addEventListener('mousedown',e=>{MDEVO_THREE.drag=true;MDEVO_THREE.last={x:e.clientX,y:e.clientY};});
+  window.addEventListener('mouseup',()=>{MDEVO_THREE.drag=false;});
+  window.addEventListener('mousemove',e=>{
+    if(!MDEVO_THREE.drag)return;
+    const dx=(e.clientX-MDEVO_THREE.last.x)*.007,dy=(e.clientY-MDEVO_THREE.last.y)*.007;
+    MDEVO_THREE.last={x:e.clientX,y:e.clientY};
+    MDEVO_THREE.sph.theta-=dx;MDEVO_THREE.sph.phi=Math.max(.1,Math.min(Math.PI-.1,MDEVO_THREE.sph.phi+dy));
+    mdevoUpdateCam();
+  });
+  el.addEventListener('wheel',e=>{e.preventDefault();MDEVO_THREE.sph.r=Math.max(1.5,MDEVO_THREE.sph.r*Math.exp(e.deltaY*.001));mdevoUpdateCam();},{passive:false});
+  new ResizeObserver(()=>{const W2=c.clientWidth,H2=c.clientHeight;MDEVO_THREE.camera.aspect=W2/H2;MDEVO_THREE.camera.updateProjectionMatrix();MDEVO_THREE.renderer.setSize(W2,H2);}).observe(c);
+  (function loop(){requestAnimationFrame(loop);if(MDEVO_THREE.renderer)MDEVO_THREE.renderer.render(MDEVO_THREE.scene,MDEVO_THREE.camera);}());
+  mdevoUpdateCam();
+}
+function mdevoUpdateCam(){
+  if(!MDEVO_THREE.camera)return;
+  const{theta,phi,r}=MDEVO_THREE.sph,t=MDEVO_THREE.target;
+  MDEVO_THREE.camera.position.set(t.x+r*Math.sin(phi)*Math.sin(theta),t.y+r*Math.cos(phi),t.z+r*Math.sin(phi)*Math.cos(theta));
+  MDEVO_THREE.camera.lookAt(t);MDEVO_THREE.camera.updateMatrixWorld(true);
+}
+function mdevoBuildPoints(s){
+  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
+  const pts=s.atoms.map(at=>({el:at.el,
+    x:(cell[0][0]*at.f[0]+cell[1][0]*at.f[1]+cell[2][0]*at.f[2])*a0,
+    y:(cell[0][1]*at.f[0]+cell[1][1]*at.f[1]+cell[2][1]*at.f[2])*a0,
+    z:(cell[0][2]*at.f[0]+cell[1][2]*at.f[1]+cell[2][2]*at.f[2])*cz}));
+  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});
+  if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
+  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
+  return {pts,a0};
+}
+function mdevoLoad3D(s){
+  if(!MDEVO_THREE.renderer&&!MDEVO_THREE.is2D)mdevoInitViewer();
+  const {pts,a0}=mdevoBuildPoints(s);
+  MDEVO_THREE.atoms=pts;
+  MDEVO_THREE.bonds=[];
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+    const ri=CF_CRADII[pts[i].el]||CF_CRADII.default,rj=CF_CRADII[pts[j].el]||CF_CRADII.default;
+    const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y,pts[i].z-pts[j].z);
+    if(d>0.3&&d<ri+rj+0.4)MDEVO_THREE.bonds.push({i,j});
+  }
+  if(MDEVO_THREE.is2D){mdevoDraw2D();return;}
+  if(!MDEVO_THREE.scene)return;
+  const toRem=[];MDEVO_THREE.scene.children.forEach(c=>{if(c.isLight)return;toRem.push(c);});
+  toRem.forEach(o=>{MDEVO_THREE.scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
+  const byEl={};pts.forEach(p=>{(byEl[p.el]||(byEl[p.el]=[])).push(p);});
+  Object.entries(byEl).forEach(([el,ats])=>{
+    const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*0.9;
+    const color=new THREE.Color(CF_COLORS[el]||CF_COLORS.default);
+    const geo=new THREE.SphereGeometry(r,18,12);
+    const mat=new THREE.MeshStandardMaterial({color,roughness:.25,metalness:.05});
+    const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
+    ats.forEach((a,i)=>{mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z));mesh.setColorAt(i,color);});
+    mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+    MDEVO_THREE.scene.add(mesh);
+  });
+  MDEVO_THREE.bonds.forEach(({i,j})=>{
+    const ai=pts[i],aj=pts[j];
+    const dir=new THREE.Vector3(aj.x-ai.x,aj.y-ai.y,aj.z-ai.z);const len=dir.length();if(len<0.001)return;
+    const geo=new THREE.CylinderGeometry(.07,.07,len,8);
+    const mat=new THREE.MeshStandardMaterial({color:0xaaaaaa});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set((ai.x+aj.x)/2,(ai.y+aj.y)/2,(ai.z+aj.z)/2);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+    MDEVO_THREE.scene.add(m);
+  });
+  MDEVO_THREE.sph.r=Math.max(4,a0*2.8);MDEVO_THREE.target.set(0,0,0);mdevoUpdateCam();
+}
+function mdevoDraw2D(){
+  if(!MDEVO_THREE.ctx2d||!MDEVO_THREE.atoms.length)return;
+  const cv=MDEVO_THREE.canvas2d,ctx=MDEVO_THREE.ctx2d;
+  const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const zoom=Math.min(W,H)/14;
+  const rx=MDEVO_THREE.sph.phi-1.1,ry=MDEVO_THREE.sph.theta-.6;
+  const proj=MDEVO_THREE.atoms.map((a,idx)=>{
+    const x=a.x*Math.cos(ry)-a.z*Math.sin(ry);
+    const z=a.x*Math.sin(ry)+a.z*Math.cos(ry);
+    const y2=a.y*Math.cos(rx)-z*Math.sin(rx);
+    const z2=a.y*Math.sin(rx)+z*Math.cos(rx);
+    return{...a,idx,px:cx+x*zoom,py:cy-y2*zoom,z:z2,r:(CF_DISPLAY_RADIUS[a.el]||0.7)*zoom*0.85};
+  }).sort((a,b)=>a.z-b.z);
+  MDEVO_THREE.bonds.forEach(({i,j})=>{
+    const a=proj.find(p=>p.idx===i),b=proj.find(p=>p.idx===j);if(!a||!b)return;
+    ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);ctx.strokeStyle='#aaa';ctx.lineWidth=2;ctx.stroke();
+  });
+  proj.forEach(a=>{
+    ctx.beginPath();ctx.arc(a.px,a.py,Math.max(4,a.r),0,Math.PI*2);
+    ctx.fillStyle=CF_COLORS[a.el]||CF_COLORS.default;ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=.5;ctx.stroke();
+  });
+}
+function mdevoViewerReset(){
+  if(MDEVO_THREE.is2D)return;
+  MDEVO_THREE.sph={theta:.6,phi:1.1,r:12};if(MDEVO_THREE.target)MDEVO_THREE.target.set(0,0,0);mdevoUpdateCam();
+}
+
+/* ── Charts ──────────────────────────────────────────────────────────────── */
+function mdevoUpdateCharts(){
+  const done=MDEVO.population.filter(t=>t.energy!==null&&t.status===MDEVO_STATUS.DONE);
+  if(!done.length)return;
+  const byGen={};done.forEach(t=>{(byGen[t.gen]=byGen[t.gen]||[]).push(t.energy);});
+  const gens=Object.keys(byGen).map(Number).sort((a,b)=>a-b);
+  MDEVO.chartGen=gens;
+  MDEVO.chartBestE=gens.map(g=>Math.min(...byGen[g]));
+  const byGenTemp={};done.forEach(t=>{(byGenTemp[t.gen]=byGenTemp[t.gen]||[]).push(t.temp);});
+  MDEVO.chartTempSpread=gens.map(g=>{const ts=byGenTemp[g]||[t=>t.temp];const m=ts.reduce((a,b)=>a+b,0)/ts.length;return Math.sqrt(ts.reduce((a,b)=>a+(b-m)**2,0)/ts.length);});
+
+  const plotCfg={displayModeBar:false,responsive:true};
+  const layout=(ytitle,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Gen',gridcolor:'#ddd',tickfont:{size:8}},yaxis:{title:ytitle,gridcolor:'#ddd',tickfont:{size:8}},showlegend:false,height:h});
+
+  Plotly.react('mdevo-chart-energy',[{x:MDEVO.chartGen,y:MDEVO.chartBestE,type:'scatter',mode:'lines+markers',line:{color:'#059669',width:1.5},marker:{size:4}}],layout('Ry/atom',128),plotCfg);
+  Plotly.react('mdevo-chart-temp',[{x:MDEVO.chartGen,y:MDEVO.chartTempSpread,type:'scatter',mode:'lines',line:{color:'#0ea5e9',width:1.5},fill:'tozeroy',fillcolor:'rgba(14,165,233,.1)'}],layout('σ(T) K',108),plotCfg);
+}
+function mdevoUpdateStats(){
+  document.getElementById('mdevo-dup-count').textContent=MDEVO.dupCount;
+  document.getElementById('mdevo-fail-count').textContent=MDEVO.failCount;
+}
+
+/* ── CSV export ──────────────────────────────────────────────────────────── */
+function mdevoExportCSV(){
+  const header='ID,Gen,Parent,Mutation,Temp(K),Energy,SnapStep,Fitness,Status\n';
+  const rows=MDEVO.population.map(t=>[t.id,t.gen,t.parent??'',t.mutation,t.temp,t.energy??'',t.snapStep??'',t.fitness??'',t.status].join(',')).join('\n');
+  const b=new Blob([header+rows],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='mdevolution_results.csv';a.click();URL.revokeObjectURL(u);
+}
+
+/* ── Host test (mirrors evoTestHost) ───────────────────────────────────── */
+async function mdevoTestHost(){
+  const inp=document.getElementById('mdevo-host-input');
+  const status=document.getElementById('mdevo-conn-status');
+  const btn=document.getElementById('mdevo-test-btn');
+  document.getElementById('loginNode').value=inp.value||'';
+  const h=getHost();
+  if(!h){status.textContent='No host';status.style.background='#fee2e2';status.style.color='#991b1b';return;}
+  btn.textContent='Testing…';btn.disabled=true;
+  status.textContent='…';status.style.background='#fef9c3';status.style.color='#854d0e';
+  try{
+    const r=await fetchWithTimeout(h+'/health',{},5000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    status.textContent='✓ Connected';status.style.background='#d1fae5';status.style.color='#065f46';
+    logHPC('[MDEvo] Host connected: '+JSON.stringify(d));
+  }catch(e){
+    status.textContent='✗ '+e.message.slice(0,30);status.style.background='#fee2e2';status.style.color='#991b1b';
+    logHPC('[MDEvo] Host test failed: '+e.message);
+  }
+  btn.textContent='⚡ Test';btn.disabled=false;
+}
+
+/* ── Show/hide overlay when mode changes ───────────────────────────────── */
+function mdevoOnModeChange(mode){
+  const overlay=document.getElementById('mdevo-overlay');
+  if(mode==='mdevo'){
+    overlay.classList.add('active');
+    mdevoInitViewer();
+    if(!MDEVO.population.length)mdevoRenderTable();
+    mdevoUpdateCharts();
+    const mainHost=document.getElementById('loginNode').value||'';
+    const mdevoInput=document.getElementById('mdevo-host-input');
+    if(mdevoInput&&mainHost)mdevoInput.value=mainHost;
+    const sb=document.getElementById('mdevo-start-btn');
+    const pb=document.getElementById('mdevo-pause-btn');
+    const stb=document.getElementById('mdevo-stop-btn');
+    if(sb&&!sb._wired){sb.addEventListener('click',function(e){e.stopPropagation();mdevoStart();});sb._wired=true;}
+    if(pb&&!pb._wired){pb.addEventListener('click',function(e){e.stopPropagation();mdevoPause();});pb._wired=true;}
+    if(stb&&!stb._wired){stb.addEventListener('click',function(e){e.stopPropagation();mdevoStop();});stb._wired=true;}
+  } else {
+    overlay.classList.remove('active');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MONTE CARLO ENGINE — standalone Metropolis search, sibling to the
+   structure-Evolution (genetic algorithm) and MD-Evolution engines.
+   Walks a single Markov chain: propose a structural move (stripple /
+   permustrain) from the current accepted structure, run DFT, then
+   accept the move unconditionally if energy dropped, or accept it
+   probabilistically (exp(-ΔE/kBT)) if energy rose. Temperature cools
+   geometrically each generation (simulated annealing). Reuses
+   MutationEngine / StructureGenerator / CF_* tables from the
+   structure-Evolution engine; talks to the same cluster bridge via
+   the same fire-and-forget submit + patient background poll pattern.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const MCEVO_STATUS={NEW:'new',RUNNING:'running',DONE:'done',FAILED:'failed',DUP:'duplicate'};
+const MCEVO_MUTATIONS={SEED:'Seed',STRIP:'Stripple',PERM:'Permustrain'};
+
+const MCEVO={
+  population:[],     // chain history — one entry per proposed step
+  step:0,
+  running:false,
+  paused:false,
+  seeds:[],
+  current:null,      // currently accepted structure (the live chain state)
+  temp:1000,
+  acceptCount:0,
+  rejectCount:0,
+  dupCount:0,
+  failCount:0,
+  sortKey:'step',
+  sortDir:-1,
+  page:0,
+  pageSize:20,
+  filterText:'',
+  selectedIdx:null,
+  chartStep:[],
+  chartEnergy:[],
+  chartTemp:[],
+};
+
+let MCEVO_ID_CTR=0;
+function makeMcEntry(opts={}){
+  return {
+    id: ++MCEVO_ID_CTR,
+    step: MCEVO.step,
+    parent: opts.parent||null,
+    mutation: opts.mutation||MCEVO_MUTATIONS.SEED,
+    structure: opts.structure||null,
+    temp: opts.temp!=null?opts.temp:MCEVO.temp,
+    energy:null, fitness:null,
+    accepted: null,    // true/false once Metropolis test runs, null while pending
+    status: MCEVO_STATUS.NEW,
+    qeInput:null, qeOutput:null,
+    jobId:null, slurmId:null,
+    createdAt:Date.now(),
+  };
+}
+
+/* ── Build QE vc-relax input for an MCEVO proposal (mirrors evoQEInput) ──── */
+function mcevoQEInput(entry){
+  const s=entry.structure;if(!s)return '';
+  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC;
+  const a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
+  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
+  const ecut=document.getElementById('mcevo-ecut').value||40;
+  const kx=document.getElementById('mcevo-kx').value||2,ky=document.getElementById('mcevo-ky').value||2,kz=document.getElementById('mcevo-kz').value||2;
+  let t=`! MonteCarlo step${entry.step} id${entry.id}\n&CONTROL\n  calculation='vc-relax'\n  prefix='mcevo_${entry.id}'\n  outdir='/tmp/mcevo_${entry.id}'\n  wf_collect=.false.\n  pseudo_dir='${getPseudoDir()}'\n/\n&SYSTEM\n  ibrav=0\n  nat=${s.atoms.length}\n  ntyp=${atsym.length}\n  ecutwfc=${ecut}\n  ecutrho=${parseInt(ecut)*8}\n  occupations='smearing'\n  smearing='mp'\n  degauss=0.02\n/\n&ELECTRONS\n  conv_thr=1.0e-6\n  mixing_beta=0.7\n/\n&IONS\n/\n&CELL\n  cell_dofree='all'\n/\nCELL_PARAMETERS angstrom\n`;
+  cell.forEach((v,i)=>{const sc=(i===2)?cz:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
+  t+=`ATOMIC_SPECIES\n`;atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||28).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
+  t+=`ATOMIC_POSITIONS crystal\n`;s.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
+  t+=`K_POINTS automatic\n  ${kx} ${ky} ${kz}  1 1 1\n`;
+  return t;
+}
+
+function mcevoParseQEOutput(entry,out){
+  const eM=out.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry/);
+  if(eM)entry.energy=parseFloat(eM[1])/(entry.structure?.atoms?.length||1);
+  entry.qeOutput=out.slice(-500);
+}
+
+/* ── Fitness across chain history (normalised energy, same convention) ── */
+const McEvoFitness={
+  calculate(pop){
+    const valid=pop.filter(e=>e.energy!==null&&e.status===MCEVO_STATUS.DONE);
+    if(!valid.length)return;
+    const es=valid.map(e=>e.energy);
+    const eMin=Math.min(...es),eMax=Math.max(...es);
+    const range=eMax-eMin||1;
+    valid.forEach(e=>{e.fitness=parseFloat(((eMax-e.energy)/range).toFixed(4));});
+    const dTol=parseFloat(document.getElementById('mcevo-dup-de').value)||0.001;
+    for(let i=0;i<valid.length;i++)for(let j=i+1;j<valid.length;j++){
+      if(Math.abs(valid[i].energy-valid[j].energy)<dTol&&valid[j].status!==MCEVO_STATUS.DUP){
+        valid[j].status=MCEVO_STATUS.DUP;MCEVO.dupCount++;
+      }
+    }
+  }
+};
+function mcevoGetBest(){
+  const done=MCEVO.population.filter(e=>e.energy!==null&&e.status===MCEVO_STATUS.DONE);
+  if(!done.length)return null;
+  return done.sort((a,b)=>a.energy-b.energy)[0];
+}
+
+/* ── Seed structure for the chain ──────────────────────────────────────── */
+function mcevoSeedStructure(){
+  if(MCEVO.seeds.length)return JSON.parse(JSON.stringify(MCEVO.seeds[0]));
+  const formula=document.getElementById('mcevo-formula').value||'Si4';
+  const zMin=parseInt(document.getElementById('mcevo-z-min').value)||1;
+  const zMax=parseInt(document.getElementById('mcevo-z-max').value)||4;
+  return StructureGenerator.random(formula,zMin,zMax,false);
+}
+
+/* ── Propose the next move from the current accepted structure ────────── */
+function mcevoPropose(){
+  const moveType=document.getElementById('mcevo-move').value||'mixed';
+  const cur=MCEVO.current;
+  if(!cur){
+    const s=mcevoSeedStructure();
+    const entry=makeMcEntry({structure:s,mutation:MCEVO_MUTATIONS.SEED,temp:MCEVO.temp});
+    MCEVO.population.push(entry);
+    return entry;
+  }
+  const pick=moveType==='mixed'?(Math.random()<0.5?'stripple':'permustrain'):moveType;
+  // Temporarily point the shared MutationEngine field IDs at our mcevo-* inputs by
+  // building a tiny adapter object with the same shape evoStripple/evoPermustrain expect.
+  let structure;
+  if(pick==='stripple')structure=mcevoStripple(cur.structure);
+  else structure=mcevoPermustrain(cur.structure);
+  const entry=makeMcEntry({structure,mutation:pick==='stripple'?MCEVO_MUTATIONS.STRIP:MCEVO_MUTATIONS.PERM,
+    parent:cur.id,temp:MCEVO.temp});
+  MCEVO.population.push(entry);
+  return entry;
+}
+
+/* ── Local copies of the stripple/permustrain operators, reading from
+       mcevo-* control IDs (kept independent from the Evolution engine's
+       evo-* fields so the two modes never interfere with each other) ──── */
+function mcevoStripple(parentStruct){
+  const s=JSON.parse(JSON.stringify(parentStruct));
+  const strain=parseFloat(document.getElementById('mcevo-strip-strain').value)||0.35;
+  const amp=parseFloat(document.getElementById('mcevo-strip-amp').value)||1.0;
+  s.a*=(1+strain*(Math.random()-.5));s.c=(s.c||s.a)*(1+strain*(Math.random()-.5));
+  s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+amp*0.05*(Math.random()-.5)+1)%1))}));
+  return s;
+}
+function mcevoPermustrain(parentStruct){
+  const s=JSON.parse(JSON.stringify(parentStruct));
+  const maxStrain=parseFloat(document.getElementById('mcevo-perm-strain').value)||0.5;
+  const nexch=parseInt(document.getElementById('mcevo-perm-exch').value)||4;
+  s.a*=(1+maxStrain*(Math.random()-.5)*0.3);
+  for(let i=0;i<nexch&&s.atoms.length>=2;i++){
+    const ia=Math.floor(Math.random()*s.atoms.length);
+    const ib=Math.floor(Math.random()*s.atoms.length);
+    if(ia!==ib)[s.atoms[ia].el,s.atoms[ib].el]=[s.atoms[ib].el,s.atoms[ia].el];
+  }
+  return s;
+}
+
+/* ── Metropolis acceptance test ─────────────────────────────────────────── */
+function mcevoAccept(entry){
+  if(!MCEVO.current||MCEVO.current.energy==null){
+    entry.accepted=true;MCEVO.current=entry;MCEVO.acceptCount++;
+    logHPC(`[MCEVO] #${entry.id} accepted (chain start), E=${entry.energy?.toFixed(5)}`);
+    return true;
+  }
+  if(entry.energy==null){entry.accepted=false;MCEVO.rejectCount++;return false;}
+  const dE=entry.energy-MCEVO.current.energy;
+  const kB_Ry=6.3336e-6; // Boltzmann constant in Ry/K
+  const T=Math.max(1,MCEVO.temp);
+  let accept;
+  if(dE<=0)accept=true;
+  else accept=Math.random()<Math.exp(-dE/(kB_Ry*T));
+  entry.accepted=accept;
+  if(accept){
+    MCEVO.current=entry;MCEVO.acceptCount++;
+    logHPC(`[MCEVO] #${entry.id} accepted, ΔE=${dE.toFixed(5)} Ry/atom, T=${T.toFixed(0)}K`);
+  } else {
+    MCEVO.rejectCount++;
+    logHPC(`[MCEVO] #${entry.id} rejected, ΔE=${dE.toFixed(5)} Ry/atom, T=${T.toFixed(0)}K`);
+  }
+  return accept;
+}
+
+/* ── Submit one chain step — fire and forget, same pattern as evoSubmitStruct ── */
+async function mcevoSubmitEntry(entry){
+  const h=getHost();
+  entry.qeInput=mcevoQEInput(entry);
+  if(!h){
+    entry.status=MCEVO_STATUS.RUNNING;mcevoRenderTable();
+    await sleep(200+Math.random()*300);
+    entry.energy=-(4.5+Math.random()*1.5)/((entry.structure?.atoms?.length)||1);
+    entry.status=MCEVO_STATUS.DONE;
+    mcevoRenderTable();
+    return true;
+  }
+  try{
+    entry.status=MCEVO_STATUS.RUNNING;mcevoRenderTable();
+    const fd=new FormData();
+    fd.append('input_text',entry.qeInput);
+    fd.append('nodes','1');
+    fd.append('ntasks','44');
+    fd.append('job_name',`mcevo_${entry.id}`);
+    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},30000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    entry.jobId=d.job_id;entry.slurmId=d.slurm_id;
+    logHPC(`[MCEVO] #${entry.id} submitted → job_id=${entry.jobId} (T=${entry.temp}K)`);
+    mcevoPollEntry(entry,h);
+    return true;
+  }catch(e){
+    entry.status=MCEVO_STATUS.FAILED;MCEVO.failCount++;
+    logHPC(`[MCEVO] #${entry.id} submit error: ${e.message}`);
+    mcevoRenderTable();
+    return false;
+  }
+}
+
+/* ── Background poller (mirrors evoPollJob's patience) ─────────────────── */
+async function mcevoPollEntry(entry,h){
+  let errCount=0;const maxErrs=10,maxPolls=360,pollInterval=10000;
+  for(let i=0;i<maxPolls;i++){
+    if(!MCEVO.running)return;
+    await sleep(pollInterval);
+    if(!MCEVO.running)return;
+    try{
+      const rp=await fetchWithTimeout(`${h}/status/${entry.jobId}`,{},15000);
+      if(!rp.ok)throw new Error('HTTP '+rp.status);
+      const dp=await rp.json();
+      errCount=0;
+      if(i%6===0||dp.status==='done'||dp.status==='failed')
+        logHPC(`[MCEVO] #${entry.id} poll ${i+1}: ${dp.status}`);
+      if(dp.status==='done'||dp.status==='completed'||dp.converged){
+        mcevoParseQEOutput(entry,dp.output_tail||'');
+        entry.status=MCEVO_STATUS.DONE;
+        logHPC(`[MCEVO] #${entry.id} ✓ E=${entry.energy?.toFixed(5)} Ry/atom`);
+        mcevoRenderTable();
+        return;
+      }
+      if(dp.status==='failed'||dp.status==='error'){
+        entry.status=MCEVO_STATUS.FAILED;MCEVO.failCount++;
+        logHPC(`[MCEVO] #${entry.id} ✗ job failed`);
+        mcevoRenderTable();
+        return;
+      }
+      entry.status=MCEVO_STATUS.RUNNING;mcevoRenderTable();
+    }catch(e){
+      errCount++;
+      logHPC(`[MCEVO] #${entry.id} poll error (${errCount}/${maxErrs}): ${e.message}`);
+      if(errCount>=maxErrs){
+        entry.status=MCEVO_STATUS.FAILED;MCEVO.failCount++;
+        mcevoRenderTable();
+        return;
+      }
+      await sleep(Math.min(10000*errCount,60000));
+    }
+  }
+  logHPC(`[MCEVO] #${entry.id} — poll timeout, may still be running on cluster.`);
+  entry.status=MCEVO_STATUS.FAILED;MCEVO.failCount++;
+  mcevoRenderTable();
+}
+
+/* ── Wait until a chain step finishes (DONE or FAILED) before proceeding —
+       Metropolis requires the result before the next move can be proposed ── */
+async function mcevoWaitForDone(entry){
+  while(MCEVO.running&&entry.status===MCEVO_STATUS.RUNNING){
+    await sleep(2000);
+  }
+}
+
+/* ── Main Monte Carlo loop — strictly sequential single chain ──────────── */
+async function mcevoRunLoop(){
+  const maxSteps=parseInt(document.getElementById('mcevo-max-steps').value)||200;
+  const startTemp=parseFloat(document.getElementById('mcevo-temp').value)||1000;
+  const cooling=parseFloat(document.getElementById('mcevo-cooling').value)||0.95;
+  const minTemp=parseFloat(document.getElementById('mcevo-min-temp').value)||1;
+  const stepsPerGen=parseInt(document.getElementById('mcevo-steps').value)||1;
+
+  logHPC(`[MCEVO] Starting Monte Carlo search — T0=${startTemp}K, cooling=${cooling}`);
+  MCEVO.current=null;MCEVO.temp=startTemp;MCEVO.acceptCount=0;MCEVO.rejectCount=0;
+  mcevoSetState('running');
+
+  // Seed the chain with one structure
+  const starter=mcevoPropose();
+  mcevoRenderTable();mcevoUpdateCounters();
+  await mcevoSubmitEntry(starter);
+  await mcevoWaitForDone(starter);
+  mcevoAccept(starter);
+  McEvoFitness.calculate(MCEVO.population);
+  mcevoRenderTable();mcevoUpdateCharts();mcevoUpdateStats();mcevoUpdateCounters();
+
+  while(MCEVO.running&&MCEVO.population.length<maxSteps&&MCEVO.temp>minTemp){
+    if(MCEVO.paused){await sleep(500);continue;}
+
+    MCEVO.step++;
+    for(let s=0;s<stepsPerGen&&MCEVO.running;s++){
+      const proposed=mcevoPropose();
+      mcevoRenderTable();mcevoUpdateCounters();
+      await mcevoSubmitEntry(proposed);
+      await mcevoWaitForDone(proposed);
+      mcevoAccept(proposed);
+      McEvoFitness.calculate(MCEVO.population);
+      mcevoRenderTable();mcevoUpdateCharts();mcevoUpdateStats();mcevoUpdateCounters();
+    }
+    MCEVO.temp=Math.max(minTemp,MCEVO.temp*cooling);
+    logHPC(`[MCEVO] Step ${MCEVO.step} done — T now ${MCEVO.temp.toFixed(1)}K, accepted ${MCEVO.acceptCount}, rejected ${MCEVO.rejectCount}`);
+  }
+
+  MCEVO.running=false;
+  mcevoSetState(MCEVO.population.length>=maxSteps?'max-reached':(MCEVO.temp<=minTemp?'converged':'stopped'));
+  logHPC(`[MCEVO] Complete — ${MCEVO.population.length} steps, final T=${MCEVO.temp.toFixed(1)}K, accepted ${MCEVO.acceptCount}, rejected ${MCEVO.rejectCount}`);
+  McEvoFitness.calculate(MCEVO.population);
+  mcevoRenderTable();mcevoUpdateCharts();
+}
+
+function mcevoUpdateCounters(){
+  const maxSteps=parseInt(document.getElementById('mcevo-max-steps').value)||200;
+  document.getElementById('mcevo-step-counter').textContent=`Step: ${MCEVO.step}`;
+  document.getElementById('mcevo-step-badge').textContent=`Step ${MCEVO.step} / ${MCEVO.population.length}`;
+  document.getElementById('mcevo-cur-temp').textContent=MCEVO.temp.toFixed(1)+' K';
+  document.getElementById('mcevo-accept-counter').textContent=`${MCEVO.acceptCount} / ${MCEVO.population.length}`;
+  const best=mcevoGetBest();
+  if(best?.energy!=null)document.getElementById('mcevo-best-energy').textContent=best.energy.toFixed(5)+' Ry/atom';
+}
+
+/* ── UI controls ─────────────────────────────────────────────────────────── */
+
+/* ══ MONTE CARLO EVOLUTION JS ══ */
+function mcevoStart(){
+  if(MCEVO.running)return;
+  MCEVO.running=true;MCEVO.paused=false;
+  MCEVO.population=[];MCEVO.step=0;MCEVO_ID_CTR=0;MCEVO.current=null;
+  MCEVO.chartStep=[];MCEVO.chartEnergy=[];MCEVO.chartTemp=[];
+  MCEVO.dupCount=0;MCEVO.failCount=0;MCEVO.acceptCount=0;MCEVO.rejectCount=0;
+  mcevoRunLoop().catch(e=>{mdLog('[MCEVO] error: '+e.message,'err');console.error(e);});
+  document.getElementById('mcevo-start-btn').disabled=true;
+  document.getElementById('mcevo-pause-btn').disabled=false;document.getElementById('mcevo-pause-btn').style.opacity='1';
+  document.getElementById('mcevo-stop-btn').disabled=false;document.getElementById('mcevo-stop-btn').style.opacity='1';
+}
+function mcevoPause(){
+  MCEVO.paused=!MCEVO.paused;
+  document.getElementById('mcevo-pause-btn').textContent=MCEVO.paused?'▶ Resume':'⏸ Pause';
+  mcevoSetState(MCEVO.paused?'paused':'running');
+}
+function mcevoStop(){
+  MCEVO.running=false;MCEVO.paused=false;
+  mcevoSetState('stopped');
+  document.getElementById('mcevo-start-btn').disabled=false;
+  document.getElementById('mcevo-pause-btn').disabled=true;document.getElementById('mcevo-pause-btn').style.opacity='.5';
+  document.getElementById('mcevo-stop-btn').disabled=true;document.getElementById('mcevo-stop-btn').style.opacity='.5';
+  document.getElementById('mcevo-pause-btn').textContent='⏸ Pause';
+}
+function mcevoResetAll(){
+  mcevoStop();
+  MCEVO.population=[];MCEVO.step=0;MCEVO_ID_CTR=0;MCEVO.current=null;
+  MCEVO.chartStep=[];MCEVO.chartEnergy=[];MCEVO.chartTemp=[];
+  MCEVO.dupCount=0;MCEVO.failCount=0;MCEVO.acceptCount=0;MCEVO.rejectCount=0;MCEVO.selectedIdx=null;
+  mcevoRenderTable();mcevoUpdateCharts();mcevoUpdateStats();
+  document.getElementById('mcevo-step-counter').textContent='Step: 0';
+  document.getElementById('mcevo-best-energy').textContent='— Ry/atom';
+  document.getElementById('mcevo-cur-temp').textContent='— K';
+  document.getElementById('mcevo-accept-counter').textContent='0 / 0';
+  document.getElementById('mcevo-step-badge').textContent='Step 0 / 0';
+  logHPC('[MCEVO] Reset complete');
+}
+function mcevoSetState(state){
+  const chip=document.getElementById('mcevo-state-chip');
+  const mon=document.getElementById('mcevo-monitor-status');
+  const labels={running:'⟳ Running',paused:'⏸ Paused',stopped:'■ Stopped',idle:'Idle',converged:'✓ Converged','max-reached':'Max Reached'};
+  const colors={running:'#ea580c',paused:'#d97706',stopped:'#dc2626',idle:'#6b7280',converged:'#047857','max-reached':'#2563eb'};
+  chip.textContent=labels[state]||state;chip.style.color=colors[state]||'#333';
+  if(mon){mon.textContent=labels[state]||state;mon.style.color=colors[state]||'#888';}
+}
+
+/* ── Table render (mirrors evoRenderTable) ──────────────────────────────── */
+function mcevoRenderTable(){
+  const filter=MCEVO.filterText.toLowerCase();
+  let rows=[...MCEVO.population];
+  if(filter){rows=rows.filter(e=>
+    String(e.id).includes(filter)||(e.mutation||'').toLowerCase().includes(filter)||
+    String(e.step).includes(filter)||(e.status||'').includes(filter)
+  );}
+  rows.sort((a,b)=>{
+    let va=a[MCEVO.sortKey],vb=b[MCEVO.sortKey];
+    if(va===null||va===undefined)va=MCEVO.sortDir>0?Infinity:-Infinity;
+    if(vb===null||vb===undefined)vb=MCEVO.sortDir>0?Infinity:-Infinity;
+    return (va<vb?-1:va>vb?1:0)*MCEVO.sortDir;
+  });
+  const total=rows.length;
+  const pages=Math.max(1,Math.ceil(total/MCEVO.pageSize));
+  MCEVO.page=Math.min(MCEVO.page,pages-1);
+  const slice=rows.slice(MCEVO.page*MCEVO.pageSize,(MCEVO.page+1)*MCEVO.pageSize);
+
+  document.getElementById('mcevo-page-info').textContent=`Page ${MCEVO.page+1} / ${pages}`;
+  document.getElementById('mcevo-total-count').textContent=`${total} steps`;
+  document.getElementById('mcevo-prev').disabled=MCEVO.page===0;
+  document.getElementById('mcevo-next').disabled=MCEVO.page>=pages-1;
+
+  const statusBadge=s=>{
+    const cls={done:'evo-status-done',running:'evo-status-run',failed:'evo-status-fail',new:'evo-status-new',duplicate:'evo-status-fail'}[s]||'evo-status-new';
+    return `<span class="evo-status-badge ${cls}">${s}</span>`;
+  };
+  const fmt=v=>v===null||v===undefined?'—':typeof v==='number'?v.toFixed(4):v;
+  const accFmt=a=>a===null||a===undefined?'—':(a?'✓':'✗');
+
+  const tbody=document.getElementById('mcevo-pop-tbody');
+  if(!slice.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">No steps yet — click ▶ Start Monte Carlo</td></tr>';
+    return;
+  }
+  tbody.innerHTML=slice.map(e=>`
+    <tr class="${MCEVO.selectedIdx===e.id?'active':''}" onclick="mcevoSelectEntry(${e.id})">
+      <td style="font-weight:700;color:#ea580c">#${e.id}</td>
+      <td>${e.step}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:9.5px">${e.parent?('#'+e.parent):'—'}</td>
+      <td style="font-size:9.5px">${e.mutation}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${e.temp}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${e.energy<-4?'#065f46':'#333'}">${fmt(e.energy)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${(e.fitness||0)>.8?'#ea580c':'#333'}">${fmt(e.fitness)}</td>
+      <td style="font-weight:700;color:${e.accepted?'#065f46':(e.accepted===false?'#991b1b':'#888')}">${accFmt(e.accepted)}</td>
+      <td>${statusBadge(e.status)}</td>
+    </tr>`).join('');
+}
+function mcevoSort(key){
+  if(MCEVO.sortKey===key)MCEVO.sortDir*=-1;else{MCEVO.sortKey=key;MCEVO.sortDir=1;}
+  mcevoRenderTable();
+}
+function mcevoFilterTable(){MCEVO.filterText=document.getElementById('mcevo-search').value;MCEVO.page=0;mcevoRenderTable();}
+function mcevoPage(d){MCEVO.page=Math.max(0,MCEVO.page+d);mcevoRenderTable();}
+
+/* ── Select entry in viewer ─────────────────────────────────────────────── */
+function mcevoSelectEntry(id){
+  MCEVO.selectedIdx=id;
+  const e=MCEVO.population.find(x=>x.id===id);
+  if(!e)return;
+  mcevoRenderTable();
+  document.getElementById('mcevo-sel-id').textContent='#'+id;
+  document.getElementById('mcevo-info-e').textContent=e.energy!=null?e.energy.toFixed(5)+' Ry':'—';
+  document.getElementById('mcevo-info-fit').textContent=e.fitness!=null?e.fitness.toFixed(4):'—';
+  document.getElementById('mcevo-info-temp').textContent=e.temp+' K';
+  document.getElementById('mcevo-info-step').textContent=e.step;
+  document.getElementById('mcevo-info-mut').textContent=e.mutation;
+  document.getElementById('mcevo-info-par').textContent=e.parent?('#'+e.parent):'—';
+  document.getElementById('mcevo-info-acc').textContent=e.accepted===true?'✓ Accepted':(e.accepted===false?'✗ Rejected':'—');
+  document.getElementById('mcevo-info-status').textContent=e.status;
+  if(e.structure)mcevoLoad3D(e.structure);
+}
+function mcevoPrevStep(){
+  if(!MCEVO.population.length)return;
+  const idx=MCEVO.population.findIndex(e=>e.id===MCEVO.selectedIdx);
+  mcevoSelectEntry(MCEVO.population[Math.max(0,idx-1)].id);
+}
+function mcevoNextStep(){
+  if(!MCEVO.population.length)return;
+  const idx=MCEVO.population.findIndex(e=>e.id===MCEVO.selectedIdx);
+  mcevoSelectEntry(MCEVO.population[Math.min(MCEVO.population.length-1,(idx<0?0:idx)+1)].id);
+}
+
+/* ── Dedicated mini-viewer for the MCEVO structure panel (own Three.js /
+       Canvas2D instance, same WebGL fallback approach as the other
+       evolution-family viewers) ───────────────────────────────────────── */
+let MCEVO_THREE={scene:null,camera:null,renderer:null,is2D:false,ctx2d:null,canvas2d:null,
+  sph:{theta:.6,phi:1.1,r:12},target:null,drag:false,last:{x:0,y:0},atoms:[],bonds:[]};
+function mcevoInitViewer(){
+  if(MCEVO_THREE.renderer||MCEVO_THREE.is2D)return;
+  const c=document.getElementById('mcevo-viewer-3d');if(!c)return;
+  const testCanvas=document.createElement('canvas');
+  const testGL=testCanvas.getContext('webgl')||testCanvas.getContext('experimental-webgl');
+  if(!testGL||!window.THREE){
+    MCEVO_THREE.is2D=true;
+    const cv=document.createElement('canvas');
+    cv.style.cssText='width:100%;height:100%;position:absolute;inset:0;cursor:grab;background:#fff;';
+    c.appendChild(cv);
+    MCEVO_THREE.canvas2d=cv;MCEVO_THREE.ctx2d=cv.getContext('2d');
+    const resize=()=>{cv.width=c.clientWidth||320;cv.height=c.clientHeight||200;mcevoDraw2D();};
+    resize();new ResizeObserver(resize).observe(c);
+    cv.addEventListener('mousedown',e=>{MCEVO_THREE.drag=true;MCEVO_THREE.last={x:e.clientX,y:e.clientY};});
+    window.addEventListener('mouseup',()=>{MCEVO_THREE.drag=false;});
+    window.addEventListener('mousemove',e=>{
+      if(!MCEVO_THREE.drag)return;
+      MCEVO_THREE.sph.theta-=(e.clientX-MCEVO_THREE.last.x)*0.01;
+      MCEVO_THREE.sph.phi+=(e.clientY-MCEVO_THREE.last.y)*0.01;
+      MCEVO_THREE.last={x:e.clientX,y:e.clientY};mcevoDraw2D();
+    });
+    logHPC('[MCEVO] Structure viewer: Canvas 2D (WebGL unavailable)');
+    return;
+  }
+  const W=c.clientWidth||320,H=c.clientHeight||200;
+  MCEVO_THREE.scene=new THREE.Scene();MCEVO_THREE.scene.background=new THREE.Color(0xfafafa);
+  MCEVO_THREE.camera=new THREE.PerspectiveCamera(38,W/H,.05,500);
+  MCEVO_THREE.target=new THREE.Vector3();
+  MCEVO_THREE.renderer=new THREE.WebGLRenderer({antialias:true});
+  MCEVO_THREE.renderer.setSize(W,H);MCEVO_THREE.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  c.appendChild(MCEVO_THREE.renderer.domElement);
+  MCEVO_THREE.scene.add(new THREE.AmbientLight(0xffffff,.5));
+  const d=new THREE.DirectionalLight(0xffffff,.8);d.position.set(3,5,4);MCEVO_THREE.scene.add(d);
+  const el=MCEVO_THREE.renderer.domElement;
+  el.addEventListener('mousedown',e=>{MCEVO_THREE.drag=true;MCEVO_THREE.last={x:e.clientX,y:e.clientY};});
+  window.addEventListener('mouseup',()=>{MCEVO_THREE.drag=false;});
+  window.addEventListener('mousemove',e=>{
+    if(!MCEVO_THREE.drag)return;
+    const dx=(e.clientX-MCEVO_THREE.last.x)*.007,dy=(e.clientY-MCEVO_THREE.last.y)*.007;
+    MCEVO_THREE.last={x:e.clientX,y:e.clientY};
+    MCEVO_THREE.sph.theta-=dx;MCEVO_THREE.sph.phi=Math.max(.1,Math.min(Math.PI-.1,MCEVO_THREE.sph.phi+dy));
+    mcevoUpdateCam();
+  });
+  el.addEventListener('wheel',e=>{e.preventDefault();MCEVO_THREE.sph.r=Math.max(1.5,MCEVO_THREE.sph.r*Math.exp(e.deltaY*.001));mcevoUpdateCam();},{passive:false});
+  new ResizeObserver(()=>{const W2=c.clientWidth,H2=c.clientHeight;MCEVO_THREE.camera.aspect=W2/H2;MCEVO_THREE.camera.updateProjectionMatrix();MCEVO_THREE.renderer.setSize(W2,H2);}).observe(c);
+  (function loop(){requestAnimationFrame(loop);if(MCEVO_THREE.renderer)MCEVO_THREE.renderer.render(MCEVO_THREE.scene,MCEVO_THREE.camera);}());
+  mcevoUpdateCam();
+}
+function mcevoUpdateCam(){
+  if(!MCEVO_THREE.camera)return;
+  const{theta,phi,r}=MCEVO_THREE.sph,t=MCEVO_THREE.target;
+  MCEVO_THREE.camera.position.set(t.x+r*Math.sin(phi)*Math.sin(theta),t.y+r*Math.cos(phi),t.z+r*Math.sin(phi)*Math.cos(theta));
+  MCEVO_THREE.camera.lookAt(t);MCEVO_THREE.camera.updateMatrixWorld(true);
+}
+function mcevoBuildPoints(s){
+  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
+  const pts=s.atoms.map(at=>({el:at.el,
+    x:(cell[0][0]*at.f[0]+cell[1][0]*at.f[1]+cell[2][0]*at.f[2])*a0,
+    y:(cell[0][1]*at.f[0]+cell[1][1]*at.f[1]+cell[2][1]*at.f[2])*a0,
+    z:(cell[0][2]*at.f[0]+cell[1][2]*at.f[1]+cell[2][2]*at.f[2])*cz}));
+  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});
+  if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
+  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
+  return {pts,a0};
+}
+function mcevoLoad3D(s){
+  if(!MCEVO_THREE.renderer&&!MCEVO_THREE.is2D)mcevoInitViewer();
+  const {pts,a0}=mcevoBuildPoints(s);
+  MCEVO_THREE.atoms=pts;
+  MCEVO_THREE.bonds=[];
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+    const ri=CF_CRADII[pts[i].el]||CF_CRADII.default,rj=CF_CRADII[pts[j].el]||CF_CRADII.default;
+    const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y,pts[i].z-pts[j].z);
+    if(d>0.3&&d<ri+rj+0.4)MCEVO_THREE.bonds.push({i,j});
+  }
+  if(MCEVO_THREE.is2D){mcevoDraw2D();return;}
+  if(!MCEVO_THREE.scene)return;
+  const toRem=[];MCEVO_THREE.scene.children.forEach(c=>{if(c.isLight)return;toRem.push(c);});
+  toRem.forEach(o=>{MCEVO_THREE.scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
+  const byEl={};pts.forEach(p=>{(byEl[p.el]||(byEl[p.el]=[])).push(p);});
+  Object.entries(byEl).forEach(([el,ats])=>{
+    const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*0.9;
+    const color=new THREE.Color(CF_COLORS[el]||CF_COLORS.default);
+    const geo=new THREE.SphereGeometry(r,18,12);
+    const mat=new THREE.MeshStandardMaterial({color,roughness:.25,metalness:.05});
+    const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
+    ats.forEach((a,i)=>{mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z));mesh.setColorAt(i,color);});
+    mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+    MCEVO_THREE.scene.add(mesh);
+  });
+  MCEVO_THREE.bonds.forEach(({i,j})=>{
+    const ai=pts[i],aj=pts[j];
+    const dir=new THREE.Vector3(aj.x-ai.x,aj.y-ai.y,aj.z-ai.z);const len=dir.length();if(len<0.001)return;
+    const geo=new THREE.CylinderGeometry(.07,.07,len,8);
+    const mat=new THREE.MeshStandardMaterial({color:0xaaaaaa});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set((ai.x+aj.x)/2,(ai.y+aj.y)/2,(ai.z+aj.z)/2);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+    MCEVO_THREE.scene.add(m);
+  });
+  MCEVO_THREE.sph.r=Math.max(4,a0*2.8);MCEVO_THREE.target.set(0,0,0);mcevoUpdateCam();
+}
+function mcevoDraw2D(){
+  if(!MCEVO_THREE.ctx2d||!MCEVO_THREE.atoms.length)return;
+  const cv=MCEVO_THREE.canvas2d,ctx=MCEVO_THREE.ctx2d;
+  const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const zoom=Math.min(W,H)/14;
+  const rx=MCEVO_THREE.sph.phi-1.1,ry=MCEVO_THREE.sph.theta-.6;
+  const proj=MCEVO_THREE.atoms.map((a,idx)=>{
+    const x=a.x*Math.cos(ry)-a.z*Math.sin(ry);
+    const z=a.x*Math.sin(ry)+a.z*Math.cos(ry);
+    const y2=a.y*Math.cos(rx)-z*Math.sin(rx);
+    const z2=a.y*Math.sin(rx)+z*Math.cos(rx);
+    return{...a,idx,px:cx+x*zoom,py:cy-y2*zoom,z:z2,r:(CF_DISPLAY_RADIUS[a.el]||0.7)*zoom*0.85};
+  }).sort((a,b)=>a.z-b.z);
+  MCEVO_THREE.bonds.forEach(({i,j})=>{
+    const a=proj.find(p=>p.idx===i),b=proj.find(p=>p.idx===j);if(!a||!b)return;
+    ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);ctx.strokeStyle='#aaa';ctx.lineWidth=2;ctx.stroke();
+  });
+  proj.forEach(a=>{
+    ctx.beginPath();ctx.arc(a.px,a.py,Math.max(4,a.r),0,Math.PI*2);
+    ctx.fillStyle=CF_COLORS[a.el]||CF_COLORS.default;ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=.5;ctx.stroke();
+  });
+}
+function mcevoViewerReset(){
+  if(MCEVO_THREE.is2D)return;
+  MCEVO_THREE.sph={theta:.6,phi:1.1,r:12};if(MCEVO_THREE.target)MCEVO_THREE.target.set(0,0,0);mcevoUpdateCam();
+}
+
+/* ── Charts ──────────────────────────────────────────────────────────────── */
+function mcevoUpdateCharts(){
+  const done=MCEVO.population.filter(e=>e.energy!==null&&e.status===MCEVO_STATUS.DONE);
+  if(!done.length)return;
+  MCEVO.chartStep=done.map(e=>e.step);
+  MCEVO.chartEnergy=done.map(e=>e.energy);
+  MCEVO.chartTemp=done.map(e=>e.temp);
+
+  const plotCfg={displayModeBar:false,responsive:true};
+  const layout=(ytitle,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Step',gridcolor:'#ddd',tickfont:{size:8}},yaxis:{title:ytitle,gridcolor:'#ddd',tickfont:{size:8}},showlegend:false,height:h});
+
+  const colors=done.map(e=>e.accepted?'#ea580c':'#ccc');
+  Plotly.react('mcevo-chart-energy',[{x:MCEVO.chartStep,y:MCEVO.chartEnergy,type:'scatter',mode:'lines+markers',
+    line:{color:'#ea580c',width:1},marker:{size:5,color:colors}}],layout('Ry/atom',128),plotCfg);
+  Plotly.react('mcevo-chart-temp',[{x:MCEVO.chartStep,y:MCEVO.chartTemp,type:'scatter',mode:'lines',
+    line:{color:'#0ea5e9',width:1.5},fill:'tozeroy',fillcolor:'rgba(14,165,233,.1)'}],layout('T (K)',108),plotCfg);
+}
+function mcevoUpdateStats(){
+  document.getElementById('mcevo-accept-count').textContent=MCEVO.acceptCount;
+  document.getElementById('mcevo-reject-count').textContent=MCEVO.rejectCount;
+  document.getElementById('mcevo-dup-count').textContent=MCEVO.dupCount;
+  document.getElementById('mcevo-fail-count').textContent=MCEVO.failCount;
+}
+
+/* ── Seeds ───────────────────────────────────────────────────────────────── */
+function mcevoAddSeed(){
+  if(!current||!current.atoms.length){logHPC('[MCEVO] No structure loaded to use as seed');return;}
+  MCEVO.seeds.push(JSON.parse(JSON.stringify(current)));
+  document.getElementById('mcevo-seed-list').textContent=MCEVO.seeds.map((s,i)=>`${i+1}. ${s.formula||'unknown'}`).join('\n');
+  logHPC('[MCEVO] Seed added: '+current.formula);
+}
+function mcevoRemoveSeed(){
+  MCEVO.seeds.pop();
+  document.getElementById('mcevo-seed-list').textContent=MCEVO.seeds.length?MCEVO.seeds.map((s,i)=>`${i+1}. ${s.formula}`).join('\n'):'No seeds added';
+}
+function mcevoResetDuplicates(){
+  MCEVO.population.forEach(e=>{if(e.status===MCEVO_STATUS.DUP)e.status=MCEVO_STATUS.DONE;});
+  MCEVO.dupCount=0;mcevoRenderTable();logHPC('[MCEVO] Duplicates reset');
+}
+
+/* ── CSV export ──────────────────────────────────────────────────────────── */
+function mcevoExportCSV(){
+  const header='ID,Step,Parent,Move,Temp(K),Energy,Fitness,Accepted,Status\n';
+  const rows=MCEVO.population.map(e=>[e.id,e.step,e.parent??'',e.mutation,e.temp,e.energy??'',e.fitness??'',e.accepted??'',e.status].join(',')).join('\n');
+  const b=new Blob([header+rows],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='montecarlo_results.csv';a.click();URL.revokeObjectURL(u);
+}
+
+/* ── Host test (mirrors evoTestHost/mdevoTestHost) ──────────────────────── */
+async function mcevoTestHost(){
+  const inp=document.getElementById('mcevo-host-input');
+  const status=document.getElementById('mcevo-conn-status');
+  const btn=document.getElementById('mcevo-test-btn');
+  document.getElementById('loginNode').value=inp.value||'';
+  const h=getHost();
+  if(!h){status.textContent='No host';status.style.background='#fee2e2';status.style.color='#991b1b';return;}
+  btn.textContent='Testing…';btn.disabled=true;
+  status.textContent='…';status.style.background='#fef9c3';status.style.color='#854d0e';
+  try{
+    const r=await fetchWithTimeout(h+'/health',{},5000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    status.textContent='✓ Connected';status.style.background='#d1fae5';status.style.color='#065f46';
+    logHPC('[MCEVO] Host connected: '+JSON.stringify(d));
+  }catch(e){
+    status.textContent='✗ '+e.message.slice(0,30);status.style.background='#fee2e2';status.style.color='#991b1b';
+    logHPC('[MCEVO] Host test failed: '+e.message);
+  }
+  btn.textContent='⚡ Test';btn.disabled=false;
+}
+
+/* ── Show/hide overlay when mode changes ────────────────────────────────── */
+function mcevoOnModeChange(mode){
+  const overlay=document.getElementById('mcevo-overlay');
+  if(mode==='mcevo'){
+    overlay.classList.add('active');
+    mcevoInitViewer();
+    if(!MCEVO.population.length)mcevoRenderTable();
+    mcevoUpdateCharts();
+    const mainHost=document.getElementById('loginNode').value||'';
+    const mcevoInput=document.getElementById('mcevo-host-input');
+    if(mcevoInput&&mainHost)mcevoInput.value=mainHost;
+    const sb=document.getElementById('mcevo-start-btn');
+    const pb=document.getElementById('mcevo-pause-btn');
+    const stb=document.getElementById('mcevo-stop-btn');
+    if(sb&&!sb._wired){sb.addEventListener('click',function(e){e.stopPropagation();mcevoStart();});sb._wired=true;}
+    if(pb&&!pb._wired){pb.addEventListener('click',function(e){e.stopPropagation();mcevoPause();});pb._wired=true;}
+    if(stb&&!stb._wired){stb.addEventListener('click',function(e){e.stopPropagation();mcevoStop();});stb._wired=true;}
+  } else {
+    overlay.classList.remove('active');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MD SIMULATIONS OVERLAY — ported standalone MD page script (namespaced md*)
+══════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════
+   MD OVERLAY — CONTROL FUNCTIONS (open/close from Compute)
+══════════════════════════════════════════════════════════ */
+
+/* ══ MODE ROUTING PATCH ══ */
+(function(){
+  const origSelect = window.selectModeItem;
+  window.selectModeItem = function(mode, e) {
+    e && e.stopPropagation && e.stopPropagation();
+    closeModeMenu && closeModeMenu();
+    // Hide evo overlays
+    ['mdevo-overlay','mcevo-overlay'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.classList.remove('active');
+    });
+    if (mode === 'evolution') {
+      var el=document.getElementById('mdevo-overlay');
+      if(el) el.classList.add('active');
+      var lbl=document.getElementById('bb-mode-label');
+      if(lbl) lbl.textContent='MD Evolution';
+      document.querySelectorAll('.mm-item').forEach(function(i){i.classList.toggle('active',i.dataset.mode===mode);});
+      var hi=document.getElementById('mdevo-host-input');
+      var ln=document.getElementById('md-loginNode');
+      if(hi&&ln) hi.value=ln.value;
+      if(typeof mdevoInitCharts==='function') mdevoInitCharts();
+      return;
+    }
+    if (mode === 'mcevo') {
+      var el=document.getElementById('mcevo-overlay');
+      if(el) el.classList.add('active');
+      var lbl=document.getElementById('bb-mode-label');
+      if(lbl) lbl.textContent='Monte Carlo Evolution';
+      document.querySelectorAll('.mm-item').forEach(function(i){i.classList.toggle('active',i.dataset.mode===mode);});
+      var hi=document.getElementById('mcevo-host-input');
+      var ln=document.getElementById('md-loginNode');
+      if(hi&&ln) hi.value=ln.value;
+      if(typeof mcevoInitCharts==='function') mcevoInitCharts();
+      return;
+    }
+    // Normal tab modes
+    var tabMap={'md':'md-sim','geometry':'md-geo','aiff':'md-aiff'};
+    var tabId=tabMap[mode]||'md-sim';
+    var btn=document.querySelector('[data-rptab="'+tabId+'"]');
+    switchRpTab && switchRpTab(tabId,btn);
+    document.querySelectorAll('.mm-item').forEach(function(i){i.classList.toggle('active',i.dataset.mode===mode);});
+  };
+})();
+
+/* Pre-fill host on load */
+document.addEventListener('DOMContentLoaded', function(){
+  var hostVal=(document.getElementById('md-loginNode')||{}).value||'http://100.127.228.36:5000';
+  ['mdevo-host-input','mcevo-host-input'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value=hostVal;
   });
 });
 </script>
