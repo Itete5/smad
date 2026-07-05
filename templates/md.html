@@ -22,11 +22,13 @@ input,select,textarea{font-family:inherit}
 #titlebar{height:30px;background:#ddd;border-bottom:1px solid #bbb;display:flex;align-items:stretch;flex-shrink:0}
 .file-tab{display:flex;align-items:center;gap:6px;padding:0 14px;background:#ccc;border-right:1px solid #bbb;font-size:12px;color:#333;font-weight:500}
 .file-tab.active{background:#e4e4e4;border-top:2px solid #ff6600}
+.file-tab.home-tab{background:#ccc;color:#444;text-decoration:none;cursor:pointer}
+.file-tab.home-tab:hover{background:#bbb;color:#222}
 .tab-close{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#777;cursor:pointer}
 .tab-close:hover{background:#bbb}
 #workspace{display:flex;flex:1;min-height:0;position:relative;}
 
-/* ══ 3D VIEWER (CrystalForge engine) ══ */
+/* ══ 3D VIEWER ══ */
 #viewer-area{flex:1;min-width:0;position:relative;background:#fff;border:1px solid #ddd;overflow:hidden;min-height:200px;}
 #dft-3dviewer{width:100%;height:100%;min-height:300px;position:absolute;inset:0;cursor:grab}
 #dft-3dviewer:active{cursor:grabbing}
@@ -531,10 +533,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
    MD SIMULATIONS OVERLAY — ported standalone MD page (namespaced md-*)
 ══════════════════════════════════════════════════════════ */
 
-/* ══════════════════════════════════════════════════════════
-   DESIGN TOKENS — inherited from CrystalForge
-══════════════════════════════════════════════════════════ */
-
 /* ══ MD PAGE EXTRA ══ */
 /* Canvas particle renderer */
 #md-canvas { width:100%; height:100%; display:block; cursor:grab; background:#fff; }
@@ -784,8 +782,8 @@ body.mode-menu-open #bb-icon-close{display:flex}
     <span id="tabFilename">MD Simulations</span>
     <span class="tab-close" onclick="history.back()">×</span>
   </div>
+  <a href="/" class="file-tab home-tab" title="SMAD Home">⌂ Home</a>
   <div style="flex:1"></div>
-  <a href="/" style="display:flex;align-items:center;padding:0 14px;font-size:11px;color:#555;text-decoration:none;border-left:1px solid #bbb;height:100%;gap:4px;" title="SMAD Home">⌂ SMAD Home</a>
 </div>
 
 <div id="workspace">
@@ -898,6 +896,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
       <button class="rp-tab" data-rptab="md-aiff" onclick="switchRpTab('md-aiff',this)">Force-Field Gen.</button>
       <button class="rp-tab" data-rptab="md-evo" onclick="switchRpTab('md-evo',this)">MD Evolution</button>
       <button class="rp-tab" data-rptab="md-mc" onclick="switchRpTab('md-mc',this)">Monte Carlo</button>
+
     </div>
 
     <div id="rp-scroll">
@@ -916,7 +915,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
           <div class="rp-tab-bar" style="margin:-8px -10px 8px;border-top:none;">
             <button class="rp-tab active" data-stab="presets" onclick="switchSubTab('presets',this,'md-sys')">Presets</button>
             <button class="rp-tab" data-stab="import" onclick="switchSubTab('import',this,'md-sys')">Import</button>
-            <button class="rp-tab" data-stab="cf" onclick="switchSubTab('cf',this,'md-sys')">CrystalForge</button>
           </div>
           <div id="md-sys-presets">
             <div class="field-row"><div class="field-label">System</div>
@@ -959,10 +957,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
                 <input class="sc-inp" id="md-scz" value="1" type="number" min="1" max="6"/>
               </div>
             </div>
-          </div>
-          <div id="md-sys-cf" style="display:none">
-            <button class="gen-btn" style="width:100%;margin-bottom:5px;border-radius:3px;padding:5px;font-size:11px" onclick="mdLoadFromCF()">⬡ Load from CrystalForge</button>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:6px 8px;font-size:10.5px;color:#666;min-height:40px" id="md-cf-preview">No structure linked yet.</div>
           </div>
           <div class="field-row" style="margin-top:6px"><div class="field-label">Init T (K)</div>
             <div class="field-val"><input class="burai-input" id="md-initT" type="number" value="300" step="50"/>
@@ -2646,7 +2640,7 @@ function switchSubTab(name, btn, group){
   bar.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   if(group==='md-sys'){
-    ['md-sys-presets','md-sys-import','md-sys-cf'].forEach(id=>{
+    ['md-sys-presets','md-sys-import'].forEach(id=>{
       const el=document.getElementById(id);
       if(el) el.style.display='none';
     });
@@ -2721,7 +2715,7 @@ function hbAction(action, e){
     result:   ()=>mdLog('Results panel — connect to cluster for live results.','inf'),
     run:      ()=>{ const t=document.querySelector('[data-rptab=md-sim]'); switchRpTab('md-sim',t); mdStartSim(); },
     screenshot:()=>mdScreenshot(),
-    designer: ()=>mdLog('Designer — opens CrystalForge structure designer.','inf'),
+    designer: ()=>mdLog('Designer — structure designer.','inf'),
     saveas:   ()=>mdExportXYZ(),
     save:     ()=>mdLog('Saved to session.','ok'),
     modeler:  ()=>mdLog('Modeler — molecule builder.','inf'),
@@ -2950,7 +2944,6 @@ function mdExportXYZ(){
   mdLog(`Exported ${MD.N} atoms as XYZ`,'ok');
 }
 function mdTestConnection(){ mdLog(`Testing ${document.getElementById('md-loginNode').value}...`,'inf'); }
-function mdLoadFromCF(){ mdLog('No CrystalForge structure found in session.','warn'); }
 
 /* ── Canvas renderer ─────────────────────────────────────── */
 function mdRender(){
@@ -3847,28 +3840,6 @@ async function mdevoTestHost(){
   btn.textContent='⚡ Test';btn.disabled=false;
 }
 
-/* ── Show/hide overlay when mode changes ───────────────────────────────── */
-function mdevoOnModeChange(mode){
-  const overlay=document.getElementById('mdevo-overlay');
-  if(mode==='mdevo'){
-    overlay.classList.add('active');
-    mdevoInitViewer();
-    if(!MDEVO.population.length)mdevoRenderTable();
-    mdevoUpdateCharts();
-    const mainHost=document.getElementById('loginNode').value||'';
-    const mdevoInput=document.getElementById('mdevo-host-input');
-    if(mdevoInput&&mainHost)mdevoInput.value=mainHost;
-    const sb=document.getElementById('mdevo-start-btn');
-    const pb=document.getElementById('mdevo-pause-btn');
-    const stb=document.getElementById('mdevo-stop-btn');
-    if(sb&&!sb._wired){sb.addEventListener('click',function(e){e.stopPropagation();mdevoStart();});sb._wired=true;}
-    if(pb&&!pb._wired){pb.addEventListener('click',function(e){e.stopPropagation();mdevoPause();});pb._wired=true;}
-    if(stb&&!stb._wired){stb.addEventListener('click',function(e){e.stopPropagation();mdevoStop();});stb._wired=true;}
-  } else {
-    overlay.classList.remove('active');
-  }
-}
-
 /* ═══════════════════════════════════════════════════════════════════════
    MONTE CARLO ENGINE — standalone Metropolis search, sibling to the
    structure-Evolution (genetic algorithm) and MD-Evolution engines.
@@ -4553,13 +4524,28 @@ function mcevoOnModeChange(mode){
   }
 }
 
-/* ══════════════════════════════════════════════════════════
-   MD SIMULATIONS OVERLAY — ported standalone MD page script (namespaced md*)
-══════════════════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════════════════
-   MD OVERLAY — CONTROL FUNCTIONS (open/close from Compute)
-══════════════════════════════════════════════════════════ */
 
+/* ── Show/hide overlay when mode changes ───────────────────────────────── */
+function mdevoOnModeChange(mode){
+  const overlay=document.getElementById('mdevo-overlay');
+  if(mode==='mdevo'){
+    overlay.classList.add('active');
+    mdevoInitViewer();
+    if(!MDEVO.population.length)mdevoRenderTable();
+    mdevoUpdateCharts();
+    const mainHost=document.getElementById('loginNode').value||'';
+    const mdevoInput=document.getElementById('mdevo-host-input');
+    if(mdevoInput&&mainHost)mdevoInput.value=mainHost;
+    const sb=document.getElementById('mdevo-start-btn');
+    const pb=document.getElementById('mdevo-pause-btn');
+    const stb=document.getElementById('mdevo-stop-btn');
+    if(sb&&!sb._wired){sb.addEventListener('click',function(e){e.stopPropagation();mdevoStart();});sb._wired=true;}
+    if(pb&&!pb._wired){pb.addEventListener('click',function(e){e.stopPropagation();mdevoPause();});pb._wired=true;}
+    if(stb&&!stb._wired){stb.addEventListener('click',function(e){e.stopPropagation();mdevoStop();});stb._wired=true;}
+  } else {
+    overlay.classList.remove('active');
+  }
+}
 
 function mcevoInitCharts(){
   if(typeof Plotly==='undefined')return;
@@ -4567,7 +4553,6 @@ function mcevoInitCharts(){
   const layout=(y,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Step',gridcolor:'#ddd'},yaxis:{title:y,gridcolor:'#ddd'},showlegend:false,height:h});
   Plotly.react('mcevo-chart-energy',empty,layout('Ry/atom',128),{displayModeBar:false,responsive:true});
   Plotly.react('mcevo-chart-temp',empty,layout('T (K)',108),{displayModeBar:false,responsive:true});
-}
 
 /* ══ MODE ROUTING PATCH ══ */
 (function(){
@@ -5253,5 +5238,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
+</body>
 </body>
 </html>
