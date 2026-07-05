@@ -26,7 +26,7 @@ input,select,textarea{font-family:inherit}
 .tab-close:hover{background:#bbb}
 #workspace{display:flex;flex:1;min-height:0;position:relative;}
 
-/* ══ 3D VIEWER (CrystalForge engine) ══ */
+/* ══ 3D VIEWER ══ */
 #viewer-area{flex:1;min-width:0;position:relative;background:#fff;border:1px solid #ddd;overflow:hidden;min-height:200px;}
 #dft-3dviewer{width:100%;height:100%;min-height:300px;position:absolute;inset:0;cursor:grab}
 #dft-3dviewer:active{cursor:grabbing}
@@ -508,31 +508,12 @@ body.mode-menu-open #bb-icon-close{display:flex}
   max-height:200px;overflow-y:hidden;
 }
 #mdevo-top::-webkit-scrollbar{height:4px}
-/* ══════════════════════════════════════════════════════
-   MONTE CARLO MODE — Metropolis-based structure search,
-   standalone sibling to Evolution / MD Evolution.
-   Overlays the workspace when mode=mc
-   ══════════════════════════════════════════════════════ */
-#mcevo-overlay{
-  position:absolute;top:0;left:0;right:0;bottom:0;z-index:99;
-  background:#e8e8e8;display:none;flex-direction:column;overflow:hidden;
-  pointer-events:none;
-}
-#mcevo-overlay.active{pointer-events:all;display:flex;}
-#mcevo-top{
-  display:flex;gap:4px;padding:3px 6px;
-  background:#ddd;border-bottom:2px solid #c0c0c0;
-  overflow-x:auto;flex-shrink:0;align-items:stretch;
-  max-height:200px;overflow-y:hidden;
-}
-#mcevo-top::-webkit-scrollbar{height:4px}
-
 /* ══════════════════════════════════════════════════════════
    MD SIMULATIONS OVERLAY — ported standalone MD page (namespaced md-*)
 ══════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════
-   DESIGN TOKENS — inherited from CrystalForge
+   DESIGN TOKENS
 ══════════════════════════════════════════════════════════ */
 
 /* ══ MD PAGE EXTRA ══ */
@@ -760,8 +741,8 @@ body.mode-menu-open #bb-icon-close{display:flex}
 }
 #evo-gen-counter{font-size:11px;font-weight:700;color:#444;font-family:'JetBrains Mono',monospace;}
 #evo-best-energy{font-size:11px;color:#065f46;font-family:'JetBrains Mono',monospace;font-weight:700;}
-#mdevo-overlay,#mcevo-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:900;background:#e8e8e8;display:none;flex-direction:column;overflow:hidden;}
-#mdevo-overlay.active,#mcevo-overlay.active{display:flex;}
+#mdevo-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:900;background:#e8e8e8;display:none;flex-direction:column;overflow:hidden;}
+#mdevo-overlay.active{display:flex;}
 #loginNode{display:none;}
 </style>
 </head>
@@ -886,7 +867,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
     <div class="rp-tab-bar">
       <button class="rp-tab active" data-rptab="md-sim" onclick="switchRpTab('md-sim',this)">MD</button>
       <button class="rp-tab" data-rptab="md-geo" onclick="switchRpTab('md-geo',this)">Geometry</button>
-      <button class="rp-tab" data-rptab="md-aiff" onclick="switchRpTab('md-aiff',this)">AI Force-Field</button>
+      <button class="rp-tab" data-rptab="md-aiff" onclick="switchRpTab('md-aiff',this)">Force-Field Gen.</button>
       <button class="rp-tab" data-rptab="md-evo" onclick="switchRpTab('md-evo',this)">MD Evolution</button>
     </div>
 
@@ -906,7 +887,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
           <div class="rp-tab-bar" style="margin:-8px -10px 8px;border-top:none;">
             <button class="rp-tab active" data-stab="presets" onclick="switchSubTab('presets',this,'md-sys')">Presets</button>
             <button class="rp-tab" data-stab="import" onclick="switchSubTab('import',this,'md-sys')">Import</button>
-            <button class="rp-tab" data-stab="cf" onclick="switchSubTab('cf',this,'md-sys')">CrystalForge</button>
           </div>
           <div id="md-sys-presets">
             <div class="field-row"><div class="field-label">System</div>
@@ -950,11 +930,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
               </div>
             </div>
           </div>
-          <div id="md-sys-cf" style="display:none">
-            <button class="gen-btn" style="width:100%;margin-bottom:5px;border-radius:3px;padding:5px;font-size:11px" onclick="mdLoadFromCF()">⬡ Load from CrystalForge</button>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:6px 8px;font-size:10.5px;color:#666;min-height:40px" id="md-cf-preview">No structure linked yet.</div>
-          </div>
-          <div class="field-row" style="margin-top:6px"><div class="field-label">Init T (K)</div>
+<div class="field-row" style="margin-top:6px"><div class="field-label">Init T (K)</div>
             <div class="field-val"><input class="burai-input" id="md-initT" type="number" value="300" step="50"/>
             <button class="spin-btn" onclick="spinF('md-initT',50)">+</button><button class="spin-btn minus" onclick="spinF('md-initT',-50)">−</button></div>
           </div>
@@ -1241,80 +1217,492 @@ body.mode-menu-open #bb-icon-close{display:flex}
     ════════════════════════════════ -->
     <div class="rp-tabpane" id="rptab-md-aiff">
 
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffProjBody','aiffProjA')">
-          <span class="acc-arrow" id="aiffProjA">▼</span><span class="acc-title">Project</span>
+      <!-- ① OVERVIEW STRIP -->
+      <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:3px;padding:8px 10px;margin-bottom:0;display:flex;align-items:flex-start;gap:8px;">
+        <span style="font-size:14px;flex-shrink:0">🧠</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:700;color:#5b21b6;margin-bottom:2px" id="nba-rp-title">Training is running (epoch 78/120)</div>
+          <div style="font-size:10px;color:#7c3aed" id="nba-rp-desc">E-RMSE=2.3 meV/atom. Review learning curves, check for divergence.</div>
         </div>
-        <div class="acc-body" id="aiffProjBody">
+      </div>
+
+      <!-- READINESS SCORE -->
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#e8e8e8;border-bottom:1px solid #ccc;">
+        <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400;" id="rp-readiness-num">72</div>
+        <div style="flex:1">
+          <div style="font-size:9px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Training Readiness</div>
+          <div style="height:5px;background:#ccc;border-radius:2px;overflow:hidden"><div style="height:100%;width:72%;background:#cc8400;border-radius:2px" id="rp-readiness-bar"></div></div>
+        </div>
+        <div style="font-size:9px;color:#888;white-space:nowrap">72 / 100</div>
+      </div>
+
+      <!-- KEY METRICS (always visible) -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#ccc;border-bottom:1px solid #ccc;">
+        <div style="background:#fff;padding:6px 8px;text-align:center">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">E RMSE</div>
+          <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#111" id="rp-ermse">2.3</div>
+          <div style="font-size:8.5px;color:#888">meV/at</div>
+        </div>
+        <div style="background:#fff;padding:6px 8px;text-align:center">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">F RMSE</div>
+          <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#111" id="rp-frmse">62</div>
+          <div style="font-size:8.5px;color:#888">meV/Å</div>
+        </div>
+        <div style="background:#fff;padding:6px 8px;text-align:center">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">Val gate</div>
+          <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400" id="rp-valgate">8/9</div>
+          <div style="font-size:8.5px;color:#888">gates pass</div>
+        </div>
+        <div style="background:#fff;padding:6px 8px;text-align:center">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">σ RMSE</div>
+          <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#111">0.41</div>
+          <div style="font-size:8.5px;color:#888">GPa</div>
+        </div>
+        <div style="background:#fff;padding:6px 8px;text-align:center">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">R²</div>
+          <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#2a9d2a">0.9987</div>
+          <div style="font-size:8.5px;color:#888">energy</div>
+        </div>
+        <div style="background:#fff;padding:6px 8px;text-align:center">
+          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">AL iter</div>
+          <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#111">4</div>
+          <div style="font-size:8.5px;color:#2a9d2a">−61% RMSE</div>
+        </div>
+      </div>
+
+      <div id="rp-scroll-aiff" style="flex:1;overflow-y:auto;overflow-x:hidden">
+
+      <!-- ① PROJECT -->
+      <div class="acc-section">
+        <div class="acc-head" onclick="toggleAcc('aiffProjB','aiffProjBA')">
+          <span class="acc-arrow" id="aiffProjBA">▼</span><span class="acc-title">① Project</span>
+        </div>
+        <div class="acc-body" id="aiffProjB">
           <div class="field-row"><div class="field-label">Name</div>
-            <div class="field-val"><input class="burai-input" value="H3S High-Pressure"/></div>
+            <div class="field-val"><input class="burai-input" value="H3S High-Pressure" style="text-align:left"/></div>
           </div>
           <div class="field-row"><div class="field-label">Elements</div>
-            <div class="field-val"><input class="burai-input" value="H, S"/></div>
+            <div class="field-val"><input class="burai-input" value="H, S" style="text-align:left"/></div>
+          </div>
+          <div class="field-row"><div class="field-label">Material class</div>
+            <div class="field-val"><select class="burai-select">
+              <option selected>Superconducting hydride</option>
+              <option>Metallic alloy</option><option>Ionic crystal</option>
+              <option>Oxide</option><option>Molecular</option><option>High-pressure</option>
+            </select></div>
           </div>
           <div class="field-row"><div class="field-label">DFT source</div>
-            <div class="field-val"><select class="burai-select"><option selected>Quantum ESPRESSO</option><option>VASP</option><option>FHI-aims</option></select></div>
+            <div class="field-val"><select class="burai-select"><option selected>Quantum ESPRESSO</option><option>VASP</option><option>FHI-aims</option><option>CP2K</option></select></div>
           </div>
         </div>
       </div>
 
+      <!-- ② PREPARE DATA -->
       <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffTrainBody','aiffTrainA')">
-          <span class="acc-arrow" id="aiffTrainA">▼</span><span class="acc-title">Training Status</span>
+        <div class="acc-head" onclick="toggleAcc('aiffDataB','aiffDataBA')">
+          <span class="acc-arrow" id="aiffDataBA" style="transform:rotate(-90deg);display:inline-block">▼</span>
+          <span class="acc-title">② Prepare Data</span>
+          <span style="margin-left:auto;font-size:9px;font-family:'JetBrains Mono',monospace;color:#2a9d2a">1,842</span>
         </div>
-        <div class="acc-body" id="aiffTrainBody">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-size:10.5px;font-weight:600;color:#333">SANNP · H3S · v2.1.0</span>
-            <span style="background:#d4edda;border:1px solid #2a9d2a;border-radius:10px;padding:1px 8px;font-size:9px;font-weight:700;color:#2a9d2a">● Running</span>
+        <div class="acc-body hidden" id="aiffDataB">
+          <!-- Dataset stats -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:8px;">
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Structures</div>
+              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace">1,842</div>
+              <div style="font-size:8.5px;color:#888">1474/184/184</div>
+            </div>
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Total atoms</div>
+              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace">97,862</div>
+              <div style="font-size:8.5px;color:#888">avg 53/struct</div>
+            </div>
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">With forces</div>
+              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400">97.8%</div>
+              <div style="font-size:8.5px;color:#888">1,801 / 1,842</div>
+            </div>
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">With stresses</div>
+              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400">96.4%</div>
+              <div style="font-size:8.5px;color:#888">1,776 / 1,842</div>
+            </div>
           </div>
-          <div style="font-size:9.5px;color:#666;font-family:'JetBrains Mono',monospace;margin-bottom:5px">Epoch 78 / 120 · Slurm JOB-3847</div>
-          <div style="height:4px;background:#e0e0e0;border-radius:2px;margin-bottom:8px;overflow:hidden"><div style="height:100%;width:65%;background:#ff6600;border-radius:2px"></div></div>
-          <div class="aiff-metrics">
-            <div class="aiff-mc"><div class="aiff-mc-lbl">E-RMSE</div><div class="aiff-mc-val">2.3<span class="aiff-mc-unit"> meV/at</span></div></div>
-            <div class="aiff-mc"><div class="aiff-mc-lbl">F-RMSE</div><div class="aiff-mc-val">62<span class="aiff-mc-unit"> meV/Å</span></div></div>
-            <div class="aiff-mc"><div class="aiff-mc-lbl">R²</div><div class="aiff-mc-val">0.9987</div></div>
+          <!-- Blockers -->
+          <div style="background:#fdeaea;border:1px solid #ef9a9a;border-radius:2px;padding:5px 8px;font-size:10px;color:#b02020;margin-bottom:5px">
+            <b>Force outliers: 27 structures</b> — |F| &gt; 35 eV/Å may destabilise training.
           </div>
-          <div style="height:80px;background:#fff;border:1px solid #ccc;border-radius:2px" id="aiff-mini-plot"></div>
+          <div style="background:#fff8e1;border:1px solid #ffcc80;border-radius:2px;padding:5px 8px;font-size:10px;color:#cc8400;margin-bottom:8px">
+            <b>Missing stress labels (3.6%)</b> — 66 structures lack stress tensors.
+          </div>
+          <!-- Train/Val/Test split -->
+          <div class="sub-head">Dataset Split</div>
+          <div class="field-row"><div class="field-label">Train</div>
+            <div class="field-val"><input type="range" min="50" max="95" value="80" style="flex:1;accent-color:#ff6600" oninput="aiffUpdateSplit(this.value)"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;width:32px" id="aiff-train-pct">80%</span></div>
+          </div>
+          <div class="field-row"><div class="field-label">Strategy</div>
+            <div class="field-val"><select class="burai-select"><option selected>Random (stratified T/P)</option><option>Sequential</option><option>Structure-based</option></select></div>
+          </div>
+          <div class="field-row"><div class="field-label">Seed</div>
+            <div class="field-val"><input class="burai-input" type="number" value="42"/></div>
+          </div>
+          <!-- DFT labels import -->
+          <div class="sub-head">DFT Labels</div>
+          <div class="field-row"><div class="field-label">Extract</div>
+            <div class="field-val" style="flex-wrap:wrap;gap:4px">
+              <label style="display:flex;align-items:center;gap:3px;font-size:10px;white-space:nowrap"><input type="checkbox" checked style="accent-color:#ff6600"> Forces</label>
+              <label style="display:flex;align-items:center;gap:3px;font-size:10px;white-space:nowrap"><input type="checkbox" checked style="accent-color:#ff6600"> Stresses</label>
+              <label style="display:flex;align-items:center;gap:3px;font-size:10px;white-space:nowrap"><input type="checkbox" style="accent-color:#ff6600"> Charges</label>
+            </div>
+          </div>
+          <button class="gen-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-top:4px" onclick="aiffLog('Importing DFT labels from cluster...','ok')">⬆ Import Dataset from QE</button>
+          <!-- Sampling strategies -->
+          <div class="sub-head">Generate Additional Data</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px">
+            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" checked style="accent-color:#ff6600"> AIMD Snapshots</label>
+            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" style="accent-color:#ff6600"> Geometry Opt.</label>
+            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" checked style="accent-color:#ff6600"> Random Displace.</label>
+            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" style="accent-color:#ff6600"> Cell Strain</label>
+            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" checked style="accent-color:#ff6600"> Active Learning</label>
+            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" style="accent-color:#ff6600"> Metropolis MC</label>
+          </div>
+          <div class="field-row"><div class="field-label">T range (K)</div>
+            <div class="field-val"><input class="burai-input" type="number" value="300" style="width:48px"/>–<input class="burai-input" type="number" value="1500" style="width:48px"/></div>
+          </div>
+          <div class="field-row"><div class="field-label">P range (GPa)</div>
+            <div class="field-val"><input class="burai-input" type="number" value="100" style="width:48px"/>–<input class="burai-input" type="number" value="250" style="width:48px"/></div>
+          </div>
+          <div class="field-row"><div class="field-label">Snapshots/job</div>
+            <div class="field-val"><input class="burai-input" type="number" value="50"/></div>
+          </div>
+          <!-- Cost estimate -->
+          <div style="background:#f0f0f0;border:1px solid #ccc;border-radius:2px;padding:6px 8px;margin-top:6px;font-size:10px">
+            <div style="font-weight:700;color:#555;margin-bottom:4px">⚡ Est. Resource Cost</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;color:#666">
+              <span>DFT calcs:</span><span style="font-family:'JetBrains Mono',monospace">~650</span>
+              <span>CPU·node·h:</span><span style="font-family:'JetBrains Mono',monospace">~312</span>
+              <span>Storage:</span><span style="font-family:'JetBrains Mono',monospace">~1.8 GB</span>
+            </div>
+          </div>
+          <button class="run-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-top:5px" onclick="aiffLog('Submitting sampling jobs to cluster...','ok')">▶ Submit Sampling Jobs</button>
         </div>
       </div>
 
+      <!-- ③ CONFIGURE MODEL -->
       <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffBackBody','aiffBackA')">
-          <span class="acc-arrow" id="aiffBackA" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">Backend &amp; Hyperparameters</span>
+        <div class="acc-head" onclick="toggleAcc('aiffCfgB','aiffCfgBA')">
+          <span class="acc-arrow" id="aiffCfgBA" style="transform:rotate(-90deg);display:inline-block">▼</span>
+          <span class="acc-title">③ Configure Model</span>
         </div>
-        <div class="acc-body hidden" id="aiffBackBody">
-          <div class="field-row"><div class="field-label">Backend</div>
-            <div class="field-val"><select class="burai-select"><option selected>SANNP / NeuralMD</option><option>HDNNP</option><option>MACE</option><option>NequIP</option><option>DeePMD</option></select></div>
+        <div class="acc-body hidden" id="aiffCfgB">
+          <!-- Presets -->
+          <div class="sub-head">Material Presets</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px">
+            <button style="padding:2px 7px;font-size:10px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Applied Hydride preset','ok')">💧 Hydride</button>
+            <button style="padding:2px 7px;font-size:10px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Applied Oxide preset','ok')">🔴 Oxide</button>
+            <button style="padding:2px 7px;font-size:10px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Applied Metallic preset','ok')">🪙 Metallic</button>
+            <button style="padding:2px 7px;font-size:10px;border:1px solid #ff6600;border-radius:2px;background:#fff5ef;color:#ff6600;cursor:pointer;font-weight:700">⬛ High-P ✓</button>
+          </div>
+          <!-- Backend -->
+          <div class="sub-head">ML Backend</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;margin-bottom:8px">
+            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'HDNNP')">HDNNP</div>
+            <div class="backend-card-rp selected" onclick="aiffSelectBackend(this,'SANNP')">SANNP ✓</div>
+            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'Delta-NNP')">Δ-NNP</div>
+            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'MACE')">MACE</div>
+            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'NequIP')">NequIP</div>
+            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'DeePMD')">DeePMD</div>
+            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'CHGNet')">CHGNet</div>
+            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'DeltaReaxFF')">Δ+ReaxFF</div>
+          </div>
+          <!-- Descriptor -->
+          <div class="sub-head">Descriptor</div>
+          <div class="field-row"><div class="field-label">Type</div>
+            <div class="field-val"><select class="burai-select"><option selected>SANNP many-body</option><option>Behler G2/G4</option><option>Chebyshev</option><option>Weighted SF</option></select></div>
           </div>
           <div class="field-row"><div class="field-label">Cutoff (Å)</div>
-            <div class="field-val"><input class="burai-input" type="number" value="6.5" step="0.5"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
+            <div class="field-val"><input class="burai-input" id="aiff-cutoff" type="number" value="6.5" step="0.5"/>
+            <button class="spin-btn" onclick="spinF('aiff-cutoff',.5)">+</button><button class="spin-btn minus" onclick="spinF('aiff-cutoff',-.5)">−</button></div>
           </div>
+          <div class="field-row"><div class="field-label">Radial basis</div>
+            <div class="field-val"><input class="burai-input" type="number" value="16"/></div>
+          </div>
+          <div class="field-row"><div class="field-label">Angular basis</div>
+            <div class="field-val"><input class="burai-input" type="number" value="8"/></div>
+          </div>
+          <!-- Architecture -->
+          <div class="sub-head">Network Architecture</div>
+          <div class="field-row"><div class="field-label">Hidden layers</div>
+            <div class="field-val"><input class="burai-input" value="128, 64, 32" style="text-align:left"/></div>
+          </div>
+          <div class="field-row"><div class="field-label">Activation</div>
+            <div class="field-val"><select class="burai-select"><option selected>Tanh</option><option>ELU</option><option>GELU</option><option>Swish</option></select></div>
+          </div>
+          <div class="field-row"><div class="field-label">Element embed.</div>
+            <div class="field-val"><select class="burai-select"><option selected>One-hot</option><option>Trainable</option><option>Charge-dep.</option></select></div>
+          </div>
+          <!-- Hyperparameters -->
+          <div class="sub-head">Hyperparameters</div>
           <div class="field-row"><div class="field-label">Epochs</div>
-            <div class="field-val"><input class="burai-input" type="number" value="120" step="10"/>
+            <div class="field-val"><input class="burai-input" id="aiff-epochs" type="number" value="120"/>
+            <button class="spin-btn" onclick="spinF('aiff-epochs',10)">+</button><button class="spin-btn minus" onclick="spinF('aiff-epochs',-10)">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Batch size</div>
+            <div class="field-val"><input class="burai-input" type="number" value="32"/>
             <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
           </div>
-          <div class="field-row"><div class="field-label">LR</div>
+          <div class="field-row"><div class="field-label">Learning rate</div>
             <div class="field-val"><input class="burai-input" type="number" value="0.001" step="0.0001"/></div>
           </div>
-        </div>
-      </div>
-
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffValBody','aiffValA')">
-          <span class="acc-arrow" id="aiffValA" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">Validation</span>
-        </div>
-        <div class="acc-body hidden" id="aiffValBody">
-          <div style="font-size:10.5px;line-height:1.9" id="aiff-checklist">
-            <div style="display:flex;gap:5px"><span style="color:#2a9d2a;font-weight:700">✓</span> Energy RMSE &lt; 5 meV/at <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">2.3</span></div>
-            <div style="display:flex;gap:5px"><span style="color:#2a9d2a;font-weight:700">✓</span> Force RMSE &lt; 100 meV/Å <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">62</span></div>
-            <div style="display:flex;gap:5px"><span style="color:#2a9d2a;font-weight:700">✓</span> Stable NVT MD (1000 K) <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">Pass</span></div>
-            <div style="display:flex;gap:5px"><span style="color:#cc3333;font-weight:700">✗</span> Phonon displacement test <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">15%</span></div>
+          <div class="field-row"><div class="field-label">Optimizer</div>
+            <div class="field-val"><select class="burai-select"><option selected>Adam</option><option>AdamW</option><option>L-BFGS</option></select></div>
           </div>
-          <button class="run-btn" style="width:100%;margin-top:7px;border-radius:3px;padding:5px;font-size:11px;background:#2e7dcc" onclick="mdLog('Deploying model to LAMMPS...','inf')">🚀 Deploy to LAMMPS</button>
+          <div class="field-row"><div class="field-label">Early stop</div>
+            <div class="field-val"><input class="burai-input" type="number" value="15" title="patience epochs"/>
+            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Precision</div>
+            <div class="field-val"><select class="burai-select"><option selected>float64</option><option>float32</option></select></div>
+          </div>
+          <!-- Loss weights -->
+          <div class="sub-head">Loss Weights</div>
+          <div class="field-row"><div class="field-label">Energy</div>
+            <div class="field-val"><input class="burai-input" id="aiff-we" type="number" value="1.0" step="0.1"/>
+            <button class="spin-btn" onclick="spinF('aiff-we',.1)">+</button><button class="spin-btn minus" onclick="spinF('aiff-we',-.1)">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Force</div>
+            <div class="field-val"><input class="burai-input" id="aiff-wf" type="number" value="10.0" step="0.5"/>
+            <button class="spin-btn" onclick="spinF('aiff-wf',.5)">+</button><button class="spin-btn minus" onclick="spinF('aiff-wf',-.5)">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Stress</div>
+            <div class="field-val"><input class="burai-input" id="aiff-ws" type="number" value="0.01" step="0.005"/>
+            <button class="spin-btn" onclick="spinF('aiff-ws',.005)">+</button><button class="spin-btn minus" onclick="spinF('aiff-ws',-.005)">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Charge</div>
+            <div class="field-val"><input class="burai-input" type="number" value="0.0" step="0.01"/></div>
+          </div>
+          <div class="field-row"><div class="field-label">Seed</div>
+            <div class="field-val"><input class="burai-input" type="number" value="42"/></div>
+          </div>
+          <!-- Cost estimate -->
+          <div style="background:#f0f0f0;border:1px solid #ccc;border-radius:2px;padding:5px 8px;margin-top:5px;font-size:10px">
+            <div style="font-weight:700;color:#555;margin-bottom:3px">⚡ Est. Training Cost</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;color:#666">
+              <span>GPU hours:</span><span style="font-family:'JetBrains Mono',monospace">~2.4</span>
+              <span>Walltime:</span><span style="font-family:'JetBrains Mono',monospace">~45 min</span>
+              <span>Checkpoint:</span><span style="font-family:'JetBrains Mono',monospace">~42 MB</span>
+            </div>
+          </div>
         </div>
       </div>
 
+      <!-- ④ TRAIN -->
+      <div class="acc-section">
+        <div class="acc-head" onclick="toggleAcc('aiffTrainBodyRP','aiffTrainBodyRPA')">
+          <span class="acc-arrow" id="aiffTrainBodyRPA">▼</span>
+          <span class="acc-title">④ Train</span>
+          <span style="margin-left:auto;font-size:9px;background:#d4edda;border:1px solid #66bb6a;border-radius:10px;padding:1px 6px;color:#2a9d2a;font-weight:700">● Running</span>
+        </div>
+        <div class="acc-body" id="aiffTrainBodyRP">
+          <!-- Progress -->
+          <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#555;margin-bottom:4px">
+            Epoch <span id="rp-epoch">78</span> / 120 · Slurm JOB-3847
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:4px">GPU: <b id="rp-gpu">4.1/8 GB</b> · ETA: <b id="rp-eta">~18 min</b> · LR: <b id="rp-lr">3.2e-4</b></div>
+          <div style="height:5px;background:#ccc;border-radius:2px;overflow:hidden;margin-bottom:8px">
+            <div style="height:100%;width:65%;background:#ff6600;border-radius:2px" id="rp-aiff-prog"></div>
+          </div>
+          <!-- Mini plot -->
+          <div style="height:90px;background:#fff;border:1px solid #ccc;border-radius:2px;margin-bottom:7px" id="rp-aiff-plot"></div>
+          <!-- Console -->
+          <div class="sub-head">Console</div>
+          <div style="height:80px;overflow-y:auto;background:#1a1a1a;border-radius:2px;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#7ee787;line-height:1.5;margin-bottom:7px" id="rp-aiff-con">
+            <div>[09:41:02] Loaded SANNP checkpoint v2.0.9</div>
+            <div>[09:41:03] Dataset: 1474 train / 184 val</div>
+            <div style="color:#79c0ff">[09:51:50] Epoch 78 | E=2.3 | F=62</div>
+          </div>
+          <!-- Slurm settings -->
+          <div class="sub-head">Cluster / Slurm</div>
+          <div class="field-row"><div class="field-label">Partition</div>
+            <div class="field-val"><input class="burai-input" value="normal" style="text-align:left"/></div>
+          </div>
+          <div class="field-row"><div class="field-label">Nodes</div>
+            <div class="field-val"><input class="burai-input" type="number" value="1"/>
+            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">GPU/node</div>
+            <div class="field-val"><input class="burai-input" type="number" value="1"/>
+            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Walltime</div>
+            <div class="field-val"><input class="burai-input" value="12:00:00" style="text-align:left"/></div>
+          </div>
+          <!-- Historical runs -->
+          <div class="sub-head">Historical Runs</div>
+          <div style="font-size:10px;font-family:'JetBrains Mono',monospace">
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid #e0e0e0">
+              <span style="color:#888">JOB-3847</span>
+              <span style="flex:1;color:#333">v2.1.0 SANNP</span>
+              <span style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:1px 5px;font-size:8.5px;color:#1565c0">Running</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid #e0e0e0">
+              <span style="color:#888">JOB-3836</span>
+              <span style="flex:1;color:#333">v2.0.9 SANNP</span>
+              <span style="font-size:9px;color:#888">E=3.1</span>
+              <button style="font-size:8.5px;padding:1px 5px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Rolled back to v2.0.9','ok')">Restore</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0">
+              <span style="color:#888">JOB-3820</span>
+              <span style="flex:1;color:#333">v2.0.8 HDNNP</span>
+              <span style="font-size:9px;color:#888">E=5.8</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ VALIDATE -->
+      <div class="acc-section">
+        <div class="acc-head" onclick="toggleAcc('aiffValBodyRP','aiffValBodyRPA')">
+          <span class="acc-arrow" id="aiffValBodyRPA" style="transform:rotate(-90deg);display:inline-block">▼</span>
+          <span class="acc-title">⑤ Validate</span>
+          <span style="margin-left:auto;font-size:9px;background:#fff8e1;border:1px solid #ffcc80;border-radius:10px;padding:1px 6px;color:#cc8400;font-weight:700">8/9 ✓</span>
+        </div>
+        <div class="acc-body hidden" id="aiffValBodyRP">
+          <!-- Deployment readiness -->
+          <div style="display:flex;align-items:center;gap:8px;background:#fff8e1;border:1px solid #ffcc80;border-radius:2px;padding:6px 8px;margin-bottom:7px">
+            <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400">89</div>
+            <div style="flex:1">
+              <div style="font-size:9px;color:#888;margin-bottom:3px;font-weight:700">Deployment Readiness</div>
+              <div style="height:5px;background:#ccc;border-radius:2px;overflow:hidden"><div style="height:100%;width:89%;background:#cc8400;border-radius:2px"></div></div>
+            </div>
+          </div>
+          <!-- Validation profile -->
+          <div class="field-row"><div class="field-label">Profile</div>
+            <div class="field-val"><select class="burai-select">
+              <option>Research Preview (2 gates)</option>
+              <option selected>Screening Model (6 gates)</option>
+              <option>Production MD (9 gates)</option>
+            </select></div>
+          </div>
+          <!-- Checklist -->
+          <div style="margin:7px 0">
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">E RMSE &lt; 5 meV/at</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">2.3</span></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">F RMSE &lt; 100 meV/Å</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">62</span></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">σ RMSE &lt; 1 GPa</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">0.41</span></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">R² &gt; 0.99</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">0.9987</span></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">Stable NVT MD (1000 K)</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a9d2a">Pass</span></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">Stable NPT MD</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a9d2a">Pass</span></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">Extrap. score &lt; 0.15</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">0.07</span></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">E MAE &lt; 3 meV/at</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">1.8</span></div>
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px"><span style="color:#b02020;font-weight:700;flex-shrink:0">✗</span><span style="flex:1">Phonon test</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b02020">15% dev</span></div>
+          </div>
+          <div style="background:#fdeaea;border:1px solid #ef9a9a;border-radius:2px;padding:5px 8px;font-size:10px;color:#b02020;margin-bottom:5px">
+            ⚠ Phonon test failing — high-freq modes deviate &gt;15% from DFT.<br>
+            <button style="margin-top:4px;font-size:9px;padding:2px 7px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Override acknowledged','warn')">Override &amp; Acknowledge</button>
+          </div>
+          <button class="run-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-top:3px" onclick="aiffLog('Running full validation suite...','inf')">▶ Run Validation Suite</button>
+        </div>
+      </div>
+
+      <!-- ⑥ IMPROVE (Active Learning) -->
+      <div class="acc-section">
+        <div class="acc-head" onclick="toggleAcc('aiffImpBodyRP','aiffImpBodyRPA')">
+          <span class="acc-arrow" id="aiffImpBodyRPA" style="transform:rotate(-90deg);display:inline-block">▼</span>
+          <span class="acc-title">⑥ Active Learning</span>
+          <span style="margin-left:auto;font-size:9px;background:#fff5ef;border:1px solid #ff6600;border-radius:10px;padding:1px 6px;color:#ff6600;font-weight:700">23 pending</span>
+        </div>
+        <div class="acc-body hidden" id="aiffImpBodyRP">
+          <!-- AL progress -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:8px">
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;text-align:center">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">AL iterations</div>
+              <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace">4</div>
+            </div>
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;text-align:center">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Structs added</div>
+              <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace">+487</div>
+            </div>
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;text-align:center">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">RMSE Δ</div>
+              <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#2a9d2a">−61%</div>
+            </div>
+          </div>
+          <div class="field-row"><div class="field-label">Uncertainty</div>
+            <div class="field-val"><select class="burai-select"><option selected>Ensemble disagree.</option><option>Descriptor distance</option><option>Force threshold</option><option>Committee variance</option></select></div>
+          </div>
+          <div class="field-row"><div class="field-label">Threshold</div>
+            <div class="field-val"><input class="burai-input" type="number" value="0.05" step="0.01"/></div>
+          </div>
+          <div class="field-row"><div class="field-label">Ensemble size</div>
+            <div class="field-val"><input class="burai-input" type="number" value="5"/>
+            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Max cand./iter</div>
+            <div class="field-val"><input class="burai-input" type="number" value="50"/>
+            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Budget (CPU·h)</div>
+            <div class="field-val"><input class="burai-input" type="number" value="500"/>
+            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
+          </div>
+          <div class="field-row"><div class="field-label">Auto-submit</div>
+            <div class="field-val"><select class="burai-select"><option>No — confirm first</option><option selected>Yes, below budget</option></select></div>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:6px">
+            <button class="gen-btn" style="flex:1;border-radius:3px;padding:4px;font-size:10.5px" onclick="aiffLog('Running ML-MD sampling...','ok')">▶ Run ML-MD</button>
+            <button class="run-btn" style="flex:1;border-radius:3px;padding:4px;font-size:10.5px" onclick="aiffLog('Submitting candidates to DFT...','ok')">⬆ Submit DFT</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑦ DEPLOY -->
+      <div class="acc-section">
+        <div class="acc-head" onclick="toggleAcc('aiffDepBodyRP','aiffDepBodyRPA')">
+          <span class="acc-arrow" id="aiffDepBodyRPA" style="transform:rotate(-90deg);display:inline-block">▼</span>
+          <span class="acc-title">⑦ Deploy</span>
+        </div>
+        <div class="acc-body hidden" id="aiffDepBodyRP">
+          <!-- Model info -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:8px">
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Model</div>
+              <div style="font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace">h3s_sannp_v2.1.0</div>
+              <div style="font-size:8.5px;color:#888">42.3 MB</div>
+            </div>
+            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
+              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Dataset</div>
+              <div style="font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace">v4 · 1842</div>
+              <div style="font-size:8.5px;color:#888">Elements: H, S</div>
+            </div>
+          </div>
+          <!-- Lineage (condensed) -->
+          <div style="font-size:9px;color:#888;background:#f5f5f5;border:1px solid #ddd;border-radius:2px;padding:5px 8px;font-family:'JetBrains Mono',monospace;margin-bottom:7px;line-height:1.8">
+            v1(1355) → JOB-3820(HDNNP) → v4(1842) → <b style="color:#ff6600">JOB-3847(SANNP)</b> → 8/9 gates → Deploy
+          </div>
+          <!-- LAMMPS preview -->
+          <div class="sub-head">LAMMPS Input Preview</div>
+          <div style="background:#1a1a1a;border-radius:2px;padding:7px 9px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#7ee787;line-height:1.7;margin-bottom:7px;max-height:100px;overflow:auto">
+            <span style="color:#6e7681">pair_style</span>  sannp  6.5<br>
+            <span style="color:#6e7681">pair_coeff</span>  * * h3s_sannp_v2.1.0.model H S<br>
+            <span style="color:#6e7681">timestep</span>    0.001<br>
+            <span style="color:#6e7681">fix</span>         1 all nvt temp 1000 1000 0.1
+          </div>
+          <!-- Est. production cost -->
+          <div style="background:#f0f0f0;border:1px solid #ccc;border-radius:2px;padding:5px 8px;margin-bottom:7px;font-size:10px">
+            <div style="font-weight:700;color:#555;margin-bottom:3px">⚡ Est. Production MD Cost</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;color:#666">
+              <span>Node·hours:</span><span style="font-family:'JetBrains Mono',monospace">~192</span>
+              <span>Storage (traj.):</span><span style="font-family:'JetBrains Mono',monospace">~12 GB</span>
+            </div>
+          </div>
+          <button class="run-btn" style="width:100%;border-radius:3px;padding:5px;font-size:10.5px;margin-bottom:4px" onclick="aiffLog('Deploying model to LAMMPS on cluster...','ok')">🚀 Deploy to LAMMPS</button>
+          <button class="gen-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-bottom:4px" onclick="aiffLog('Packaging model files...','ok')">📦 Package Model</button>
+          <button class="gen-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-bottom:4px;background:#2e7dcc" onclick="aiffLog('Exporting Model Card...','ok')">📋 Export Model Card</button>
+          <button class="gen-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;background:#555" onclick="switchRpTab('md-sim',document.querySelector('[data-rptab=md-sim]'))">⬡ Send to MD Simulation</button>
+        </div>
+      </div>
+
+      </div><!-- /rp-scroll-aiff -->
     </div><!-- /rptab-md-aiff -->
 
     <!-- ════════════════════════════════
@@ -1455,9 +1843,8 @@ body.mode-menu-open #bb-icon-close{display:flex}
 <div id="mode-menu">
   <div class="mm-item active" data-mode="md" onclick="selectModeItem('md',event)"><span class="mm-lbl" style="color:#34d399;font-weight:700">MD Simulations</span></div>
   <div class="mm-item" data-mode="geometry" onclick="selectModeItem('geometry',event)"><span class="mm-lbl">Geometry</span></div>
-  <div class="mm-item" data-mode="aiff" onclick="selectModeItem('aiff',event)"><span class="mm-lbl">AI Force-Field</span></div>
+  <div class="mm-item" data-mode="aiff" onclick="selectModeItem('aiff',event)"><span class="mm-lbl">Force-Field Generator</span></div>
   <div class="mm-item" data-mode="evolution" onclick="selectModeItem('evolution',event)"><span class="mm-lbl" style="color:#34d399;font-weight:700">⬡ MD Evolution</span></div>
-  <div class="mm-item" data-mode="mcevo" onclick="selectModeItem('mcevo',event)"><span class="mm-lbl" style="color:#fb923c;font-weight:700">⬡ Monte Carlo Evolution</span></div>
 </div>
 
 <!-- ══ LEFT MENU (bottom-left fly-in) ══ -->
@@ -1644,184 +2031,6 @@ Initialize a system and click Start MD.
   </div><!-- /mdevo-bottom -->
 
 </div><!-- /mdevo-overlay -->
-<div id="mcevo-overlay">
-
-  <!-- ── TOP CONFIG CARDS ── -->
-  <div id="mcevo-top">
-
-    <div class="evo-card" style="min-width:185px">
-      <div class="evo-card-title">① Chain Setup</div>
-      <div class="evo-row"><span class="evo-lbl">Composition</span><input class="evo-inp" id="mcevo-formula" type="text" value="Si8" style="text-align:left;width:80px"/></div>
-      <div class="evo-row"><span class="evo-lbl">Z range</span>
-        <div style="display:flex;gap:3px">
-          <input class="evo-inp" id="mcevo-z-min" type="number" value="1" min="1" style="width:30px"/>
-          <span style="font-size:10px;color:#888;align-self:center">–</span>
-          <input class="evo-inp" id="mcevo-z-max" type="number" value="4" min="1" style="width:30px"/>
-        </div>
-      </div>
-      <div class="evo-sub">Seed Structures</div>
-      <div class="evo-seed-list" id="mcevo-seed-list">No seeds added</div>
-      <div style="display:flex;gap:4px;margin-top:3px">
-        <button class="evo-btn-sm primary" onclick="mcevoAddSeed()" style="background:#ea580c;border-color:#c2410c">+ Seed</button>
-        <button class="evo-btn-sm" onclick="mcevoRemoveSeed()">Remove</button>
-      </div>
-    </div>
-
-    <div class="evo-card" style="min-width:195px">
-      <div class="evo-card-title">② Metropolis Settings</div>
-      <div class="evo-row"><span class="evo-lbl">Start Temp T₀ (K)</span><input class="evo-inp" id="mcevo-temp" type="number" value="1000" min="1"/></div>
-      <div class="evo-row"><span class="evo-lbl">Cooling Rate</span><input class="evo-inp" id="mcevo-cooling" type="number" value="0.95" step="0.01" min="0.5" max="1"/></div>
-      <div class="evo-row"><span class="evo-lbl">Steps / Gen</span><input class="evo-inp" id="mcevo-steps" type="number" value="1" min="1"/></div>
-      <div class="evo-row"><span class="evo-lbl">Max Steps</span><input class="evo-inp" id="mcevo-max-steps" type="number" value="200" min="10"/></div>
-      <div class="evo-row"><span class="evo-lbl">Min Temp (K)</span><input class="evo-inp" id="mcevo-min-temp" type="number" value="1" min="0"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:200px">
-      <div class="evo-card-title">③ Move Set</div>
-      <div class="evo-row"><span class="evo-lbl">Move Type</span>
-        <select class="evo-sel" id="mcevo-move">
-          <option value="mixed" selected>Mixed</option>
-          <option value="stripple">Stripple only</option>
-          <option value="permustrain">Permustrain only</option>
-        </select>
-      </div>
-      <div class="evo-sub">Stripple</div>
-      <div class="evo-row"><span class="evo-lbl">Strain Range</span><input class="evo-inp" id="mcevo-strip-strain" type="number" value="0.35" step="0.05"/></div>
-      <div class="evo-row"><span class="evo-lbl">Amplitude</span><input class="evo-inp" id="mcevo-strip-amp" type="number" value="1.0" step="0.1"/></div>
-      <div class="evo-sub">Permustrain</div>
-      <div class="evo-row"><span class="evo-lbl">Max Strain</span><input class="evo-inp" id="mcevo-perm-strain" type="number" value="0.5" step="0.05"/></div>
-      <div class="evo-row"><span class="evo-lbl"># Exchanges</span><input class="evo-inp" id="mcevo-perm-exch" type="number" value="4" min="1"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:185px">
-      <div class="evo-card-title">④ Duplicate Matching</div>
-      <div class="evo-row"><span class="evo-lbl">Min ΔE (Ry)</span><input class="evo-inp" id="mcevo-dup-de" type="number" value="0.001" step="0.001"/></div>
-      <div style="display:flex;gap:4px;margin-top:4px">
-        <button class="evo-btn-sm" onclick="mcevoResetDuplicates()">Reset Dups</button>
-      </div>
-    </div>
-
-    <div class="evo-card" style="min-width:195px">
-      <div class="evo-card-title" style="color:#ea580c">⬡ QE Settings</div>
-      <div class="evo-row"><span class="evo-lbl">Ecut (Ry)</span><input class="evo-inp" id="mcevo-ecut" type="number" value="40" min="20"/></div>
-      <div class="evo-row"><span class="evo-lbl">k-mesh</span>
-        <div style="display:flex;gap:2px">
-          <input class="evo-inp" id="mcevo-kx" type="number" value="2" min="1" style="width:32px"/>
-          <input class="evo-inp" id="mcevo-ky" type="number" value="2" min="1" style="width:32px"/>
-          <input class="evo-inp" id="mcevo-kz" type="number" value="2" min="1" style="width:32px"/>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /mcevo-top -->
-
-  <!-- ── CONTROLS BAR ── -->
-  <div id="mcevo-controls-bar" style="flex-wrap:wrap;row-gap:3px;background:#fde0c8;border-bottom:2px solid #f0a868;">
-    <button class="evo-run-btn start" id="mcevo-start-btn" onclick="mcevoStart()" style="background:#ea580c;">▶ Start Monte Carlo</button>
-    <button class="evo-run-btn pause" id="mcevo-pause-btn" onclick="mcevoPause()" disabled style="opacity:.5">⏸ Pause</button>
-    <button class="evo-run-btn stop"  id="mcevo-stop-btn"  onclick="mcevoStop()"  disabled style="opacity:.5">■ Stop</button>
-    <div class="evo-stat-chip" id="mcevo-state-chip" style="background:#ffedd5;color:#9a3412;border-color:#fdba74;">Idle</div>
-    <span id="mcevo-step-counter">Step: 0</span>
-    <span style="color:#888;font-size:10px">Temp:</span>
-    <span id="mcevo-cur-temp">— K</span>
-    <span style="color:#888;font-size:10px">Best:</span>
-    <span id="mcevo-best-energy">— Ry/atom</span>
-    <span style="color:#888;font-size:10px">Accepted:</span>
-    <span id="mcevo-accept-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
-    <div style="flex:1"></div>
-    <span style="font-size:9px;color:#666;font-weight:700;flex-shrink:0">🖥 Host:</span>
-    <input id="mcevo-host-input" placeholder="http://100.127.228.36:5000"
-      style="padding:3px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;border:1px solid #bbb;border-radius:2px;width:180px;background:#fff;flex-shrink:0"
-      oninput="document.getElementById('loginNode').value=this.value"/>
-    <button class="evo-btn-sm" id="mcevo-test-btn" onclick="mcevoTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">⚡ Test</button>
-    <span id="mcevo-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;flex-shrink:0;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
-    <button class="evo-btn-sm" onclick="mcevoExportCSV()">⬇ CSV</button>
-    <button class="evo-btn-sm danger" onclick="mcevoResetAll()">✕ Reset</button>
-  </div>
-
-  <!-- ── BOTTOM THREE PANELS ── -->
-  <div id="mcevo-bottom" style="display:flex;flex:1;min-height:0;gap:0;">
-
-    <!-- LEFT: Monitor plots -->
-    <div id="mcevo-monitor" style="width:280px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;display:flex;flex-direction:column;overflow:hidden;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;">
-        <span>Monte Carlo Monitor</span>
-        <span id="mcevo-monitor-status" style="font-size:9px;color:#ea580c;font-weight:400">Idle</span>
-      </div>
-      <div class="evo-chart-lbl">Energy vs Step (chain trace)</div>
-      <div class="evo-plot" id="mcevo-chart-energy" style="height:130px"></div>
-      <div class="evo-chart-lbl">Annealing Temperature</div>
-      <div class="evo-plot" id="mcevo-chart-temp" style="height:110px"></div>
-      <div style="padding:4px 8px;font-size:9px;color:#888;border-top:1px solid #ccc">
-        <div style="display:flex;justify-content:space-between"><span>Accepted</span><span id="mcevo-accept-count">0</span></div>
-        <div style="display:flex;justify-content:space-between"><span>Rejected</span><span id="mcevo-reject-count">0</span></div>
-        <div style="display:flex;justify-content:space-between"><span>Duplicates removed</span><span id="mcevo-dup-count">0</span></div>
-        <div style="display:flex;justify-content:space-between"><span>Failed jobs</span><span id="mcevo-fail-count">0</span></div>
-      </div>
-    </div>
-
-    <!-- MIDDLE: Chain table -->
-    <div id="mcevo-table-panel" style="flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;border-right:1px solid #c8c8c8;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        <span id="mcevo-step-badge" style="font-size:10px;font-weight:700;color:#ea580c;background:#ffedd5;border:1px solid #fdba74;border-radius:3px;padding:2px 8px;white-space:nowrap;">Step 0 / 0</span>
-        <input class="evo-search" id="mcevo-search" placeholder="Search ID, status…" oninput="mcevoFilterTable()"/>
-        <button class="evo-btn-sm" onclick="mcevoExportCSV()" title="Export table as CSV">⬇ CSV</button>
-      </div>
-      <div style="flex:1;overflow-y:auto;overflow-x:auto;">
-        <table class="evo-pop-table" id="mcevo-pop-table">
-          <thead>
-            <tr>
-              <th onclick="mcevoSort('id')"># ID</th>
-              <th onclick="mcevoSort('step')">Step</th>
-              <th onclick="mcevoSort('parent')">Parent</th>
-              <th onclick="mcevoSort('mutation')">Move</th>
-              <th onclick="mcevoSort('temp')">Temp (K)</th>
-              <th onclick="mcevoSort('energy')">E (Ry/atom)</th>
-              <th onclick="mcevoSort('fitness')">Fitness</th>
-              <th onclick="mcevoSort('accepted')">Accepted</th>
-              <th onclick="mcevoSort('status')">Status</th>
-            </tr>
-          </thead>
-          <tbody id="mcevo-pop-tbody">
-            <tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">
-              No steps yet — click ▶ Start Monte Carlo
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div style="padding:4px 9px;background:#d8d8d8;border-top:1px solid #ccc;font-size:10px;color:#666;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <button class="evo-page-btn" id="mcevo-prev" onclick="mcevoPage(-1)">‹ Prev</button>
-        <span id="mcevo-page-info">Page 1 / 1</span>
-        <button class="evo-page-btn" id="mcevo-next" onclick="mcevoPage(1)">Next ›</button>
-        <span style="flex:1"></span>
-        <span id="mcevo-total-count">0 steps</span>
-      </div>
-    </div>
-
-    <!-- RIGHT: Structure viewer -->
-    <div id="mcevo-viewer-panel" style="width:340px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;">Structure Viewer — <span id="mcevo-sel-id" style="color:#ea580c">none selected</span></div>
-      <div style="padding:6px 9px;background:#e8e8e8;border-bottom:1px solid #d8d8d8;display:grid;grid-template-columns:1fr 1fr;gap:3px;">
-        <div class="evo-info-item"><span class="evo-info-k">Energy/atom</span><span class="evo-info-v" id="mcevo-info-e">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Fitness</span><span class="evo-info-v" id="mcevo-info-fit">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Temp (K)</span><span class="evo-info-v" id="mcevo-info-temp">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Step</span><span class="evo-info-v" id="mcevo-info-step">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Move</span><span class="evo-info-v" id="mcevo-info-mut">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Parent</span><span class="evo-info-v" id="mcevo-info-par">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Accepted</span><span class="evo-info-v" id="mcevo-info-acc">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Status</span><span class="evo-info-v" id="mcevo-info-status">—</span></div>
-      </div>
-      <div id="mcevo-viewer-3d" style="flex:1;min-height:200px;position:relative;background:#fff;"></div>
-      <div style="padding:5px 8px;background:#d8d8d8;border-top:1px solid #ccc;display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
-        <button class="evo-btn-sm" onclick="mcevoPrevStep()">‹ Prev</button>
-        <button class="evo-btn-sm" onclick="mcevoNextStep()">Next ›</button>
-        <button class="evo-btn-sm" onclick="mcevoViewerReset()">⟳ Reset</button>
-      </div>
-    </div>
-
-  </div><!-- /mcevo-bottom -->
-
-</div><!-- /mcevo-overlay -->
 </div><!-- /app -->
 
 <script>
@@ -1891,7 +2100,7 @@ function switchRpTab(tabId, btn){
       <button onclick="evoReset()" style="padding:6px 10px;border-radius:3px;background:#cc3333;border:none;color:#fff;font-size:11px;cursor:pointer">↺ Reset</button>`;
   }
   // Update mode label
-  const labels={'md-sim':'MD Simulations','md-geo':'Geometry','md-aiff':'AI Force-Field','md-evo':'MD Evolution'};
+  const labels={'md-sim':'MD Simulations','md-geo':'Geometry','md-aiff':'Force-Field Generator','md-evo':'MD Evolution'};
   const lbl=document.getElementById('bb-mode-label');
   if(lbl) lbl.textContent=labels[tabId]||'MD Simulations';
 }
@@ -1902,7 +2111,7 @@ function switchSubTab(name, btn, group){
   bar.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   if(group==='md-sys'){
-    ['md-sys-presets','md-sys-import','md-sys-cf'].forEach(id=>{
+    ['md-sys-presets','md-sys-import'].forEach(id=>{
       const el=document.getElementById(id);
       if(el) el.style.display='none';
     });
@@ -1977,7 +2186,7 @@ function hbAction(action, e){
     result:   ()=>mdLog('Results panel — connect to cluster for live results.','inf'),
     run:      ()=>{ const t=document.querySelector('[data-rptab=md-sim]'); switchRpTab('md-sim',t); mdStartSim(); },
     screenshot:()=>mdScreenshot(),
-    designer: ()=>mdLog('Designer — opens CrystalForge structure designer.','inf'),
+    designer: ()=>mdLog('Designer — structure designer.','inf'),
     saveas:   ()=>mdExportXYZ(),
     save:     ()=>mdLog('Saved to session.','ok'),
     modeler:  ()=>mdLog('Modeler — molecule builder.','inf'),
@@ -2206,7 +2415,6 @@ function mdExportXYZ(){
   mdLog(`Exported ${MD.N} atoms as XYZ`,'ok');
 }
 function mdTestConnection(){ mdLog(`Testing ${document.getElementById('md-loginNode').value}...`,'inf'); }
-function mdLoadFromCF(){ mdLog('No CrystalForge structure found in session.','warn'); }
 
 /* ── Canvas renderer ─────────────────────────────────────── */
 function mdRender(){
@@ -2466,7 +2674,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 <script>
-/* ══ Shared cluster / structure utilities (MD Evolution + Monte Carlo) ══ */
+/* ══ Shared cluster / structure utilities (MD Evolution) ══ */
 const CELL_VECS={FCC:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],BCC:[[-.5,.5,.5],[.5,-.5,.5],[.5,.5,-.5]],SC:[[1,0,0],[0,1,0],[0,0,1]],HEX:[[1,0,0],[-.5,.866,0],[0,0,1]],TET:[[1,0,0],[0,1,0],[0,0,1]],ORTH:[[1,0,0],[0,1,0],[0,0,1]],MONO:[[1,0,0],[0,1,0],[.1,0,1]],TRI:[[1,0,0],[.2,.98,0],[.1,.1,.99]]};
 const MASS={H:1.008,C:12.011,N:14.007,O:15.999,Li:6.941,Na:22.99,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.065,Cl:35.45,K:39.098,Ca:40.078,Ti:47.867,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.63,As:74.922,Sb:121.76,Mo:95.96,Ba:137.33,Au:196.97,Sr:87.62};
 const CF_CRADII={H:.31,C:.77,N:.71,O:.66,Na:1.66,Mg:1.41,Al:1.21,Si:1.11,Cl:1.02,Fe:1.32,Cu:1.32,Ga:1.22,As:1.19,default:1.20};
@@ -2486,7 +2694,7 @@ function getPseudoDir(){
   return (el?.value||'./pseudo').trim();
 }
 function getHost(){
-  const ids=['mdevo-host-input','mcevo-host-input','md-loginNode','loginNode'];
+  const ids=['mdevo-host-input','md-loginNode','loginNode'];
   let h='';
   for(const id of ids){
     const el=document.getElementById(id);
@@ -2778,13 +2986,6 @@ function mdevoInitCharts(){
   const layout=(y,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Gen',gridcolor:'#ddd'},yaxis:{title:y,gridcolor:'#ddd'},showlegend:false,height:h});
   Plotly.react('mdevo-chart-energy',empty,layout('Ry/atom',128),{displayModeBar:false,responsive:true});
   Plotly.react('mdevo-chart-temp',empty,layout('σ(T) K',108),{displayModeBar:false,responsive:true});
-}
-function mcevoInitCharts(){
-  if(typeof Plotly==='undefined')return;
-  const empty=[{x:[0],y:[0],type:'scatter',mode:'lines',line:{color:'#ccc'}}];
-  const layout=(y,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Step',gridcolor:'#ddd'},yaxis:{title:y,gridcolor:'#ddd'},showlegend:false,height:h});
-  Plotly.react('mcevo-chart-energy',empty,layout('Ry/atom',128),{displayModeBar:false,responsive:true});
-  Plotly.react('mcevo-chart-temp',empty,layout('T (K)',108),{displayModeBar:false,responsive:true});
 }
 </script>
 
@@ -3133,689 +3334,6 @@ function mdevoOnModeChange(mode){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   MONTE CARLO ENGINE — standalone Metropolis search, sibling to the
-   structure-Evolution (genetic algorithm) and MD-Evolution engines.
-   Walks a single Markov chain: propose a structural move (stripple /
-   permustrain) from the current accepted structure, run DFT, then
-   accept the move unconditionally if energy dropped, or accept it
-   probabilistically (exp(-ΔE/kBT)) if energy rose. Temperature cools
-   geometrically each generation (simulated annealing). Reuses
-   MutationEngine / StructureGenerator / CF_* tables from the
-   structure-Evolution engine; talks to the same cluster bridge via
-   the same fire-and-forget submit + patient background poll pattern.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-const MCEVO_STATUS={NEW:'new',RUNNING:'running',DONE:'done',FAILED:'failed',DUP:'duplicate'};
-const MCEVO_MUTATIONS={SEED:'Seed',STRIP:'Stripple',PERM:'Permustrain'};
-
-const MCEVO={
-  population:[],     // chain history — one entry per proposed step
-  step:0,
-  running:false,
-  paused:false,
-  seeds:[],
-  current:null,      // currently accepted structure (the live chain state)
-  temp:1000,
-  acceptCount:0,
-  rejectCount:0,
-  dupCount:0,
-  failCount:0,
-  sortKey:'step',
-  sortDir:-1,
-  page:0,
-  pageSize:20,
-  filterText:'',
-  selectedIdx:null,
-  chartStep:[],
-  chartEnergy:[],
-  chartTemp:[],
-};
-
-let MCEVO_ID_CTR=0;
-function makeMcEntry(opts={}){
-  return {
-    id: ++MCEVO_ID_CTR,
-    step: MCEVO.step,
-    parent: opts.parent||null,
-    mutation: opts.mutation||MCEVO_MUTATIONS.SEED,
-    structure: opts.structure||null,
-    temp: opts.temp!=null?opts.temp:MCEVO.temp,
-    energy:null, fitness:null,
-    accepted: null,    // true/false once Metropolis test runs, null while pending
-    status: MCEVO_STATUS.NEW,
-    qeInput:null, qeOutput:null,
-    jobId:null, slurmId:null,
-    createdAt:Date.now(),
-  };
-}
-
-/* ── Build QE vc-relax input for an MCEVO proposal (mirrors evoQEInput) ──── */
-function mcevoQEInput(entry){
-  const s=entry.structure;if(!s)return '';
-  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
-  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
-  const ecut=document.getElementById('mcevo-ecut').value||40;
-  const kx=document.getElementById('mcevo-kx').value||2,ky=document.getElementById('mcevo-ky').value||2,kz=document.getElementById('mcevo-kz').value||2;
-  let t=`! MonteCarlo step${entry.step} id${entry.id}\n&CONTROL\n  calculation='vc-relax'\n  prefix='mcevo_${entry.id}'\n  outdir='/tmp/mcevo_${entry.id}'\n  wf_collect=.false.\n  pseudo_dir='${getPseudoDir()}'\n/\n&SYSTEM\n  ibrav=0\n  nat=${s.atoms.length}\n  ntyp=${atsym.length}\n  ecutwfc=${ecut}\n  ecutrho=${parseInt(ecut)*8}\n  occupations='smearing'\n  smearing='mp'\n  degauss=0.02\n/\n&ELECTRONS\n  conv_thr=1.0e-6\n  mixing_beta=0.7\n/\n&IONS\n/\n&CELL\n  cell_dofree='all'\n/\nCELL_PARAMETERS angstrom\n`;
-  cell.forEach((v,i)=>{const sc=(i===2)?cz:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
-  t+=`ATOMIC_SPECIES\n`;atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||28).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
-  t+=`ATOMIC_POSITIONS crystal\n`;s.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
-  t+=`K_POINTS automatic\n  ${kx} ${ky} ${kz}  1 1 1\n`;
-  return t;
-}
-
-function mcevoParseQEOutput(entry,out){
-  const eM=out.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry/);
-  if(eM)entry.energy=parseFloat(eM[1])/(entry.structure?.atoms?.length||1);
-  entry.qeOutput=out.slice(-500);
-}
-
-/* ── Fitness across chain history (normalised energy, same convention) ── */
-const McEvoFitness={
-  calculate(pop){
-    const valid=pop.filter(e=>e.energy!==null&&e.status===MCEVO_STATUS.DONE);
-    if(!valid.length)return;
-    const es=valid.map(e=>e.energy);
-    const eMin=Math.min(...es),eMax=Math.max(...es);
-    const range=eMax-eMin||1;
-    valid.forEach(e=>{e.fitness=parseFloat(((eMax-e.energy)/range).toFixed(4));});
-    const dTol=parseFloat(document.getElementById('mcevo-dup-de').value)||0.001;
-    for(let i=0;i<valid.length;i++)for(let j=i+1;j<valid.length;j++){
-      if(Math.abs(valid[i].energy-valid[j].energy)<dTol&&valid[j].status!==MCEVO_STATUS.DUP){
-        valid[j].status=MCEVO_STATUS.DUP;MCEVO.dupCount++;
-      }
-    }
-  }
-};
-function mcevoGetBest(){
-  const done=MCEVO.population.filter(e=>e.energy!==null&&e.status===MCEVO_STATUS.DONE);
-  if(!done.length)return null;
-  return done.sort((a,b)=>a.energy-b.energy)[0];
-}
-
-/* ── Seed structure for the chain ──────────────────────────────────────── */
-function mcevoSeedStructure(){
-  if(MCEVO.seeds.length)return JSON.parse(JSON.stringify(MCEVO.seeds[0]));
-  const formula=document.getElementById('mcevo-formula').value||'Si4';
-  const zMin=parseInt(document.getElementById('mcevo-z-min').value)||1;
-  const zMax=parseInt(document.getElementById('mcevo-z-max').value)||4;
-  return StructureGenerator.random(formula,zMin,zMax,false);
-}
-
-/* ── Propose the next move from the current accepted structure ────────── */
-function mcevoPropose(){
-  const moveType=document.getElementById('mcevo-move').value||'mixed';
-  const cur=MCEVO.current;
-  if(!cur){
-    const s=mcevoSeedStructure();
-    const entry=makeMcEntry({structure:s,mutation:MCEVO_MUTATIONS.SEED,temp:MCEVO.temp});
-    MCEVO.population.push(entry);
-    return entry;
-  }
-  const pick=moveType==='mixed'?(Math.random()<0.5?'stripple':'permustrain'):moveType;
-  // Temporarily point the shared MutationEngine field IDs at our mcevo-* inputs by
-  // building a tiny adapter object with the same shape evoStripple/evoPermustrain expect.
-  let structure;
-  if(pick==='stripple')structure=mcevoStripple(cur.structure);
-  else structure=mcevoPermustrain(cur.structure);
-  const entry=makeMcEntry({structure,mutation:pick==='stripple'?MCEVO_MUTATIONS.STRIP:MCEVO_MUTATIONS.PERM,
-    parent:cur.id,temp:MCEVO.temp});
-  MCEVO.population.push(entry);
-  return entry;
-}
-
-/* ── Local copies of the stripple/permustrain operators, reading from
-       mcevo-* control IDs (kept independent from the Evolution engine's
-       evo-* fields so the two modes never interfere with each other) ──── */
-function mcevoStripple(parentStruct){
-  const s=JSON.parse(JSON.stringify(parentStruct));
-  const strain=parseFloat(document.getElementById('mcevo-strip-strain').value)||0.35;
-  const amp=parseFloat(document.getElementById('mcevo-strip-amp').value)||1.0;
-  s.a*=(1+strain*(Math.random()-.5));s.c=(s.c||s.a)*(1+strain*(Math.random()-.5));
-  s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+amp*0.05*(Math.random()-.5)+1)%1))}));
-  return s;
-}
-function mcevoPermustrain(parentStruct){
-  const s=JSON.parse(JSON.stringify(parentStruct));
-  const maxStrain=parseFloat(document.getElementById('mcevo-perm-strain').value)||0.5;
-  const nexch=parseInt(document.getElementById('mcevo-perm-exch').value)||4;
-  s.a*=(1+maxStrain*(Math.random()-.5)*0.3);
-  for(let i=0;i<nexch&&s.atoms.length>=2;i++){
-    const ia=Math.floor(Math.random()*s.atoms.length);
-    const ib=Math.floor(Math.random()*s.atoms.length);
-    if(ia!==ib)[s.atoms[ia].el,s.atoms[ib].el]=[s.atoms[ib].el,s.atoms[ia].el];
-  }
-  return s;
-}
-
-/* ── Metropolis acceptance test ─────────────────────────────────────────── */
-function mcevoAccept(entry){
-  if(!MCEVO.current||MCEVO.current.energy==null){
-    entry.accepted=true;MCEVO.current=entry;MCEVO.acceptCount++;
-    logHPC(`[MCEVO] #${entry.id} accepted (chain start), E=${entry.energy?.toFixed(5)}`);
-    return true;
-  }
-  if(entry.energy==null){entry.accepted=false;MCEVO.rejectCount++;return false;}
-  const dE=entry.energy-MCEVO.current.energy;
-  const kB_Ry=6.3336e-6; // Boltzmann constant in Ry/K
-  const T=Math.max(1,MCEVO.temp);
-  let accept;
-  if(dE<=0)accept=true;
-  else accept=Math.random()<Math.exp(-dE/(kB_Ry*T));
-  entry.accepted=accept;
-  if(accept){
-    MCEVO.current=entry;MCEVO.acceptCount++;
-    logHPC(`[MCEVO] #${entry.id} accepted, ΔE=${dE.toFixed(5)} Ry/atom, T=${T.toFixed(0)}K`);
-  } else {
-    MCEVO.rejectCount++;
-    logHPC(`[MCEVO] #${entry.id} rejected, ΔE=${dE.toFixed(5)} Ry/atom, T=${T.toFixed(0)}K`);
-  }
-  return accept;
-}
-
-/* ── Submit one chain step — fire and forget, same pattern as evoSubmitStruct ── */
-async function mcevoSubmitEntry(entry){
-  const h=getHost();
-  entry.qeInput=mcevoQEInput(entry);
-  if(!h){
-    entry.status=MCEVO_STATUS.RUNNING;mcevoRenderTable();
-    await sleep(200+Math.random()*300);
-    entry.energy=-(4.5+Math.random()*1.5)/((entry.structure?.atoms?.length)||1);
-    entry.status=MCEVO_STATUS.DONE;
-    mcevoRenderTable();
-    return true;
-  }
-  try{
-    entry.status=MCEVO_STATUS.RUNNING;mcevoRenderTable();
-    const fd=new FormData();
-    fd.append('input_text',entry.qeInput);
-    fd.append('nodes','1');
-    fd.append('ntasks','44');
-    fd.append('job_name',`mcevo_${entry.id}`);
-    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},30000);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    entry.jobId=d.job_id;entry.slurmId=d.slurm_id;
-    logHPC(`[MCEVO] #${entry.id} submitted → job_id=${entry.jobId} (T=${entry.temp}K)`);
-    mcevoPollEntry(entry,h);
-    return true;
-  }catch(e){
-    entry.status=MCEVO_STATUS.FAILED;MCEVO.failCount++;
-    logHPC(`[MCEVO] #${entry.id} submit error: ${e.message}`);
-    mcevoRenderTable();
-    return false;
-  }
-}
-
-/* ── Background poller (mirrors evoPollJob's patience) ─────────────────── */
-async function mcevoPollEntry(entry,h){
-  let errCount=0;const maxErrs=10,maxPolls=360,pollInterval=10000;
-  for(let i=0;i<maxPolls;i++){
-    if(!MCEVO.running)return;
-    await sleep(pollInterval);
-    if(!MCEVO.running)return;
-    try{
-      const rp=await fetchWithTimeout(`${h}/status/${entry.jobId}`,{},15000);
-      if(!rp.ok)throw new Error('HTTP '+rp.status);
-      const dp=await rp.json();
-      errCount=0;
-      if(i%6===0||dp.status==='done'||dp.status==='failed')
-        logHPC(`[MCEVO] #${entry.id} poll ${i+1}: ${dp.status}`);
-      if(dp.status==='done'||dp.status==='completed'||dp.converged){
-        mcevoParseQEOutput(entry,dp.output_tail||'');
-        entry.status=MCEVO_STATUS.DONE;
-        logHPC(`[MCEVO] #${entry.id} ✓ E=${entry.energy?.toFixed(5)} Ry/atom`);
-        mcevoRenderTable();
-        return;
-      }
-      if(dp.status==='failed'||dp.status==='error'){
-        entry.status=MCEVO_STATUS.FAILED;MCEVO.failCount++;
-        logHPC(`[MCEVO] #${entry.id} ✗ job failed`);
-        mcevoRenderTable();
-        return;
-      }
-      entry.status=MCEVO_STATUS.RUNNING;mcevoRenderTable();
-    }catch(e){
-      errCount++;
-      logHPC(`[MCEVO] #${entry.id} poll error (${errCount}/${maxErrs}): ${e.message}`);
-      if(errCount>=maxErrs){
-        entry.status=MCEVO_STATUS.FAILED;MCEVO.failCount++;
-        mcevoRenderTable();
-        return;
-      }
-      await sleep(Math.min(10000*errCount,60000));
-    }
-  }
-  logHPC(`[MCEVO] #${entry.id} — poll timeout, may still be running on cluster.`);
-  entry.status=MCEVO_STATUS.FAILED;MCEVO.failCount++;
-  mcevoRenderTable();
-}
-
-/* ── Wait until a chain step finishes (DONE or FAILED) before proceeding —
-       Metropolis requires the result before the next move can be proposed ── */
-async function mcevoWaitForDone(entry){
-  while(MCEVO.running&&entry.status===MCEVO_STATUS.RUNNING){
-    await sleep(2000);
-  }
-}
-
-/* ── Main Monte Carlo loop — strictly sequential single chain ──────────── */
-async function mcevoRunLoop(){
-  const maxSteps=parseInt(document.getElementById('mcevo-max-steps').value)||200;
-  const startTemp=parseFloat(document.getElementById('mcevo-temp').value)||1000;
-  const cooling=parseFloat(document.getElementById('mcevo-cooling').value)||0.95;
-  const minTemp=parseFloat(document.getElementById('mcevo-min-temp').value)||1;
-  const stepsPerGen=parseInt(document.getElementById('mcevo-steps').value)||1;
-
-  logHPC(`[MCEVO] Starting Monte Carlo search — T0=${startTemp}K, cooling=${cooling}`);
-  MCEVO.current=null;MCEVO.temp=startTemp;MCEVO.acceptCount=0;MCEVO.rejectCount=0;
-  mcevoSetState('running');
-
-  // Seed the chain with one structure
-  const starter=mcevoPropose();
-  mcevoRenderTable();mcevoUpdateCounters();
-  await mcevoSubmitEntry(starter);
-  await mcevoWaitForDone(starter);
-  mcevoAccept(starter);
-  McEvoFitness.calculate(MCEVO.population);
-  mcevoRenderTable();mcevoUpdateCharts();mcevoUpdateStats();mcevoUpdateCounters();
-
-  while(MCEVO.running&&MCEVO.population.length<maxSteps&&MCEVO.temp>minTemp){
-    if(MCEVO.paused){await sleep(500);continue;}
-
-    MCEVO.step++;
-    for(let s=0;s<stepsPerGen&&MCEVO.running;s++){
-      const proposed=mcevoPropose();
-      mcevoRenderTable();mcevoUpdateCounters();
-      await mcevoSubmitEntry(proposed);
-      await mcevoWaitForDone(proposed);
-      mcevoAccept(proposed);
-      McEvoFitness.calculate(MCEVO.population);
-      mcevoRenderTable();mcevoUpdateCharts();mcevoUpdateStats();mcevoUpdateCounters();
-    }
-    MCEVO.temp=Math.max(minTemp,MCEVO.temp*cooling);
-    logHPC(`[MCEVO] Step ${MCEVO.step} done — T now ${MCEVO.temp.toFixed(1)}K, accepted ${MCEVO.acceptCount}, rejected ${MCEVO.rejectCount}`);
-  }
-
-  MCEVO.running=false;
-  mcevoSetState(MCEVO.population.length>=maxSteps?'max-reached':(MCEVO.temp<=minTemp?'converged':'stopped'));
-  logHPC(`[MCEVO] Complete — ${MCEVO.population.length} steps, final T=${MCEVO.temp.toFixed(1)}K, accepted ${MCEVO.acceptCount}, rejected ${MCEVO.rejectCount}`);
-  McEvoFitness.calculate(MCEVO.population);
-  mcevoRenderTable();mcevoUpdateCharts();
-}
-
-function mcevoUpdateCounters(){
-  const maxSteps=parseInt(document.getElementById('mcevo-max-steps').value)||200;
-  document.getElementById('mcevo-step-counter').textContent=`Step: ${MCEVO.step}`;
-  document.getElementById('mcevo-step-badge').textContent=`Step ${MCEVO.step} / ${MCEVO.population.length}`;
-  document.getElementById('mcevo-cur-temp').textContent=MCEVO.temp.toFixed(1)+' K';
-  document.getElementById('mcevo-accept-counter').textContent=`${MCEVO.acceptCount} / ${MCEVO.population.length}`;
-  const best=mcevoGetBest();
-  if(best?.energy!=null)document.getElementById('mcevo-best-energy').textContent=best.energy.toFixed(5)+' Ry/atom';
-}
-
-/* ── UI controls ─────────────────────────────────────────────────────────── */
-
-/* ══ MONTE CARLO EVOLUTION JS ══ */
-function mcevoStart(){
-  if(MCEVO.running)return;
-  MCEVO.running=true;MCEVO.paused=false;
-  MCEVO.population=[];MCEVO.step=0;MCEVO_ID_CTR=0;MCEVO.current=null;
-  MCEVO.chartStep=[];MCEVO.chartEnergy=[];MCEVO.chartTemp=[];
-  MCEVO.dupCount=0;MCEVO.failCount=0;MCEVO.acceptCount=0;MCEVO.rejectCount=0;
-  mcevoRunLoop().catch(e=>{mdLog('[MCEVO] error: '+e.message,'err');console.error(e);});
-  document.getElementById('mcevo-start-btn').disabled=true;
-  document.getElementById('mcevo-pause-btn').disabled=false;document.getElementById('mcevo-pause-btn').style.opacity='1';
-  document.getElementById('mcevo-stop-btn').disabled=false;document.getElementById('mcevo-stop-btn').style.opacity='1';
-}
-function mcevoPause(){
-  MCEVO.paused=!MCEVO.paused;
-  document.getElementById('mcevo-pause-btn').textContent=MCEVO.paused?'▶ Resume':'⏸ Pause';
-  mcevoSetState(MCEVO.paused?'paused':'running');
-}
-function mcevoStop(){
-  MCEVO.running=false;MCEVO.paused=false;
-  mcevoSetState('stopped');
-  document.getElementById('mcevo-start-btn').disabled=false;
-  document.getElementById('mcevo-pause-btn').disabled=true;document.getElementById('mcevo-pause-btn').style.opacity='.5';
-  document.getElementById('mcevo-stop-btn').disabled=true;document.getElementById('mcevo-stop-btn').style.opacity='.5';
-  document.getElementById('mcevo-pause-btn').textContent='⏸ Pause';
-}
-function mcevoResetAll(){
-  mcevoStop();
-  MCEVO.population=[];MCEVO.step=0;MCEVO_ID_CTR=0;MCEVO.current=null;
-  MCEVO.chartStep=[];MCEVO.chartEnergy=[];MCEVO.chartTemp=[];
-  MCEVO.dupCount=0;MCEVO.failCount=0;MCEVO.acceptCount=0;MCEVO.rejectCount=0;MCEVO.selectedIdx=null;
-  mcevoRenderTable();mcevoUpdateCharts();mcevoUpdateStats();
-  document.getElementById('mcevo-step-counter').textContent='Step: 0';
-  document.getElementById('mcevo-best-energy').textContent='— Ry/atom';
-  document.getElementById('mcevo-cur-temp').textContent='— K';
-  document.getElementById('mcevo-accept-counter').textContent='0 / 0';
-  document.getElementById('mcevo-step-badge').textContent='Step 0 / 0';
-  logHPC('[MCEVO] Reset complete');
-}
-function mcevoSetState(state){
-  const chip=document.getElementById('mcevo-state-chip');
-  const mon=document.getElementById('mcevo-monitor-status');
-  const labels={running:'⟳ Running',paused:'⏸ Paused',stopped:'■ Stopped',idle:'Idle',converged:'✓ Converged','max-reached':'Max Reached'};
-  const colors={running:'#ea580c',paused:'#d97706',stopped:'#dc2626',idle:'#6b7280',converged:'#047857','max-reached':'#2563eb'};
-  chip.textContent=labels[state]||state;chip.style.color=colors[state]||'#333';
-  if(mon){mon.textContent=labels[state]||state;mon.style.color=colors[state]||'#888';}
-}
-
-/* ── Table render (mirrors evoRenderTable) ──────────────────────────────── */
-function mcevoRenderTable(){
-  const filter=MCEVO.filterText.toLowerCase();
-  let rows=[...MCEVO.population];
-  if(filter){rows=rows.filter(e=>
-    String(e.id).includes(filter)||(e.mutation||'').toLowerCase().includes(filter)||
-    String(e.step).includes(filter)||(e.status||'').includes(filter)
-  );}
-  rows.sort((a,b)=>{
-    let va=a[MCEVO.sortKey],vb=b[MCEVO.sortKey];
-    if(va===null||va===undefined)va=MCEVO.sortDir>0?Infinity:-Infinity;
-    if(vb===null||vb===undefined)vb=MCEVO.sortDir>0?Infinity:-Infinity;
-    return (va<vb?-1:va>vb?1:0)*MCEVO.sortDir;
-  });
-  const total=rows.length;
-  const pages=Math.max(1,Math.ceil(total/MCEVO.pageSize));
-  MCEVO.page=Math.min(MCEVO.page,pages-1);
-  const slice=rows.slice(MCEVO.page*MCEVO.pageSize,(MCEVO.page+1)*MCEVO.pageSize);
-
-  document.getElementById('mcevo-page-info').textContent=`Page ${MCEVO.page+1} / ${pages}`;
-  document.getElementById('mcevo-total-count').textContent=`${total} steps`;
-  document.getElementById('mcevo-prev').disabled=MCEVO.page===0;
-  document.getElementById('mcevo-next').disabled=MCEVO.page>=pages-1;
-
-  const statusBadge=s=>{
-    const cls={done:'evo-status-done',running:'evo-status-run',failed:'evo-status-fail',new:'evo-status-new',duplicate:'evo-status-fail'}[s]||'evo-status-new';
-    return `<span class="evo-status-badge ${cls}">${s}</span>`;
-  };
-  const fmt=v=>v===null||v===undefined?'—':typeof v==='number'?v.toFixed(4):v;
-  const accFmt=a=>a===null||a===undefined?'—':(a?'✓':'✗');
-
-  const tbody=document.getElementById('mcevo-pop-tbody');
-  if(!slice.length){
-    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">No steps yet — click ▶ Start Monte Carlo</td></tr>';
-    return;
-  }
-  tbody.innerHTML=slice.map(e=>`
-    <tr class="${MCEVO.selectedIdx===e.id?'active':''}" onclick="mcevoSelectEntry(${e.id})">
-      <td style="font-weight:700;color:#ea580c">#${e.id}</td>
-      <td>${e.step}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:9.5px">${e.parent?('#'+e.parent):'—'}</td>
-      <td style="font-size:9.5px">${e.mutation}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${e.temp}</td>
-      <td style="font-family:'JetBrains Mono',monospace;color:${e.energy<-4?'#065f46':'#333'}">${fmt(e.energy)}</td>
-      <td style="font-family:'JetBrains Mono',monospace;color:${(e.fitness||0)>.8?'#ea580c':'#333'}">${fmt(e.fitness)}</td>
-      <td style="font-weight:700;color:${e.accepted?'#065f46':(e.accepted===false?'#991b1b':'#888')}">${accFmt(e.accepted)}</td>
-      <td>${statusBadge(e.status)}</td>
-    </tr>`).join('');
-}
-function mcevoSort(key){
-  if(MCEVO.sortKey===key)MCEVO.sortDir*=-1;else{MCEVO.sortKey=key;MCEVO.sortDir=1;}
-  mcevoRenderTable();
-}
-function mcevoFilterTable(){MCEVO.filterText=document.getElementById('mcevo-search').value;MCEVO.page=0;mcevoRenderTable();}
-function mcevoPage(d){MCEVO.page=Math.max(0,MCEVO.page+d);mcevoRenderTable();}
-
-/* ── Select entry in viewer ─────────────────────────────────────────────── */
-function mcevoSelectEntry(id){
-  MCEVO.selectedIdx=id;
-  const e=MCEVO.population.find(x=>x.id===id);
-  if(!e)return;
-  mcevoRenderTable();
-  document.getElementById('mcevo-sel-id').textContent='#'+id;
-  document.getElementById('mcevo-info-e').textContent=e.energy!=null?e.energy.toFixed(5)+' Ry':'—';
-  document.getElementById('mcevo-info-fit').textContent=e.fitness!=null?e.fitness.toFixed(4):'—';
-  document.getElementById('mcevo-info-temp').textContent=e.temp+' K';
-  document.getElementById('mcevo-info-step').textContent=e.step;
-  document.getElementById('mcevo-info-mut').textContent=e.mutation;
-  document.getElementById('mcevo-info-par').textContent=e.parent?('#'+e.parent):'—';
-  document.getElementById('mcevo-info-acc').textContent=e.accepted===true?'✓ Accepted':(e.accepted===false?'✗ Rejected':'—');
-  document.getElementById('mcevo-info-status').textContent=e.status;
-  if(e.structure)mcevoLoad3D(e.structure);
-}
-function mcevoPrevStep(){
-  if(!MCEVO.population.length)return;
-  const idx=MCEVO.population.findIndex(e=>e.id===MCEVO.selectedIdx);
-  mcevoSelectEntry(MCEVO.population[Math.max(0,idx-1)].id);
-}
-function mcevoNextStep(){
-  if(!MCEVO.population.length)return;
-  const idx=MCEVO.population.findIndex(e=>e.id===MCEVO.selectedIdx);
-  mcevoSelectEntry(MCEVO.population[Math.min(MCEVO.population.length-1,(idx<0?0:idx)+1)].id);
-}
-
-/* ── Dedicated mini-viewer for the MCEVO structure panel (own Three.js /
-       Canvas2D instance, same WebGL fallback approach as the other
-       evolution-family viewers) ───────────────────────────────────────── */
-let MCEVO_THREE={scene:null,camera:null,renderer:null,is2D:false,ctx2d:null,canvas2d:null,
-  sph:{theta:.6,phi:1.1,r:12},target:null,drag:false,last:{x:0,y:0},atoms:[],bonds:[]};
-function mcevoInitViewer(){
-  if(MCEVO_THREE.renderer||MCEVO_THREE.is2D)return;
-  const c=document.getElementById('mcevo-viewer-3d');if(!c)return;
-  const testCanvas=document.createElement('canvas');
-  const testGL=testCanvas.getContext('webgl')||testCanvas.getContext('experimental-webgl');
-  if(!testGL||!window.THREE){
-    MCEVO_THREE.is2D=true;
-    const cv=document.createElement('canvas');
-    cv.style.cssText='width:100%;height:100%;position:absolute;inset:0;cursor:grab;background:#fff;';
-    c.appendChild(cv);
-    MCEVO_THREE.canvas2d=cv;MCEVO_THREE.ctx2d=cv.getContext('2d');
-    const resize=()=>{cv.width=c.clientWidth||320;cv.height=c.clientHeight||200;mcevoDraw2D();};
-    resize();new ResizeObserver(resize).observe(c);
-    cv.addEventListener('mousedown',e=>{MCEVO_THREE.drag=true;MCEVO_THREE.last={x:e.clientX,y:e.clientY};});
-    window.addEventListener('mouseup',()=>{MCEVO_THREE.drag=false;});
-    window.addEventListener('mousemove',e=>{
-      if(!MCEVO_THREE.drag)return;
-      MCEVO_THREE.sph.theta-=(e.clientX-MCEVO_THREE.last.x)*0.01;
-      MCEVO_THREE.sph.phi+=(e.clientY-MCEVO_THREE.last.y)*0.01;
-      MCEVO_THREE.last={x:e.clientX,y:e.clientY};mcevoDraw2D();
-    });
-    logHPC('[MCEVO] Structure viewer: Canvas 2D (WebGL unavailable)');
-    return;
-  }
-  const W=c.clientWidth||320,H=c.clientHeight||200;
-  MCEVO_THREE.scene=new THREE.Scene();MCEVO_THREE.scene.background=new THREE.Color(0xfafafa);
-  MCEVO_THREE.camera=new THREE.PerspectiveCamera(38,W/H,.05,500);
-  MCEVO_THREE.target=new THREE.Vector3();
-  MCEVO_THREE.renderer=new THREE.WebGLRenderer({antialias:true});
-  MCEVO_THREE.renderer.setSize(W,H);MCEVO_THREE.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  c.appendChild(MCEVO_THREE.renderer.domElement);
-  MCEVO_THREE.scene.add(new THREE.AmbientLight(0xffffff,.5));
-  const d=new THREE.DirectionalLight(0xffffff,.8);d.position.set(3,5,4);MCEVO_THREE.scene.add(d);
-  const el=MCEVO_THREE.renderer.domElement;
-  el.addEventListener('mousedown',e=>{MCEVO_THREE.drag=true;MCEVO_THREE.last={x:e.clientX,y:e.clientY};});
-  window.addEventListener('mouseup',()=>{MCEVO_THREE.drag=false;});
-  window.addEventListener('mousemove',e=>{
-    if(!MCEVO_THREE.drag)return;
-    const dx=(e.clientX-MCEVO_THREE.last.x)*.007,dy=(e.clientY-MCEVO_THREE.last.y)*.007;
-    MCEVO_THREE.last={x:e.clientX,y:e.clientY};
-    MCEVO_THREE.sph.theta-=dx;MCEVO_THREE.sph.phi=Math.max(.1,Math.min(Math.PI-.1,MCEVO_THREE.sph.phi+dy));
-    mcevoUpdateCam();
-  });
-  el.addEventListener('wheel',e=>{e.preventDefault();MCEVO_THREE.sph.r=Math.max(1.5,MCEVO_THREE.sph.r*Math.exp(e.deltaY*.001));mcevoUpdateCam();},{passive:false});
-  new ResizeObserver(()=>{const W2=c.clientWidth,H2=c.clientHeight;MCEVO_THREE.camera.aspect=W2/H2;MCEVO_THREE.camera.updateProjectionMatrix();MCEVO_THREE.renderer.setSize(W2,H2);}).observe(c);
-  (function loop(){requestAnimationFrame(loop);if(MCEVO_THREE.renderer)MCEVO_THREE.renderer.render(MCEVO_THREE.scene,MCEVO_THREE.camera);}());
-  mcevoUpdateCam();
-}
-function mcevoUpdateCam(){
-  if(!MCEVO_THREE.camera)return;
-  const{theta,phi,r}=MCEVO_THREE.sph,t=MCEVO_THREE.target;
-  MCEVO_THREE.camera.position.set(t.x+r*Math.sin(phi)*Math.sin(theta),t.y+r*Math.cos(phi),t.z+r*Math.sin(phi)*Math.cos(theta));
-  MCEVO_THREE.camera.lookAt(t);MCEVO_THREE.camera.updateMatrixWorld(true);
-}
-function mcevoBuildPoints(s){
-  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
-  const pts=s.atoms.map(at=>({el:at.el,
-    x:(cell[0][0]*at.f[0]+cell[1][0]*at.f[1]+cell[2][0]*at.f[2])*a0,
-    y:(cell[0][1]*at.f[0]+cell[1][1]*at.f[1]+cell[2][1]*at.f[2])*a0,
-    z:(cell[0][2]*at.f[0]+cell[1][2]*at.f[1]+cell[2][2]*at.f[2])*cz}));
-  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});
-  if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
-  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
-  return {pts,a0};
-}
-function mcevoLoad3D(s){
-  if(!MCEVO_THREE.renderer&&!MCEVO_THREE.is2D)mcevoInitViewer();
-  const {pts,a0}=mcevoBuildPoints(s);
-  MCEVO_THREE.atoms=pts;
-  MCEVO_THREE.bonds=[];
-  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-    const ri=CF_CRADII[pts[i].el]||CF_CRADII.default,rj=CF_CRADII[pts[j].el]||CF_CRADII.default;
-    const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y,pts[i].z-pts[j].z);
-    if(d>0.3&&d<ri+rj+0.4)MCEVO_THREE.bonds.push({i,j});
-  }
-  if(MCEVO_THREE.is2D){mcevoDraw2D();return;}
-  if(!MCEVO_THREE.scene)return;
-  const toRem=[];MCEVO_THREE.scene.children.forEach(c=>{if(c.isLight)return;toRem.push(c);});
-  toRem.forEach(o=>{MCEVO_THREE.scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
-  const byEl={};pts.forEach(p=>{(byEl[p.el]||(byEl[p.el]=[])).push(p);});
-  Object.entries(byEl).forEach(([el,ats])=>{
-    const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*0.9;
-    const color=new THREE.Color(CF_COLORS[el]||CF_COLORS.default);
-    const geo=new THREE.SphereGeometry(r,18,12);
-    const mat=new THREE.MeshStandardMaterial({color,roughness:.25,metalness:.05});
-    const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
-    ats.forEach((a,i)=>{mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z));mesh.setColorAt(i,color);});
-    mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
-    MCEVO_THREE.scene.add(mesh);
-  });
-  MCEVO_THREE.bonds.forEach(({i,j})=>{
-    const ai=pts[i],aj=pts[j];
-    const dir=new THREE.Vector3(aj.x-ai.x,aj.y-ai.y,aj.z-ai.z);const len=dir.length();if(len<0.001)return;
-    const geo=new THREE.CylinderGeometry(.07,.07,len,8);
-    const mat=new THREE.MeshStandardMaterial({color:0xaaaaaa});
-    const m=new THREE.Mesh(geo,mat);
-    m.position.set((ai.x+aj.x)/2,(ai.y+aj.y)/2,(ai.z+aj.z)/2);
-    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
-    MCEVO_THREE.scene.add(m);
-  });
-  MCEVO_THREE.sph.r=Math.max(4,a0*2.8);MCEVO_THREE.target.set(0,0,0);mcevoUpdateCam();
-}
-function mcevoDraw2D(){
-  if(!MCEVO_THREE.ctx2d||!MCEVO_THREE.atoms.length)return;
-  const cv=MCEVO_THREE.canvas2d,ctx=MCEVO_THREE.ctx2d;
-  const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
-  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-  const zoom=Math.min(W,H)/14;
-  const rx=MCEVO_THREE.sph.phi-1.1,ry=MCEVO_THREE.sph.theta-.6;
-  const proj=MCEVO_THREE.atoms.map((a,idx)=>{
-    const x=a.x*Math.cos(ry)-a.z*Math.sin(ry);
-    const z=a.x*Math.sin(ry)+a.z*Math.cos(ry);
-    const y2=a.y*Math.cos(rx)-z*Math.sin(rx);
-    const z2=a.y*Math.sin(rx)+z*Math.cos(rx);
-    return{...a,idx,px:cx+x*zoom,py:cy-y2*zoom,z:z2,r:(CF_DISPLAY_RADIUS[a.el]||0.7)*zoom*0.85};
-  }).sort((a,b)=>a.z-b.z);
-  MCEVO_THREE.bonds.forEach(({i,j})=>{
-    const a=proj.find(p=>p.idx===i),b=proj.find(p=>p.idx===j);if(!a||!b)return;
-    ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);ctx.strokeStyle='#aaa';ctx.lineWidth=2;ctx.stroke();
-  });
-  proj.forEach(a=>{
-    ctx.beginPath();ctx.arc(a.px,a.py,Math.max(4,a.r),0,Math.PI*2);
-    ctx.fillStyle=CF_COLORS[a.el]||CF_COLORS.default;ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=.5;ctx.stroke();
-  });
-}
-function mcevoViewerReset(){
-  if(MCEVO_THREE.is2D)return;
-  MCEVO_THREE.sph={theta:.6,phi:1.1,r:12};if(MCEVO_THREE.target)MCEVO_THREE.target.set(0,0,0);mcevoUpdateCam();
-}
-
-/* ── Charts ──────────────────────────────────────────────────────────────── */
-function mcevoUpdateCharts(){
-  const done=MCEVO.population.filter(e=>e.energy!==null&&e.status===MCEVO_STATUS.DONE);
-  if(!done.length)return;
-  MCEVO.chartStep=done.map(e=>e.step);
-  MCEVO.chartEnergy=done.map(e=>e.energy);
-  MCEVO.chartTemp=done.map(e=>e.temp);
-
-  const plotCfg={displayModeBar:false,responsive:true};
-  const layout=(ytitle,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Step',gridcolor:'#ddd',tickfont:{size:8}},yaxis:{title:ytitle,gridcolor:'#ddd',tickfont:{size:8}},showlegend:false,height:h});
-
-  const colors=done.map(e=>e.accepted?'#ea580c':'#ccc');
-  Plotly.react('mcevo-chart-energy',[{x:MCEVO.chartStep,y:MCEVO.chartEnergy,type:'scatter',mode:'lines+markers',
-    line:{color:'#ea580c',width:1},marker:{size:5,color:colors}}],layout('Ry/atom',128),plotCfg);
-  Plotly.react('mcevo-chart-temp',[{x:MCEVO.chartStep,y:MCEVO.chartTemp,type:'scatter',mode:'lines',
-    line:{color:'#0ea5e9',width:1.5},fill:'tozeroy',fillcolor:'rgba(14,165,233,.1)'}],layout('T (K)',108),plotCfg);
-}
-function mcevoUpdateStats(){
-  document.getElementById('mcevo-accept-count').textContent=MCEVO.acceptCount;
-  document.getElementById('mcevo-reject-count').textContent=MCEVO.rejectCount;
-  document.getElementById('mcevo-dup-count').textContent=MCEVO.dupCount;
-  document.getElementById('mcevo-fail-count').textContent=MCEVO.failCount;
-}
-
-/* ── Seeds ───────────────────────────────────────────────────────────────── */
-function mcevoAddSeed(){
-  if(!current||!current.atoms.length){logHPC('[MCEVO] No structure loaded to use as seed');return;}
-  MCEVO.seeds.push(JSON.parse(JSON.stringify(current)));
-  document.getElementById('mcevo-seed-list').textContent=MCEVO.seeds.map((s,i)=>`${i+1}. ${s.formula||'unknown'}`).join('\n');
-  logHPC('[MCEVO] Seed added: '+current.formula);
-}
-function mcevoRemoveSeed(){
-  MCEVO.seeds.pop();
-  document.getElementById('mcevo-seed-list').textContent=MCEVO.seeds.length?MCEVO.seeds.map((s,i)=>`${i+1}. ${s.formula}`).join('\n'):'No seeds added';
-}
-function mcevoResetDuplicates(){
-  MCEVO.population.forEach(e=>{if(e.status===MCEVO_STATUS.DUP)e.status=MCEVO_STATUS.DONE;});
-  MCEVO.dupCount=0;mcevoRenderTable();logHPC('[MCEVO] Duplicates reset');
-}
-
-/* ── CSV export ──────────────────────────────────────────────────────────── */
-function mcevoExportCSV(){
-  const header='ID,Step,Parent,Move,Temp(K),Energy,Fitness,Accepted,Status\n';
-  const rows=MCEVO.population.map(e=>[e.id,e.step,e.parent??'',e.mutation,e.temp,e.energy??'',e.fitness??'',e.accepted??'',e.status].join(',')).join('\n');
-  const b=new Blob([header+rows],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='montecarlo_results.csv';a.click();URL.revokeObjectURL(u);
-}
-
-/* ── Host test (mirrors evoTestHost/mdevoTestHost) ──────────────────────── */
-async function mcevoTestHost(){
-  const inp=document.getElementById('mcevo-host-input');
-  const status=document.getElementById('mcevo-conn-status');
-  const btn=document.getElementById('mcevo-test-btn');
-  document.getElementById('loginNode').value=inp.value||'';
-  const h=getHost();
-  if(!h){status.textContent='No host';status.style.background='#fee2e2';status.style.color='#991b1b';return;}
-  btn.textContent='Testing…';btn.disabled=true;
-  status.textContent='…';status.style.background='#fef9c3';status.style.color='#854d0e';
-  try{
-    const r=await fetchWithTimeout(h+'/health',{},5000);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    status.textContent='✓ Connected';status.style.background='#d1fae5';status.style.color='#065f46';
-    logHPC('[MCEVO] Host connected: '+JSON.stringify(d));
-  }catch(e){
-    status.textContent='✗ '+e.message.slice(0,30);status.style.background='#fee2e2';status.style.color='#991b1b';
-    logHPC('[MCEVO] Host test failed: '+e.message);
-  }
-  btn.textContent='⚡ Test';btn.disabled=false;
-}
-
-/* ── Show/hide overlay when mode changes ────────────────────────────────── */
-function mcevoOnModeChange(mode){
-  const overlay=document.getElementById('mcevo-overlay');
-  if(mode==='mcevo'){
-    overlay.classList.add('active');
-    mcevoInitViewer();
-    if(!MCEVO.population.length)mcevoRenderTable();
-    mcevoUpdateCharts();
-    const mainHost=document.getElementById('loginNode').value||'';
-    const mcevoInput=document.getElementById('mcevo-host-input');
-    if(mcevoInput&&mainHost)mcevoInput.value=mainHost;
-    const sb=document.getElementById('mcevo-start-btn');
-    const pb=document.getElementById('mcevo-pause-btn');
-    const stb=document.getElementById('mcevo-stop-btn');
-    if(sb&&!sb._wired){sb.addEventListener('click',function(e){e.stopPropagation();mcevoStart();});sb._wired=true;}
-    if(pb&&!pb._wired){pb.addEventListener('click',function(e){e.stopPropagation();mcevoPause();});pb._wired=true;}
-    if(stb&&!stb._wired){stb.addEventListener('click',function(e){e.stopPropagation();mcevoStop();});stb._wired=true;}
-  } else {
-    overlay.classList.remove('active');
-  }
-}
 
 /* ══════════════════════════════════════════════════════════
    MD SIMULATIONS OVERLAY — ported standalone MD page script (namespaced md*)
@@ -3831,7 +3349,7 @@ function mcevoOnModeChange(mode){
     e && e.stopPropagation && e.stopPropagation();
     closeModeMenu && closeModeMenu();
     // Hide evo overlays
-    ['mdevo-overlay','mcevo-overlay'].forEach(function(id){
+    ['mdevo-overlay'].forEach(function(id){
       var el=document.getElementById(id); if(el) el.classList.remove('active');
     });
     if (mode === 'evolution') {
@@ -3846,19 +3364,7 @@ function mcevoOnModeChange(mode){
       if(typeof mdevoInitCharts==='function') mdevoInitCharts();
       return;
     }
-    if (mode === 'mcevo') {
-      var el=document.getElementById('mcevo-overlay');
-      if(el) el.classList.add('active');
-      var lbl=document.getElementById('bb-mode-label');
-      if(lbl) lbl.textContent='Monte Carlo Evolution';
-      document.querySelectorAll('.mm-item').forEach(function(i){i.classList.toggle('active',i.dataset.mode===mode);});
-      var hi=document.getElementById('mcevo-host-input');
-      var ln=document.getElementById('md-loginNode');
-      if(hi&&ln) hi.value=ln.value;
-      if(typeof mcevoInitCharts==='function') mcevoInitCharts();
-      return;
-    }
-    // Normal tab modes
+// Normal tab modes
     var tabMap={'md':'md-sim','geometry':'md-geo','aiff':'md-aiff'};
     var tabId=tabMap[mode]||'md-sim';
     var btn=document.querySelector('[data-rptab="'+tabId+'"]');
@@ -3870,10 +3376,58 @@ function mcevoOnModeChange(mode){
 /* Pre-fill host on load */
 document.addEventListener('DOMContentLoaded', function(){
   var hostVal=(document.getElementById('md-loginNode')||{}).value||'http://100.127.228.36:5000';
-  ['mdevo-host-input','mcevo-host-input'].forEach(function(id){
+  ['mdevo-host-input'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value=hostVal;
   });
 });
+</script>
+
+
+<script>
+function aiffSelectBackend(el, name) {
+  el.closest('.acc-body').querySelectorAll('.backend-card-rp').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  el.textContent = name + ' \u2713';
+  aiffLog('Backend selected: ' + name, 'ok');
+}
+function aiffUpdateSplit(v) {
+  const el = document.getElementById('aiff-train-pct');
+  if(el) el.textContent = v + '%';
+}
+function aiffLog(msg, type) {
+  mdLog(msg, type || 'ok');
+  const c = document.getElementById('rp-aiff-con');
+  if(c) {
+    const d = document.createElement('div');
+    const ts = new Date().toLocaleTimeString('en',{hour12:false});
+    d.style.color = type==='inf'?'#79c0ff':type==='warn'?'#e3b341':type==='err'?'#ff7b72':'#7ee787';
+    d.textContent = '['+ts+'] '+msg;
+    c.appendChild(d); c.scrollTop = c.scrollHeight;
+  }
+}
+let _aiffMiniPlotInit = false;
+const _origSwitchRpTabAiff = switchRpTab;
+switchRpTab = function(tabId, btn) {
+  _origSwitchRpTabAiff(tabId, btn);
+  if(tabId === 'md-aiff' && !_aiffMiniPlotInit) {
+    _aiffMiniPlotInit = true;
+    setTimeout(() => {
+      const el = document.getElementById('rp-aiff-plot');
+      if(!el || !window.Plotly) return;
+      const epochs = Array.from({length:78},(_,i)=>i+1);
+      const tL = epochs.map(e=>0.12*Math.exp(-e/25)+0.014);
+      const vL = epochs.map(e=>0.13*Math.exp(-e/22)+0.015);
+      Plotly.newPlot('rp-aiff-plot',[
+        {x:epochs,y:tL,name:'Train',line:{color:'#ff6600',width:1.5}},
+        {x:epochs,y:vL,name:'Val',  line:{color:'#2e7dcc',width:1.5}},
+      ],{paper_bgcolor:'#fff',plot_bgcolor:'#fff',margin:{t:2,r:4,b:18,l:34},
+        font:{family:'Roboto',size:8,color:'#888'},showlegend:false,
+        xaxis:{gridcolor:'rgba(0,0,0,.05)',tickfont:{size:8}},
+        yaxis:{gridcolor:'rgba(0,0,0,.05)',tickfont:{size:8},type:'log'}},
+      {responsive:true,displayModeBar:false});
+    }, 100);
+  }
+};
 </script>
 
 </body>
