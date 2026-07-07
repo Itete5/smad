@@ -120,6 +120,12 @@ body{font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx
 }
 .ppane{display:none;width:100%;height:100%}
 .ppane.active{display:flex;flex-direction:column}
+/* Show placeholder content behind the drop-zone */
+.ppane.has-ph .plot-ph{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:40px;z-index:5;background:var(--bg3);
+}
 
 /* placeholder */
 .plot-ph{
@@ -132,6 +138,60 @@ body{font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx
 
 /* actual plot divs */
 .plot-div{flex:1;min-height:0}
+
+/* ── DROP ZONE ── */
+#drop-zone{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:var(--bg3);z-index:10;
+  border:none;
+  transition:background var(--t);
+  cursor:pointer;
+}
+#drop-zone.drag-over{
+  background:var(--acc-l);
+}
+#drop-zone.hidden{display:none}
+
+.dz-icon{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--bg2);border:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:14px;
+  transition:background var(--t),border-color var(--t);
+}
+#drop-zone.drag-over .dz-icon{background:var(--acc-l);border-color:var(--acc)}
+.dz-title{font-size:14px;font-weight:600;color:var(--tx1);margin-bottom:6px}
+.dz-sub{font-size:12px;color:var(--tx3);margin-bottom:18px;line-height:1.5;max-width:300px;text-align:center}
+.dz-formats{
+  display:flex;gap:5px;flex-wrap:wrap;justify-content:center;
+  margin-bottom:20px;
+}
+.dz-fmt{
+  padding:2px 8px;border-radius:var(--r);background:var(--bg2);
+  border:1px solid var(--bdr);font-size:10px;font-weight:600;
+  color:var(--tx3);font-family:var(--mono);
+}
+.dz-btn{
+  padding:9px 22px;background:var(--acc);border:none;border-radius:var(--r2);
+  color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;
+  font-family:var(--sans);transition:background var(--t);
+  display:inline-flex;align-items:center;gap:7px;
+}
+.dz-btn:hover{background:var(--acc-d)}
+.dz-or{font-size:11px;color:var(--tx3);margin:10px 0}
+.dz-sample-btn{
+  padding:7px 18px;background:transparent;border:1px solid var(--bdr);
+  border-radius:var(--r2);color:var(--tx2);font-size:12px;cursor:pointer;
+  font-family:var(--sans);transition:all var(--t);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.dz-sample-btn:hover{background:var(--bg2);border-color:var(--bdr2);color:var(--tx0)}
+.dz-loaded-name{
+  font-size:11px;font-family:var(--mono);color:var(--grn);
+  margin-top:10px;display:none;align-items:center;gap:5px;
+}
+.dz-loaded-name.show{display:flex}
 
 /* multi-plot grid (e.g. DOS+Band side by side) */
 .plot-grid-2{display:grid;grid-template-columns:1fr 1fr;height:100%;gap:1px;background:var(--bdr)}
@@ -180,72 +240,76 @@ body{font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx
   width:240px;flex-shrink:0;background:var(--bg1);border-left:1px solid var(--bdr);
   display:flex;flex-direction:column;overflow:hidden;
 }
-/* Module list inside right panel */
-.rp-module-section{
-  padding:5px 10px 3px;font-size:9px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.09em;color:var(--tx3);
-  background:var(--bg2);border-bottom:1px solid var(--bg5);border-top:1px solid var(--bg5);
-  flex-shrink:0;
+/* ── RIGHT PANEL ── */
+#rpanel{
+  width:240px;flex-shrink:0;background:var(--bg1);border-left:1px solid var(--bdr);
+  display:flex;flex-direction:column;overflow:hidden;
 }
-.rp-module-item{
-  display:flex;align-items:center;gap:7px;padding:6px 10px;
-  font-size:11px;color:var(--tx1);cursor:pointer;transition:background var(--t);
-  border-bottom:1px solid var(--bg5);
+.rp-sec-head{
+  padding:8px 12px 4px;
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.10em;color:var(--tx3);
+  user-select:none;
 }
-.rp-module-item:hover{background:var(--bg2)}
-.rp-module-item.active{
-  background:var(--bg3);border-left:2px solid var(--acc);
-  color:var(--tx0);font-weight:600;
+.rp-dropdown{
+  margin:0 10px 10px;position:relative;
 }
-.rp-module-icon{font-size:12px;flex-shrink:0;width:15px;text-align:center}
-.rp-module-badge{
-  margin-left:auto;font-size:8px;font-weight:700;padding:1px 5px;
-  border-radius:2px;background:var(--acc-l);color:var(--acc);border:1px solid var(--acc-b);
-  white-space:nowrap;
+.rp-dropdown select{
+  width:100%;appearance:none;-webkit-appearance:none;
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);
+  padding:7px 28px 7px 10px;font-size:12px;font-weight:500;color:var(--tx0);
+  font-family:var(--sans);cursor:pointer;
+  transition:border-color var(--t),box-shadow var(--t);
 }
-.rp-module-badge.grn{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-b)}
-.rp-divider-section{height:1px;background:var(--bg5);margin:0}
-/* collapsible options panel below the module list */
-#rp-opts-toggle{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.09em;color:var(--tx3);background:var(--bg2);
-  border-top:1px solid var(--bdr);border-bottom:1px solid var(--bg5);
-  cursor:pointer;flex-shrink:0;
+.rp-dropdown select:focus{border-color:var(--acc);outline:none;box-shadow:0 0 0 2px rgba(255,102,0,.12)}
+.rp-dropdown::after{
+  content:"▾";position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  font-size:11px;color:var(--tx3);pointer-events:none;
 }
-#rp-opts-toggle:hover{background:var(--bg4)}
-#rp-opts-arrow{transition:transform .15s}
-.rp-head{
-  padding:6px 10px 5px;font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);
-  border-bottom:1px solid var(--bg5);background:var(--bg2);flex-shrink:0;
-}
-.rp-body{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:8px}
-.rp-field{display:flex;flex-direction:column;gap:3px}
-.rp-label{font-size:10px;font-weight:600;color:var(--tx2)}
+.rp-rule{height:1px;background:var(--bdr);margin:4px 10px 10px;}
+.rp-field{margin:0 10px 8px;display:flex;flex-direction:column;gap:3px;}
+.rp-label{font-size:10px;font-weight:600;color:var(--tx2);}
 .rp-select,.rp-input{
-  height:24px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);
-  font-size:11px;color:var(--tx1);padding:0 6px;width:100%;font-family:var(--sans);
+  height:26px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);
+  font-size:11px;color:var(--tx1);padding:0 7px;width:100%;font-family:var(--sans);
 }
 .rp-select:focus,.rp-input:focus{border-color:var(--acc);outline:none}
-.rp-checks{display:flex;flex-direction:column;gap:4px}
+.rp-checks{display:flex;flex-direction:column;gap:5px;margin:0 10px 8px;}
 .rp-check{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx1);cursor:pointer}
 .rp-check input{accent-color:var(--acc)}
 .rp-divider{height:1px;background:var(--bg5);margin:2px 0}
-.rp-subhead{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);margin-top:4px}
-.rp-run-btn{
-  margin:8px 10px;padding:7px;background:var(--acc);border:none;border-radius:var(--r2);
-  color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);
-  transition:background var(--t);flex-shrink:0;
-}
-.rp-run-btn:hover{background:var(--acc-d)}
-.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px}
-.metric-card{
-  background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:5px 7px;
-}
+.rp-subhead{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);margin:0 10px 5px;}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 10px 8px;}
+.metric-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:5px 7px;}
 .metric-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:var(--tx3)}
 .metric-val{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--tx0);margin-top:1px}
+.metric-val.ok{color:var(--grn)} .metric-val.warn{color:var(--acc)}
 .metric-unit{font-size:8.5px;color:var(--tx3)}
+.rp-run-btn{
+  margin:auto 10px 10px;padding:8px;background:var(--acc);border:none;border-radius:var(--r2);
+  color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans);
+  transition:background var(--t);flex-shrink:0;display:block;
+  width:calc(100% - 20px);margin-left:10px;margin-right:10px;
+}
+.rp-run-btn:hover{background:var(--acc-d)}
+.rp-collapsible{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 12px;font-size:11.5px;font-weight:500;color:var(--tx2);
+  cursor:pointer;border-top:1px solid var(--bg5);transition:background var(--t);
+  user-select:none;
+}
+.rp-collapsible:hover{background:var(--bg2);color:var(--tx0)}
+.rp-collapsible .rp-caret{font-size:10px;color:var(--tx3);transition:transform var(--t)}
+.rp-collapsible.open .rp-caret{transform:rotate(90deg)}
+.rp-coll-body{
+  overflow:hidden;max-height:0;transition:max-height .2s ease;
+  background:var(--bg2);border-top:1px solid var(--bg5);
+}
+.rp-coll-body.open{max-height:400px}
+.rp-coll-inner{padding:8px 10px;font-size:11px;color:var(--tx2);line-height:1.65}
+.rp-coll-inner .rp-field{margin:0 0 7px;}
+.rp-coll-inner .rp-checks{margin:0 0 7px;}
+@keyframes bbpulse{to{opacity:.25}}
 
 /* ── BOTTOM BAR ── */
 #bottombar{
@@ -261,7 +325,7 @@ body{font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx
 .bb-dot{width:6px;height:6px;border-radius:50%;background:var(--tx3);flex-shrink:0}
 .bb-dot.ok{background:var(--grn);box-shadow:0 0 4px var(--grn)}
 .bb-dot.run{background:var(--acc);box-shadow:0 0 4px var(--acc);animation:bbpulse .8s infinite alternate}
-@keyframes bbpulse{to{opacity:.25}}
+
 /* ── PLOT TAB BAR ── */
 #plot-tab-bar{
   display:flex;align-items:stretch;flex:1;overflow-x:auto;overflow-y:hidden;
@@ -278,14 +342,13 @@ body{font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx
 .ptab:hover{background:var(--bg2);color:var(--tx0)}
 .ptab.active{background:var(--bg2);color:var(--acc);font-weight:700;border-bottom-color:var(--acc)}
 #bb-right{
-  display:flex;align-items:center;gap:7px;padding:0 10px;
-  border-left:1px solid var(--bdr);flex-shrink:0;
+  display:flex;align-items:center;gap:0;flex-shrink:0;
 }
-#bb-status{font-size:10px;color:var(--tx3);font-family:var(--mono);white-space:nowrap}
+#bb-status{font-size:10px;color:var(--tx3);font-family:var(--mono);white-space:nowrap;padding:0 8px}
 .bb-export-btn{
   height:20px;padding:0 9px;background:var(--bg3);border:1px solid var(--bdr);
   border-radius:var(--r);font-size:10px;color:var(--tx2);cursor:pointer;
-  font-family:var(--sans);transition:all var(--t);
+  font-family:var(--sans);transition:all var(--t);margin-right:6px;
 }
 .bb-export-btn:hover{background:var(--bg2);border-color:var(--bdr2);color:var(--tx0)}
 </style>
@@ -307,6 +370,46 @@ body{font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx
 
     <!-- PLOT AREA -->
     <div id="plot-area">
+
+      <!-- ══ DROP ZONE overlay (hidden when a file is loaded / sample used) ══ -->
+      <div id="drop-zone"
+           onclick="dzClick()"
+           ondragover="dzDragOver(event)"
+           ondragleave="dzDragLeave(event)"
+           ondrop="dzDrop(event)">
+        <input type="file" id="dz-input"
+               accept=".dat,.txt,.xml,.bands,.dos,.freq,.out,.xyz,.cif,.poscar,.vasp,.json,.csv"
+               style="display:none"
+               onchange="dzFileChosen(this.files[0])"/>
+
+        <div class="dz-icon" id="dz-icon">⬆</div>
+        <div class="dz-title" id="dz-title">Drop file or click to upload</div>
+        <div class="dz-sub" id="dz-sub">Upload your output file to visualise results.</div>
+
+        <div class="dz-formats" id="dz-formats">
+          <span class="dz-fmt">.dat</span>
+          <span class="dz-fmt">.freq</span>
+          <span class="dz-fmt">.out</span>
+          <span class="dz-fmt">.xyz</span>
+          <span class="dz-fmt">CIF</span>
+          <span class="dz-fmt">POSCAR</span>
+          <span class="dz-fmt">.csv</span>
+          <span class="dz-fmt">.json</span>
+        </div>
+
+        <button class="dz-btn" onclick="event.stopPropagation();dzClick()">
+          ⬆ Select file
+        </button>
+        <div class="dz-or">or</div>
+        <button class="dz-sample-btn" onclick="event.stopPropagation();dzLoadSample()">
+          ◉ Load sample data
+        </button>
+
+        <div class="dz-loaded-name" id="dz-loaded-name">
+          <span style="color:var(--grn)">✓</span>
+          <span id="dz-fname"></span>
+        </div>
+      </div>
 
       <!-- ── BAND STRUCTURE ── -->
       <div class="ppane active" id="pane-band">
@@ -404,374 +507,363 @@ body{font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx
       </div>
 
       <!-- ── GENERIC PLACEHOLDER PANES (Spectroscopy / Structural etc.) ── -->
-      <div class="ppane" id="pane-raman">      <div class="plot-ph"><div class="ph-ico">〜</div><div class="ph-title">Raman Simulation</div><div class="ph-desc">Raman-active mode intensities from DFPT phonon calculation. Requires ph.x output with Raman tensor.</div></div></div>
-      <div class="ppane" id="pane-infrared">   <div class="plot-ph"><div class="ph-ico">—</div><div class="ph-title">Infrared (IR)</div><div class="ph-desc">IR absorption spectrum from mode effective charges. Upload matdyn output or ph.x dynamical matrix.</div></div></div>
-      <div class="ppane" id="pane-xanes">      <div class="plot-ph"><div class="ph-ico">X</div><div class="ph-title">XANES / EXAFS</div><div class="ph-desc">X-ray absorption near-edge structure and extended fine structure. Upload XSpectra or FEFF output.</div></div></div>
-      <div class="ppane" id="pane-eels">       <div class="plot-ph"><div class="ph-ico">E</div><div class="ph-title">EELS</div><div class="ph-desc">Electron energy loss spectrum — low-loss plasmon region and core-loss edges from dielectric function.</div></div></div>
-      <div class="ppane" id="pane-arpes">      <div class="plot-ph"><div class="ph-ico">A</div><div class="ph-title">ARPES</div><div class="ph-desc">Angle-resolved photoemission spectral function A(k,ω) from unfolded band structure or surface calculation.</div></div></div>
-      <div class="ppane" id="pane-vibvis">     <div class="plot-ph"><div class="ph-ico">↕</div><div class="ph-title">Vibration Visualizer</div><div class="ph-desc">Animate normal modes in 3D. Select mode index and amplitude. Requires matdyn.modes output.</div></div></div>
-      <div class="ppane" id="pane-seekpath">   <div class="plot-ph"><div class="ph-ico">○</div><div class="ph-title">SeekPath</div><div class="ph-desc">Automatic high-symmetry k-path from crystal structure. Outputs path labels, fractional coordinates, and BZ visualisation.</div></div></div>
-      <div class="ppane" id="pane-bz">         <div class="plot-ph"><div class="ph-ico">○</div><div class="ph-title">Brillouin Zone</div><div class="ph-desc">3D Brillouin zone with symmetry points labelled. Click a point to set it as k-path waypoint.</div></div></div>
-      <div class="ppane" id="pane-phasediag">  <div class="plot-ph"><div class="ph-ico">◇</div><div class="ph-title">Phase Diagram</div><div class="ph-desc">Convex hull and T–x / P–T phase diagram from formation energies. Upload structures or pull from DB.</div></div></div>
-      <div class="ppane" id="pane-charge">     <div class="plot-ph"><div class="ph-ico">□</div><div class="ph-title">Charge Density</div><div class="ph-desc">ρ(r) isosurface and 2D slice from charge.xsf or pp.x output. Adjust isovalue and colour map.</div></div></div>
-      <div class="ppane" id="pane-xrd">        <div class="plot-ph"><div class="ph-ico">✦</div><div class="ph-title">XRD Diffraction</div><div class="ph-desc">Simulated powder XRD pattern (Cu Kα) from crystal structure. Upload CIF or use current geometry.</div></div></div>
+      <div class="ppane" id="pane-raman">
+        <div class="plot-ph">
+          <div class="ph-ico">〜</div>
+          <div class="ph-title">Raman Simulation</div>
+          <div class="ph-desc">Generate Raman-active mode intensities from a DFPT phonon calculation.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-infrared">
+        <div class="plot-ph">
+          <div class="ph-ico">—</div>
+          <div class="ph-title">Infrared (IR)</div>
+          <div class="ph-desc">Compute IR absorption spectrum from mode effective charges and phonon frequencies.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-xanes">
+        <div class="plot-ph">
+          <div class="ph-ico">X</div>
+          <div class="ph-title">XANES / EXAFS</div>
+          <div class="ph-desc">Plot X-ray absorption near-edge structure and extended fine structure spectra.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-eels">
+        <div class="plot-ph">
+          <div class="ph-ico">E</div>
+          <div class="ph-title">EELS</div>
+          <div class="ph-desc">Electron energy loss spectrum from the dielectric function — low-loss and core-loss.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-arpes">
+        <div class="plot-ph">
+          <div class="ph-ico">A</div>
+          <div class="ph-title">ARPES</div>
+          <div class="ph-desc">Angle-resolved photoemission spectral function A(k,ω) from unfolded bands.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-vibvis">
+        <div class="plot-ph">
+          <div class="ph-ico">↕</div>
+          <div class="ph-title">Vibration Visualizer</div>
+          <div class="ph-desc">Animate normal modes in 3D at selected amplitude and mode index.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-seekpath">
+        <div class="plot-ph">
+          <div class="ph-ico">○</div>
+          <div class="ph-title">SeekPath</div>
+          <div class="ph-desc">Automatic high-symmetry k-path from crystal structure using Setyawan-Curtarolo convention.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-bz">
+        <div class="plot-ph">
+          <div class="ph-ico">○</div>
+          <div class="ph-title">Brillouin Zone</div>
+          <div class="ph-desc">3D Brillouin zone with high-sym points labelled. Click a point to set k-path waypoints.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-phasediag">
+        <div class="plot-ph">
+          <div class="ph-ico">◇</div>
+          <div class="ph-title">Phase Diagram</div>
+          <div class="ph-desc">Convex hull and T–x / P–T phase diagram from computed formation energies.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-charge">
+        <div class="plot-ph">
+          <div class="ph-ico">□</div>
+          <div class="ph-title">Charge Density</div>
+          <div class="ph-desc">ρ(r) isosurface and 2D slice visualisation from pp.x charge density output.</div>
+          </div>
+      </div>
+      <div class="ppane" id="pane-xrd">
+        <div class="plot-ph">
+          <div class="ph-ico">✦</div>
+          <div class="ph-title">XRD Diffraction</div>
+          <div class="ph-desc">Simulated powder XRD pattern (Cu Kα) from crystal structure.</div>
+          </div>
+      </div></div>
 
     </div><!-- /plot-area -->
   </div><!-- /main -->
 
-  <!-- RIGHT PANEL (modules + options) -->
+  <!-- RIGHT PANEL — two-level navigation -->
   <div id="rpanel">
-    <!-- ── MODULE LIST ── -->
-    <div style="overflow-y:auto;flex:1;min-height:0">
 
-      <!-- SPECTROSCOPY -->
-      <div class="rp-module-section">Spectroscopy</div>
-      <div class="rp-module-item" onclick="switchTool('raman',this)">
-        <span class="rp-module-icon">〜</span>Raman Simulation
-        <span class="rp-module-badge">New</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('infrared',this)">
-        <span class="rp-module-icon">—</span>Infrared (IR)
-        <span class="rp-module-badge">New</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('xanes',this)">
-        <span class="rp-module-icon">X</span>XANES / EXAFS
-        <span class="rp-module-badge">New</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('eels',this)">
-        <span class="rp-module-icon">E</span>EELS
-        <span class="rp-module-badge">New</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('arpes',this)">
-        <span class="rp-module-icon">A</span>ARPES
-        <span class="rp-module-badge">New</span>
-      </div>
+    <!-- ① Module selector -->
+    <div class="rp-sec-head">Analysis</div>
+    <div class="rp-dropdown">
+      <select id="module-select" onchange="selectModule(this.value)">
+        <optgroup label="Spectroscopy">
+          <option value="raman">Raman Simulation</option>
+          <option value="infrared">Infrared (IR)</option>
+          <option value="xanes">XANES / EXAFS</option>
+          <option value="eels">EELS</option>
+          <option value="arpes">ARPES</option>
+        </optgroup>
+        <optgroup label="Lattice Dynamics">
+          <option value="vibvis">Vibration Visualizer</option>
+          <option value="phonon">Phonon Dispersion</option>
+          <option value="phonondos">Phonon DOS</option>
+        </optgroup>
+        <optgroup label="Electronic Structure">
+          <option value="seekpath">SeekPath</option>
+          <option value="band">Band Structure</option>
+          <option value="dos">DOS / PDOS</option>
+          <option value="bz">Brillouin Zone</option>
+        </optgroup>
+        <optgroup label="Structural">
+          <option value="phasediag">Phase Diagram</option>
+          <option value="chargedensity">Charge Density</option>
+          <option value="xrd">XRD Diffraction</option>
+          <option value="convergence">Convergence</option>
+        </optgroup>
+        <optgroup label="Molecular Dynamics">
+          <option value="energy">Energy / T / P</option>
+          <option value="rdf">g(r) RDF</option>
+          <option value="msd">MSD</option>
+          <option value="vacf">VACF</option>
+        </optgroup>
+        <optgroup label="ML Force Field">
+          <option value="parity">Parity Plot</option>
+          <option value="learning">Learning Curve</option>
+          <option value="coverage">Coverage / PCA</option>
+        </optgroup>
+      </select>
+    </div>
 
-      <!-- LATTICE DYNAMICS -->
-      <div class="rp-module-section">Lattice Dynamics</div>
-      <div class="rp-module-item" onclick="switchTool('vibvis',this)">
-        <span class="rp-module-icon">↕</span>Vibration Visualizer
-        <span class="rp-module-badge">New</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('phonon',this)">
-        <span class="rp-module-icon">ω</span>Phonon Dispersion
-        <span class="rp-module-badge">New</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('phonondos',this)">
-        <span class="rp-module-icon">≡</span>Phonon DOS
-        <span class="rp-module-badge">New</span>
-      </div>
+    <div class="rp-rule"></div>
 
-      <!-- ELECTRONIC STRUCTURE -->
-      <div class="rp-module-section">Electronic Structure</div>
-      <div class="rp-module-item" onclick="switchTool('seekpath',this)">
-        <span class="rp-module-icon">○</span>SeekPath
-        <span class="rp-module-badge">New</span>
-      </div>
-      <div class="rp-module-item active" onclick="switchTool('band',this)">
-        <span class="rp-module-icon">〜〜</span>Band Structure
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('dos',this)">
-        <span class="rp-module-icon">≡</span>DOS / PDOS
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('bz',this)">
-        <span class="rp-module-icon">○</span>Brillouin Zone
-        <span class="rp-module-badge grn">Live</span>
-      </div>
+    <!-- ② Options — scrollable -->
+    <div id="rp-options-scroll" style="flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;display:flex;flex-direction:column;">
 
-      <!-- STRUCTURAL -->
-      <div class="rp-module-section">Structural</div>
-      <div class="rp-module-item" onclick="switchTool('phasediag',this)">
-        <span class="rp-module-icon">◇</span>Phase Diagram
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('chargedensity',this)">
-        <span class="rp-module-icon">□</span>Charge Density
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('xrd',this)">
-        <span class="rp-module-icon">✦</span>XRD Diffraction
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('convergence',this)">
-        <span class="rp-module-icon">⚡</span>Convergence
-        <span class="rp-module-badge grn">Live</span>
+      <div class="rp-sec-head">Data</div>
+
+      <!-- RAMAN -->
+      <div id="rpo-raman" class="rp-opts-pane">
+        <div class="rp-field">
+          <div class="rp-label">ph.x output file</div>
+          <div style="display:flex;gap:4px">
+            <input class="rp-input" id="raman-file" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/>
+            <button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button>
+          </div>
+        </div>
+        <div class="rp-field">
+          <div class="rp-label">Laser wavelength (nm)</div>
+          <input class="rp-input" type="number" value="532" step="1"/>
+        </div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Lorentzian broadening</label>
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> Non-resonant only</label>
+        </div>
       </div>
 
-      <!-- MD -->
-      <div class="rp-module-section">Molecular Dynamics</div>
-      <div class="rp-module-item" onclick="switchTool('energy',this)">
-        <span class="rp-module-icon">⚡</span>Energy / T / P
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('rdf',this)">
-        <span class="rp-module-icon">〰</span>g(r) RDF
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('msd',this)">
-        <span class="rp-module-icon">⇥</span>MSD
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('vacf',this)">
-        <span class="rp-module-icon">〜</span>VACF
-        <span class="rp-module-badge grn">Live</span>
+      <!-- INFRARED -->
+      <div id="rpo-infrared" class="rp-opts-pane" style="display:none">
+        <div class="rp-field">
+          <div class="rp-label">matdyn.x output file</div>
+          <div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div>
+        </div>
+        <div class="rp-field"><div class="rp-label">Broadening (cm⁻¹)</div><input class="rp-input" type="number" value="10"/></div>
+        <div class="rp-checks"><label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Born effective charges</label></div>
       </div>
 
-      <!-- ML Force Field -->
-      <div class="rp-module-section">ML Force Field</div>
-      <div class="rp-module-item" onclick="switchTool('parity',this)">
-        <span class="rp-module-icon">⚖</span>Parity Plot
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('learning',this)">
-        <span class="rp-module-icon">📉</span>Learning Curve
-        <span class="rp-module-badge grn">Live</span>
-      </div>
-      <div class="rp-module-item" onclick="switchTool('coverage',this)">
-        <span class="rp-module-icon">🗺</span>Coverage / PCA
-        <span class="rp-module-badge grn">Live</span>
+      <!-- XANES -->
+      <div id="rpo-xanes" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">XSpectra / FEFF output</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Absorbing element</div><select class="rp-select"><option>Auto-detect</option><option>Fe</option><option>Cu</option><option>S</option></select></div>
+        <div class="rp-field"><div class="rp-label">Edge</div><select class="rp-select"><option>K</option><option>L₁</option><option>L₂,₃</option><option>M</option></select></div>
       </div>
 
-      <!-- INPUT FILE -->
-      <div class="rp-module-section">Input File</div>
-      <div class="rp-module-item" onclick="triggerUpload()" style="flex-direction:column;align-items:center;padding:12px 10px;gap:4px">
-        <span style="font-size:18px;opacity:.5">⬆</span>
-        <span style="font-size:10.5px;color:var(--tx2)">Drop file or click</span>
-        <span style="font-size:9px;color:var(--tx3);font-family:var(--mono)">CIF · POSCAR · XYZ · out</span>
+      <!-- EELS -->
+      <div id="rpo-eels" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">Dielectric function file</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Region</div><select class="rp-select"><option>Low-loss (0–50 eV)</option><option>Core-loss</option><option>Both</option></select></div>
+      </div>
+
+      <!-- ARPES -->
+      <div id="rpo-arpes" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">Spectral function file</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Temperature (K)</div><input class="rp-input" type="number" value="300"/></div>
+        <div class="rp-field"><div class="rp-label">Broadening (eV)</div><input class="rp-input" type="number" value="0.05" step="0.01"/></div>
+      </div>
+
+      <!-- VIBVIS -->
+      <div id="rpo-vibvis" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">matdyn.modes file</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Mode index</div><input class="rp-input" type="number" value="1" min="1"/></div>
+        <div class="rp-field"><div class="rp-label">Amplitude</div><input class="rp-input" type="number" value="1.0" step="0.1"/></div>
+      </div>
+
+      <!-- PHONON -->
+      <div id="rpo-phonon" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">matdyn.x output</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> VDOS</label>
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> Mark imaginary</label>
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> NAC correction</label>
+        </div>
+      </div>
+
+      <!-- PHONON DOS -->
+      <div id="rpo-phonondos" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">matdyn.x output</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-checks"><label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Partial VDOS per atom</label></div>
+      </div>
+
+      <!-- SEEKPATH -->
+      <div id="rpo-seekpath" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">Structure file</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="CIF / POSCAR / XYZ" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Convention</div><select class="rp-select"><option>Setyawan-Curtarolo</option><option>Hinuma et al.</option><option>AFLOW</option></select></div>
+      </div>
+
+      <!-- BAND -->
+      <div id="rpo-band" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">bands.x output</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">k-path</div><select class="rp-select"><option>Auto (AFLOW)</option><option>Γ-X-M-Γ-R</option><option>Custom</option></select></div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> SOC</label>
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> Fatbands</label>
+        </div>
+      </div>
+
+      <!-- DOS -->
+      <div id="rpo-dos" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">dos.x output</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Smearing (Ry)</div><input class="rp-input" type="number" value="0.02" step="0.005"/></div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> PDOS</label>
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> Spin-resolved</label>
+        </div>
+      </div>
+
+      <!-- BZ -->
+      <div id="rpo-bz" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">Structure file</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="CIF / POSCAR" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-checks"><label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Label high-sym points</label></div>
+      </div>
+
+      <!-- PHASE DIAGRAM -->
+      <div id="rpo-phasediag" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">Formation energy CSV / JSON</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Diagram type</div><select class="rp-select"><option>Convex hull</option><option>T–x</option><option>P–T</option></select></div>
+      </div>
+
+      <!-- CHARGE DENSITY -->
+      <div id="rpo-chargedensity" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">charge.xsf / pp.x output</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Isovalue</div><input class="rp-input" type="number" value="0.05" step="0.005"/></div>
+        <div class="rp-field"><div class="rp-label">Colour map</div><select class="rp-select"><option>Blue–Red</option><option>Viridis</option><option>Plasma</option></select></div>
+      </div>
+
+      <!-- XRD -->
+      <div id="rpo-xrd" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">Structure file</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="CIF / POSCAR" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Radiation source</div><select class="rp-select"><option>Cu Kα (1.5406 Å)</option><option>Mo Kα</option><option>Synchrotron</option></select></div>
+        <div class="rp-field"><div class="rp-label">2θ range (°)</div><div style="display:flex;gap:4px"><input class="rp-input" type="number" value="5" style="width:50%"/><input class="rp-input" type="number" value="80" style="width:50%"/></div></div>
+      </div>
+
+      <!-- CONVERGENCE -->
+      <div id="rpo-convergence" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">pw.x output file</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Test type</div><select class="rp-select"><option>SCF convergence</option><option>Ecutwfc sweep</option><option>k-mesh sweep</option></select></div>
+      </div>
+
+      <!-- ENERGY -->
+      <div id="rpo-energy" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">MD trajectory / log</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Kinetic E</label>
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Potential E</label>
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Temperature</label>
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> Pressure</label>
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Running avg</label>
+        </div>
+      </div>
+
+      <!-- RDF -->
+      <div id="rpo-rdf" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">XYZ trajectory</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">r<sub>max</sub> (Å)</div><input class="rp-input" type="number" value="12"/></div>
+        <div class="rp-field"><div class="rp-label">Bins</div><input class="rp-input" type="number" value="120"/></div>
+        <div class="rp-checks"><label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Partial pairs</label></div>
+      </div>
+
+      <!-- MSD -->
+      <div id="rpo-msd" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">XYZ trajectory</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Fit window</div><select class="rp-select"><option>Last 50%</option><option>Last 25%</option><option>All</option></select></div>
+        <div class="rp-checks"><label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Per species</label></div>
+      </div>
+
+      <!-- VACF -->
+      <div id="rpo-vacf" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">XYZ trajectory</div><div style="display:flex;gap:4px"><input class="rp-input" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="dzClick()"/><button onclick="dzClick()" style="height:26px;padding:0 8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;cursor:pointer">…</button></div></div>
+        <div class="rp-field"><div class="rp-label">Max lag (ps)</div><input class="rp-input" type="number" value="2.0" step="0.1"/></div>
+        <div class="rp-checks"><label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> FFT → VDOS</label></div>
+      </div>
+
+      <!-- PARITY -->
+      <div id="rpo-parity" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">ML model</div><select class="rp-select"><option>SANNP v2.1.0</option><option>MACE v1.0</option><option>NequIP v0.8</option></select></div>
+        <div class="rp-field"><div class="rp-label">Property</div><select class="rp-select"><option>Energy</option><option>Forces</option><option>Stress</option></select></div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Show RMSE</label>
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Identity line</label>
+        </div>
+      </div>
+
+      <!-- LEARNING CURVE -->
+      <div id="rpo-learning" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">Model</div><select class="rp-select"><option>SANNP v2.1.0</option><option>MACE v1.0</option></select></div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Train loss</label>
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Val loss</label>
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> F-RMSE</label>
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Log scale</label>
+        </div>
+      </div>
+
+      <!-- COVERAGE -->
+      <div id="rpo-coverage" class="rp-opts-pane" style="display:none">
+        <div class="rp-field"><div class="rp-label">View</div><select class="rp-select"><option>T–P scatter</option><option>PCA embedding</option><option>Energy histogram</option></select></div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Train set</label>
+          <label class="rp-check"><input type="checkbox" checked style="accent-color:var(--acc)"> Val set</label>
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> Flag outliers</label>
+        </div>
+      </div>
+
+    </div><!-- /rp-options-scroll -->
+
+    <!-- Advanced settings -->
+    <div class="rp-collapsible" onclick="toggleColl(this,'adv-body')">
+      <span>Advanced settings</span><span class="rp-caret">▸</span>
+    </div>
+    <div class="rp-coll-body" id="adv-body">
+      <div class="rp-coll-inner">
+        <div class="rp-field"><div class="rp-label">Output format</div><select class="rp-select"><option>PNG (300 dpi)</option><option>SVG</option><option>PDF</option></select></div>
+        <div class="rp-field"><div class="rp-label">Colour scheme</div><select class="rp-select"><option>BURAI default</option><option>Publication B&W</option><option>Viridis</option></select></div>
+        <div class="rp-checks">
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> Show grid</label>
+          <label class="rp-check"><input type="checkbox" style="accent-color:var(--acc)"> Show legend</label>
+        </div>
       </div>
     </div>
 
-    <!-- ── OPTIONS SECTION ── -->
-    <div id="rp-opts-toggle" onclick="toggleRpOpts()">
-      <span id="rp-title">Options</span>
-      <span id="rp-opts-arrow">▲</span>
+    <!-- Help -->
+    <div class="rp-collapsible" onclick="toggleColl(this,'help-body')">
+      <span>Help &amp; requirements</span><span class="rp-caret">▸</span>
     </div>
-    <div id="rp-opts-wrap" style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0">
-    <div class="rp-body" id="rp-body">
+    <div class="rp-coll-body" id="help-body">
+      <div class="rp-coll-inner" id="help-text">Select a module above to see requirements.</div>
+    </div>
 
-      <!-- BAND options (default shown) -->
-      <div id="rpo-band">
-        <div class="rp-field">
-          <div class="rp-label">Fermi level align</div>
-          <select class="rp-select"><option>Automatic</option><option>Manual</option></select>
-        </div>
-        <div class="rp-field">
-          <div class="rp-label">Energy window (eV)</div>
-          <div style="display:flex;gap:4px">
-            <input class="rp-input" type="number" value="-6" step="0.5" style="width:50%"/>
-            <input class="rp-input" type="number" value="6" step="0.5" style="width:50%"/>
-          </div>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Display</div>
-        <div class="rp-checks">
-          <label class="rp-check"><input type="checkbox" checked> Show Fermi level</label>
-          <label class="rp-check"><input type="checkbox" checked> High-sym labels</label>
-          <label class="rp-check"><input type="checkbox"> Orbital character</label>
-          <label class="rp-check"><input type="checkbox"> Spin up / down</label>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Metrics</div>
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-lbl">Band gap</div><div class="metric-val" id="m-gap">—</div></div>
-          <div class="metric-card"><div class="metric-lbl">Gap type</div><div class="metric-val" id="m-gaptype">—</div></div>
-          <div class="metric-card"><div class="metric-lbl">E_F (Ry)</div><div class="metric-val" id="m-ef">—</div></div>
-          <div class="metric-card"><div class="metric-lbl">Num bands</div><div class="metric-val" id="m-nbnd">—</div></div>
-        </div>
-      </div>
-
-      <!-- DOS options -->
-      <div id="rpo-dos" style="display:none">
-        <div class="rp-field">
-          <div class="rp-label">Smearing (Ry)</div>
-          <input class="rp-input" type="number" value="0.02" step="0.005" style="width:100%"/>
-        </div>
-        <div class="rp-field">
-          <div class="rp-label">Energy window (eV)</div>
-          <div style="display:flex;gap:4px">
-            <input class="rp-input" type="number" value="-8" step="1" style="width:50%"/>
-            <input class="rp-input" type="number" value="6" step="1" style="width:50%"/>
-          </div>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Projections</div>
-        <div class="rp-checks">
-          <label class="rp-check"><input type="checkbox" checked> Total DOS</label>
-          <label class="rp-check"><input type="checkbox" checked> s orbital</label>
-          <label class="rp-check"><input type="checkbox" checked> p orbital</label>
-          <label class="rp-check"><input type="checkbox" checked> d orbital</label>
-          <label class="rp-check"><input type="checkbox"> f orbital</label>
-          <label class="rp-check"><input type="checkbox"> Spin-resolved</label>
-        </div>
-      </div>
-
-      <!-- Phonon options -->
-      <div id="rpo-phonon" style="display:none">
-        <div class="rp-checks">
-          <label class="rp-check"><input type="checkbox" checked> Show imaginary modes</label>
-          <label class="rp-check"><input type="checkbox" checked> Mark acoustic</label>
-          <label class="rp-check"><input type="checkbox"> NAC correction</label>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Stability check</div>
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-lbl">Imaginary</div><div class="metric-val" id="m-imag" style="color:var(--red)">—</div></div>
-          <div class="metric-card"><div class="metric-lbl">ω<sub>max</sub> (THz)</div><div class="metric-val" id="m-wmax">—</div></div>
-        </div>
-      </div>
-
-      <!-- Convergence options -->
-      <div id="rpo-convergence" style="display:none">
-        <div class="rp-field">
-          <div class="rp-label">Threshold type</div>
-          <select class="rp-select"><option>Total energy</option><option>Force</option><option>Stress</option></select>
-        </div>
-        <div class="rp-field">
-          <div class="rp-label">Show threshold line</div>
-          <select class="rp-select"><option>Auto (QE default)</option><option>Custom</option><option>None</option></select>
-        </div>
-      </div>
-
-      <!-- Energy options -->
-      <div id="rpo-energy" style="display:none">
-        <div class="rp-field">
-          <div class="rp-label">Running avg window</div>
-          <input class="rp-input" type="number" value="50" min="1" style="width:100%"/>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-checks">
-          <label class="rp-check"><input type="checkbox" checked> Kinetic E</label>
-          <label class="rp-check"><input type="checkbox" checked> Potential E</label>
-          <label class="rp-check"><input type="checkbox" checked> Total E</label>
-          <label class="rp-check"><input type="checkbox" checked> Temperature</label>
-          <label class="rp-check"><input type="checkbox"> Pressure</label>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Live stats</div>
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-lbl">⟨T⟩ (K)</div><div class="metric-val" id="m-T">—</div></div>
-          <div class="metric-card"><div class="metric-lbl">⟨P⟩ (bar)</div><div class="metric-val" id="m-P">—</div></div>
-          <div class="metric-card"><div class="metric-lbl">⟨E⟩ (eV)</div><div class="metric-val" id="m-E">—</div></div>
-          <div class="metric-card"><div class="metric-lbl">σ(E)</div><div class="metric-val" id="m-sE">—</div></div>
-        </div>
-      </div>
-
-      <!-- RDF options -->
-      <div id="rpo-rdf" style="display:none">
-        <div class="rp-checks">
-          <label class="rp-check"><input type="checkbox" checked> Auto-detect pairs</label>
-          <label class="rp-check"><input type="checkbox"> Show running integral</label>
-          <label class="rp-check"><input type="checkbox"> Overlay ideal gas</label>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Coordination</div>
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-lbl">1st shell r</div><div class="metric-val" id="m-r1">—</div></div>
-          <div class="metric-card"><div class="metric-lbl">CN</div><div class="metric-val" id="m-cn">—</div></div>
-        </div>
-      </div>
-
-      <!-- MSD options -->
-      <div id="rpo-msd" style="display:none">
-        <div class="rp-checks">
-          <label class="rp-check"><input type="checkbox" checked> Einstein fit line</label>
-          <label class="rp-check"><input type="checkbox"> Log-log axes</label>
-          <label class="rp-check"><input type="checkbox"> Subdiffusion α</label>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Diffusion</div>
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-lbl">D (cm²/s)</div><div class="metric-val" id="m-D" style="color:var(--acc)">2.41e-5</div></div>
-          <div class="metric-card"><div class="metric-lbl">α exponent</div><div class="metric-val" id="m-alpha">1.00</div></div>
-        </div>
-      </div>
-
-      <!-- VACF options -->
-      <div id="rpo-vacf" style="display:none">
-        <div class="rp-checks">
-          <label class="rp-check"><input type="checkbox" checked> Normalize VACF</label>
-          <label class="rp-check"><input type="checkbox" checked> Show VDOS (FFT)</label>
-          <label class="rp-check"><input type="checkbox"> Per species</label>
-        </div>
-      </div>
-
-      <!-- Parity options -->
-      <div id="rpo-parity" style="display:none">
-        <div class="rp-field">
-          <div class="rp-label">Color by</div>
-          <select class="rp-select"><option>Temperature</option><option>Pressure</option><option>Composition</option><option>Uniform</option></select>
-        </div>
-        <div class="rp-checks" style="margin-top:6px">
-          <label class="rp-check"><input type="checkbox" checked> Show RMSE</label>
-          <label class="rp-check"><input type="checkbox" checked> Identity line</label>
-          <label class="rp-check"><input type="checkbox"> Error histogram</label>
-          <label class="rp-check"><input type="checkbox"> Outliers only</label>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Metrics</div>
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-lbl">E RMSE</div><div class="metric-val ok" id="mp-ermse">2.3</div><div class="metric-unit">meV/at</div></div>
-          <div class="metric-card"><div class="metric-lbl">F RMSE</div><div class="metric-val warn" id="mp-frmse">62</div><div class="metric-unit">meV/Å</div></div>
-          <div class="metric-card"><div class="metric-lbl">R²</div><div class="metric-val ok" id="mp-r2">0.9987</div></div>
-          <div class="metric-card"><div class="metric-lbl">MAE</div><div class="metric-val" id="mp-mae">1.8</div><div class="metric-unit">meV/at</div></div>
-        </div>
-      </div>
-
-      <!-- Learning curve options -->
-      <div id="rpo-learning" style="display:none">
-        <div class="rp-checks">
-          <label class="rp-check"><input type="checkbox" checked> Train loss</label>
-          <label class="rp-check"><input type="checkbox" checked> Val loss</label>
-          <label class="rp-check"><input type="checkbox" checked> E-RMSE</label>
-          <label class="rp-check"><input type="checkbox" checked> F-RMSE</label>
-          <label class="rp-check"><input type="checkbox"> LR schedule</label>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Progress</div>
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-lbl">Epoch</div><div class="metric-val warn">78/120</div></div>
-          <div class="metric-card"><div class="metric-lbl">Best val</div><div class="metric-val ok">0.014</div></div>
-        </div>
-      </div>
-
-      <!-- Generic options (placeholder modules) -->
-      <div id="rpo-generic" style="display:none">
-        <div class="rp-field">
-          <div class="rp-label">Data source</div>
-          <select class="rp-select"><option>Upload output file</option><option>From active cluster job</option></select>
-        </div>
-        <div class="rp-divider"></div>
-        <div style="padding:12px 0;text-align:center;color:var(--tx3);font-size:11px;line-height:1.6">
-          Module coming soon.<br>Upload a compatible output file<br>or connect to cluster job.
-        </div>
-        <button class="ctrl-btn" onclick="triggerUpload()" style="width:100%;height:26px;font-size:11px">⬆ Upload file</button>
-      </div>
-      <!-- Coverage options -->
-      <div id="rpo-coverage" style="display:none">
-        <div class="rp-field">
-          <div class="rp-label">PCA components</div>
-          <select class="rp-select"><option>PC1 vs PC2</option><option>PC1 vs PC3</option><option>3D (PC1/2/3)</option></select>
-        </div>
-        <div class="rp-checks" style="margin-top:6px">
-          <label class="rp-check"><input type="checkbox" checked> Train set</label>
-          <label class="rp-check"><input type="checkbox" checked> Val set</label>
-          <label class="rp-check"><input type="checkbox"> Flag outliers</label>
-        </div>
-        <div class="rp-divider"></div>
-        <div class="rp-subhead">Coverage</div>
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-lbl">T range</div><div class="metric-val warn">300–1500K</div></div>
-          <div class="metric-card"><div class="metric-lbl">P range</div><div class="metric-val">100–250 GPa</div></div>
-        </div>
-      </div>
-
-    </div><!-- /rp-body -->
+    <!-- ▶ Plot pinned to bottom -->
     <button class="rp-run-btn" id="rp-run-btn" onclick="renderActive()">▶ Plot</button>
-    </div><!-- /rp-opts-wrap -->
-  </div>
 
+  </div><!-- /rpanel -->
 </div><!-- /workspace -->
 
 <!-- BOTTOM BAR (module name · plot tabs · status · export) -->
@@ -788,61 +880,174 @@ body{font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx
 </div>
 
 <script>
-/* ══ Tool registry ══════════════════════════════════════════════════ */
+/* ══ Tool & module registry ══════════════════════════════════════════ */
 const TOOLS = {
-  band:       { label:'Band Structure',   pane:'pane-band',       ctrl:'ctrl-band',       rpo:'rpo-band',       tabs:['Band + DOS','Band only','DOS only'], stats:{src:'QE bands.x output',ermse:'—',frmse:'—',r2:'—',n:'—'} },
-  dos:        { label:'Density of States',pane:'pane-dos',        ctrl:'ctrl-dos',        rpo:'rpo-dos',        tabs:['Total + PDOS','Total only','Partial'],stats:{src:'QE dos.x output'} },
-  phonon:     { label:'Phonon',           pane:'pane-phonon',     ctrl:'ctrl-phonon',     rpo:'rpo-phonon',     tabs:['Dispersion + VDOS','Dispersion','VDOS'],stats:{src:'QE matdyn.x output'} },
-  convergence:{ label:'Convergence',      pane:'pane-convergence',ctrl:'ctrl-convergence',rpo:'rpo-convergence',tabs:['SCF','Ecutwfc sweep','k-mesh sweep'],  stats:{src:'QE pw.x output'} },
-  energy:     { label:'Energy / T / P',   pane:'pane-energy',     ctrl:'ctrl-energy',     rpo:'rpo-energy',     tabs:['All','Energy','Temperature','Pressure'],stats:{src:'MD trajectory'} },
-  rdf:        { label:'g(r) RDF',         pane:'pane-rdf',        ctrl:'ctrl-rdf',        rpo:'rpo-rdf',        tabs:['All pairs','Partial pairs'],           stats:{src:'MD trajectory'} },
-  msd:        { label:'MSD',              pane:'pane-msd',        ctrl:'ctrl-msd',        rpo:'rpo-msd',        tabs:['MSD curves','Log-log'],               stats:{src:'MD trajectory'} },
-  vacf:       { label:'VACF',             pane:'pane-vacf',       ctrl:'ctrl-vacf',       rpo:'rpo-vacf',       tabs:['VACF + VDOS','VACF only','VDOS only'], stats:{src:'MD trajectory'} },
-  parity:     { label:'Parity Plot',      pane:'pane-parity',     ctrl:'ctrl-parity',     rpo:'rpo-parity',     tabs:['Energy','Forces','Stress'],            stats:{src:'SANNP v2.1.0 · H3S',ermse:'2.3',frmse:'62',r2:'0.9987',n:'1,842 structs'} },
-  learning:   { label:'Learning Curve',   pane:'pane-learning',   ctrl:'ctrl-learning',   rpo:'rpo-learning',   tabs:['Loss','RMSE','LR schedule'],          stats:{src:'SANNP v2.1.0 · JOB-3847',ermse:'2.3',frmse:'62',r2:'0.9987',n:'1,842 structs'} },
-  coverage:   { label:'Coverage / PCA',   pane:'pane-coverage',   ctrl:'ctrl-coverage',   rpo:'rpo-coverage',   tabs:['T–P scatter','PCA','Energy hist','Force hist'],stats:{src:'Dataset v4 · H3S',n:'1,842 structs'} },
-  raman:       { label:'Raman Simulation',  pane:'pane-raman',      ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['Spectrum','Modes'],                stats:{src:'—'} },
-  infrared:    { label:'Infrared (IR)',      pane:'pane-infrared',   ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['Spectrum','Absorption'],           stats:{src:'—'} },
-  xanes:       { label:'XANES / EXAFS',     pane:'pane-xanes',      ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['XANES','EXAFS','χ(k)','FT'],      stats:{src:'—'} },
-  eels:        { label:'EELS',              pane:'pane-eels',       ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['Low-loss','Core-loss'],            stats:{src:'—'} },
-  arpes:       { label:'ARPES',             pane:'pane-arpes',      ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['Band map','EDC','MDC'],            stats:{src:'—'} },
-  vibvis:      { label:'Vibration Visualizer',pane:'pane-vibvis',   ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['3D Mode viewer','Mode list'],      stats:{src:'—'} },
-  phonondos:   { label:'Phonon DOS',        pane:'pane-phonon',     ctrl:'ctrl-phonon',     rpo:'rpo-phonon',     tabs:['VDOS','Partial VDOS'],             stats:{src:'—'} },
-  seekpath:    { label:'SeekPath',          pane:'pane-seekpath',   ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['BZ path','K-points'],              stats:{src:'—'} },
-  bz:          { label:'Brillouin Zone',    pane:'pane-bz',         ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['3D BZ','2D slice'],                stats:{src:'—'} },
-  phasediag:   { label:'Phase Diagram',     pane:'pane-phasediag',  ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['T–x','P–T','Convex hull'],         stats:{src:'—'} },
-  chargedensity:{ label:'Charge Density',   pane:'pane-charge',     ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['Isosurface','Slice (xy)','Slice (xz)'],stats:{src:'—'} },
-  xrd:         { label:'XRD Diffraction',   pane:'pane-xrd',        ctrl:'ctrl-generic',    rpo:'rpo-generic',    tabs:['Pattern','Structure factor'],      stats:{src:'—'} },
+  raman:        { label:'Raman Simulation',   pane:'pane-raman',      rpo:'rpo-raman',      tabs:['Spectrum','Modes','Peak table'] },
+  infrared:     { label:'Infrared (IR)',       pane:'pane-infrared',   rpo:'rpo-infrared',   tabs:['Spectrum','Absorption'] },
+  xanes:        { label:'XANES / EXAFS',       pane:'pane-xanes',      rpo:'rpo-xanes',      tabs:['XANES','EXAFS','χ(k)','FT'] },
+  eels:         { label:'EELS',                pane:'pane-eels',       rpo:'rpo-eels',       tabs:['Low-loss','Core-loss'] },
+  arpes:        { label:'ARPES',               pane:'pane-arpes',      rpo:'rpo-arpes',      tabs:['Band map','EDC','MDC'] },
+  vibvis:       { label:'Vibration Visualizer',pane:'pane-vibvis',     rpo:'rpo-vibvis',     tabs:['3D mode','Mode list'] },
+  phonon:       { label:'Phonon Dispersion',   pane:'pane-phonon',     rpo:'rpo-phonon',     tabs:['Dispersion + VDOS','Dispersion','VDOS'] },
+  phonondos:    { label:'Phonon DOS',           pane:'pane-phonon',     rpo:'rpo-phonondos',  tabs:['VDOS','Partial VDOS'] },
+  seekpath:     { label:'SeekPath',             pane:'pane-seekpath',   rpo:'rpo-seekpath',   tabs:['BZ path','k-points list'] },
+  band:         { label:'Band Structure',       pane:'pane-band',       rpo:'rpo-band',       tabs:['Band + DOS','Band only','DOS only'] },
+  dos:          { label:'DOS / PDOS',           pane:'pane-dos',        rpo:'rpo-dos',        tabs:['Total + PDOS','Total only'] },
+  bz:           { label:'Brillouin Zone',       pane:'pane-bz',         rpo:'rpo-bz',         tabs:['3D BZ','2D slice'] },
+  phasediag:    { label:'Phase Diagram',        pane:'pane-phasediag',  rpo:'rpo-phasediag',  tabs:['Convex hull','T–x','P–T'] },
+  chargedensity:{ label:'Charge Density',       pane:'pane-charge',     rpo:'rpo-chargedensity',tabs:['Isosurface','Slice xy','Slice xz'] },
+  xrd:          { label:'XRD Diffraction',      pane:'pane-xrd',        rpo:'rpo-xrd',        tabs:['Pattern','Structure factor'] },
+  convergence:  { label:'Convergence',          pane:'pane-convergence',rpo:'rpo-convergence',tabs:['SCF','Ecutwfc sweep','k-mesh sweep'] },
+  energy:       { label:'Energy / T / P',       pane:'pane-energy',     rpo:'rpo-energy',     tabs:['All','Energy','Temperature','Pressure'] },
+  rdf:          { label:'g(r) RDF',             pane:'pane-rdf',        rpo:'rpo-rdf',        tabs:['All pairs','Partial pairs'] },
+  msd:          { label:'MSD',                  pane:'pane-msd',        rpo:'rpo-msd',        tabs:['MSD curves','Log-log'] },
+  vacf:         { label:'VACF',                 pane:'pane-vacf',       rpo:'rpo-vacf',       tabs:['VACF','VDOS'] },
+  parity:       { label:'Parity Plot',          pane:'pane-parity',     rpo:'rpo-parity',     tabs:['Energy','Forces','Stress'] },
+  learning:     { label:'Learning Curve',       pane:'pane-learning',   rpo:'rpo-learning',   tabs:['Loss','RMSE','LR'] },
+  coverage:     { label:'Coverage / PCA',       pane:'pane-coverage',   rpo:'rpo-coverage',   tabs:['T–P scatter','PCA','Histograms'] },
 };
 
-let currentTool = 'band';
+const HELP = {'raman': 'Requires: ph.x output with Raman tensor (matdyn.freq + .dyn files). Run pw.x → ph.x with lraman=.true.', 'infrared': 'Requires: matdyn.x output (.freq). Born effective charges needed for accurate IR intensities.', 'xanes': 'Requires: XSpectra xanes.dat output or FEFF feff.inp+chi.dat. Edge type must match absorbing atom.', 'eels': 'Requires: Dielectric function output from pp.x (epsilon_imag.dat). Or EELS experimental data.', 'arpes': 'Requires: Unfolded spectral function file or projected band structure from bands.x.', 'vibvis': 'Requires: matdyn.modes file from matdyn.x (LMODES=.true.). Animates one normal mode at a time.', 'phonon': 'Requires: matdyn.x dispersion output (freq file). Use matdyn.x with flfrq set.', 'phonondos': 'Requires: matdyn.x partial VDOS output (dos file). Use matdyn.x with fldos set.', 'seekpath': 'Requires: CIF, POSCAR or XYZ structure file. Outputs high-symmetry k-path labels and coordinates.', 'band': 'Requires: QE bands.x output file (.dat.gnu or .dat). Run pw.x bands → bands.x to generate.', 'dos': 'Requires: QE dos.x output file (prefix.dos). Run pw.x scf → nscf → dos.x to generate.', 'bz': 'Requires: CIF, POSCAR or XYZ structure file. No calculation needed — uses spglib for symmetry.', 'phasediag': 'Requires: CSV or JSON with columns: formula, formation_energy_per_atom. Optional: temperature, pressure.', 'chargedensity': 'Requires: pp.x output in XSF format (set plot_num=0 for charge density). Or VESTA-compatible charge.cube.', 'xrd': 'Requires: CIF, POSCAR or XYZ structure file. Simulation uses DebyeScherrer formula (Cu Kα default).', 'convergence': 'Requires: pw.x output file (.out). SCF convergence is extracted from the scf loop lines.', 'energy': 'Requires: MD log file (LAMMPS log, QE md output, or XYZ + energy column). Time step auto-detected.', 'rdf': 'Requires: XYZ trajectory file (multi-frame). Periodic boundary conditions applied automatically.', 'msd': 'Requires: XYZ trajectory file (multi-frame). Species labels used for per-element decomposition.', 'vacf': 'Requires: XYZ trajectory file with velocities (extended XYZ format with Velocities property).', 'parity': 'Requires: CSV with columns: dft_energy, ml_energy (and optionally forces, stresses). Or live from cluster.', 'learning': 'Requires: Training log from SANNP/MACE/NequIP (loss CSV or JSON history).', 'coverage': 'Requires: Descriptor CSV with columns: descriptor_*, temperature, pressure, split (train/val).'};
+
+let currentTool = 'raman';
 let plotsRendered = {};
 
-/* ── Switch tool ──────────────────────────────────────────────────── */
-function switchTool(name, el) {
-  currentTool = name;
+/* ── Module dropdown selection ───────────────────────────────────── */
+function selectModule(name) {
   const T = TOOLS[name];
-  // Left panel active state
-  document.querySelectorAll('.rp-module-item').forEach(i => i.classList.remove('active'));
-  if (el) el.classList.add('active');
-  // Title
-  document.getElementById('bb-mode-lbl').textContent = T.label;
-  document.getElementById('rp-title').textContent = T.label;
-  // Right panel options
-  Object.keys(TOOLS).forEach(k => {
-    const r = document.getElementById('rpo-' + k);
-    if (r) r.style.display = k === name ? 'block' : 'none';
-  });
+  if (!T) return;
+  currentTool = name;
   // Panes
   document.querySelectorAll('.ppane').forEach(p => p.classList.remove('active'));
-  document.getElementById(T.pane).classList.add('active');
+  const pane = document.getElementById(T.pane);
+  if (pane) pane.classList.add('active');
+  // Options panels
+  document.querySelectorAll('.rp-opts-pane').forEach(p => p.style.display = 'none');
+  const rpo = document.getElementById(T.rpo);
+  if (rpo) rpo.style.display = 'block';
+  // Sync dropdown
+  const sel = document.getElementById('module-select');
+  if (sel) sel.value = name;
+  // Bottom bar
+  const lbl = document.getElementById('bb-mode-lbl');
+  if (lbl) lbl.textContent = T.label;
+  const dot = document.getElementById('bb-dot');
+  if (dot) dot.className = 'bb-dot ok';
   // Tabs
   buildTabs(T.tabs);
-  // Auto-render on first open
-  if (!plotsRendered[name]) renderActive();
+  // Help text
+  const ht = document.getElementById('help-text');
+  if (ht) ht.textContent = HELP[name] || 'Select a module above.';
+  // Drop zone
+  dzUpdateForModule(name);
+  setStatus('Idle');
 }
 
-/* ── Tab bar ──────────────────────────────────────────────────────── */
+/* switchTool kept for backward compat (some render fns call it) */
+function switchTool(name, _el) { selectModule(name); }
+
+/* ── Collapsible panels ──────────────────────────────────────────── */
+function toggleColl(el, bodyId) {
+  el.classList.toggle('open');
+  const body = document.getElementById(bodyId);
+  body.classList.toggle('open');
+}
+function triggerUpload(inputId) {
+  // Clicking any file button shows the central drop-zone's file dialog
+  dzClick();
+}
+
+/* ── Init ────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  selectModule('raman');
+});
+/* ── Drop zone ────────────────────────────────────────────────────── */
+const DZ_META = {
+  raman:        { title:'Drop Raman output or click to upload',   sub:'Requires ph.x output with Raman tensor (.dyn, .modes files)',  fmts:['.dyn','.modes','.freq'] },
+  infrared:     { title:'Drop IR output or click to upload',      sub:'Requires matdyn.x output with Born charges (.freq)',           fmts:['.freq','.dat'] },
+  xanes:        { title:'Drop XANES / EXAFS file or click',       sub:'Requires XSpectra xanes.dat or FEFF output (chi.dat)',         fmts:['xanes.dat','chi.dat','.out'] },
+  eels:         { title:'Drop dielectric function file or click', sub:'Requires pp.x output (epsilon_imag.dat)',                      fmts:['epsilon.dat','.dat'] },
+  arpes:        { title:'Drop spectral function file or click',   sub:'Requires unfolded spectral function or projected bands',       fmts:['.dat','.gnu','.bands'] },
+  vibvis:       { title:'Drop matdyn.modes file or click',        sub:'Requires matdyn.x output with LMODES=.true.',                  fmts:['.modes','.freq'] },
+  phonon:       { title:'Drop phonon dispersion file or click',   sub:'Requires matdyn.x output — set flfrq in input',                fmts:['.freq','.gp'] },
+  phonondos:    { title:'Drop phonon DOS file or click',          sub:'Requires matdyn.x VDOS output — set fldos in input',           fmts:['.dos','.dat'] },
+  seekpath:     { title:'Drop structure file or click',           sub:'Requires CIF, POSCAR or XYZ structure file',                   fmts:['CIF','POSCAR','.vasp','.xyz'] },
+  band:         { title:'Drop bands.x output or click to upload', sub:'Requires QE bands.x output (.dat.gnu). Run: pw.x → bands.x',   fmts:['.dat.gnu','.dat','.bands'] },
+  dos:          { title:'Drop dos.x output or click to upload',   sub:'Requires QE dos.x output (prefix.dos). Run: pw.x → dos.x',    fmts:['.dos','.dat'] },
+  bz:           { title:'Drop structure file or click',           sub:'Requires CIF, POSCAR or XYZ — no calculation needed',          fmts:['CIF','POSCAR','.xyz'] },
+  phasediag:    { title:'Drop formation energy data or click',    sub:'Requires CSV or JSON with formula + formation_energy/atom',    fmts:['.csv','.json'] },
+  chargedensity:{ title:'Drop charge density file or click',      sub:'Requires pp.x output in XSF or CUBE format',                  fmts:['.xsf','.cube','.dat'] },
+  xrd:          { title:'Drop structure file or click',           sub:'Requires CIF, POSCAR or XYZ structure file',                   fmts:['CIF','POSCAR','.xyz'] },
+  convergence:  { title:'Drop pw.x output or click to upload',    sub:'Requires QE pw.x .out file',                                   fmts:['.out','.log'] },
+  energy:       { title:'Drop MD log / trajectory or click',      sub:'Requires LAMMPS log, QE md output or XYZ trajectory',          fmts:['.log','.out','.xyz','.lammpstrj'] },
+  rdf:          { title:'Drop XYZ trajectory or click',           sub:'Requires multi-frame XYZ trajectory file',                     fmts:['.xyz','.xtc','.lammpstrj'] },
+  msd:          { title:'Drop XYZ trajectory or click',           sub:'Requires multi-frame XYZ trajectory with species labels',      fmts:['.xyz','.xtc'] },
+  vacf:         { title:'Drop XYZ trajectory or click',           sub:'Requires extended XYZ with Velocities property column',        fmts:['.xyz'] },
+  parity:       { title:'Drop DFT–ML comparison CSV or click',    sub:'Columns: dft_energy, ml_energy (+ optional forces/stress)',    fmts:['.csv','.json'] },
+  learning:     { title:'Drop training log or click',             sub:'Requires SANNP/MACE/NequIP loss history CSV or JSON',          fmts:['.csv','.json','.log'] },
+  coverage:     { title:'Drop descriptor CSV or click',           sub:'Columns: descriptor_*, temperature, pressure, split',         fmts:['.csv','.json'] },
+};
+
+function dzUpdateForModule(name) {
+  const meta = DZ_META[name] || { title:'Drop file or click to upload', sub:'Upload your output file to visualise results.', fmts:[] };
+  setEl('dz-title', meta.title);
+  setEl('dz-sub',   meta.sub);
+  const fmtEl = document.getElementById('dz-formats');
+  if (fmtEl) fmtEl.innerHTML = meta.fmts.map(f => `<span class="dz-fmt">${f}</span>`).join('');
+  // Reset loaded state
+  const loaded = document.getElementById('dz-loaded-name');
+  if (loaded) loaded.classList.remove('show');
+  // Show drop-zone
+  const dz = document.getElementById('drop-zone');
+  if (dz) dz.classList.remove('hidden');
+}
+function dzClick() { document.getElementById('dz-input').click(); }
+function dzDragOver(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.add('drag-over');
+}
+function dzDragLeave(e) {
+  document.getElementById('drop-zone').classList.remove('drag-over');
+}
+function dzDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer?.files?.[0];
+  if (file) dzFileChosen(file);
+}
+function dzFileChosen(file) {
+  if (!file) return;
+  setEl('dz-fname', file.name);
+  setEl('rp-fname', file.name);
+  const loaded = document.getElementById('dz-loaded-name');
+  if (loaded) loaded.classList.add('show');
+  const chip = document.getElementById('rp-file-chip');
+  if (chip) chip.classList.add('show');
+  setStatus('Loaded: ' + file.name);
+  setTimeout(() => {
+    const dz = document.getElementById('drop-zone');
+    if (dz) dz.classList.add('hidden');
+    renderActive();
+  }, 600);
+}
+function dzLoadSample() {
+  const fname = 'sample_data.dat';
+  setEl('dz-fname', fname);
+  setEl('rp-fname', fname);
+  const loaded = document.getElementById('dz-loaded-name');
+  if (loaded) loaded.classList.add('show');
+  const chip = document.getElementById('rp-file-chip');
+  if (chip) chip.classList.add('show');
+  setStatus('Sample data loaded');
+  setTimeout(() => {
+    const dz = document.getElementById('drop-zone');
+    if (dz) dz.classList.add('hidden');
+    plotsRendered[currentTool] = true;
+    renderActive();
+  }, 400);
+}
+function loadSampleData(_m) { dzLoadSample(); }
+
 function buildTabs(tabs) {
   const bar = document.getElementById('plot-tab-bar');
   bar.innerHTML = tabs.map((t, i) =>
@@ -1170,6 +1375,7 @@ document.addEventListener('DOMContentLoaded', () => {
   buildTabs(TOOLS['band'].tabs);
   switchTool('band', document.querySelector('.rp-module-item.active'));
 });
+
 </script>
 </body>
 </html>

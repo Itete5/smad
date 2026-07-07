@@ -2,6 +2,7 @@
 import json
 import pathlib
 import re
+import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 ANALYSIS = ROOT / "static" / "analysis_v3.html"
@@ -10,6 +11,7 @@ TRANSCRIPT = pathlib.Path(
     r"\32866920-6631-4cb5-9962-7bdb4bd094a4"
     r"\32866920-6631-4cb5-9962-7bdb4bd094a4.jsonl"
 )
+RENDER_JS_REF = "7e61938:static/analysis_v3.html"
 
 
 def extract_html(transcript_path: pathlib.Path) -> str:
@@ -33,7 +35,7 @@ def extract_html(transcript_path: pathlib.Path) -> str:
         if (
             "<!DOCTYPE html>" in text
             and "Analysis · SMAD" in text
-            and "BURAI tokens (exact match to dft_simulator" in text
+            and 'id="module-select"' in text
         ):
             start = text.find("<!DOCTYPE html>")
             end = text.rfind("</html>")
@@ -53,12 +55,45 @@ def fix_html(html: str) -> str:
             1,
         )
     html = html.replace('href="smad_home.html"', 'href="/"')
-    return html.strip() + "\n"
+    # Malformed placeholder panes: extra closing </div>
+    html = re.sub(
+        r"(</div>\s*</div>)\s*</div>\s*(?=<div class=\"ppane\")",
+        r"\1\n      ",
+        html,
+    )
+    return html
+
+
+def render_js_from_ref() -> str:
+    old = subprocess.check_output(
+        ["git", "show", RENDER_JS_REF],
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        cwd=ROOT,
+    )
+    m = re.search(r"function buildTabs", old)
+    if not m:
+        raise SystemExit("Could not find buildTabs in reference analysis HTML")
+    start = m.start()
+    m2 = re.search(r"/\* ── Init ── \*/", old[start:])
+    end = start + m2.start() if m2 else old.rfind("</script>")
+    return old[start:end].strip()
+
+
+def merge_render_js(html: str) -> str:
+    if "function renderActive" in html:
+        return html
+    block = render_js_from_ref()
+    marker = "function loadSampleData(_m) { dzLoadSample(); }"
+    if marker not in html:
+        raise SystemExit("Could not find drop-zone script anchor for render JS merge")
+    return html.replace(marker, marker + "\n\n" + block, 1)
 
 
 def main() -> None:
-    html = fix_html(extract_html(TRANSCRIPT))
-    ANALYSIS.write_text(html, encoding="utf-8", newline="\n")
+    html = merge_render_js(fix_html(extract_html(TRANSCRIPT)))
+    ANALYSIS.write_text(html.strip() + "\n", encoding="utf-8", newline="\n")
     print(f"Wrote {ANALYSIS} ({len(html):,} bytes)")
 
 
