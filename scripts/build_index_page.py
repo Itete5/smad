@@ -30,7 +30,12 @@ def extract_html(transcript_path: pathlib.Path) -> str:
         text = re.sub(r"<timestamp>[^<]*</timestamp>\s*", "", text)
         text = re.sub(r"<user_query>\s*", "", text)
         text = re.sub(r"\s*</user_query>\s*$", "", text)
-        if "<!DOCTYPE html>" in text and "#0d0a06" in text and "NAV — exactly 5 links" in text:
+        if (
+            "<!DOCTYPE html>" in text
+            and "#0d0a06" in text
+            and "NAV — exactly 5 links" in text
+            and ("Community — inline" in text or 'class="comm-header"' in text)
+        ):
             start = text.find("<!DOCTYPE html>")
             end = text.rfind("</html>")
             if start >= 0 and end > start:
