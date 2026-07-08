@@ -34,7 +34,8 @@ def extract_html(transcript_path: pathlib.Path) -> str:
             "<!DOCTYPE html>" in text
             and "#0d0a06" in text
             and "NAV — exactly 5 links" in text
-            and ("Community — inline" in text or 'class="comm-header"' in text)
+            and 'id="navToggle"' in text
+            and 'id="navLinks"' in text
         ):
             start = text.find("<!DOCTYPE html>")
             end = text.rfind("</html>")

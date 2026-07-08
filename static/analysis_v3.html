@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Analysis · SMAD</title>
 <link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════
@@ -65,6 +66,7 @@ body{
   padding:32px 20px;text-align:center;cursor:pointer;transition:background var(--t);
 }
 #drop-zone.drag-over{background:var(--acc-l)}
+#drop-zone.hidden{display:none}
 
 .dz-icon{
   width:56px;height:56px;border-radius:50%;border:1.5px solid var(--bdr);
@@ -101,6 +103,27 @@ body{
 .dz-loaded.show{display:flex}
 
 #dz-input{display:none}
+
+/* ── PLOT AREA (shown once data is loaded) ── */
+#plot-area{
+  flex:1;display:none;flex-direction:column;min-height:0;padding:14px;
+}
+#plot-area.active{display:flex}
+#plot-toolbar{
+  display:flex;align-items:center;gap:10px;padding-bottom:10px;flex-shrink:0;
+}
+#plot-toolbar .pt-title{font-size:13px;font-weight:700;color:var(--tx0)}
+#plot-toolbar .pt-file{font-size:11px;font-family:var(--mono);color:var(--tx3)}
+#plot-toolbar .pt-spacer{flex:1}
+.pt-reset{
+  font-size:11px;color:var(--tx2);background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:4px 9px;cursor:pointer;transition:all var(--t);
+}
+.pt-reset:hover{background:var(--bg1);border-color:var(--bdr2);color:var(--tx0)}
+#plot-div{flex:1;min-height:0}
+#plot-empty-msg{
+  display:none;flex:1;align-items:center;justify-content:center;color:var(--tx3);font-size:12.5px;
+}
 
 /* ═══════════════════════════════════════════════════════════
    SIDEBAR (right, fixed width, light gray)
@@ -164,6 +187,7 @@ body{
   transition:background var(--t);
 }
 #plot-btn:hover{background:var(--acc-d)}
+#plot-btn:disabled{background:var(--bdr2);cursor:not-allowed}
 
 /* ═══════════════════════════════════════════════════════════
    BOTTOM STATUS BAR
@@ -229,6 +253,8 @@ body{
 
   <!-- MAIN CONTENT -->
   <div id="main">
+
+    <!-- DROP ZONE (visible until a file/sample is loaded) -->
     <div id="drop-zone" onclick="dzClick()" ondragover="dzDragOver(event)" ondragleave="dzDragLeave()" ondrop="dzDrop(event)">
       <input type="file" id="dz-input" accept=".dat,.freq,.out,.xyz,.cif,.poscar,.vasp,.csv,.json" onchange="dzFileChosen(this.files[0])"/>
 
@@ -238,8 +264,8 @@ body{
         </svg>
       </div>
 
-      <div class="dz-title">Drop file or click to upload</div>
-      <div class="dz-sub">Upload your ph.x output file to run the Raman simulation.</div>
+      <div class="dz-title" id="dz-title">Drop file or click to upload</div>
+      <div class="dz-sub" id="dz-sub">Upload your ph.x output file to run the Raman simulation.</div>
 
       <div class="dz-badges">
         <span class="dz-badge">.dat</span>
@@ -267,6 +293,19 @@ body{
         <span style="color:var(--grn)">✓</span><span id="dz-fname"></span>
       </div>
     </div>
+
+    <!-- PLOT AREA (shown once data is loaded, replaces drop zone) -->
+    <div id="plot-area">
+      <div id="plot-toolbar">
+        <span class="pt-title" id="pt-title">Raman Simulation</span>
+        <span class="pt-file" id="pt-file"></span>
+        <div class="pt-spacer"></div>
+        <button class="pt-reset" onclick="resetToDropzone()">⟲ Load different file</button>
+      </div>
+      <div id="plot-div"></div>
+      <div id="plot-empty-msg">Click ▶ Plot to render this analysis.</div>
+    </div>
+
   </div><!-- /main -->
 
   <!-- SIDEBAR -->
@@ -277,12 +316,12 @@ body{
       <div class="sb-field">
         <div class="sb-select-wrap">
           <select class="sb-select" id="analysis-select">
-            <option selected>Raman Simulation</option>
-            <option>Infrared (IR)</option>
-            <option>Band Structure</option>
-            <option>DOS / PDOS</option>
-            <option>Phonon Dispersion</option>
-            <option>g(r) RDF</option>
+            <option value="raman" selected>Raman Simulation</option>
+            <option value="infrared">Infrared (IR)</option>
+            <option value="band">Band Structure</option>
+            <option value="dos">DOS / PDOS</option>
+            <option value="phonon">Phonon Dispersion</option>
+            <option value="rdf">g(r) RDF</option>
           </select>
           <span class="sb-caret">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -294,7 +333,7 @@ body{
 
       <div class="sb-sec">Data</div>
       <div class="sb-field">
-        <div class="sb-label">ph.x output file</div>
+        <div class="sb-label" id="file-field-label">ph.x output file</div>
         <div class="sb-file-row">
           <input class="sb-input" id="raman-file" placeholder="No file selected" readonly onclick="dzClick()"/>
           <button class="sb-browse" onclick="dzClick()">…</button>
@@ -340,8 +379,8 @@ body{
       </div>
       <div class="sb-checks" style="padding-bottom:14px">
         <label class="sb-check"><input type="checkbox" id="advanced-toggle" onchange="toggleAdvanced(this)"> Advanced settings</label>
-        <label class="sb-check"><input type="checkbox"> Show grid</label>
-        <label class="sb-check"><input type="checkbox"> Show legend</label>
+        <label class="sb-check" id="grid-check-wrap"><input type="checkbox" id="grid-check" onchange="rerenderIfLoaded()"> Show grid</label>
+        <label class="sb-check" id="legend-check-wrap"><input type="checkbox" id="legend-check" checked onchange="rerenderIfLoaded()"> Show legend</label>
       </div>
 
     </div><!-- /sidebar-scroll -->
@@ -373,6 +412,41 @@ body{
 </div>
 
 <script>
+/* ══════════════════════════════════════════════════════════
+   MODULE METADATA — dropzone copy + sidebar file-field labels
+═══════════════════════════════════════════════════════════ */
+const MODULES = {
+  raman:    { label:'Raman Simulation', fileLabel:'ph.x output file',   dzSub:'Upload your ph.x output file to run the Raman simulation.' },
+  infrared: { label:'Infrared (IR)',    fileLabel:'matdyn.x output file', dzSub:'Upload matdyn.x output with Born effective charges.' },
+  band:     { label:'Band Structure',   fileLabel:'bands.x output file', dzSub:'Upload QE bands.x output (.dat.gnu) to plot the band structure.' },
+  dos:      { label:'DOS / PDOS',       fileLabel:'dos.x output file',   dzSub:'Upload QE dos.x output to plot total and projected DOS.' },
+  phonon:   { label:'Phonon Dispersion',fileLabel:'matdyn.x output file', dzSub:'Upload matdyn.x dispersion output (flfrq).' },
+  rdf:      { label:'g(r) RDF',         fileLabel:'XYZ trajectory file', dzSub:'Upload a multi-frame XYZ trajectory to compute g(r).' },
+};
+
+let currentModule = 'raman';
+let hasData = false;       // true once a file is uploaded or sample data is loaded
+let loadedFileName = '';
+
+/* ══════════════════════════════════════════════════════════
+   MODULE SELECTION
+═══════════════════════════════════════════════════════════ */
+document.getElementById('analysis-select').addEventListener('change', function(){
+  currentModule = this.value;
+  const m = MODULES[currentModule];
+  document.getElementById('status-label').textContent = m.label;
+  document.getElementById('dz-title').textContent = 'Drop file or click to upload';
+  document.getElementById('dz-sub').textContent = m.dzSub;
+  document.getElementById('file-field-label').textContent = m.fileLabel;
+  document.getElementById('pt-title').textContent = m.label;
+  setStatus('Idle');
+  // Loaded data stays associated with the file, but re-plot for the new module if data present
+  if (hasData) { document.getElementById('plot-empty-msg').style.display = 'flex'; document.getElementById('plot-div').innerHTML=''; }
+});
+
+/* ══════════════════════════════════════════════════════════
+   DROP ZONE
+═══════════════════════════════════════════════════════════ */
 function dzClick(){ document.getElementById('dz-input').click(); }
 function dzDragOver(e){ e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
 function dzDragLeave(){ document.getElementById('drop-zone').classList.remove('drag-over'); }
@@ -385,39 +459,175 @@ function dzDrop(e){
 function dzFileChosen(file){
   if(!file) return;
   document.getElementById('raman-file').value = file.name;
+  loadedFileName = file.name;
   showLoaded(file.name);
   setStatus('Loaded: ' + file.name);
+  hasData = true;
+  setTimeout(activatePlotArea, 500);
 }
 function dzLoadSample(){
-  document.getElementById('raman-file').value = 'sample_raman.dyn';
-  showLoaded('sample_raman.dyn');
+  const name = 'sample_' + currentModule + '.dat';
+  document.getElementById('raman-file').value = name;
+  loadedFileName = name;
+  showLoaded(name);
   setStatus('Sample data loaded');
+  hasData = true;
+  setTimeout(activatePlotArea, 350);
 }
 function showLoaded(name){
   document.getElementById('dz-fname').textContent = name;
   document.getElementById('dz-loaded').classList.add('show');
 }
+
+/* Switches from the drop-zone view to the plot view and renders immediately */
+function activatePlotArea(){
+  document.getElementById('drop-zone').classList.add('hidden');
+  document.getElementById('plot-area').classList.add('active');
+  document.getElementById('pt-file').textContent = loadedFileName;
+  runPlot();
+}
+function resetToDropzone(){
+  hasData = false;
+  loadedFileName = '';
+  document.getElementById('raman-file').value = '';
+  document.getElementById('dz-loaded').classList.remove('show');
+  document.getElementById('plot-area').classList.remove('active');
+  document.getElementById('drop-zone').classList.remove('hidden');
+  document.getElementById('plot-div').innerHTML = '';
+  setStatus('Idle');
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATUS BAR HELPERS
+═══════════════════════════════════════════════════════════ */
 function setStatus(s){ document.getElementById('status-idle').textContent = s; }
 function toggleAdvanced(el){
   setStatus(el.checked ? 'Advanced settings enabled' : 'Idle');
 }
-function runPlot(){
-  const dot = document.getElementById('status-dot');
-  dot.classList.add('run');
-  setStatus('Rendering…');
-  setTimeout(() => {
-    dot.classList.remove('run');
-    setStatus('Done');
-  }, 700);
-}
+function rerenderIfLoaded(){ if (hasData) runPlot(); }
 function exportPlot(){
+  if (!hasData) { alert('Load data and plot before exporting.'); return; }
   alert('Connect to cluster for live data export.');
 }
 
-document.getElementById('analysis-select').addEventListener('change', function(){
-  document.getElementById('status-label').textContent = this.value;
-  setStatus('Idle');
-});
+/* ══════════════════════════════════════════════════════════
+   PLOTLY BASE LAYOUT
+═══════════════════════════════════════════════════════════ */
+function baseLayout(){
+  const showGrid = document.getElementById('grid-check').checked;
+  const showLegend = document.getElementById('legend-check').checked;
+  return {
+    paper_bgcolor:'#fff', plot_bgcolor:'#fff',
+    font:{ family:'Roboto,sans-serif', size:11, color:'#555' },
+    margin:{ t:20, r:20, b:44, l:56 },
+    showlegend: showLegend,
+    xaxis:{ gridcolor: showGrid ? 'rgba(0,0,0,.10)' : 'rgba(0,0,0,0)', zerolinecolor:'rgba(0,0,0,.15)', linecolor:'#bbb' },
+    yaxis:{ gridcolor: showGrid ? 'rgba(0,0,0,.10)' : 'rgba(0,0,0,0)', zerolinecolor:'rgba(0,0,0,.15)', linecolor:'#bbb' },
+    legend:{ bgcolor:'rgba(0,0,0,0)', font:{ size:10 } },
+  };
+}
+const PLOT_OPTS = { responsive:true, displayModeBar:false };
+
+/* ══════════════════════════════════════════════════════════
+   RENDER DISPATCH — runs when ▶ Plot is clicked (or auto after load)
+═══════════════════════════════════════════════════════════ */
+function runPlot(){
+  if (!hasData){
+    setStatus('Load a file or sample data first');
+    return;
+  }
+  const dot = document.getElementById('status-dot');
+  dot.classList.add('run');
+  setStatus('Rendering…');
+  document.getElementById('plot-empty-msg').style.display = 'none';
+
+  setTimeout(() => {
+    try {
+      const renderers = {
+        raman: renderRaman, infrared: renderInfrared, band: renderBand,
+        dos: renderDOS, phonon: renderPhonon, rdf: renderRDF,
+      };
+      (renderers[currentModule] || renderRaman)();
+    } catch(e){
+      console.error(e);
+      setStatus('Render error — see console');
+      dot.classList.remove('run');
+      return;
+    }
+    dot.classList.remove('run');
+    setStatus('Done');
+  }, 250);
+}
+
+/* ── Raman ──────────────────────────────────────────── */
+function renderRaman(){
+  const w = Array.from({length:400}, (_,i)=> 50 + i*3.5); // cm^-1
+  const peaks = [220,410,610,780,1080];
+  const y = w.map(x => peaks.reduce((s,p)=> s + Math.exp(-((x-p)**2)/(2*12*12))*(1+Math.random()*.05), 0.02));
+  Plotly.newPlot('plot-div', [{
+    x:w, y:y, type:'scatter', mode:'lines', name:'Raman intensity',
+    fill:'tozeroy', fillcolor:'rgba(255,102,0,.12)', line:{color:'#ff6600', width:2},
+  }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Raman shift (cm⁻¹)'}, yaxis:{...baseLayout().yaxis, title:'Intensity (a.u.)'}}, PLOT_OPTS);
+}
+/* ── Infrared ───────────────────────────────────────── */
+function renderInfrared(){
+  const w = Array.from({length:400}, (_,i)=> 100 + i*4);
+  const peaks = [340,560,890,1250];
+  const y = w.map(x => peaks.reduce((s,p)=> s + Math.exp(-((x-p)**2)/(2*15*15)), 0.03));
+  Plotly.newPlot('plot-div', [{
+    x:w, y:y, type:'scatter', mode:'lines', name:'IR absorption',
+    fill:'tozeroy', fillcolor:'rgba(46,125,204,.12)', line:{color:'#2e7dcc', width:2},
+  }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Wavenumber (cm⁻¹)'}, yaxis:{...baseLayout().yaxis, title:'Absorption (a.u.)'}}, PLOT_OPTS);
+}
+/* ── Band Structure ────────────────────────────────── */
+function renderBand(){
+  const nk=80, nb=8;
+  const k=Array.from({length:nk},(_,i)=>i/(nk-1));
+  const syms=[[0,'Γ'],[26,'X'],[53,'M'],[nk-1,'Γ']];
+  const traces=[];
+  for(let b=0;b<nb;b++){
+    const y=k.map(v=>-3+b*.9+2.2*Math.sin(v*Math.PI*(1+b*.15))+0.8*Math.cos(v*2*Math.PI*(b*.3+.1)));
+    traces.push({x:k,y,type:'scatter',mode:'lines',line:{color:b<4?'#2e7dcc':'#ff6600',width:1.6},showlegend:false});
+  }
+  traces.push({x:[0,1],y:[0,0],type:'scatter',mode:'lines',name:'E_F',line:{color:'#b02020',width:1,dash:'dot'}});
+  const layout = {...baseLayout(),
+    xaxis:{...baseLayout().xaxis, tickmode:'array', tickvals:syms.map(s=>s[0]/(nk-1)), ticktext:syms.map(s=>s[1]), showgrid:false, title:'k-path'},
+    yaxis:{...baseLayout().yaxis, title:'E − E_F (eV)', range:[-4.5,4.5]},
+  };
+  Plotly.newPlot('plot-div', traces, layout, PLOT_OPTS);
+}
+/* ── DOS / PDOS ─────────────────────────────────────── */
+function renderDOS(){
+  const e=Array.from({length:200},(_,i)=>-10+i*.1);
+  const g=(x,m,s,a)=>a*Math.exp(-((x-m)**2)/(2*s*s));
+  const tot=e.map(x=>g(x,-4,.8,1.2)+g(x,-1.5,1,2)+g(x,1,.6,1.5)+g(x,3,.5,.8)+.05);
+  const sp=e.map(x=>g(x,-4,.6,.5)+g(x,-1.5,.9,.8)+.02);
+  const pp=e.map(x=>g(x,-2,.7,.6)+g(x,1,.5,.9)+.01);
+  Plotly.newPlot('plot-div', [
+    {x:e,y:tot,name:'Total',type:'scatter',mode:'lines',fill:'tozeroy',fillcolor:'rgba(255,102,0,.1)',line:{color:'#ff6600',width:2}},
+    {x:e,y:sp,name:'s',type:'scatter',mode:'lines',line:{color:'#2e7dcc',width:1.2,dash:'dot'}},
+    {x:e,y:pp,name:'p',type:'scatter',mode:'lines',line:{color:'#2a9d2a',width:1.2,dash:'dash'}},
+  ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'E − E_F (eV)'}, yaxis:{...baseLayout().yaxis, title:'DOS (states/eV)'}}, PLOT_OPTS);
+}
+/* ── Phonon Dispersion ──────────────────────────────── */
+function renderPhonon(){
+  const nk=80,nm=6;
+  const k=Array.from({length:nk},(_,i)=>i/(nk-1));
+  const traces=Array.from({length:nm},(_,m)=>({x:k,y:k.map(v=>Math.abs(Math.sin(v*Math.PI*(m*.5+.2)))*8*(m+1)*.5+m*.3),type:'scatter',mode:'lines',line:{color:m<3?'#2e7dcc':'#ff6600',width:1.6},showlegend:false}));
+  Plotly.newPlot('plot-div', traces, {...baseLayout(),
+    xaxis:{...baseLayout().xaxis, tickmode:'array', tickvals:[0,.33,.67,1], ticktext:['Γ','X','M','Γ'], showgrid:false, title:'k-path'},
+    yaxis:{...baseLayout().yaxis, title:'ω (THz)', range:[-.5,16]},
+  }, PLOT_OPTS);
+}
+/* ── g(r) RDF ───────────────────────────────────────── */
+function renderRDF(){
+  const r=Array.from({length:120},(_,i)=>i*.1+.2);
+  const y=r.map(x=>{ if(x<1.8) return 0; return 1+2.8*Math.exp(-((x-2.5)**2)/.06)+0.8*Math.exp(-((x-4.1)**2)/.12)+0.3*Math.exp(-((x-5.8)**2)/.2)+.05*(Math.random()-.5); });
+  Plotly.newPlot('plot-div', [
+    {x:r,y:y,type:'scatter',mode:'lines',name:'g(r)',fill:'tozeroy',fillcolor:'rgba(255,102,0,.1)',line:{color:'#ff6600',width:2}},
+    {x:[1,12],y:[1,1],type:'scatter',mode:'lines',name:'g(r)=1',line:{color:'#888',width:.8,dash:'dot'}},
+  ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'r (Å)'}, yaxis:{...baseLayout().yaxis, title:'g(r)'}}, PLOT_OPTS);
+}
 </script>
 </body>
 </html>

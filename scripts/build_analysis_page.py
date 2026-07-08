@@ -33,7 +33,9 @@ def extract_html() -> str:
                 "<!DOCTYPE html>" in text
                 and "Analysis · SMAD" in text
                 and 'id="analysis-select"' in text
-                and "DESIGN TOKENS — BURAI palette" in text
+                and 'id="plot-area"' in text
+                and "plotly-2.27.0.min.js" in text
+                and "renderRaman" in text
             ):
                 start = text.find("<!DOCTYPE html>")
                 end = text.rfind("</html>")
