@@ -639,6 +639,53 @@ body.mode-menu-open #bb-icon-close{display:flex}
 }
 #evo-gen-counter{font-size:11px;font-weight:700;color:#444;font-family:'JetBrains Mono',monospace;}
 #evo-best-energy{font-size:11px;color:#065f46;font-family:'JetBrains Mono',monospace;font-weight:700;}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MOBILE / SMARTPHONE LAYOUT
+   Stacks the 3D viewer above the right panel, makes the workspace
+   scrollable, and re-flows the Evolution overlay's three side-by-side
+   panels into a scrollable single column.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width:860px){
+  #workspace{flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #viewer-area{flex:none;width:100%;height:52vh;min-height:280px;}
+  #rpanel{width:100%;min-width:0;border-left:none;border-top:1px solid #bbb;flex-shrink:0;}
+  #rp-scroll{max-height:none;}
+  /* Console previously anchored to the right of the 318px sidebar —
+     the sidebar is no longer beside it, so run it full width. */
+  #console-area{right:0;}
+  /* Settings panel reserved space for the vertical toolbar; keep as-is,
+     toolbar remains usable via scroll on the viewer. */
+
+  /* Evolution mode: three fixed-width side-by-side panels don't fit a
+     phone screen — stack them and let the whole thing scroll. */
+  #evo-overlay.active{overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #evo-bottom{flex-direction:column;overflow:visible;}
+  #evo-monitor{width:100%;border-right:none;border-bottom:1px solid #c8c8c8;}
+  #evo-table-panel{width:100%;border-right:none;border-bottom:1px solid #c8c8c8;min-height:260px;}
+  #evo-table-scroll{max-height:280px;}
+  #evo-viewer-panel{width:100%;}
+  #evo-viewer-3d{min-height:260px;}
+  #evo-top{max-height:none;flex-wrap:wrap;overflow-y:visible;}
+  .evo-card{min-width:150px;}
+  #evo-controls-bar{overflow-x:auto;}
+
+  /* Run dialog rows: stack label above input so they fit narrow screens */
+  .rd-row{flex-wrap:wrap;}
+  .rd-label{width:100%;}
+
+  /* Mode / hamburger fly-in menus: keep clear of viewport edges */
+  #mode-menu,#hbmenu{width:min(190px,60vw);}
+}
+@media (max-width:480px){
+  #titlebar .file-tab{padding:0 10px;font-size:11px;}
+  #ct-toolbar{top:6px;right:6px;}
+  .ct-btn{width:32px;height:32px;font-size:14px;}
+  #console-btn{font-size:9px;padding:2px 7px;}
+  #bb-mode-label{font-size:12px;}
+  #evo-controls-bar .evo-run-btn{padding:5px 10px;font-size:11px;}
+  #evo-host-input{width:130px !important;}
+}
 </style>
 </head>
 <body>
@@ -880,7 +927,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
     </div>
 
   </div><!-- /evo-bottom -->
-
 
 </div><!-- /evo-overlay -->
 
@@ -1729,7 +1775,6 @@ function doExport(fmt){
   else if(fmt==='json'){const b=new Blob([JSON.stringify({structure:current,cartesian_atoms:CF.atoms,bonds:CF.bonds},null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(current.formula||'structure')+'.json';a.click();URL.revokeObjectURL(u);}
   else{try{navigator.clipboard.writeText(txt).then(()=>log('[export] QE input copied'));}catch(e){log('[export] '+e.message);}}
 }
-
 
 /* Atom pills */
 function updatePills(){
