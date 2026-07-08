@@ -4,265 +4,358 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About · SMAD</title>
+    <script>
+        (function(){
+            try {
+                if (localStorage.getItem('smad-theme') === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch(e) {}
+        })();
+    </script>
     <link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+    /* ═══════════════════════════════════════════════════════════
+       DESIGN TOKENS — dark platform theme (matches smad.live footer)
+    ═══════════════════════════════════════════════════════════ */
+    :root{
+      --bg0:#0a0806;        /* page background */
+      --bg1:#121009;        /* card background */
+      --bg2:#181510;        /* hover / elevated */
+      --bdr:#2a2419;        /* borders */
+      --bdr2:#3a331f;
+      --tx0:#f2ece1;        /* headings / bright text */
+      --tx1:#cbbda5;        /* body text */
+      --tx2:#9c8a6f;        /* secondary text */
+      --tx3:#7d6b52;        /* footer / muted text — matches reference bar */
+      --acc:#c9975a;        /* tan/amber accent (links, active states) */
+      --acc-br:#e0b378;     /* accent hover / bright */
+      --r:4px; --r2:8px;
+      --t:.15s ease;
+      --sans:'Inter',sans-serif;
+      --mono:'JetBrains Mono',monospace;
+    }
+    /* ── LIGHT THEME OVERRIDES ── */
+    html[data-theme="light"]{
+      --bg0:#faf7f1;        /* page background */
+      --bg1:#ffffff;        /* card background */
+      --bg2:#f1ebdf;        /* hover / elevated */
+      --bdr:#e2d9c7;        /* borders */
+      --bdr2:#cdbf9f;
+      --tx0:#1d1710;        /* headings / dark text */
+      --tx1:#3d3325;        /* body text */
+      --tx2:#6b5c42;        /* secondary text */
+      --tx3:#8a7a5c;        /* footer / muted text */
+      --acc:#a3672f;        /* amber accent, tuned for light bg */
+      --acc-br:#7d4d20;     /* accent hover / darker */
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html{transition:background var(--t)}
+    body{
+      margin:0;font-family:var(--sans);font-size:14px;color:var(--tx1);
+      background:var(--bg0);min-height:100vh;
+      transition:background var(--t),color var(--t);
+    }
+    a{color:var(--acc)}
+
+    /* ── THEME TOGGLE ── */
+    #theme-toggle{
+      display:flex;align-items:center;justify-content:center;
+      width:32px;height:32px;border-radius:50%;
+      background:var(--bg2);border:1px solid var(--bdr);color:var(--tx1);
+      cursor:pointer;margin-right:10px;flex-shrink:0;
+      transition:background var(--t),border-color var(--t),color var(--t);
+    }
+    #theme-toggle:hover{border-color:var(--acc);color:var(--acc)}
+    #theme-toggle svg{width:16px;height:16px}
+    #theme-toggle .icon-moon{display:none}
+    html[data-theme="light"] #theme-toggle .icon-sun{display:none}
+    html[data-theme="light"] #theme-toggle .icon-moon{display:block}
+
+    /* ── NAVBAR ── */
+    #navbar{
+      height:52px;background:var(--bg0);border-bottom:1px solid var(--bdr);
+      display:flex;align-items:center;padding:0 22px;position:sticky;top:0;z-index:20;
+    }
+    .brand{
+      font-weight:700;font-size:16px;color:var(--tx0);text-decoration:none;
+      letter-spacing:.02em;margin-right:auto;
+    }
+    #nav-links{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+    .nav-link{
+      padding:7px 12px;font-size:12.5px;color:var(--tx2);text-decoration:none;
+      border-radius:var(--r);transition:background var(--t),color var(--t);
+      white-space:nowrap;
+    }
+    .nav-link:hover{background:var(--bg2);color:var(--tx0)}
+    .nav-link.active{color:var(--acc);font-weight:600}
+    .nav-toggle{display:none;background:none;border:1px solid var(--bdr);border-radius:var(--r);
+      color:var(--tx1);padding:6px 10px;cursor:pointer;font-size:14px}
+    @media (max-width:900px){
+      #nav-links{
+        display:none;position:absolute;top:52px;left:0;right:0;background:var(--bg1);
+        flex-direction:column;align-items:stretch;border-bottom:1px solid var(--bdr);padding:6px;
+      }
+      #nav-links.open{display:flex}
+      .nav-toggle{display:inline-block}
+      .nav-link{padding:10px 12px}
+    }
+
+    /* ── MAIN ── */
+    main{padding:40px 0 70px}
+    .container{max-width:1000px;margin:0 auto;padding:0 22px}
+    .hero-title{font-size:28px;font-weight:700;color:var(--tx0);margin:0 0 10px}
+    .hero-sub{font-size:14px;color:var(--tx2);line-height:1.7;max-width:720px;margin:0}
+    .hero-sub a{font-weight:600;text-decoration:none}
+    .hero-sub a:hover{color:var(--acc-br);text-decoration:underline}
+
+    /* ── TABS ── */
+    #tabs{
+      display:flex;gap:4px;margin:30px 0 0;border-bottom:1px solid var(--bdr);
+      flex-wrap:wrap;
+    }
+    .tab-btn{
+      padding:10px 16px;font-size:13px;font-weight:600;color:var(--tx2);
+      background:transparent;border:none;border-bottom:2px solid transparent;
+      cursor:pointer;font-family:var(--sans);transition:color var(--t),border-color var(--t);
+    }
+    .tab-btn:hover{color:var(--tx0)}
+    .tab-btn.active{color:var(--acc);border-bottom-color:var(--acc)}
+
+    /* ── PANELS ── */
+    .panel{display:none;padding-top:24px}
+    .panel.active{display:block}
+    .card{
+      background:var(--bg1);border:1px solid var(--bdr);border-radius:var(--r2);
+      padding:26px 28px;margin-bottom:18px;
+    }
+    .card h2{font-size:18px;color:var(--tx0);margin:0 0 14px;font-weight:600}
+    .card p{line-height:1.75;color:var(--tx1);margin:0 0 12px}
+    .card ul,.card ol{padding-left:20px;margin:0 0 12px;line-height:1.8;color:var(--tx1)}
+    .card strong{color:var(--tx0)}
+    .muted{color:var(--tx2);font-size:12.5px}
+
+    /* ── PLATFORM MODULE LIST ── */
+    .platform-item{display:flex;gap:14px;align-items:flex-start;margin-bottom:20px}
+    .platform-item:last-of-type{margin-bottom:0}
+    .platform-icon{
+      width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+      border-radius:var(--r);background:var(--bg2);color:var(--acc);font-size:17px;font-weight:700;
+      border:1px solid var(--bdr2);
+    }
+    .platform-item h3{font-size:14.5px;margin:0 0 3px;color:var(--tx0);font-weight:600}
+    .platform-item p{margin:0;color:var(--tx2);font-size:13px;line-height:1.65}
+
+    /* ── TEAM ── */
+    .team-row{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+    .founder-photo{
+      width:200px;height:200px;object-fit:cover;border-radius:var(--r2);
+      border:1px solid var(--bdr2);flex-shrink:0;
+    }
+    .team-name{font-size:16px;font-weight:700;color:var(--tx0);margin:0 0 2px}
+    .team-role{font-size:12.5px;color:var(--acc);font-weight:600;margin:0 0 10px}
+
+    /* ── CODE BLOCK ── */
+    pre.code{
+      background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);
+      padding:14px 16px;font-family:var(--mono);font-size:12px;color:var(--tx1);
+      overflow-x:auto;line-height:1.6;
+    }
+
+    /* ── FOOTER — single uniform bar ── */
+    footer{
+      border-top:1px solid var(--bdr);background:var(--bg0);padding:16px 0;
+    }
+    .footer-row{
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+      font-size:12px;color:var(--tx3);
+    }
+    .footer-links{display:flex;gap:18px;flex-wrap:wrap}
+    .footer-links a{
+      color:var(--tx3);text-decoration:none;font-weight:500;transition:color var(--t);
+    }
+    .footer-links a:hover{color:var(--acc)}
+    </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/">SMAD</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsAbout">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarsAbout">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/">⌂ Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/#overview">Overview</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/structures">CrystalForge</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/dft">DFT</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/md">MD Simulations</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/montecarlo">Monte Carlo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/analysis">Analysis</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="/about">About</a></li>
-                </ul>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+    <a class="brand" href="/">SMAD</a>
+    <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="nav-toggle" onclick="document.getElementById('nav-links').classList.toggle('open')">☰</button>
+    <div id="nav-links">
+        <a class="nav-link" href="/">⌂ Home</a>
+    </div>
+</nav>
+
+<main>
+    <div class="container">
+        <h1 class="hero-title">About SMAD</h1>
+        <p class="hero-sub">
+            SMAD (Superconducting Materials Automated Discovery) is a platform for running, tracking, and
+            visualising the full computational pipeline behind superconducting materials research — live at
+            <a href="https://smad.live">smad.live</a>.
+        </p>
+
+        <!-- TABS -->
+        <div id="tabs">
+            <button class="tab-btn active" data-panel="platform" onclick="showTab('platform', this)">Platform</button>
+            <button class="tab-btn" data-panel="team" onclick="showTab('team', this)">Team</button>
+            <button class="tab-btn" data-panel="terms" onclick="showTab('terms', this)">Terms of use</button>
+            <button class="tab-btn" data-panel="cite" onclick="showTab('cite', this)">How to cite</button>
+        </div>
+
+        <!-- PLATFORM -->
+        <div class="panel active" id="panel-platform">
+            <div class="card">
+                <h2>What smad.live does</h2>
+                <p>
+                    SMAD ties together structure generation, first-principles calculation, molecular dynamics,
+                    statistical sampling, and result visualisation into one workspace, so a screening campaign
+                    for superconducting materials can go from an idea to a plotted result without leaving
+                    the browser. The platform is organised around four core modules:
+                </p>
+
+                <div class="platform-item">
+                    <div class="platform-icon">◈</div>
+                    <div>
+                        <h3>DFT</h3>
+                        <p>Configure and launch electronic-structure calculations (SCF, band structure, DOS/PDOS, phonons, XANES/EELS/ARPES and related spectroscopies) on the connected HPC cluster.</p>
+                    </div>
+                </div>
+
+                <div class="platform-item">
+                    <div class="platform-icon">∿</div>
+                    <div>
+                        <h3>MD Simulations</h3>
+                        <p>Run and monitor molecular dynamics trajectories — energy/temperature/pressure tracking, radial distribution functions, mean-squared displacement, and velocity autocorrelation.</p>
+                    </div>
+                </div>
+
+                <div class="platform-item">
+                    <div class="platform-icon">⚄</div>
+                    <div>
+                        <h3>Monte Carlo</h3>
+                        <p>Sample model Hamiltonians and thermodynamic ensembles for phase behaviour and statistical properties that complement the DFT and MD results.</p>
+                    </div>
+                </div>
+
+                <div class="platform-item">
+                    <div class="platform-icon">📈</div>
+                    <div>
+                        <h3>Analysis</h3>
+                        <p>A unified plotting suite across every module: band structures, DOS/PDOS, phonon dispersion, RDF/MSD/VACF, parity and learning curves for ML force fields, XRD, charge density, and more — each with drag-and-drop file upload and export.</p>
+                    </div>
+                </div>
+            </div>
+            <p class="muted">Modules are pluggable — institutions can swap in their own codes, schedulers, or surrogate models behind the same interface.</p>
+        </div>
+
+        <!-- TEAM -->
+        <div class="panel" id="panel-team">
+            <div class="card">
+                <h2>Team</h2>
+                <div class="team-row">
+                    <img src="/static/jay-rwaka.jpg" alt="Jay Rwaka" class="founder-photo" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="founder-photo" style="display:none;align-items:center;justify-content:center;background:var(--bg2);color:var(--acc);font-size:48px;font-weight:700" aria-hidden="true">JR</div>
+                    <div>
+                        <div class="team-name">Jay Rwaka</div>
+                        <div class="team-role">Creator, SMAD</div>
+                        <p>
+                            Jay Rwaka created SMAD to bring structure generation, DFT, molecular dynamics,
+                            Monte Carlo sampling, and analysis into a single workspace for superconducting
+                            materials research — cutting down the time between a candidate structure and a
+                            plotted, citable result.
+                        </p>
+                        <p class="muted">Replace this bio with fuller background, affiliation, and links (email, GitHub, Google Scholar) once available.</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <main class="section-light py-5">
-        <div class="container">
-            <div class="row mb-4">
-                <div class="col-lg-8">
-                    <h1 class="section-title mb-3">About SMAD</h1>
-                    <p class="section-subtitle mb-0">
-                        This page provides a technical overview of the software stack, HPC environment, screening workflows,
-                        and the policies around using and citing SMAD in scientific work.
-                    </p>
-                </div>
+        <!-- TERMS OF USE -->
+        <div class="panel" id="panel-terms">
+            <div class="card">
+                <h2>Terms of use</h2>
+                <p>
+                    SMAD is intended for research and educational purposes. Access may be restricted to members of
+                    a specific institution, collaboration, or project.
+                </p>
+                <ul>
+                    <li><strong>Data responsibility</strong>: Users are responsible for verifying and interpreting results.</li>
+                    <li><strong>Compliance</strong>: All usage must comply with institutional HPC policies and software licenses.</li>
+                    <li><strong>Security</strong>: Do not store sensitive personal data; SSH access should use keys and strong practices.</li>
+                    <li><strong>Attribution</strong>: Publications must acknowledge SMAD and relevant funding sources.</li>
+                </ul>
+                <p class="muted">Replace or extend this text with your official legal terms, institutional policies, or license statements.</p>
             </div>
+        </div>
 
-            <!-- Tabs -->
-            <ul class="nav nav-tabs mb-3" id="aboutTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="software-tab" data-bs-toggle="tab" data-bs-target="#software" type="button" role="tab">
-                        Software stack
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="hpc-tab" data-bs-toggle="tab" data-bs-target="#hpc" type="button" role="tab">
-                        HPC & infrastructure
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="screening-tab" data-bs-toggle="tab" data-bs-target="#screening" type="button" role="tab">
-                        Screening workflows
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="news-tab" data-bs-toggle="tab" data-bs-target="#news" type="button" role="tab">
-                        News & updates
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="publications-tab" data-bs-toggle="tab" data-bs-target="#publications" type="button" role="tab">
-                        Publications
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="terms-tab" data-bs-toggle="tab" data-bs-target="#terms" type="button" role="tab">
-                        Terms of use
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="cite-tab" data-bs-toggle="tab" data-bs-target="#cite" type="button" role="tab">
-                        How to cite
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content" id="aboutTabsContent">
-                <!-- Software stack -->
-                <div class="tab-pane fade show active" id="software" role="tabpanel" aria-labelledby="software-tab">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">Software stack</h2>
-                            <p>
-                                SMAD is built as a modular scientific platform. The current instance runs on:
-                            </p>
-                            <ul>
-                                <li><strong>Backend</strong>: FastAPI (Python) for high‑performance REST and WebSocket APIs.</li>
-                                <li><strong>Database</strong>: SQLite with SQLAlchemy ORM for structured materials data.</li>
-                                <li><strong>Remote access</strong>: Paramiko‑based SSH bridge for interacting with HPC login nodes.</li>
-                                <li><strong>Frontend</strong>: Bootstrap 5 with custom CSS for a lightweight, responsive UI.</li>
-                                <li><strong>Automation & AI</strong>: Pluggable Python workflows for optimization, surrogate models, and active learning.</li>
-                            </ul>
-                            <p class="mb-0 small text-muted">
-                                You can extend this stack with additional databases, schedulers, or AI libraries according to the
-                                needs of your project or institution.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- HPC & infrastructure -->
-                <div class="tab-pane fade" id="hpc" role="tabpanel" aria-labelledby="hpc-tab">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">HPC & infrastructure</h2>
-                            <p>
-                                SMAD is designed to sit on top of institutional HPC clusters or cloud‑based resources.
-                                Typical deployments include:
-                            </p>
-                            <ul>
-                                <li><strong>Login nodes</strong> accessed via SSH for job submission and monitoring.</li>
-                                <li><strong>Schedulers</strong> such as SLURM, PBS, or similar batch systems.</li>
-                                <li><strong>Compute partitions</strong> with CPU‑only and GPU‑accelerated nodes.</li>
-                                <li><strong>High‑performance storage</strong> for wavefunctions, checkpoints, and derived datasets.</li>
-                            </ul>
-                            <p class="mb-0">
-                                This instance exposes an experimental cluster console for lightweight commands; production
-                                workflows should be encoded as automated pipelines rather than manual terminal usage.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Screening workflows -->
-                <div class="tab-pane fade" id="screening" role="tabpanel" aria-labelledby="screening-tab">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">Screening and optimization workflows</h2>
-                            <p>
-                                SMAD supports multi‑stage superconducting materials discovery campaigns. A typical workflow is:
-                            </p>
-                            <ol>
-                                <li>Curate candidate structures (from databases or generative models).</li>
-                                <li>Submit large‑scale electronic‑structure or model Hamiltonian calculations on the cluster.</li>
-                                <li>Aggregate results into the SMAD database with metadata and provenance.</li>
-                                <li>Train surrogate models to predict \(T_c\), stability, and other target properties.</li>
-                                <li>Use active learning or Bayesian optimization to propose new candidates.</li>
-                                <li>Iterate until convergence on high‑value superconducting families.</li>
-                            </ol>
-                            <p class="mb-0 small text-muted">
-                                The exact codes (e.g. DFT, DMFT, Monte Carlo) and optimization strategies can be customized for
-                                your project and should be documented in your workflow configuration or lab documentation.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- News & updates -->
-                <div class="tab-pane fade" id="news" role="tabpanel" aria-labelledby="news-tab">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">News & updates</h2>
-                            <p class="mb-3">
-                                Use this space to track major changes to the SMAD platform and your discovery campaigns.
-                            </p>
-                            <ul class="small">
-                                <li><strong>[YYYY‑MM‑DD]</strong> Initial deployment of SMAD on the superconductivity cluster.</li>
-                                <li><strong>[YYYY‑MM‑DD]</strong> Added automated screening workflow for layered cuprates.</li>
-                                <li><strong>[YYYY‑MM‑DD]</strong> Integrated new AI model for predicting critical temperatures.</li>
-                            </ul>
-                            <p class="small text-muted mb-0">
-                                Replace these placeholder entries with your real release notes, campaign milestones, or
-                                announcements for collaborators.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Publications -->
-                <div class="tab-pane fade" id="publications" role="tabpanel" aria-labelledby="publications-tab">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">Publications using SMAD</h2>
-                            <p>
-                                List peer‑reviewed articles, preprints, and conference contributions that used SMAD or data
-                                generated by SMAD.
-                            </p>
-                            <ul class="small">
-                                <li>
-                                    <strong>[Author et al.]</strong> <em>Title of superconducting materials paper</em>,
-                                    Journal / arXiv:XXXX.XXXXX (Year).
-                                </li>
-                                <li>
-                                    <strong>[Author et al.]</strong> <em>High‑throughput search for unconventional superconductors</em>,
-                                    Conference / Workshop (Year).
-                                </li>
-                            </ul>
-                            <p class="small text-muted mb-0">
-                                You can link each entry to a DOI, arXiv record, or institutional repository.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Terms of use -->
-                <div class="tab-pane fade" id="terms" role="tabpanel" aria-labelledby="terms-tab">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">Terms of use</h2>
-                            <p>
-                                SMAD is intended for research and educational purposes. Access may be restricted to members of
-                                a specific institution, collaboration, or project.
-                            </p>
-                            <ul>
-                                <li><strong>Data responsibility</strong>: Users are responsible for verifying and interpreting results.</li>
-                                <li><strong>Compliance</strong>: All usage must comply with institutional HPC policies and software licenses.</li>
-                                <li><strong>Security</strong>: Do not store sensitive personal data; SSH access should use keys and strong practices.</li>
-                                <li><strong>Attribution</strong>: Publications must acknowledge SMAD and relevant funding sources.</li>
-                            </ul>
-                            <p class="small text-muted mb-0">
-                                Replace or extend this text with your official legal terms, institutional policies, or license statements.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- How to cite -->
-                <div class="tab-pane fade" id="cite" role="tabpanel" aria-labelledby="cite-tab">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">How to cite SMAD</h2>
-                            <p>
-                                If you use SMAD in a publication, please cite it so that others can trace the computational
-                                infrastructure behind your results. A suggested citation format is:
-                            </p>
-                            <p class="mb-2">
-                                <strong>Text citation</strong>:
-                                “This work used the SMAD (Superconducting Materials Automated Discovery) platform for
-                                high‑throughput screening and analysis of superconducting materials.”
-                            </p>
-                            <p class="mb-2"><strong>BibTeX (example)</strong>:</p>
-<pre class="console-output small mb-3">
-@misc{smad_platform,
+        <!-- HOW TO CITE -->
+        <div class="panel" id="panel-cite">
+            <div class="card">
+                <h2>How to cite SMAD</h2>
+                <p>
+                    If you use SMAD in a publication, please cite it so that others can trace the computational
+                    infrastructure behind your results. A suggested citation format is:
+                </p>
+                <p><strong>Text citation</strong>:
+                    "This work used the SMAD (Superconducting Materials Automated Discovery) platform for
+                    high‑throughput screening and analysis of superconducting materials."
+                </p>
+                <p><strong>BibTeX (example)</strong>:</p>
+<pre class="code">@misc{smad_platform,
   title        = {SMAD: A Platform for Automated Discovery of Superconducting Materials},
-  author       = {Your Name and Collaborators},
+  author       = {Jay Rwaka and Collaborators},
   year         = {2026},
   howpublished = {\url{https://smad.live}},
   note         = {High-performance computing and AI-assisted materials discovery platform}
-}
-</pre>
-                            <p class="small text-muted mb-0">
-                                Update authors, year, and other fields once a formal software paper or institutional report is available.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+}</pre>
+                <p class="muted">Update authors, year, and other fields once a formal software paper or institutional report is available.</p>
             </div>
         </div>
-    </main>
 
-    <footer class="footer py-4 text-center text-muted small">
-        <div class="container">
-            <div>© 2026 SMAD · Superconducting Materials Automated Discovery</div>
-            <div>Running on FastAPI · HPC + AI automation for superconducting materials</div>
+    </div>
+</main>
+
+<!-- FOOTER — uniform single bar, matches platform footer -->
+<footer>
+    <div class="container">
+        <div class="footer-row">
+            <div>© 2026 SMAD Labs. All rights reserved. &nbsp;·&nbsp; All-in-one Materials Discovery Platform</div>
+            <div class="footer-links">
+                <a href="/about">About</a>
+                <a href="https://github.com/Itete5/smad" target="_blank" rel="noopener">GitHub</a>
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+                <a href="/status">Status</a>
+                <a href="/about#contact">Contact</a>
+            </div>
         </div>
-    </footer>
+    </div>
+</footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toggleTheme(){
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    if (next === 'light') { html.setAttribute('data-theme', 'light'); }
+    else { html.removeAttribute('data-theme'); }
+    try { localStorage.setItem('smad-theme', next); } catch(e) {}
+}
+function showTab(name, btn){
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    btn.classList.add('active');
+    const links = document.getElementById('nav-links');
+    if (window.innerWidth <= 900) links.classList.remove('open');
+}
+</script>
 </body>
 </html>
