@@ -121,27 +121,43 @@ body{
 }
 .pt-reset:hover{background:var(--bg1);border-color:var(--bdr2);color:var(--tx0)}
 
-/* ── Crystal structure viewer ── */
-#structure-panel{
-  border:1px solid var(--bdr);border-radius:var(--r2);background:var(--bg2);
-  margin-bottom:10px;flex-shrink:0;overflow:hidden;
-}
-#structure-header{
-  display:flex;align-items:center;gap:10px;padding:7px 10px;
-  background:var(--bg1);border-bottom:1px solid var(--bdr);
-  cursor:pointer;user-select:none;
-}
-.struct-title{font-size:11.5px;font-weight:700;color:var(--tx0);white-space:nowrap}
-.struct-meta{font-size:11px;font-family:var(--mono);color:var(--tx3);white-space:nowrap}
-.struct-spacer{flex:1}
-.struct-toggle{font-size:10px;color:var(--tx3);transition:transform var(--t)}
-#structure-div{height:230px}
-#structure-panel.collapsed #structure-div{display:none}
-#structure-panel.collapsed .struct-toggle{transform:rotate(-90deg)}
+/* ── Crystal structure + analysis viewport ── */
+#viewport{ position:relative; flex:1; min-height:0; border:1px solid var(--bdr); border-radius:var(--r2); background:var(--bg2); overflow:hidden; }
 
-#plot-div{flex:1;min-height:0}
+#structure-div{
+  position:absolute; top:0; right:0; bottom:0; left:0;
+  transition:top var(--t),right var(--t),bottom var(--t),left var(--t),width var(--t),height var(--t);
+  z-index:2;
+}
+#structure-div.mini{
+  top:10px; right:10px; bottom:auto; left:auto; width:230px; height:160px;
+  border:1px solid var(--bdr2); border-radius:var(--r); box-shadow:0 3px 10px rgba(0,0,0,.2);
+  background:var(--bg3); z-index:6;
+}
+
+#structure-legend{
+  position:absolute; right:16px; bottom:14px; display:flex; gap:8px; z-index:3; pointer-events:none;
+}
+.legend-chip{
+  display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;
+  font-size:11px;font-weight:700;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);
+}
+#structure-gizmo{ position:absolute; left:14px; bottom:14px; width:64px; height:64px; z-index:3; pointer-events:none; }
+#structure-export-btn{
+  position:absolute; top:10px; right:10px; z-index:4; width:28px; height:28px;
+  border:1px solid var(--bdr); border-radius:var(--r); background:var(--bg3); color:var(--tx2);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all var(--t);
+}
+#structure-export-btn:hover{background:var(--bg1);color:var(--tx0);border-color:var(--bdr2)}
+#structure-div.mini ~ #structure-legend,
+#structure-div.mini ~ #structure-gizmo,
+#structure-div.mini ~ #structure-export-btn{ display:none; }
+
+#plot-div{ position:absolute; top:0; right:0; bottom:0; left:0; display:none; z-index:1; }
+#plot-div.active{ display:block; }
 #plot-empty-msg{
-  display:none;flex:1;align-items:center;justify-content:center;color:var(--tx3);font-size:12.5px;
+  position:absolute; top:0; right:0; bottom:0; left:0;
+  display:none; align-items:center; justify-content:center; color:var(--tx3); font-size:12.5px; z-index:1;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -261,7 +277,25 @@ body{
 <!-- TOP NAVIGATION -->
 <nav id="navbar">
   <a class="nav-tab" href="/">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <svg width="14" height="14" viewBox="0 0 367 232" fill="currentColor" style="flex-shrink:0">
+<g transform="translate(0,232) scale(0.1,-0.1)">
+<path d="M1710 1954 c-484 -254 -619 -324 -629 -324 -7 0 -11 37 -11 110 l0
+110 -155 0 -155 0 0 -198 0 -197 -287 -150 -288 -150 178 -3 c161 -2 182 -1
+210 17 29 17 1034 544 1199 628 l67 35 83 -42 c46 -24 128 -66 183 -95 55 -29
+240 -126 410 -215 454 -238 515 -270 570 -301 49 -27 54 -28 232 -31 99 -2
+179 0 177 3 -2 4 -160 88 -351 188 -192 100 -395 206 -453 237 -208 111 -848
+444 -852 444 -1 0 -59 -30 -128 -66z M1800 1662 c-19 -10 -177 -91 -350 -180
+-173 -88 -394 -201 -490 -251 l-175 -90 -3 -500 -2 -501 85 0 85 0 2 451 3
+451 145 74 c80 41 279 143 443 227 l298 152 197 -101 c108 -56 308 -158 445
+-228 l247 -127 0 -450 0 -449 85 0 85 0 0 499 0 499 -212 110 c-339 174 -845
+432 -849 432 -2 0 -20 -8 -39 -18z M1885 932 c-3 -3 -5 -70 -5 -149 l0 -143
+150 0 150 0 0 28 c0 41 -53 142 -96 184 -22 20 -57 45 -79 54 -46 19 -112 34
+-120 26z M1665 902 c-92 -44 -153 -126 -168 -224 l-6 -38 150 0 149 0 0 145 0
+145 -32 0 c-18 0 -60 -13 -93 -28z M1490 395 l0 -145 150 0 150 0 0 145 0 145
+-150 0 -150 0 0 -145z M1882 398 l3 -143 148 -3 147 -3 0 146 0 145 -150 0
+-151 0 3 -142z"/>
+</g>
+</svg>
     SMAD Home
   </a>
   <div class="nav-tab active">Analysis</div>
@@ -322,18 +356,17 @@ body{
         <button class="pt-reset" onclick="resetToDropzone()">⟲ Load different file</button>
       </div>
 
-      <div id="structure-panel">
-        <div id="structure-header" onclick="toggleStructurePanel()">
-          <span class="struct-title">◆ Crystal Structure</span>
-          <span class="struct-meta" id="structure-meta"></span>
-          <div class="struct-spacer"></div>
-          <span class="struct-toggle" id="structure-toggle-icon">▾</span>
-        </div>
+      <div id="viewport">
         <div id="structure-div"></div>
-      </div>
+        <div id="structure-legend"></div>
+        <svg id="structure-gizmo" viewBox="0 0 64 64"></svg>
+        <button id="structure-export-btn" onclick="exportPlot()" title="Export view">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
 
-      <div id="plot-div"></div>
-      <div id="plot-empty-msg">Click ▶ Plot to render this analysis.</div>
+        <div id="plot-div"></div>
+        <div id="plot-empty-msg">Click ▶ Plot to render this analysis.</div>
+      </div>
     </div>
 
   </div><!-- /main -->
@@ -532,7 +565,7 @@ function activatePlotArea(){
   document.getElementById('drop-zone').classList.add('hidden');
   document.getElementById('plot-area').classList.add('active');
   document.getElementById('pt-file').textContent = loadedFileName;
-  document.getElementById('structure-panel').classList.remove('collapsed');
+  document.getElementById('structure-div').classList.remove('mini');
   renderStructure();
   runPlot();
 }
@@ -544,12 +577,21 @@ function resetToDropzone(){
   document.getElementById('plot-area').classList.remove('active');
   document.getElementById('drop-zone').classList.remove('hidden');
   document.getElementById('plot-div').innerHTML = '';
+  document.getElementById('plot-div').classList.remove('active');
   document.getElementById('structure-div').innerHTML = '';
-  document.getElementById('structure-meta').textContent = '';
+  document.getElementById('structure-div').classList.remove('mini');
+  document.getElementById('structure-legend').innerHTML = '';
+  document.getElementById('structure-gizmo').innerHTML = '';
   setStatus('Idle');
 }
-function toggleStructurePanel(){
-  document.getElementById('structure-panel').classList.toggle('collapsed');
+
+/* Shrinks the structure viewer into a top-right inset once an analysis
+   plot is on screen, filling the main viewport with the plot instead. */
+function shrinkStructureToCorner(){
+  const sd = document.getElementById('structure-div');
+  if (sd.classList.contains('mini')) return;
+  sd.classList.add('mini');
+  setTimeout(()=>{ if (window.Plotly) Plotly.Plots.resize(sd); }, 160);
 }
 
 /* ── Crystal structure viewer ─────────────────────────
@@ -557,7 +599,9 @@ function toggleStructurePanel(){
    small replicated unit cell with two atom species, bonds along the
    lattice vectors, and the primitive cell outlined in orange.
    Lattice parameter/atom pattern are seeded from the filename so the
-   same "file" always reproduces the same structure. ──────────────── */
+   same "file" always reproduces the same structure. A legend and a
+   camera-synced axis gizmo overlay the viewer, matching the reference
+   look of a dedicated structure viewer. ──────────────── */
 function renderStructure(){
   let seed = 7;
   for (let i=0;i<loadedFileName.length;i++) seed = (seed*31 + loadedFileName.charCodeAt(i)) >>> 0;
@@ -587,14 +631,15 @@ function renderStructure(){
     ez.push(corners[p][2],corners[q][2],null);
   });
 
+  const COL_A = '#7fb8e0', COL_B = '#e0c33f';
+
   Plotly.newPlot('structure-div', [
     {x:bx,y:by,z:bz, type:'scatter3d', mode:'lines', line:{color:'#bbb',width:2}, showlegend:false, hoverinfo:'skip'},
     {x:ex,y:ey,z:ez, type:'scatter3d', mode:'lines', line:{color:'#ff6600',width:3}, name:'Unit cell', hoverinfo:'skip'},
-    {x:cationX,y:cationY,z:cationZ, type:'scatter3d', mode:'markers', marker:{size:7,color:'#2e7dcc'}, name:'Species A'},
-    {x:anionX,y:anionY,z:anionZ, type:'scatter3d', mode:'markers', marker:{size:9,color:'#e05500'}, name:'Species B'},
+    {x:cationX,y:cationY,z:cationZ, type:'scatter3d', mode:'markers', marker:{size:7,color:COL_A}, name:'Species A', hoverinfo:'name'},
+    {x:anionX,y:anionY,z:anionZ, type:'scatter3d', mode:'markers', marker:{size:9,color:COL_B}, name:'Species B', hoverinfo:'name'},
   ], {
-    paper_bgcolor:'rgba(0,0,0,0)', margin:{t:4,r:4,b:4,l:4}, showlegend:true,
-    legend:{ orientation:'h', x:0, y:1.1, font:{size:9,color:'#555'}, bgcolor:'rgba(0,0,0,0)' },
+    paper_bgcolor:'rgba(0,0,0,0)', margin:{t:4,r:4,b:4,l:4}, showlegend:false,
     scene:{
       xaxis:{title:'',showticklabels:false,gridcolor:'rgba(0,0,0,.06)',zeroline:false},
       yaxis:{title:'',showticklabels:false,gridcolor:'rgba(0,0,0,.06)',zeroline:false},
@@ -602,11 +647,45 @@ function renderStructure(){
       aspectmode:'cube',
       camera:{ eye:{x:1.5,y:1.4,z:1.05} },
     },
-  }, { responsive:true, displayModeBar:false });
+  }, { responsive:true, displayModeBar:false }).then(function(gd){
+    gd.on('plotly_relayout', updateGizmo);
+    updateGizmo();
+  });
 
-  const nAtoms = cationX.length + anionX.length;
-  document.getElementById('structure-meta').textContent =
-    `${nAtoms} atoms · cubic · a = ${a.toFixed(2)} Å`;
+  document.getElementById('structure-legend').innerHTML = `
+    <div class="legend-chip" style="background:${COL_A}">A</div>
+    <div class="legend-chip" style="background:${COL_B}">B</div>
+  `;
+}
+
+/* Small orientation gizmo (bottom-left) that tracks the 3D camera so the
+   arrows always show which way x/y/z point in the current view. */
+function updateGizmo(){
+  const gd = document.getElementById('structure-div');
+  const scene = gd._fullLayout && gd._fullLayout.scene;
+  if (!scene || !scene.camera) return;
+  const cam = scene.camera;
+  const eye = cam.eye || {x:1.5,y:1.4,z:1.05};
+  const up = cam.up || {x:0,y:0,z:1};
+  const center = cam.center || {x:0,y:0,z:0};
+
+  let fx=center.x-eye.x, fy=center.y-eye.y, fz=center.z-eye.z;
+  const flen=Math.hypot(fx,fy,fz)||1; fx/=flen; fy/=flen; fz/=flen;
+  let rx=fy*up.z-fz*up.y, ry=fz*up.x-fx*up.z, rz=fx*up.y-fy*up.x;
+  const rlen=Math.hypot(rx,ry,rz)||1; rx/=rlen; ry/=rlen; rz/=rlen;
+  const ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
+
+  const proj=(vx,vy,vz)=>({ x: vx*rx+vy*ry+vz*rz, y: vx*ux+vy*uy+vz*uz });
+  const X=proj(1,0,0), Y=proj(0,1,0), Z=proj(0,0,1);
+
+  const svg = document.getElementById('structure-gizmo');
+  const cx=32, cy=32, L=24;
+  const arm=(v,color)=>{
+    const x2=(cx+v.x*L).toFixed(1), y2=(cy-v.y*L).toFixed(1);
+    return `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="${x2}" cy="${y2}" r="3" fill="${color}"/>`;
+  };
+  svg.innerHTML = arm(Z,'#2a9d2a') + arm(X,'#b02020') + arm(Y,'#2e7dcc');
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -663,6 +742,8 @@ function runPlot(){
         phase: renderPhaseDiagram, charge: renderChargeDensity, xrd: renderXRD,
       };
       (renderers[currentModule] || renderRaman)();
+      document.getElementById('plot-div').classList.add('active');
+      shrinkStructureToCorner();
     } catch(e){
       console.error(e);
       setStatus('Render error — see console');

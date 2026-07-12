@@ -45,9 +45,11 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
-            if "renderXANES" in html:
+            if "shrinkStructureToCorner" in html:
+                score += 2_000_000
+            if 'id="viewport"' in html:
                 score += 1_000_000
-            if 'id="structure-panel"' in html:
+            if "renderXANES" in html:
                 score += 500_000
             if score > best_score:
                 best_score = score
@@ -76,9 +78,10 @@ def main() -> None:
     for s in [
         "favicon.png",
         'href="/"',
-        "structure-panel",
+        'id="viewport"',
+        "shrinkStructureToCorner",
+        "structure-gizmo",
         "renderXANES",
-        "renderVibration",
         "max-width:820px",
     ]:
         print(f"  {s}: {s in html}")
