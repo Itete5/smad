@@ -45,18 +45,22 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
-            if 'id="structure-dims"' in html:
+            if 'id="structure-wrap"' in html:
+                score += 4_000_000
+            if "parseElementsFromFilename" in html:
+                score += 3_500_000
+            if "PERIODIC_SYMBOLS" in html:
                 score += 3_000_000
-            if "ELEMENT_PAIRS" in html:
-                score += 2_500_000
+            if 'id="structure-dims"' in html:
+                score += 1_000_000
             if "Structure viewer stays full-size" in html:
                 score += 1_500_000
             if "shrinkStructureToCorner" in html:
                 score += 2_000_000
             if 'id="viewport"' in html:
-                score += 1_000_000
-            if "renderXANES" in html:
                 score += 500_000
+            if "renderXANES" in html:
+                score += 250_000
             if score > best_score:
                 best_score = score
                 best = html
@@ -84,10 +88,11 @@ def main() -> None:
     for s in [
         "favicon.png",
         'href="/"',
-        'id="structure-dims"',
-        "ELEMENT_PAIRS",
+        'id="structure-wrap"',
+        "parseElementsFromFilename",
+        "PERIODIC_SYMBOLS",
         "Structure viewer stays full-size",
-        "shrinkStructureToCorner",
+        "Plotly.Plots.resize(document.getElementById('plot-div'))",
         "max-width:820px",
     ]:
         print(f"  {s}: {s in html}")

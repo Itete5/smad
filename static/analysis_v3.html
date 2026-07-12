@@ -122,18 +122,22 @@ body{
 .pt-reset:hover{background:var(--bg1);border-color:var(--bdr2);color:var(--tx0)}
 
 /* ── Crystal structure + analysis viewport ── */
-#viewport{ position:relative; flex:1; min-height:0; border:1px solid var(--bdr); border-radius:var(--r2); background:var(--bg2); overflow:hidden; }
+#viewport{ position:relative; flex:1; min-height:0; border:1px solid var(--bdr); border-radius:var(--r2); background:#fff; overflow:hidden; }
 
-#structure-div{
+/* structure-wrap is the element that moves/shrinks into the corner; the
+   Plotly target div and all overlays (legend/gizmo/dims/export) live
+   inside it so they always travel and scale together. */
+#structure-wrap{
   position:absolute; top:0; right:0; bottom:0; left:0;
   transition:top var(--t),right var(--t),bottom var(--t),left var(--t),width var(--t),height var(--t);
-  z-index:2;
+  background:#fff; z-index:2;
 }
-#structure-div.mini{
+#structure-wrap.mini{
   top:10px; right:10px; bottom:auto; left:auto; width:230px; height:160px;
   border:1px solid var(--bdr2); border-radius:var(--r); box-shadow:0 3px 10px rgba(0,0,0,.2);
-  background:var(--bg3); z-index:6;
+  background:#fff; z-index:6;
 }
+#structure-div{ position:absolute; top:0; right:0; bottom:0; left:0; }
 
 #structure-legend{
   position:absolute; right:16px; bottom:14px; display:flex; gap:8px; z-index:3; pointer-events:none;
@@ -141,12 +145,14 @@ body{
 .legend-chip{
   display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;
   font-size:11px;font-weight:700;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);
+  transition:all var(--t);
 }
-#structure-gizmo{ position:absolute; left:14px; bottom:14px; width:64px; height:64px; z-index:3; pointer-events:none; }
+#structure-gizmo{ position:absolute; left:14px; bottom:14px; width:64px; height:64px; z-index:3; pointer-events:none; transition:all var(--t); }
 #structure-dims{
   position:absolute; left:14px; top:14px; z-index:3; pointer-events:none;
   background:rgba(255,255,255,.88); border:1px solid var(--bdr); border-radius:var(--r);
   padding:8px 10px; font-family:var(--mono); box-shadow:0 1px 4px rgba(0,0,0,.12);
+  transition:all var(--t);
 }
 .dims-row{ display:flex; gap:14px; justify-content:space-between; font-size:11px; line-height:1.6; }
 .dims-lbl{ color:var(--tx3); }
@@ -157,10 +163,14 @@ body{
   cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all var(--t);
 }
 #structure-export-btn:hover{background:var(--bg1);color:var(--tx0);border-color:var(--bdr2)}
-#structure-div.mini ~ #structure-dims,
-#structure-div.mini ~ #structure-legend,
-#structure-div.mini ~ #structure-gizmo,
-#structure-div.mini ~ #structure-export-btn{ display:none; }
+
+/* Scale the overlays down to fit the small corner inset instead of hiding them */
+#structure-wrap.mini #structure-dims{ left:6px; top:6px; padding:4px 6px; }
+#structure-wrap.mini .dims-row{ gap:8px; font-size:8px; line-height:1.4; }
+#structure-wrap.mini #structure-legend{ right:6px; bottom:6px; gap:4px; }
+#structure-wrap.mini .legend-chip{ width:18px; height:18px; font-size:7px; }
+#structure-wrap.mini #structure-gizmo{ left:6px; bottom:6px; width:34px; height:34px; }
+#structure-wrap.mini #structure-export-btn{ display:none; }
 
 #plot-div{ position:absolute; top:0; right:0; bottom:0; left:0; display:none; z-index:1; }
 #plot-div.active{ display:block; }
@@ -366,13 +376,15 @@ body{
       </div>
 
       <div id="viewport">
-        <div id="structure-div"></div>
-        <div id="structure-dims"></div>
-        <div id="structure-legend"></div>
-        <svg id="structure-gizmo" viewBox="0 0 64 64"></svg>
-        <button id="structure-export-btn" onclick="exportPlot()" title="Export view">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </button>
+        <div id="structure-wrap">
+          <div id="structure-div"></div>
+          <div id="structure-dims"></div>
+          <div id="structure-legend"></div>
+          <svg id="structure-gizmo" viewBox="0 0 64 64"></svg>
+          <button id="structure-export-btn" onclick="exportPlot()" title="Export view">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
 
         <div id="plot-div"></div>
         <div id="plot-empty-msg">Click ▶ Plot to render this analysis.</div>
@@ -575,7 +587,7 @@ function activatePlotArea(){
   document.getElementById('drop-zone').classList.add('hidden');
   document.getElementById('plot-area').classList.add('active');
   document.getElementById('pt-file').textContent = loadedFileName;
-  document.getElementById('structure-div').classList.remove('mini');
+  document.getElementById('structure-wrap').classList.remove('mini');
   renderStructure();
   // Structure viewer stays full-size here; the analysis plot (and the
   // shrink-to-corner behavior) only happens once the user clicks ▶ Plot.
@@ -590,7 +602,7 @@ function resetToDropzone(){
   document.getElementById('plot-div').innerHTML = '';
   document.getElementById('plot-div').classList.remove('active');
   document.getElementById('structure-div').innerHTML = '';
-  document.getElementById('structure-div').classList.remove('mini');
+  document.getElementById('structure-wrap').classList.remove('mini');
   document.getElementById('structure-legend').innerHTML = '';
   document.getElementById('structure-gizmo').innerHTML = '';
   document.getElementById('structure-dims').innerHTML = '';
@@ -600,10 +612,47 @@ function resetToDropzone(){
 /* Shrinks the structure viewer into a top-right inset once an analysis
    plot is on screen, filling the main viewport with the plot instead. */
 function shrinkStructureToCorner(){
-  const sd = document.getElementById('structure-div');
-  if (sd.classList.contains('mini')) return;
-  sd.classList.add('mini');
-  setTimeout(()=>{ if (window.Plotly) Plotly.Plots.resize(sd); }, 160);
+  const wrap = document.getElementById('structure-wrap');
+  if (wrap.classList.contains('mini')) return;
+  wrap.classList.add('mini');
+  setTimeout(()=>{ if (window.Plotly) Plotly.Plots.resize(document.getElementById('structure-div')); }, 160);
+}
+
+/* Scans a filename for real periodic-table element symbols (longest
+   match first, e.g. "Ti" before "T"), so a file like "TiS05.cif" shows
+   Ti/S instead of an unrelated random pair. Falls back to a plausible
+   pair (seeded so it's reproducible) only when the name doesn't contain
+   two recognisable symbols. */
+const PERIODIC_SYMBOLS = ["He","Li","Be","Ne","Na","Mg","Al","Si","Cl","Ar","Ca","Sc","Ti","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr","Rb","Sr","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","Np","Pu",
+  "H","B","C","N","O","F","P","S","K","V","Y","I","W","U"];
+const PERIODIC_SET = new Set(PERIODIC_SYMBOLS);
+
+function parseElementsFromFilename(name, rnd){
+  const base = (name||'').replace(/\.[a-zA-Z0-9]+$/, ''); // strip extension
+  const found = [];
+  for (let i=0;i<base.length;i++){
+    const c1 = base[i];
+    if (!/[A-Z]/.test(c1)) continue;
+    const two = base.slice(i,i+2);
+    if (base[i+1] && /[a-z]/.test(base[i+1]) && PERIODIC_SET.has(two)){
+      found.push(two); i++; continue;
+    }
+    if (PERIODIC_SET.has(c1)) found.push(c1);
+  }
+  const unique = [...new Set(found)];
+
+  if (unique.length >= 2) return [unique[0], unique[1]];
+  if (unique.length === 1){
+    const el = unique[0];
+    const anionLike = ['O','S','N','F','Cl'].includes(el);
+    return anionLike ? ['Si', el] : [el, 'O'];
+  }
+  // Nothing recognisable in the name — reproducible random fallback.
+  const ELEMENT_PAIRS = [
+    ['Na','Cl'], ['Ti','O'], ['Si','O'], ['Ga','As'], ['Mg','O'],
+    ['Al','O'], ['Zn','O'], ['Ba','Ti'], ['Fe','O'], ['Cu','O'],
+  ];
+  return ELEMENT_PAIRS[Math.floor(rnd()*ELEMENT_PAIRS.length)];
 }
 
 /* ── Crystal structure viewer ─────────────────────────
@@ -622,14 +671,10 @@ function renderStructure(){
   const a = 3.6 + rnd()*2.4;      // lattice parameter (Å)
   const n = 2;                     // 2x2x2 replicated cell
 
-  // Pick a plausible element pair, seeded from the filename so the same
-  // "file" always reproduces the same structure/element labels.
-  const ELEMENT_PAIRS = [
-    ['Na','Cl'], ['Ti','O'], ['Si','O'], ['Ga','As'], ['Mg','O'],
-    ['Al','O'], ['Zn','O'], ['Ba','Ti'], ['Fe','O'], ['Cu','O'],
-  ];
-  const pair = ELEMENT_PAIRS[Math.floor(rnd()*ELEMENT_PAIRS.length)];
-  const elA = pair[0], elB = pair[1];
+  // Try to read real element symbols out of the filename itself (e.g.
+  // "TiS05.cif" -> Ti, S). Falls back to a plausible random pair only
+  // when the filename doesn't contain any recognisable element symbols.
+  const [elA, elB] = parseElementsFromFilename(loadedFileName, rnd);
   const cationX=[],cationY=[],cationZ=[], anionX=[],anionY=[],anionZ=[];
   const bx=[],by=[],bz=[];
 
@@ -761,6 +806,10 @@ function runPlot(){
 
   setTimeout(() => {
     try {
+      // Make plot-div visible/sized *before* Plotly draws into it —
+      // otherwise the first render measures a collapsed container and
+      // only fills correctly after a second render/resize.
+      document.getElementById('plot-div').classList.add('active');
       const renderers = {
         raman: renderRaman, infrared: renderInfrared, band: renderBand,
         dos: renderDOS, phonon: renderPhonon, rdf: renderRDF,
@@ -769,8 +818,8 @@ function runPlot(){
         phase: renderPhaseDiagram, charge: renderChargeDensity, xrd: renderXRD,
       };
       (renderers[currentModule] || renderRaman)();
-      document.getElementById('plot-div').classList.add('active');
       shrinkStructureToCorner();
+      setTimeout(()=>{ if (window.Plotly) Plotly.Plots.resize(document.getElementById('plot-div')); }, 50);
     } catch(e){
       console.error(e);
       setStatus('Render error — see console');
