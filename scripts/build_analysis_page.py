@@ -45,6 +45,8 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
+            if "#structure-wrap.mini #structure-dims{ display:none; }" in html:
+                score += 5_000_000
             if 'id="structure-wrap"' in html:
                 score += 4_000_000
             if "parseElementsFromFilename" in html:
@@ -89,6 +91,7 @@ def main() -> None:
         "favicon.png",
         'href="/"',
         'id="structure-wrap"',
+        "#structure-wrap.mini #structure-dims{ display:none; }",
         "parseElementsFromFilename",
         "PERIODIC_SYMBOLS",
         "Structure viewer stays full-size",
