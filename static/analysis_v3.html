@@ -8,9 +8,6 @@
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════════════════════
-   DESIGN TOKENS — BURAI palette (shared with rest of SMAD)
-═══════════════════════════════════════════════════════════ */
 :root{
   --bg0:#c8c8c8; --bg1:#e8e8e8; --bg2:#f0f0f0; --bg3:#ffffff;
   --bg4:#d4d4d4; --bg5:#dddddd;
@@ -32,17 +29,12 @@ html[data-theme="dark"]{
 html[data-theme="dark"] #viewport,
 html[data-theme="dark"] #structure-wrap,
 html[data-theme="dark"] #structure-wrap.mini{ background:var(--bg3); }
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
   font-family:var(--sans);font-size:13px;background:var(--bg0);color:var(--tx1);
   display:flex;flex-direction:column;min-height:100vh;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   TOP NAVIGATION
-═══════════════════════════════════════════════════════════ */
 #navbar{
   height:34px;background:var(--bg4);border-bottom:2px solid var(--acc);
   display:flex;align-items:stretch;flex-shrink:0;
@@ -55,44 +47,32 @@ body{
 .nav-tab:hover{background:var(--bg5);color:var(--tx0)}
 .nav-tab.active{background:var(--bg3);color:var(--tx0);font-weight:600}
 .nav-tab svg{flex-shrink:0}
-
-/* ═══════════════════════════════════════════════════════════
-   WORKSPACE — main content + sidebar
-═══════════════════════════════════════════════════════════ */
 #workspace{
   flex:1;display:flex;min-height:0;
 }
-
-/* ── MAIN CONTENT (wide, left) ── */
 #main{
   flex:1;min-width:0;background:var(--bg3);position:relative;
   display:flex;flex-direction:column;
 }
-
-/* ── DROP ZONE ── */
 #drop-zone{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:32px 20px;text-align:center;cursor:pointer;transition:background var(--t);
 }
 #drop-zone.drag-over{background:var(--acc-l)}
 #drop-zone.hidden{display:none}
-
 .dz-icon{
   width:56px;height:56px;border-radius:50%;border:1.5px solid var(--bdr);
   background:var(--bg3);display:flex;align-items:center;justify-content:center;
   margin-bottom:18px;color:var(--tx2);transition:border-color var(--t),background var(--t);
 }
 #drop-zone.drag-over .dz-icon{border-color:var(--acc);background:var(--acc-l)}
-
 .dz-title{font-size:15px;font-weight:600;color:var(--tx0);margin-bottom:6px}
 .dz-sub{font-size:12px;color:var(--tx3);margin-bottom:20px;max-width:340px;line-height:1.5}
-
 .dz-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:28px;max-width:420px}
 .dz-badge{
   padding:3px 9px;border:1px solid var(--bdr);border-radius:var(--r);
   font-size:11px;font-family:var(--mono);color:var(--tx2);background:var(--bg2);
 }
-
 .dz-actions{display:flex;flex-direction:column;align-items:center;gap:10px}
 .dz-btn{
   display:inline-flex;align-items:center;gap:7px;padding:10px 28px;
@@ -104,16 +84,12 @@ body{
 .dz-or{font-size:11px;color:var(--tx3)}
 .dz-btn.secondary{background:var(--bg3);border:1px solid var(--bdr);color:var(--tx1);font-weight:600}
 .dz-btn.secondary:hover{background:var(--bg2);border-color:var(--bdr2);color:var(--tx0)}
-
 .dz-loaded{
   display:none;align-items:center;gap:6px;margin-top:16px;font-size:11.5px;
   font-family:var(--mono);color:var(--grn);
 }
 .dz-loaded.show{display:flex}
-
 #dz-input{display:none}
-
-/* ── PLOT AREA (shown once data is loaded) ── */
 #plot-area{
   flex:1;display:none;flex-direction:column;min-height:0;padding:14px;
 }
@@ -135,8 +111,6 @@ body{
   display:inline-flex;align-items:center;gap:5px;
 }
 .pt-export:hover{background:var(--bg1);border-color:var(--bdr2);color:var(--tx0)}
-
-/* ── Viewer toolbar (rotate/pan/zoom/reset + display toggles) ── */
 #viewer-toolbar{
   display:flex;align-items:center;gap:4px;padding-bottom:8px;flex-shrink:0;flex-wrap:wrap;
 }
@@ -148,13 +122,7 @@ body{
 .vt-btn:hover{background:var(--bg2);color:var(--tx0);border-color:var(--bdr2)}
 .vt-btn.active{background:var(--acc);color:#fff;border-color:var(--acc-d)}
 .vt-sep{width:1px;height:18px;background:var(--bdr);margin:0 3px}
-
-/* ── Crystal structure + analysis viewport ── */
 #viewport{ position:relative; flex:1; min-height:0; border:1px solid var(--bdr); border-radius:var(--r2); background:#fff; overflow:hidden; }
-
-/* structure-wrap is the element that moves/shrinks into the corner; the
-   Plotly target div and all overlays (legend/gizmo/dims/export) live
-   inside it so they always travel and scale together. */
 #structure-wrap{
   position:absolute; top:0; right:0; bottom:0; left:0;
   transition:top var(--t),right var(--t),bottom var(--t),left var(--t),width var(--t),height var(--t);
@@ -166,7 +134,6 @@ body{
   background:#fff; z-index:6;
 }
 #structure-div{ position:absolute; top:0; right:0; bottom:0; left:0; }
-
 #structure-legend{
   position:absolute; right:16px; bottom:14px; display:flex; gap:8px; z-index:3;
 }
@@ -194,24 +161,17 @@ body{
   cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all var(--t);
 }
 #structure-export-btn:hover{background:var(--bg1);color:var(--tx0);border-color:var(--bdr2)}
-
-/* Scale the overlays down to fit the small corner inset instead of hiding them */
 #structure-wrap.mini #structure-dims{ display:none; }
 #structure-wrap.mini #structure-legend{ right:6px; bottom:6px; gap:4px; }
 #structure-wrap.mini .legend-chip{ width:18px; height:18px; font-size:7px; }
 #structure-wrap.mini #structure-gizmo{ left:6px; bottom:6px; width:34px; height:34px; }
 #structure-wrap.mini #structure-export-btn{ display:none; }
-
 #plot-div{ position:absolute; top:0; right:0; bottom:0; left:0; display:none; z-index:1; }
 #plot-div.active{ display:block; }
 #plot-empty-msg{
   position:absolute; top:0; right:0; bottom:0; left:0;
   display:none; align-items:center; justify-content:center; color:var(--tx3); font-size:12.5px; z-index:1;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   SIDEBAR (right, fixed width, light gray)
-═══════════════════════════════════════════════════════════ */
 #sidebar{
   width:280px;flex-shrink:0;background:var(--bg1);border-left:1px solid var(--bdr);
   display:flex;flex-direction:column;overflow:hidden;
@@ -222,14 +182,12 @@ body{
 }
 #sidebar-scroll::-webkit-scrollbar{width:5px}
 #sidebar-scroll::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
-
 .sb-sec{
   padding:14px 14px 5px;font-size:9px;font-weight:700;text-transform:uppercase;
   letter-spacing:.1em;color:var(--tx3);
 }
 .sb-field{padding:0 14px 12px;display:flex;flex-direction:column;gap:5px}
 .sb-label{font-size:11px;font-weight:500;color:var(--tx2)}
-
 .sb-select-wrap{position:relative}
 .sb-select,.sb-input{
   width:100%;height:29px;background:var(--bg3);border:1px solid var(--bdr);
@@ -243,7 +201,6 @@ body{
   position:absolute;right:9px;top:50%;transform:translateY(-50%);
   pointer-events:none;color:var(--tx3);
 }
-
 .sb-file-row{display:flex;gap:5px}
 .sb-file-row .sb-input{flex:1;cursor:pointer}
 .sb-browse{
@@ -252,10 +209,7 @@ body{
   font-family:var(--mono);flex-shrink:0;transition:all var(--t);
 }
 .sb-browse:hover{background:var(--bg2);border-color:var(--bdr2)}
-
 .sb-divider{height:1px;background:var(--bdr);margin:2px 14px 10px}
-
-/* ── Workflow indicator ── */
 #workflow{ padding:14px 14px 4px; display:flex; flex-direction:column; gap:0; }
 .wf-step{ display:flex; align-items:center; gap:9px; padding:3px 0; }
 .wf-dot{
@@ -270,8 +224,6 @@ body{
 .wf-step.current .wf-label{ color:var(--tx0); font-weight:700; }
 .wf-line{ width:2px; height:10px; background:var(--bdr2); margin-left:8px; }
 .wf-step.done + .wf-line{ background:var(--acc); }
-
-/* ── Collapsible sidebar sections ── */
 .sb-section{ border-bottom:1px solid var(--bdr); }
 .sb-sec-toggle{
   width:100%; display:flex; align-items:center; justify-content:space-between;
@@ -284,8 +236,6 @@ body{
 .sb-section.collapsed .sb-sec-toggle .chev{ transform:rotate(-90deg); }
 .sb-sec-body{ padding-bottom:6px; }
 .sb-section.collapsed .sb-sec-body{ display:none; }
-
-/* nested "Advanced settings" collapsible within Simulation */
 .sb-subtoggle{
   display:flex; align-items:center; gap:6px; width:100%; padding:8px 14px; background:none;
   border:none; border-top:1px dashed var(--bdr); cursor:pointer; text-align:left;
@@ -295,7 +245,6 @@ body{
 .sb-subtoggle.collapsed .chev{ transform:rotate(-90deg); }
 .sb-subbody{ padding:0 14px 6px; display:flex; flex-direction:column; gap:10px; }
 .sb-subbody.collapsed{ display:none; }
-
 .sb-range{ width:100%; accent-color:var(--acc); cursor:pointer; }
 .sb-range-row{ display:flex; align-items:center; gap:8px; }
 .sb-range-val{ font-size:11px; font-family:var(--mono); color:var(--tx3); width:34px; text-align:right; flex-shrink:0; }
@@ -310,15 +259,12 @@ body{
 }
 .export-chip:hover{ background:var(--bg2); border-color:var(--bdr2); }
 .export-chip.active{ background:var(--acc); border-color:var(--acc-d); color:#fff; }
-
 .sb-checks{padding:0 14px 4px;display:flex;flex-direction:column;gap:10px}
 .sb-check{
   display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx1);
   cursor:pointer;line-height:1.3;
 }
 .sb-check input{width:14px;height:14px;accent-color:var(--acc);cursor:pointer;flex-shrink:0}
-
-/* ▶ Plot button pinned to bottom */
 #plot-btn-wrap{padding:12px 14px 14px;border-top:1px solid var(--bdr);flex-shrink:0;background:var(--bg1)}
 #plot-btn{
   width:100%;padding:11px;background:var(--acc);border:none;border-radius:var(--r2);
@@ -328,10 +274,6 @@ body{
 }
 #plot-btn:hover{background:var(--acc-d)}
 #plot-btn:disabled{background:var(--bdr2);cursor:not-allowed}
-
-/* ═══════════════════════════════════════════════════════════
-   BOTTOM STATUS BAR
-═══════════════════════════════════════════════════════════ */
 #statusbar{
   height:32px;background:var(--bg4);border-top:2px solid var(--acc);
   display:flex;align-items:stretch;flex-shrink:0;
@@ -356,10 +298,6 @@ body{
   white-space:nowrap;
 }
 #status-export:hover{background:var(--bg5);color:var(--tx0)}
-
-/* ═══════════════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════════════ */
 @media (max-width:820px){
   #workspace{flex-direction:column;overflow-y:auto}
   #sidebar{
@@ -379,7 +317,6 @@ body{
 </head>
 <body>
 
-<!-- TOP NAVIGATION -->
 <nav id="navbar">
   <a class="nav-tab" href="/">
     <svg width="14" height="14" viewBox="0 0 367 232" fill="currentColor" style="flex-shrink:0">
@@ -406,13 +343,10 @@ body{
   <div class="nav-tab active">Analysis</div>
 </nav>
 
-<!-- WORKSPACE -->
 <div id="workspace">
 
-  <!-- MAIN CONTENT -->
   <div id="main">
 
-    <!-- DROP ZONE (visible until a file/sample is loaded) -->
     <div id="drop-zone" onclick="dzClick()" ondragover="dzDragOver(event)" ondragleave="dzDragLeave()" ondrop="dzDrop(event)">
       <input type="file" id="dz-input" accept=".dat,.freq,.out,.xyz,.cif,.poscar,.vasp,.csv,.json" onchange="dzFileChosen(this.files[0])"/>
 
@@ -452,7 +386,6 @@ body{
       </div>
     </div>
 
-    <!-- PLOT AREA (shown once data is loaded, replaces drop zone) -->
     <div id="plot-area">
       <div id="plot-toolbar">
         <span class="pt-title" id="pt-title">Raman Simulation</span>
@@ -518,13 +451,11 @@ body{
       </div>
     </div>
 
-  </div><!-- /main -->
+  </div>
 
-  <!-- SIDEBAR -->
   <div id="sidebar">
     <div id="sidebar-scroll">
 
-      <!-- WORKFLOW INDICATOR -->
       <div id="workflow">
         <div class="wf-step" id="wf-1"><span class="wf-dot">1</span><span class="wf-label">Load Structure</span></div>
         <div class="wf-line"></div>
@@ -537,7 +468,6 @@ body{
         <div class="wf-step" id="wf-5"><span class="wf-dot">5</span><span class="wf-label">Results</span></div>
       </div>
 
-      <!-- ANALYSIS -->
       <div class="sb-section" id="sec-analysis">
         <button class="sb-sec-toggle" onclick="toggleSection('sec-analysis')">
           <span>Analysis</span>
@@ -571,7 +501,6 @@ body{
         </div>
       </div>
 
-      <!-- SIMULATION -->
       <div class="sb-section" id="sec-simulation">
         <button class="sb-sec-toggle" onclick="toggleSection('sec-simulation')">
           <span>Simulation</span>
@@ -641,7 +570,6 @@ body{
         </div>
       </div>
 
-      <!-- VISUALIZATION -->
       <div class="sb-section collapsed" id="sec-visualization">
         <button class="sb-sec-toggle" onclick="toggleSection('sec-visualization')">
           <span>Visualization</span>
@@ -704,7 +632,6 @@ body{
         </div>
       </div>
 
-      <!-- EXPORT -->
       <div class="sb-section collapsed" id="sec-export">
         <button class="sb-sec-toggle" onclick="toggleSection('sec-export')">
           <span>Export</span>
@@ -727,7 +654,7 @@ body{
         </div>
       </div>
 
-    </div><!-- /sidebar-scroll -->
+    </div>
 
     <div id="plot-btn-wrap">
       <button id="plot-btn" onclick="runPlot()">
@@ -735,11 +662,10 @@ body{
         <span id="plot-btn-label">Plot Raman Spectrum</span>
       </button>
     </div>
-  </div><!-- /sidebar -->
+  </div>
 
-</div><!-- /workspace -->
+</div>
 
-<!-- BOTTOM STATUS BAR -->
 <div id="statusbar">
   <div id="status-left">
     <span class="status-dot" id="status-dot"></span>
@@ -756,9 +682,6 @@ body{
 </div>
 
 <script>
-/* ══════════════════════════════════════════════════════════
-   MODULE METADATA — dropzone copy + sidebar file-field labels
-═══════════════════════════════════════════════════════════ */
 const MODULES = {
   raman:    { label:'Raman Simulation', fileLabel:'ph.x output file',   dzSub:'Upload your ph.x output file to run the Raman simulation.' },
   infrared: { label:'Infrared (IR)',    fileLabel:'matdyn.x output file', dzSub:'Upload matdyn.x output with Born effective charges.' },
@@ -778,12 +701,9 @@ const MODULES = {
 };
 
 let currentModule = 'raman';
-let hasData = false;       // true once a file is uploaded or sample data is loaded
+let hasData = false;
 let loadedFileName = '';
 
-/* ══════════════════════════════════════════════════════════
-   MODULE SELECTION
-═══════════════════════════════════════════════════════════ */
 document.getElementById('analysis-select').addEventListener('change', function(){
   currentModule = this.value;
   const m = MODULES[currentModule];
@@ -795,13 +715,9 @@ document.getElementById('analysis-select').addEventListener('change', function()
   document.getElementById('plot-btn-label').textContent = currentModule === 'raman' ? 'Plot Raman Spectrum' : ('Plot ' + m.label);
   setStatus('Idle');
   if (hasData) setWorkflowStep(3);
-  // Loaded data stays associated with the file, but re-plot for the new module if data present
   if (hasData) { document.getElementById('plot-empty-msg').style.display = 'flex'; document.getElementById('plot-div').innerHTML=''; }
 });
 
-/* ══════════════════════════════════════════════════════════
-   DROP ZONE
-═══════════════════════════════════════════════════════════ */
 function dzClick(){ document.getElementById('dz-input').click(); }
 function dzDragOver(e){ e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
 function dzDragLeave(){ document.getElementById('drop-zone').classList.remove('drag-over'); }
@@ -834,13 +750,11 @@ function showLoaded(name){
   document.getElementById('dz-loaded').classList.add('show');
 }
 
-/* Switches from the drop-zone view to the plot view and renders immediately */
 function activatePlotArea(){
   document.getElementById('drop-zone').classList.add('hidden');
   document.getElementById('plot-area').classList.add('active');
   document.getElementById('pt-file').textContent = loadedFileName;
   document.getElementById('structure-wrap').classList.remove('mini');
-  // Fresh structure: reset viewer toggle states to their defaults.
   structureLayerState.cell = true; structureLayerState.bonds = true;
   structureLayerState.poly = false; structureLayerState.axes = false;
   supercellOn = false; projectionOrtho = false;
@@ -854,8 +768,6 @@ function activatePlotArea(){
   if (axesCheck) axesCheck.checked = false;
   renderStructure();
   setWorkflowStep(2);
-  // Structure viewer stays full-size here; the analysis plot (and the
-  // shrink-to-corner behavior) only happens once the user clicks ▶ Plot.
 }
 function resetToDropzone(){
   hasData = false;
@@ -875,8 +787,6 @@ function resetToDropzone(){
   setWorkflowStep(1);
 }
 
-/* Shrinks the structure viewer into a top-right inset once an analysis
-   plot is on screen, filling the main viewport with the plot instead. */
 function shrinkStructureToCorner(){
   const wrap = document.getElementById('structure-wrap');
   if (wrap.classList.contains('mini')) return;
@@ -884,17 +794,12 @@ function shrinkStructureToCorner(){
   setTimeout(()=>{ if (window.Plotly) Plotly.Plots.resize(document.getElementById('structure-div')); }, 160);
 }
 
-/* Scans a filename for real periodic-table element symbols (longest
-   match first, e.g. "Ti" before "T"), so a file like "TiS05.cif" shows
-   Ti/S instead of an unrelated random pair. Falls back to a plausible
-   pair (seeded so it's reproducible) only when the name doesn't contain
-   two recognisable symbols. */
 const PERIODIC_SYMBOLS = ["He","Li","Be","Ne","Na","Mg","Al","Si","Cl","Ar","Ca","Sc","Ti","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr","Rb","Sr","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","Np","Pu",
   "H","B","C","N","O","F","P","S","K","V","Y","I","W","U"];
 const PERIODIC_SET = new Set(PERIODIC_SYMBOLS);
 
 function parseElementsFromFilename(name, rnd){
-  const base = (name||'').replace(/\.[a-zA-Z0-9]+$/, ''); // strip extension
+  const base = (name||'').replace(/\.[a-zA-Z0-9]+$/, '');
   const found = [];
   for (let i=0;i<base.length;i++){
     const c1 = base[i];
@@ -905,15 +810,20 @@ function parseElementsFromFilename(name, rnd){
     }
     if (PERIODIC_SET.has(c1)) found.push(c1);
   }
-  const unique = [...new Set(found)];
+  return [...new Set(found)];
+}
 
+/* Picks a display pair for the generic binary-lattice renderer. Kept
+   separate from parseElementsFromFilename so callers can inspect the
+   *full* detected element set first (e.g. to notice a Ti/O/S ternary
+   system) before it gets collapsed down to just two species. */
+function pickBinaryPair(unique, rnd){
   if (unique.length >= 2) return [unique[0], unique[1]];
   if (unique.length === 1){
     const el = unique[0];
     const anionLike = ['O','S','N','F','Cl'].includes(el);
     return anionLike ? ['Si', el] : [el, 'O'];
   }
-  // Nothing recognisable in the name — reproducible random fallback.
   const ELEMENT_PAIRS = [
     ['Na','Cl'], ['Ti','O'], ['Si','O'], ['Ga','As'], ['Mg','O'],
     ['Al','O'], ['Zn','O'], ['Ba','Ti'], ['Fe','O'], ['Cu','O'],
@@ -921,21 +831,18 @@ function parseElementsFromFilename(name, rnd){
   return ELEMENT_PAIRS[Math.floor(rnd()*ELEMENT_PAIRS.length)];
 }
 
-/* ── Crystal structure viewer ─────────────────────────
-   Renders the atomic structure associated with the loaded file: a
-   replicated unit cell (2×2×2, or 3×3×3 with the Supercell toggle) with
-   two atom species, bonds along the lattice vectors, coordination
-   polyhedra around interior sites, and the primitive cell outlined in
-   orange. Lattice parameter/atom pattern are seeded from the filename
-   so the same "file" always reproduces the same structure. A legend,
-   info card, and camera-synced axis gizmo overlay the viewer. Toolbar
-   toggle state (cell/bonds/polyhedra/axes visibility, drag mode,
-   projection) persists across re-renders (e.g. the Supercell toggle). */
+/* Recognises the Ti/O/S oxysulfate system (e.g. mp-559283, TiOSO4.cif) so
+   it gets routed to a chemically correct octahedra+tetrahedra renderer
+   instead of the generic binary rock-salt lattice below. */
+function isTiOSSystem(unique){
+  return unique.includes('Ti') && unique.includes('O') && unique.includes('S');
+}
+
 const structureLayerState = { cell:true, bonds:true, poly:false, axes:false };
 let supercellOn = false;
 let projectionOrtho = false;
 let dragModeState = 'orbit';
-let structureIdx = null;      // trace index map, set after each render
+let structureIdx = null;
 let structureSpeciesVisible = { A:true, B:true };
 
 function buildPolyhedraTraces(n, a, opacity){
@@ -956,18 +863,178 @@ function buildPolyhedraTraces(n, a, opacity){
   return traces;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Ti/O/S oxysulfate renderer (chemically correct coordination)
+   Coordination numbers, bond-length ranges, and corner-sharing
+   topology are drawn from the verified mp-559283 (TiOSO4, Pmc2_1)
+   structure description: every Ti is 6-coordinate (TiO6 octahedra,
+   Ti-O 1.79-2.12 Å), every S is 4-coordinate (SO4 tetrahedra, S-O
+   1.45-1.48 Å), and octahedra corner-share with 2 neighboring TiO6
+   + 4 SO4 tetrahedra. This is a representative schematic motif —
+   the deposited structure's full 8-Ti/8-S/28-O fractional
+   coordinates weren't available to reproduce exactly — but the
+   chemistry (coordination numbers, bond lengths, sharing topology)
+   is real rather than invented.
+═══════════════════════════════════════════════════════════ */
+function buildTiOSO4Motif(rnd){
+  const TiO = 1.79 + rnd()*(2.12-1.79);
+  const SO  = 1.45 + rnd()*(1.48-1.45);
+  const tilt = (5 + rnd()*5) * Math.PI/180; // 1-17 deg tilt range per doc
+
+  const tiPos = [], sPos = [], oPos = [];
+  const tiOBonds = [], sOBonds = [];
+  const tiOctahedra = [], sTetrahedra = [];
+
+  const rotY = (v, th) => [ v[0]*Math.cos(th)+v[2]*Math.sin(th), v[1], -v[0]*Math.sin(th)+v[2]*Math.cos(th) ];
+
+  const nTi = 3;
+  let cursor = [0,0,0];
+  const sharedO = [];
+
+  for (let t=0; t<nTi; t++){
+    const th = (t % 2 === 0 ? tilt : -tilt);
+    const dirs = [
+      rotY([ 1,0,0], th), rotY([-1,0,0], th),
+      rotY([ 0,1,0], th), rotY([ 0,-1,0], th),
+      rotY([ 0,0,1], th), rotY([ 0,0,-1], th),
+    ];
+    const oCoords = dirs.map(d => [cursor[0]+d[0]*TiO, cursor[1]+d[1]*TiO, cursor[2]+d[2]*TiO]);
+
+    if (t>0){ oCoords[1] = sharedO[t-1]; }
+    sharedO[t] = oCoords[0];
+
+    tiPos.push(cursor.slice());
+    oCoords.forEach((o,idx) => { if (!(t>0 && idx===1)) oPos.push(o); tiOBonds.push([cursor, o]); });
+    tiOctahedra.push({ center: cursor.slice(), oCoords });
+
+    for (let e=2; e<6; e++){
+      const bridgeO = oCoords[e];
+      const outward = [bridgeO[0]-cursor[0], bridgeO[1]-cursor[1], bridgeO[2]-cursor[2]];
+      const norm = Math.hypot(...outward) || 1;
+      const uOut = outward.map(v=>v/norm);
+      const sCenter = [ bridgeO[0]+uOut[0]*SO, bridgeO[1]+uOut[1]*SO, bridgeO[2]+uOut[2]*SO ];
+
+      const tetraDirs = [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(v=>{
+        const n=Math.hypot(...v); return v.map(x=>x/n);
+      });
+      const sOCoords = [bridgeO];
+      for (let d=0; d<3; d++){
+        const dir = tetraDirs[d];
+        const o = [ sCenter[0]+dir[0]*SO, sCenter[1]+dir[1]*SO, sCenter[2]+dir[2]*SO ];
+        sOCoords.push(o); oPos.push(o); sOBonds.push([sCenter, o]);
+      }
+      sOBonds.push([sCenter, bridgeO]);
+      sPos.push(sCenter);
+      sTetrahedra.push({ center: sCenter, oCoords: sOCoords });
+    }
+
+    cursor = [cursor[0] + 2*TiO*Math.cos(th), cursor[1], cursor[2] + 2*TiO*Math.sin(th)];
+  }
+
+  return { TiO, SO, tiPos, sPos, oPos, tiOBonds, sOBonds, tiOctahedra, sTetrahedra };
+}
+
+function renderTiOSO4Structure(rnd){
+  const motif = buildTiOSO4Motif(rnd);
+  const COL_TI = '#7fb8e0', COL_S = '#e0c33f', COL_O = '#d64545';
+
+  const tiX=motif.tiPos.map(p=>p[0]), tiY=motif.tiPos.map(p=>p[1]), tiZ=motif.tiPos.map(p=>p[2]);
+  const sX=motif.sPos.map(p=>p[0]), sY=motif.sPos.map(p=>p[1]), sZ=motif.sPos.map(p=>p[2]);
+  const oX=motif.oPos.map(p=>p[0]), oY=motif.oPos.map(p=>p[1]), oZ=motif.oPos.map(p=>p[2]);
+
+  const flatten = (bonds) => {
+    const x=[],y=[],z=[];
+    bonds.forEach(([p,q])=>{ x.push(p[0],q[0],null); y.push(p[1],q[1],null); z.push(p[2],q[2],null); });
+    return {x,y,z};
+  };
+  const tiOB = flatten(motif.tiOBonds);
+  const sOB  = flatten(motif.sOBonds);
+
+  const polyOpacityInput = document.getElementById('poly-opacity-range');
+  const polyOpacity = polyOpacityInput ? polyOpacityInput.value/100 : 0.35;
+  const transparencyInput = document.getElementById('transparency-range');
+  const atomOpacity = transparencyInput ? 1 - transparencyInput.value/100 : 1;
+
+  const polyTraces = [];
+  motif.tiOctahedra.forEach(oct=>{
+    polyTraces.push({
+      type:'mesh3d', alphahull:0, flatshading:true, color:COL_TI, opacity:polyOpacity,
+      x:oct.oCoords.map(p=>p[0]), y:oct.oCoords.map(p=>p[1]), z:oct.oCoords.map(p=>p[2]),
+      showlegend:false, hoverinfo:'skip', name:'TiO6 octahedron', visible:structureLayerState.poly,
+    });
+  });
+  motif.sTetrahedra.forEach(tet=>{
+    polyTraces.push({
+      type:'mesh3d', alphahull:0, flatshading:true, color:COL_S, opacity:polyOpacity,
+      x:tet.oCoords.map(p=>p[0]), y:tet.oCoords.map(p=>p[1]), z:tet.oCoords.map(p=>p[2]),
+      showlegend:false, hoverinfo:'skip', name:'SO4 tetrahedron', visible:structureLayerState.poly,
+    });
+  });
+
+  const axesOn = structureLayerState.axes;
+  const axisSpec = (label)=>({
+    title: axesOn ? label : '', showticklabels: axesOn,
+    gridcolor: axesOn ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.06)', zeroline:false,
+  });
+
+  const traces = [
+    {x:tiOB.x,y:tiOB.y,z:tiOB.z, type:'scatter3d', mode:'lines', line:{color:'#9ec9e8',width:3}, showlegend:false, hoverinfo:'skip', visible:structureLayerState.bonds, name:'Ti-O'},
+    {x:sOB.x,y:sOB.y,z:sOB.z, type:'scatter3d', mode:'lines', line:{color:'#e8d67f',width:3}, showlegend:false, hoverinfo:'skip', visible:structureLayerState.bonds, name:'S-O'},
+    {x:tiX,y:tiY,z:tiZ, type:'scatter3d', mode:'markers', marker:{size:10,color:COL_TI,opacity:atomOpacity}, name:'Ti', hoverinfo:'name'},
+    {x:sX,y:sY,z:sZ, type:'scatter3d', mode:'markers', marker:{size:8,color:COL_S,opacity:atomOpacity}, name:'S', hoverinfo:'name'},
+    {x:oX,y:oY,z:oZ, type:'scatter3d', mode:'markers', marker:{size:5,color:COL_O,opacity:atomOpacity}, name:'O', hoverinfo:'name'},
+    ...polyTraces,
+  ];
+  // No cell-outline trace here: this is a schematic bonding motif, not a
+  // literal unit-cell replication, so the "Toggle unit cell" button is
+  // intentionally a no-op in this mode.
+  structureIdx = { bonds:[0,1], cell:null, A:2, B:4, S:3, polyIdx: polyTraces.map((_,idx)=>5+idx) };
+
+  Plotly.newPlot('structure-div', traces, {
+    paper_bgcolor:'rgba(0,0,0,0)', margin:{t:4,r:4,b:4,l:4}, showlegend:false,
+    scene:{
+      xaxis:axisSpec('x (Å)'), yaxis:axisSpec('y (Å)'), zaxis:axisSpec('z (Å)'),
+      aspectmode:'data', dragmode: dragModeState,
+      camera:{ eye:{x:1.6,y:1.3,z:1.1}, projection:{ type: projectionOrtho ? 'orthographic' : 'perspective' } },
+    },
+  }, { responsive:true, displayModeBar:false }).then(function(gd){
+    gd.on('plotly_relayout', updateGizmo); updateGizmo();
+  });
+
+  document.getElementById('structure-legend').innerHTML = `
+    <div class="legend-chip" style="background:${COL_TI}" data-trace="2" onclick="toggleSpecies(this)" title="Click to show/hide">Ti</div>
+    <div class="legend-chip" style="background:${COL_S}" data-trace="3" onclick="toggleSpecies(this)" title="Click to show/hide">S</div>
+    <div class="legend-chip" style="background:${COL_O}" data-trace="4" onclick="toggleSpecies(this)" title="Click to show/hide">O</div>
+  `;
+
+  const nAtoms = motif.tiPos.length + motif.sPos.length + motif.oPos.length;
+  document.getElementById('structure-dims').innerHTML = `
+    <div class="dims-title">Structure</div>
+    <div class="dims-row"><span class="dims-lbl">Formula</span><span class="dims-val">TiOSO&#8324;</span></div>
+    <div class="dims-row"><span class="dims-lbl">Space group</span><span class="dims-val">Pmc2&#8321; (#26)</span></div>
+    <div class="dims-row"><span class="dims-lbl">Crystal system</span><span class="dims-val">Orthorhombic</span></div>
+    <div class="dims-row"><span class="dims-lbl">Atoms shown</span><span class="dims-val">${nAtoms} (schematic motif)</span></div>
+    <div class="dims-row sep"><span class="dims-lbl">Ti-O bond</span><span class="dims-val">${motif.TiO.toFixed(3)} &Aring;</span></div>
+    <div class="dims-row"><span class="dims-lbl">S-O bond</span><span class="dims-val">${motif.SO.toFixed(3)} &Aring;</span></div>
+    <div class="dims-row"><span class="dims-lbl">Coordination</span><span class="dims-val">Ti:6 / S:4</span></div>
+  `;
+}
+
 function renderStructure(presetCamera){
   let seed = 7;
   for (let i=0;i<loadedFileName.length;i++) seed = (seed*31 + loadedFileName.charCodeAt(i)) >>> 0;
   const rnd = ()=>{ seed = (seed*1103515245 + 12345) >>> 0; return seed/4294967296; };
 
-  const a = 3.6 + rnd()*2.4;      // lattice parameter (Å)
-  const n = supercellOn ? 3 : 2;   // 2x2x2, or 3x3x3 with Supercell toggle on
+  const uniqueEls = parseElementsFromFilename(loadedFileName, rnd);
+  if (isTiOSSystem(uniqueEls)){
+    renderTiOSO4Structure(rnd);
+    return;
+  }
 
-  // Try to read real element symbols out of the filename itself (e.g.
-  // "TiS05.cif" -> Ti, S). Falls back to a plausible random pair only
-  // when the filename doesn't contain any recognisable element symbols.
-  const [elA, elB] = parseElementsFromFilename(loadedFileName, rnd);
+  const a = 3.6 + rnd()*2.4;
+  const n = supercellOn ? 3 : 2;
+
+  const [elA, elB] = pickBinaryPair(uniqueEls, rnd);
   const cationX=[],cationY=[],cationZ=[], anionX=[],anionY=[],anionZ=[];
   const bx=[],by=[],bz=[];
 
@@ -1046,16 +1113,12 @@ function renderStructure(presetCamera){
   `;
 }
 
-/* Toggles a single element species on/off in the 3D view (legend chips
-   double as checkboxes, per the interactive-legend spec). */
 function toggleSpecies(el){
   const idx = parseInt(el.dataset.trace, 10);
   const isOff = el.classList.toggle('off');
   Plotly.restyle('structure-div', {visible: !isOff}, [idx]);
 }
 
-/* Small orientation gizmo (bottom-left) that tracks the 3D camera so the
-   arrows always show which way x/y/z point in the current view. */
 function updateGizmo(){
   const gd = document.getElementById('structure-div');
   const scene = gd._fullLayout && gd._fullLayout.scene;
@@ -1084,9 +1147,6 @@ function updateGizmo(){
   svg.innerHTML = arm(Z,'#2a9d2a') + arm(X,'#b02020') + arm(Y,'#2e7dcc');
 }
 
-/* ══════════════════════════════════════════════════════════
-   VIEWER TOOLBAR — rotate/pan/zoom/reset/projection + display toggles
-═══════════════════════════════════════════════════════════ */
 function setDragMode(mode, btn){
   dragModeState = mode;
   document.getElementById('vt-rotate').classList.toggle('active', mode === 'orbit');
@@ -1113,8 +1173,11 @@ function toggleStructureLayer(layer, btn){
   const gd = document.getElementById('structure-div');
   if (!gd || !gd.data || !structureIdx) return;
 
-  if (layer === 'cell') Plotly.restyle(gd, {visible: structureLayerState.cell}, [structureIdx.cell]);
-  if (layer === 'bonds') Plotly.restyle(gd, {visible: structureLayerState.bonds}, [structureIdx.bonds]);
+  if (layer === 'cell' && structureIdx.cell != null) Plotly.restyle(gd, {visible: structureLayerState.cell}, [structureIdx.cell]);
+  if (layer === 'bonds') {
+    const bondIdx = Array.isArray(structureIdx.bonds) ? structureIdx.bonds : [structureIdx.bonds];
+    Plotly.restyle(gd, {visible: structureLayerState.bonds}, bondIdx);
+  }
   if (layer === 'poly' && structureIdx.polyIdx.length) Plotly.restyle(gd, {visible: structureLayerState.poly}, structureIdx.polyIdx);
   if (layer === 'axes'){
     const on = structureLayerState.axes;
@@ -1138,9 +1201,6 @@ function toggleSupercell(btn){
   renderStructure(prevCamera);
 }
 
-/* ══════════════════════════════════════════════════════════
-   WORKFLOW INDICATOR
-═══════════════════════════════════════════════════════════ */
 function setWorkflowStep(step){
   for (let i=1;i<=5;i++){
     const el = document.getElementById('wf-'+i);
@@ -1151,9 +1211,6 @@ function setWorkflowStep(step){
   }
 }
 
-/* ══════════════════════════════════════════════════════════
-   SIDEBAR — collapsible sections + visualization/export controls
-═══════════════════════════════════════════════════════════ */
 function toggleSection(id){
   document.getElementById(id).classList.toggle('collapsed');
 }
@@ -1174,7 +1231,9 @@ function setAtomTransparency(val){
   document.getElementById('transparency-val').textContent = val + '%';
   const gd = document.getElementById('structure-div');
   if (!gd || !gd.data || !structureIdx) return;
-  Plotly.restyle(gd, {'marker.opacity': 1 - val/100}, [structureIdx.A, structureIdx.B]);
+  const idxs = [structureIdx.A, structureIdx.B];
+  if (structureIdx.S != null) idxs.push(structureIdx.S);
+  Plotly.restyle(gd, {'marker.opacity': 1 - val/100}, idxs);
 }
 function setPolyOpacity(val){
   document.getElementById('poly-opacity-val').textContent = val + '%';
@@ -1189,9 +1248,6 @@ function selectExportFormat(fmt, btn){
   btn.classList.add('active');
 }
 
-/* ══════════════════════════════════════════════════════════
-   STATUS BAR HELPERS
-═══════════════════════════════════════════════════════════ */
 function setStatus(s){ document.getElementById('status-idle').textContent = s; }
 function rerenderIfLoaded(){ if (hasData) runPlot(); }
 function exportPlot(){
@@ -1199,9 +1255,6 @@ function exportPlot(){
   alert('Connect to cluster for live data export.');
 }
 
-/* ══════════════════════════════════════════════════════════
-   PLOTLY BASE LAYOUT
-═══════════════════════════════════════════════════════════ */
 function baseLayout(){
   const showGrid = document.getElementById('grid-check').checked;
   const showLegend = document.getElementById('legend-check').checked;
@@ -1217,9 +1270,6 @@ function baseLayout(){
 }
 const PLOT_OPTS = { responsive:true, displayModeBar:false };
 
-/* ══════════════════════════════════════════════════════════
-   RENDER DISPATCH — runs when ▶ Plot is clicked (or auto after load)
-═══════════════════════════════════════════════════════════ */
 function runPlot(){
   if (!hasData){
     setStatus('Load a file or sample data first');
@@ -1233,9 +1283,6 @@ function runPlot(){
 
   setTimeout(() => {
     try {
-      // Make plot-div visible/sized *before* Plotly draws into it —
-      // otherwise the first render measures a collapsed container and
-      // only fills correctly after a second render/resize.
       document.getElementById('plot-div').classList.add('active');
       const renderers = {
         raman: renderRaman, infrared: renderInfrared, band: renderBand,
@@ -1259,9 +1306,8 @@ function runPlot(){
   }, 250);
 }
 
-/* ── Raman ──────────────────────────────────────────── */
 function renderRaman(){
-  const w = Array.from({length:400}, (_,i)=> 50 + i*3.5); // cm^-1
+  const w = Array.from({length:400}, (_,i)=> 50 + i*3.5);
   const peaks = [220,410,610,780,1080];
   const y = w.map(x => peaks.reduce((s,p)=> s + Math.exp(-((x-p)**2)/(2*12*12))*(1+Math.random()*.05), 0.02));
   Plotly.newPlot('plot-div', [{
@@ -1269,7 +1315,6 @@ function renderRaman(){
     fill:'tozeroy', fillcolor:'rgba(255,102,0,.12)', line:{color:'#ff6600', width:2},
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Raman shift (cm⁻¹)'}, yaxis:{...baseLayout().yaxis, title:'Intensity (a.u.)'}}, PLOT_OPTS);
 }
-/* ── Infrared ───────────────────────────────────────── */
 function renderInfrared(){
   const w = Array.from({length:400}, (_,i)=> 100 + i*4);
   const peaks = [340,560,890,1250];
@@ -1279,7 +1324,6 @@ function renderInfrared(){
     fill:'tozeroy', fillcolor:'rgba(46,125,204,.12)', line:{color:'#2e7dcc', width:2},
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Wavenumber (cm⁻¹)'}, yaxis:{...baseLayout().yaxis, title:'Absorption (a.u.)'}}, PLOT_OPTS);
 }
-/* ── Band Structure ────────────────────────────────── */
 function renderBand(){
   const nk=80, nb=8;
   const k=Array.from({length:nk},(_,i)=>i/(nk-1));
@@ -1296,7 +1340,6 @@ function renderBand(){
   };
   Plotly.newPlot('plot-div', traces, layout, PLOT_OPTS);
 }
-/* ── DOS / PDOS ─────────────────────────────────────── */
 function renderDOS(){
   const e=Array.from({length:200},(_,i)=>-10+i*.1);
   const g=(x,m,s,a)=>a*Math.exp(-((x-m)**2)/(2*s*s));
@@ -1309,7 +1352,6 @@ function renderDOS(){
     {x:e,y:pp,name:'p',type:'scatter',mode:'lines',line:{color:'#2a9d2a',width:1.2,dash:'dash'}},
   ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'E − E_F (eV)'}, yaxis:{...baseLayout().yaxis, title:'DOS (states/eV)'}}, PLOT_OPTS);
 }
-/* ── Phonon Dispersion ──────────────────────────────── */
 function renderPhonon(){
   const nk=80,nm=6;
   const k=Array.from({length:nk},(_,i)=>i/(nk-1));
@@ -1319,7 +1361,6 @@ function renderPhonon(){
     yaxis:{...baseLayout().yaxis, title:'ω (THz)', range:[-.5,16]},
   }, PLOT_OPTS);
 }
-/* ── g(r) RDF ───────────────────────────────────────── */
 function renderRDF(){
   const r=Array.from({length:120},(_,i)=>i*.1+.2);
   const y=r.map(x=>{ if(x<1.8) return 0; return 1+2.8*Math.exp(-((x-2.5)**2)/.06)+0.8*Math.exp(-((x-4.1)**2)/.12)+0.3*Math.exp(-((x-5.8)**2)/.2)+.05*(Math.random()-.5); });
@@ -1328,7 +1369,6 @@ function renderRDF(){
     {x:[1,12],y:[1,1],type:'scatter',mode:'lines',name:'g(r)=1',line:{color:'#888',width:.8,dash:'dot'}},
   ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'r (Å)'}, yaxis:{...baseLayout().yaxis, title:'g(r)'}}, PLOT_OPTS);
 }
-/* ── XANES / EXAFS ──────────────────────────────────── */
 function renderXANES(){
   const e = Array.from({length:600}, (_,i)=> 7100 + i*0.5);
   const edge = 7112, whiteLine = 7128;
@@ -1344,7 +1384,6 @@ function renderXANES(){
     line:{color:'#ff6600', width:2},
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Photon energy (eV)'}, yaxis:{...baseLayout().yaxis, title:'Normalized absorption μ(E)'}}, PLOT_OPTS);
 }
-/* ── EELS ───────────────────────────────────────────── */
 function renderEELS(){
   const e = Array.from({length:400}, (_,i)=> -2 + i*0.15);
   const g=(x,m,s,a)=>a*Math.exp(-((x-m)**2)/(2*s*s));
@@ -1354,7 +1393,6 @@ function renderEELS(){
     fill:'tozeroy', fillcolor:'rgba(255,102,0,.12)', line:{color:'#ff6600', width:2},
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Energy loss (eV)'}, yaxis:{...baseLayout().yaxis, title:'Intensity (a.u.)'}}, PLOT_OPTS);
 }
-/* ── ARPES ──────────────────────────────────────────── */
 function renderARPES(){
   const nk=100, ne=100;
   const k = Array.from({length:nk},(_,i)=> -1 + i*2/(nk-1));
@@ -1370,9 +1408,7 @@ function renderARPES(){
     colorscale:[[0,'#ffffff'],[0.3,'#fff0e0'],[0.6,'#ffb066'],[1,'#ff6600']], showscale:true,
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'k (Å⁻¹)'}, yaxis:{...baseLayout().yaxis, title:'E − E_F (eV)'}}, PLOT_OPTS);
 }
-/* ── Vibration Visualizer ───────────────────────────── */
 function renderVibration(){
-  // schematic ring of atoms with a breathing-type displacement mode
   const n=6, atoms=[];
   for(let i=0;i<n;i++){
     const ang = i*2*Math.PI/n;
@@ -1393,7 +1429,6 @@ function renderVibration(){
     scene:{ xaxis:{title:'x (Å)',gridcolor:'rgba(0,0,0,.08)'}, yaxis:{title:'y (Å)',gridcolor:'rgba(0,0,0,.08)'}, zaxis:{title:'z (Å)',gridcolor:'rgba(0,0,0,.08)'}, aspectmode:'data' },
   }, PLOT_OPTS);
 }
-/* ── Seek-path (high-symmetry k-path) ──────────────── */
 function renderSeekpath(){
   const pts = {'Γ':[0,0], 'X':[1,0], 'M':[1,1], 'R':[0.5,1.5], 'Γ2':[0,0]};
   const order = ['Γ','X','M','R','Γ2'];
@@ -1405,7 +1440,6 @@ function renderSeekpath(){
      marker:{size:9,color:'#2e7dcc'}, text:labels, textposition:'top center', textfont:{size:13,color:'#333'}, name:'Suggested k-path'},
   ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'k_x (2π/a)'}, yaxis:{...baseLayout().yaxis, title:'k_y (2π/a)'}}, PLOT_OPTS);
 }
-/* ── Brillouin Zone ─────────────────────────────────── */
 function renderBZ(){
   const s=1;
   const verts = [
@@ -1423,7 +1457,6 @@ function renderBZ(){
     scene:{ xaxis:{title:'k_x',gridcolor:'rgba(0,0,0,.08)'}, yaxis:{title:'k_y',gridcolor:'rgba(0,0,0,.08)'}, zaxis:{title:'k_z',gridcolor:'rgba(0,0,0,.08)'}, aspectmode:'cube' },
   }, PLOT_OPTS);
 }
-/* ── Phase Diagram ──────────────────────────────────── */
 function renderPhaseDiagram(){
   const x = Array.from({length:100},(_,i)=>i/99);
   const liquidus = x.map(c=> 1800 - 600*c + 200*Math.sin(c*Math.PI));
@@ -1435,7 +1468,6 @@ function renderPhaseDiagram(){
     {x, y:eutectic, type:'scatter', mode:'lines', name:'Eutectic', line:{color:'#888',width:1,dash:'dot'}},
   ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Composition x'}, yaxis:{...baseLayout().yaxis, title:'Temperature (K)'}}, PLOT_OPTS);
 }
-/* ── Charge Density ─────────────────────────────────── */
 function renderChargeDensity(){
   const n=80;
   const x = Array.from({length:n},(_,i)=>-4+i*8/(n-1));
@@ -1447,7 +1479,6 @@ function renderChargeDensity(){
     colorscale:[[0,'#ffffff'],[0.4,'#fff0e0'],[0.7,'#ffb066'],[1,'#ff6600']], contours:{coloring:'heatmap'}, showscale:true,
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'x (Å)'}, yaxis:{...baseLayout().yaxis, title:'y (Å)'}}, PLOT_OPTS);
 }
-/* ── XRD Diffraction ────────────────────────────────── */
 function renderXRD(){
   const tt = Array.from({length:800},(_,i)=>10+i*0.1);
   const peaks=[[26.6,100],[34.5,45],[38.2,30],[44.8,25],[54.9,20],[62.1,15],[68.3,10]];
@@ -1458,9 +1489,6 @@ function renderXRD(){
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'2θ (degrees)'}, yaxis:{...baseLayout().yaxis, title:'Intensity (counts)'}}, PLOT_OPTS);
 }
 
-/* ══════════════════════════════════════════════════════════
-   INITIAL STATE
-═══════════════════════════════════════════════════════════ */
 setWorkflowStep(1);
 </script>
 </body>

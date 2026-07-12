@@ -45,6 +45,14 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
+            if "renderTiOSO4Structure" in html:
+                score += 15_000_000
+            if "buildTiOSO4Motif" in html:
+                score += 14_500_000
+            if "isTiOSSystem" in html:
+                score += 14_000_000
+            if "pickBinaryPair" in html:
+                score += 13_500_000
             if 'id="viewer-toolbar"' in html:
                 score += 10_000_000
             if "setWorkflowStep" in html:
@@ -100,6 +108,10 @@ def main() -> None:
     for s in [
         "favicon.png",
         'href="/"',
+        "renderTiOSO4Structure",
+        "buildTiOSO4Motif",
+        "isTiOSSystem",
+        "pickBinaryPair",
         'id="viewer-toolbar"',
         'id="workflow"',
         "setWorkflowStep",
