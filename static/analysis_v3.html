@@ -23,6 +23,15 @@
   --sans:'Roboto',sans-serif;
   --mono:'JetBrains Mono',monospace;
 }
+html[data-theme="dark"]{
+  --bg0:#1a1a1a; --bg1:#232323; --bg2:#2a2a2a; --bg3:#1f1f1f;
+  --bg4:#2c2c2c; --bg5:#333333;
+  --bdr:#3a3a3a; --bdr2:#4a4a4a;
+  --tx0:#f0f0f0; --tx1:#d8d8d8; --tx2:#aaaaaa; --tx3:#888888;
+}
+html[data-theme="dark"] #viewport,
+html[data-theme="dark"] #structure-wrap,
+html[data-theme="dark"] #structure-wrap.mini{ background:var(--bg3); }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -120,6 +129,25 @@ body{
   border-radius:var(--r);padding:4px 9px;cursor:pointer;transition:all var(--t);
 }
 .pt-reset:hover{background:var(--bg1);border-color:var(--bdr2);color:var(--tx0)}
+.pt-export{
+  font-size:11px;color:var(--tx2);background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:var(--r);padding:4px 9px;cursor:pointer;transition:all var(--t);
+  display:inline-flex;align-items:center;gap:5px;
+}
+.pt-export:hover{background:var(--bg1);border-color:var(--bdr2);color:var(--tx0)}
+
+/* ── Viewer toolbar (rotate/pan/zoom/reset + display toggles) ── */
+#viewer-toolbar{
+  display:flex;align-items:center;gap:4px;padding-bottom:8px;flex-shrink:0;flex-wrap:wrap;
+}
+.vt-btn{
+  display:flex;align-items:center;justify-content:center;width:28px;height:28px;
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);color:var(--tx2);
+  cursor:pointer;transition:all var(--t);
+}
+.vt-btn:hover{background:var(--bg2);color:var(--tx0);border-color:var(--bdr2)}
+.vt-btn.active{background:var(--acc);color:#fff;border-color:var(--acc-d)}
+.vt-sep{width:1px;height:18px;background:var(--bdr);margin:0 3px}
 
 /* ── Crystal structure + analysis viewport ── */
 #viewport{ position:relative; flex:1; min-height:0; border:1px solid var(--bdr); border-radius:var(--r2); background:#fff; overflow:hidden; }
@@ -140,21 +168,24 @@ body{
 #structure-div{ position:absolute; top:0; right:0; bottom:0; left:0; }
 
 #structure-legend{
-  position:absolute; right:16px; bottom:14px; display:flex; gap:8px; z-index:3; pointer-events:none;
+  position:absolute; right:16px; bottom:14px; display:flex; gap:8px; z-index:3;
 }
 .legend-chip{
   display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;
   font-size:11px;font-weight:700;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);
-  transition:all var(--t);
+  transition:all var(--t);cursor:pointer;pointer-events:auto;border:2px solid transparent;
 }
+.legend-chip.off{ opacity:.3; filter:grayscale(60%); }
 #structure-gizmo{ position:absolute; left:14px; bottom:14px; width:64px; height:64px; z-index:3; pointer-events:none; transition:all var(--t); }
 #structure-dims{
   position:absolute; left:14px; top:14px; z-index:3; pointer-events:none;
-  background:rgba(255,255,255,.88); border:1px solid var(--bdr); border-radius:var(--r);
-  padding:8px 10px; font-family:var(--mono); box-shadow:0 1px 4px rgba(0,0,0,.12);
-  transition:all var(--t);
+  background:rgba(255,255,255,.92); border:1px solid var(--bdr); border-radius:var(--r);
+  padding:9px 12px; font-family:var(--mono); box-shadow:0 1px 4px rgba(0,0,0,.12);
+  transition:all var(--t); min-width:170px;
 }
+.dims-title{ font-family:var(--sans); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--tx3); margin-bottom:5px; }
 .dims-row{ display:flex; gap:14px; justify-content:space-between; font-size:11px; line-height:1.6; }
+.dims-row.sep{ border-top:1px solid var(--bdr); margin-top:3px; padding-top:3px; }
 .dims-lbl{ color:var(--tx3); }
 .dims-val{ color:var(--tx0); font-weight:700; }
 #structure-export-btn{
@@ -223,6 +254,62 @@ body{
 .sb-browse:hover{background:var(--bg2);border-color:var(--bdr2)}
 
 .sb-divider{height:1px;background:var(--bdr);margin:2px 14px 10px}
+
+/* ── Workflow indicator ── */
+#workflow{ padding:14px 14px 4px; display:flex; flex-direction:column; gap:0; }
+.wf-step{ display:flex; align-items:center; gap:9px; padding:3px 0; }
+.wf-dot{
+  width:18px;height:18px;border-radius:50%;background:var(--bg3);border:2px solid var(--bdr2);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;
+  color:var(--tx3);transition:all var(--t);
+}
+.wf-label{ font-size:11px; color:var(--tx3); transition:color var(--t); }
+.wf-step.done .wf-dot{ background:var(--acc); border-color:var(--acc-d); color:#fff; }
+.wf-step.done .wf-label{ color:var(--tx2); }
+.wf-step.current .wf-dot{ background:var(--acc); border-color:var(--acc-d); color:#fff; box-shadow:0 0 0 3px var(--acc-l); }
+.wf-step.current .wf-label{ color:var(--tx0); font-weight:700; }
+.wf-line{ width:2px; height:10px; background:var(--bdr2); margin-left:8px; }
+.wf-step.done + .wf-line{ background:var(--acc); }
+
+/* ── Collapsible sidebar sections ── */
+.sb-section{ border-bottom:1px solid var(--bdr); }
+.sb-sec-toggle{
+  width:100%; display:flex; align-items:center; justify-content:space-between;
+  padding:12px 14px; background:none; border:none; cursor:pointer; text-align:left;
+  font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--tx3);
+  font-family:var(--sans);
+}
+.sb-sec-toggle:hover{ color:var(--tx1); }
+.sb-sec-toggle .chev{ transition:transform var(--t); flex-shrink:0; }
+.sb-section.collapsed .sb-sec-toggle .chev{ transform:rotate(-90deg); }
+.sb-sec-body{ padding-bottom:6px; }
+.sb-section.collapsed .sb-sec-body{ display:none; }
+
+/* nested "Advanced settings" collapsible within Simulation */
+.sb-subtoggle{
+  display:flex; align-items:center; gap:6px; width:100%; padding:8px 14px; background:none;
+  border:none; border-top:1px dashed var(--bdr); cursor:pointer; text-align:left;
+  font-size:11.5px; color:var(--tx1); font-family:var(--sans); font-weight:600;
+}
+.sb-subtoggle .chev{ transition:transform var(--t); }
+.sb-subtoggle.collapsed .chev{ transform:rotate(-90deg); }
+.sb-subbody{ padding:0 14px 6px; display:flex; flex-direction:column; gap:10px; }
+.sb-subbody.collapsed{ display:none; }
+
+.sb-range{ width:100%; accent-color:var(--acc); cursor:pointer; }
+.sb-range-row{ display:flex; align-items:center; gap:8px; }
+.sb-range-val{ font-size:11px; font-family:var(--mono); color:var(--tx3); width:34px; text-align:right; flex-shrink:0; }
+.sb-two-col{ display:flex; gap:8px; }
+.sb-two-col .sb-input{ flex:1; }
+.muted-note{ font-size:10.5px; color:var(--tx3); line-height:1.5; }
+.export-chip-row{ display:flex; gap:6px; flex-wrap:wrap; }
+.export-chip{
+  padding:6px 12px; font-size:11px; font-weight:600; color:var(--tx1); background:var(--bg3);
+  border:1px solid var(--bdr); border-radius:var(--r); cursor:pointer; transition:all var(--t);
+  font-family:var(--sans);
+}
+.export-chip:hover{ background:var(--bg2); border-color:var(--bdr2); }
+.export-chip.active{ background:var(--acc); border-color:var(--acc-d); color:#fff; }
 
 .sb-checks{padding:0 14px 4px;display:flex;flex-direction:column;gap:10px}
 .sb-check{
@@ -371,7 +458,48 @@ body{
         <span class="pt-title" id="pt-title">Raman Simulation</span>
         <span class="pt-file" id="pt-file"></span>
         <div class="pt-spacer"></div>
-        <button class="pt-reset" onclick="resetToDropzone()">⟲ Load different file</button>
+        <button class="pt-export" onclick="exportPlot()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Image
+        </button>
+        <button class="pt-reset" onclick="resetToDropzone()">⟲ Load Structure</button>
+      </div>
+
+      <div id="viewer-toolbar">
+        <button class="vt-btn active" id="vt-rotate" title="Rotate" onclick="setDragMode('orbit', this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+        </button>
+        <button class="vt-btn" id="vt-pan" title="Pan" onclick="setDragMode('pan', this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+        </button>
+        <button class="vt-btn" title="Zoom in" onclick="zoomStructure(0.85)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <button class="vt-btn" title="Zoom out" onclick="zoomStructure(1.15)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <button class="vt-btn" title="Reset camera" onclick="resetCamera()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
+        <button class="vt-btn" title="Orthographic / perspective" id="vt-proj" onclick="toggleProjection(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </button>
+        <div class="vt-sep"></div>
+        <button class="vt-btn active" id="vt-cell" title="Toggle unit cell" onclick="toggleStructureLayer('cell', this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8L12 3 3 8l9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+        </button>
+        <button class="vt-btn active" id="vt-bonds" title="Toggle bonds" onclick="toggleStructureLayer('bonds', this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><line x1="8.1" y1="8.1" x2="15.9" y2="15.9"/></svg>
+        </button>
+        <button class="vt-btn" id="vt-poly" title="Toggle coordination polyhedra" onclick="toggleStructureLayer('poly', this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 6-3 12H6L3 8l9-6z"/></svg>
+        </button>
+        <button class="vt-btn" id="vt-axes" title="Toggle coordinate axes" onclick="toggleStructureLayer('axes', this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="4"/><line x1="4" y1="12" x2="20" y2="12"/><polyline points="8 8 12 4 16 8"/></svg>
+        </button>
+        <button class="vt-btn" id="vt-supercell" title="Toggle 3×3×3 supercell" onclick="toggleSupercell(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
       </div>
 
       <div id="viewport">
@@ -396,84 +524,207 @@ body{
   <div id="sidebar">
     <div id="sidebar-scroll">
 
-      <div class="sb-sec">Analysis</div>
-      <div class="sb-field">
-        <div class="sb-select-wrap">
-          <select class="sb-select" id="analysis-select">
-            <option value="raman" selected>Raman Simulation</option>
-            <option value="infrared">Infrared (IR)</option>
-            <option value="band">Band Structure</option>
-            <option value="dos">DOS / PDOS</option>
-            <option value="phonon">Phonon Dispersion</option>
-            <option value="rdf">g(r) RDF</option>
-            <option value="xanes">XANES/EXAFS</option>
-            <option value="eels">EELS</option>
-            <option value="arpes">ARPES</option>
-            <option value="vibration">Vibration Visualizer</option>
-            <option value="seekpath">Seek-path</option>
-            <option value="bz">Brillouin Zone</option>
-            <option value="phase">Phase Diagram</option>
-            <option value="charge">Charge Density</option>
-            <option value="xrd">XRD Diffraction</option>
-          </select>
-          <span class="sb-caret">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </span>
+      <!-- WORKFLOW INDICATOR -->
+      <div id="workflow">
+        <div class="wf-step" id="wf-1"><span class="wf-dot">1</span><span class="wf-label">Load Structure</span></div>
+        <div class="wf-line"></div>
+        <div class="wf-step" id="wf-2"><span class="wf-dot">2</span><span class="wf-label">Choose Analysis</span></div>
+        <div class="wf-line"></div>
+        <div class="wf-step" id="wf-3"><span class="wf-dot">3</span><span class="wf-label">Configure</span></div>
+        <div class="wf-line"></div>
+        <div class="wf-step" id="wf-4"><span class="wf-dot">4</span><span class="wf-label">Run</span></div>
+        <div class="wf-line"></div>
+        <div class="wf-step" id="wf-5"><span class="wf-dot">5</span><span class="wf-label">Results</span></div>
+      </div>
+
+      <!-- ANALYSIS -->
+      <div class="sb-section" id="sec-analysis">
+        <button class="sb-sec-toggle" onclick="toggleSection('sec-analysis')">
+          <span>Analysis</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sb-sec-body">
+          <div class="sb-field">
+            <div class="sb-select-wrap">
+              <select class="sb-select" id="analysis-select">
+                <option value="raman" selected>Raman Simulation</option>
+                <option value="infrared">Infrared (IR)</option>
+                <option value="band">Band Structure</option>
+                <option value="dos">DOS / PDOS</option>
+                <option value="phonon">Phonon Dispersion</option>
+                <option value="rdf">g(r) RDF</option>
+                <option value="xanes">XANES/EXAFS</option>
+                <option value="eels">EELS</option>
+                <option value="arpes">ARPES</option>
+                <option value="vibration">Vibration Visualizer</option>
+                <option value="seekpath">Seek-path</option>
+                <option value="bz">Brillouin Zone</option>
+                <option value="phase">Phase Diagram</option>
+                <option value="charge">Charge Density</option>
+                <option value="xrd">XRD Diffraction</option>
+              </select>
+              <span class="sb-caret">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="sb-divider"></div>
+      <!-- SIMULATION -->
+      <div class="sb-section" id="sec-simulation">
+        <button class="sb-sec-toggle" onclick="toggleSection('sec-simulation')">
+          <span>Simulation</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sb-sec-body">
+          <div class="sb-field">
+            <div class="sb-label" id="file-field-label">ph.x output file</div>
+            <div class="sb-file-row">
+              <input class="sb-input" id="raman-file" placeholder="No file selected" readonly onclick="dzClick()"/>
+              <button class="sb-browse" onclick="dzClick()">…</button>
+            </div>
+          </div>
+          <div class="sb-field">
+            <div class="sb-label">Laser wavelength (nm)</div>
+            <input class="sb-input" type="number" value="532" step="1" min="200" max="1500"/>
+          </div>
+          <div class="sb-field">
+            <div class="sb-label">Output format</div>
+            <div class="sb-select-wrap">
+              <select class="sb-select" id="output-format-select">
+                <option selected>PNG (300 dpi)</option>
+                <option>SVG</option>
+                <option>PDF</option>
+                <option>CSV</option>
+                <option>JSON</option>
+              </select>
+              <span class="sb-caret">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </div>
+          </div>
 
-      <div class="sb-sec">Data</div>
-      <div class="sb-field">
-        <div class="sb-label" id="file-field-label">ph.x output file</div>
-        <div class="sb-file-row">
-          <input class="sb-input" id="raman-file" placeholder="No file selected" readonly onclick="dzClick()"/>
-          <button class="sb-browse" onclick="dzClick()">…</button>
+          <button class="sb-subtoggle collapsed" id="advtoggle-btn" onclick="toggleSubsection('advanced-body','advtoggle-btn')">
+            <svg class="chev" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            Advanced settings
+          </button>
+          <div class="sb-subbody collapsed" id="advanced-body">
+            <label class="sb-check"><input type="checkbox" id="lorentzian-check" checked onchange="rerenderIfLoaded()"> Lorentzian broadening</label>
+            <label class="sb-check"><input type="checkbox" id="gaussian-check" onchange="rerenderIfLoaded()"> Gaussian broadening</label>
+            <label class="sb-check"><input type="checkbox" id="nonresonant-check" onchange="rerenderIfLoaded()"> Non-resonant only</label>
+            <div class="sb-field" style="padding:0">
+              <div class="sb-label">Temperature (K)</div>
+              <input class="sb-input" type="number" value="300" step="1" min="0" max="2000"/>
+            </div>
+            <div class="sb-field" style="padding:0">
+              <div class="sb-label">Polarization</div>
+              <div class="sb-select-wrap">
+                <select class="sb-select">
+                  <option selected>VV</option>
+                  <option>VH</option>
+                  <option>HH</option>
+                  <option>Unpolarized</option>
+                </select>
+                <span class="sb-caret"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></span>
+              </div>
+            </div>
+            <div class="sb-field" style="padding:0">
+              <div class="sb-label">Frequency range (cm⁻¹)</div>
+              <div class="sb-two-col">
+                <input class="sb-input" type="number" value="0" placeholder="min"/>
+                <input class="sb-input" type="number" value="1500" placeholder="max"/>
+              </div>
+            </div>
+            <div class="muted-note">QE-specific parameters inherit from the linked ph.x calculation.</div>
+          </div>
         </div>
       </div>
-      <div class="sb-field">
-        <div class="sb-label">Laser wavelength (nm)</div>
-        <input class="sb-input" type="number" value="532" step="1" min="200" max="1500"/>
-      </div>
-      <div class="sb-checks">
-        <label class="sb-check"><input type="checkbox" checked> Lorentzian broadening</label>
-        <label class="sb-check"><input type="checkbox"> Non-resonant only</label>
-      </div>
 
-      <div class="sb-divider"></div>
-
-      <div class="sb-sec">Output</div>
-      <div class="sb-field">
-        <div class="sb-label">Output format</div>
-        <div class="sb-select-wrap">
-          <select class="sb-select">
-            <option selected>PNG (300 dpi)</option>
-            <option>SVG</option>
-            <option>PDF</option>
-          </select>
-          <span class="sb-caret">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </span>
+      <!-- VISUALIZATION -->
+      <div class="sb-section collapsed" id="sec-visualization">
+        <button class="sb-sec-toggle" onclick="toggleSection('sec-visualization')">
+          <span>Visualization</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sb-sec-body">
+          <div class="sb-field">
+            <div class="sb-label">Theme</div>
+            <div class="sb-select-wrap">
+              <select class="sb-select" id="theme-select" onchange="setTheme(this.value)">
+                <option value="light" selected>Light</option>
+                <option value="dark">Dark</option>
+              </select>
+              <span class="sb-caret"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+          </div>
+          <div class="sb-field">
+            <div class="sb-label">Colour scheme</div>
+            <div class="sb-select-wrap">
+              <select class="sb-select">
+                <option selected>Default</option>
+                <option>Publication B&amp;W</option>
+                <option>Viridis</option>
+              </select>
+              <span class="sb-caret">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </div>
+          </div>
+          <div class="sb-field">
+            <div class="sb-label">Background colour</div>
+            <div class="sb-select-wrap">
+              <select class="sb-select" id="bg-select" onchange="setViewerBackground(this.value)">
+                <option value="#ffffff" selected>White</option>
+                <option value="#f0f0f0">Light gray</option>
+                <option value="#1f1f1f">Dark</option>
+              </select>
+              <span class="sb-caret"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+          </div>
+          <div class="sb-field">
+            <div class="sb-label">Transparency</div>
+            <div class="sb-range-row">
+              <input class="sb-range" type="range" min="0" max="100" value="0" id="transparency-range" oninput="setAtomTransparency(this.value)">
+              <span class="sb-range-val" id="transparency-val">0%</span>
+            </div>
+          </div>
+          <div class="sb-field">
+            <div class="sb-label">Polyhedra opacity</div>
+            <div class="sb-range-row">
+              <input class="sb-range" type="range" min="0" max="100" value="35" id="poly-opacity-range" oninput="setPolyOpacity(this.value)">
+              <span class="sb-range-val" id="poly-opacity-val">35%</span>
+            </div>
+          </div>
+          <div class="sb-checks" style="padding-bottom:14px">
+            <label class="sb-check" id="grid-check-wrap"><input type="checkbox" id="grid-check" onchange="rerenderIfLoaded()"> Show grid</label>
+            <label class="sb-check"><input type="checkbox" id="axes-check" onchange="toggleStructureLayer('axes', document.getElementById('vt-axes'))"> Show axes</label>
+            <label class="sb-check" id="legend-check-wrap"><input type="checkbox" id="legend-check" checked onchange="rerenderIfLoaded()"> Show legend</label>
+          </div>
         </div>
       </div>
-      <div class="sb-field">
-        <div class="sb-label">Colour scheme</div>
-        <div class="sb-select-wrap">
-          <select class="sb-select">
-            <option selected>Default</option>
-            <option>Publication B&amp;W</option>
-            <option>Viridis</option>
-          </select>
-          <span class="sb-caret">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </span>
+
+      <!-- EXPORT -->
+      <div class="sb-section collapsed" id="sec-export">
+        <button class="sb-sec-toggle" onclick="toggleSection('sec-export')">
+          <span>Export</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sb-sec-body">
+          <div class="sb-field">
+            <div class="sb-label">Format</div>
+            <div class="export-chip-row">
+              <button class="export-chip active" onclick="selectExportFormat('PNG', this)">PNG</button>
+              <button class="export-chip" onclick="selectExportFormat('SVG', this)">SVG</button>
+              <button class="export-chip" onclick="selectExportFormat('PDF', this)">PDF</button>
+              <button class="export-chip" onclick="selectExportFormat('CSV', this)">CSV</button>
+              <button class="export-chip" onclick="selectExportFormat('JSON', this)">JSON</button>
+            </div>
+          </div>
+          <div class="sb-field" style="padding-bottom:14px">
+            <button class="dz-btn secondary" style="width:100%;justify-content:center" onclick="exportPlot()">⭳ Export</button>
+          </div>
         </div>
-      </div>
-      <div class="sb-checks" style="padding-bottom:14px">
-        <label class="sb-check"><input type="checkbox" id="advanced-toggle" onchange="toggleAdvanced(this)"> Advanced settings</label>
-        <label class="sb-check" id="grid-check-wrap"><input type="checkbox" id="grid-check" onchange="rerenderIfLoaded()"> Show grid</label>
-        <label class="sb-check" id="legend-check-wrap"><input type="checkbox" id="legend-check" checked onchange="rerenderIfLoaded()"> Show legend</label>
       </div>
 
     </div><!-- /sidebar-scroll -->
@@ -481,7 +732,7 @@ body{
     <div id="plot-btn-wrap">
       <button id="plot-btn" onclick="runPlot()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Plot
+        <span id="plot-btn-label">Plot Raman Spectrum</span>
       </button>
     </div>
   </div><!-- /sidebar -->
@@ -541,7 +792,9 @@ document.getElementById('analysis-select').addEventListener('change', function()
   document.getElementById('dz-sub').textContent = m.dzSub;
   document.getElementById('file-field-label').textContent = m.fileLabel;
   document.getElementById('pt-title').textContent = m.label;
+  document.getElementById('plot-btn-label').textContent = currentModule === 'raman' ? 'Plot Raman Spectrum' : ('Plot ' + m.label);
   setStatus('Idle');
+  if (hasData) setWorkflowStep(3);
   // Loaded data stays associated with the file, but re-plot for the new module if data present
   if (hasData) { document.getElementById('plot-empty-msg').style.display = 'flex'; document.getElementById('plot-div').innerHTML=''; }
 });
@@ -587,7 +840,20 @@ function activatePlotArea(){
   document.getElementById('plot-area').classList.add('active');
   document.getElementById('pt-file').textContent = loadedFileName;
   document.getElementById('structure-wrap').classList.remove('mini');
+  // Fresh structure: reset viewer toggle states to their defaults.
+  structureLayerState.cell = true; structureLayerState.bonds = true;
+  structureLayerState.poly = false; structureLayerState.axes = false;
+  supercellOn = false; projectionOrtho = false;
+  document.getElementById('vt-cell').classList.add('active');
+  document.getElementById('vt-bonds').classList.add('active');
+  document.getElementById('vt-poly').classList.remove('active');
+  document.getElementById('vt-axes').classList.remove('active');
+  document.getElementById('vt-supercell').classList.remove('active');
+  document.getElementById('vt-proj').classList.remove('active');
+  const axesCheck = document.getElementById('axes-check');
+  if (axesCheck) axesCheck.checked = false;
   renderStructure();
+  setWorkflowStep(2);
   // Structure viewer stays full-size here; the analysis plot (and the
   // shrink-to-corner behavior) only happens once the user clicks ▶ Plot.
 }
@@ -606,6 +872,7 @@ function resetToDropzone(){
   document.getElementById('structure-gizmo').innerHTML = '';
   document.getElementById('structure-dims').innerHTML = '';
   setStatus('Idle');
+  setWorkflowStep(1);
 }
 
 /* Shrinks the structure viewer into a top-right inset once an analysis
@@ -656,19 +923,46 @@ function parseElementsFromFilename(name, rnd){
 
 /* ── Crystal structure viewer ─────────────────────────
    Renders the atomic structure associated with the loaded file: a
-   small replicated unit cell with two atom species, bonds along the
-   lattice vectors, and the primitive cell outlined in orange.
-   Lattice parameter/atom pattern are seeded from the filename so the
-   same "file" always reproduces the same structure. A legend and a
-   camera-synced axis gizmo overlay the viewer, matching the reference
-   look of a dedicated structure viewer. ──────────────── */
-function renderStructure(){
+   replicated unit cell (2×2×2, or 3×3×3 with the Supercell toggle) with
+   two atom species, bonds along the lattice vectors, coordination
+   polyhedra around interior sites, and the primitive cell outlined in
+   orange. Lattice parameter/atom pattern are seeded from the filename
+   so the same "file" always reproduces the same structure. A legend,
+   info card, and camera-synced axis gizmo overlay the viewer. Toolbar
+   toggle state (cell/bonds/polyhedra/axes visibility, drag mode,
+   projection) persists across re-renders (e.g. the Supercell toggle). */
+const structureLayerState = { cell:true, bonds:true, poly:false, axes:false };
+let supercellOn = false;
+let projectionOrtho = false;
+let dragModeState = 'orbit';
+let structureIdx = null;      // trace index map, set after each render
+let structureSpeciesVisible = { A:true, B:true };
+
+function buildPolyhedraTraces(n, a, opacity){
+  const traces = [];
+  for(let i=1;i<n;i++)for(let j=1;j<n;j++)for(let k=1;k<n;k++){
+    const neighbors = [
+      [(i-1)*a, j*a, k*a], [(i+1)*a, j*a, k*a],
+      [i*a, (j-1)*a, k*a], [i*a, (j+1)*a, k*a],
+      [i*a, j*a, (k-1)*a], [i*a, j*a, (k+1)*a],
+    ];
+    traces.push({
+      type:'mesh3d', alphahull:0, flatshading:true, color:'#ff6600',
+      x:neighbors.map(p=>p[0]), y:neighbors.map(p=>p[1]), z:neighbors.map(p=>p[2]),
+      opacity, showlegend:false, hoverinfo:'skip', name:'Polyhedra',
+      visible: structureLayerState.poly,
+    });
+  }
+  return traces;
+}
+
+function renderStructure(presetCamera){
   let seed = 7;
   for (let i=0;i<loadedFileName.length;i++) seed = (seed*31 + loadedFileName.charCodeAt(i)) >>> 0;
   const rnd = ()=>{ seed = (seed*1103515245 + 12345) >>> 0; return seed/4294967296; };
 
   const a = 3.6 + rnd()*2.4;      // lattice parameter (Å)
-  const n = 2;                     // 2x2x2 replicated cell
+  const n = supercellOn ? 3 : 2;   // 2x2x2, or 3x3x3 with Supercell toggle on
 
   // Try to read real element symbols out of the filename itself (e.g.
   // "TiS05.cif" -> Ti, S). Falls back to a plausible random pair only
@@ -697,20 +991,36 @@ function renderStructure(){
   });
 
   const COL_A = '#7fb8e0', COL_B = '#e0c33f';
+  structureSpeciesVisible = { A:true, B:true };
+
+  const polyOpacityInput = document.getElementById('poly-opacity-range');
+  const polyOpacity = polyOpacityInput ? polyOpacityInput.value/100 : 0.35;
+  const transparencyInput = document.getElementById('transparency-range');
+  const atomOpacity = transparencyInput ? 1 - transparencyInput.value/100 : 1;
+
+  const polyTraces = buildPolyhedraTraces(n, a, polyOpacity);
+  structureIdx = { bonds:0, cell:1, A:2, B:3, polyIdx: polyTraces.map((_,idx)=>4+idx) };
+
+  const axesOn = structureLayerState.axes;
+  const axisSpec = (label)=>({
+    title: axesOn ? label : '', showticklabels: axesOn,
+    gridcolor: axesOn ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.06)', zeroline:false,
+  });
+  const eye = (presetCamera && presetCamera.eye) || {x:1.5,y:1.4,z:1.05};
 
   Plotly.newPlot('structure-div', [
-    {x:bx,y:by,z:bz, type:'scatter3d', mode:'lines', line:{color:'#bbb',width:2}, showlegend:false, hoverinfo:'skip'},
-    {x:ex,y:ey,z:ez, type:'scatter3d', mode:'lines', line:{color:'#ff6600',width:3}, name:'Unit cell', hoverinfo:'skip'},
-    {x:cationX,y:cationY,z:cationZ, type:'scatter3d', mode:'markers', marker:{size:7,color:COL_A}, name:elA, hoverinfo:'name'},
-    {x:anionX,y:anionY,z:anionZ, type:'scatter3d', mode:'markers', marker:{size:9,color:COL_B}, name:elB, hoverinfo:'name'},
+    {x:bx,y:by,z:bz, type:'scatter3d', mode:'lines', line:{color:'#bbb',width:2}, showlegend:false, hoverinfo:'skip', visible:structureLayerState.bonds},
+    {x:ex,y:ey,z:ez, type:'scatter3d', mode:'lines', line:{color:'#ff6600',width:3}, name:'Unit cell', hoverinfo:'skip', visible:structureLayerState.cell},
+    {x:cationX,y:cationY,z:cationZ, type:'scatter3d', mode:'markers', marker:{size:7,color:COL_A,opacity:atomOpacity}, name:elA, hoverinfo:'name'},
+    {x:anionX,y:anionY,z:anionZ, type:'scatter3d', mode:'markers', marker:{size:9,color:COL_B,opacity:atomOpacity}, name:elB, hoverinfo:'name'},
+    ...polyTraces,
   ], {
     paper_bgcolor:'rgba(0,0,0,0)', margin:{t:4,r:4,b:4,l:4}, showlegend:false,
     scene:{
-      xaxis:{title:'',showticklabels:false,gridcolor:'rgba(0,0,0,.06)',zeroline:false},
-      yaxis:{title:'',showticklabels:false,gridcolor:'rgba(0,0,0,.06)',zeroline:false},
-      zaxis:{title:'',showticklabels:false,gridcolor:'rgba(0,0,0,.06)',zeroline:false},
+      xaxis:axisSpec('x (Å)'), yaxis:axisSpec('y (Å)'), zaxis:axisSpec('z (Å)'),
       aspectmode:'cube',
-      camera:{ eye:{x:1.5,y:1.4,z:1.05} },
+      dragmode: dragModeState,
+      camera:{ eye, projection:{ type: projectionOrtho ? 'orthographic' : 'perspective' } },
     },
   }, { responsive:true, displayModeBar:false }).then(function(gd){
     gd.on('plotly_relayout', updateGizmo);
@@ -718,15 +1028,30 @@ function renderStructure(){
   });
 
   document.getElementById('structure-legend').innerHTML = `
-    <div class="legend-chip" style="background:${COL_A}">${elA}</div>
-    <div class="legend-chip" style="background:${COL_B}">${elB}</div>
+    <div class="legend-chip" style="background:${COL_A}" data-trace="${structureIdx.A}" onclick="toggleSpecies(this)" title="Click to show/hide">${elA}</div>
+    <div class="legend-chip" style="background:${COL_B}" data-trace="${structureIdx.B}" onclick="toggleSpecies(this)" title="Click to show/hide">${elB}</div>
   `;
 
+  const nAtoms = cationX.length + anionX.length;
+  const volume = a*a*a;
   document.getElementById('structure-dims').innerHTML = `
+    <div class="dims-title">Structure</div>
     <div class="dims-row"><span class="dims-lbl">Formula</span><span class="dims-val">${elA}${elB}</span></div>
-    <div class="dims-row"><span class="dims-lbl">a = b = c</span><span class="dims-val">${a.toFixed(3)} &Aring;</span></div>
+    <div class="dims-row"><span class="dims-lbl">Space group</span><span class="dims-val">Pm-3m</span></div>
+    <div class="dims-row"><span class="dims-lbl">Crystal system</span><span class="dims-val">Cubic</span></div>
+    <div class="dims-row"><span class="dims-lbl">Atoms</span><span class="dims-val">${nAtoms}</span></div>
+    <div class="dims-row"><span class="dims-lbl">Volume</span><span class="dims-val">${volume.toFixed(1)} &Aring;&sup3;</span></div>
+    <div class="dims-row sep"><span class="dims-lbl">a = b = c</span><span class="dims-val">${a.toFixed(3)} &Aring;</span></div>
     <div class="dims-row"><span class="dims-lbl">&alpha;=&beta;=&gamma;</span><span class="dims-val">90&deg;</span></div>
   `;
+}
+
+/* Toggles a single element species on/off in the 3D view (legend chips
+   double as checkboxes, per the interactive-legend spec). */
+function toggleSpecies(el){
+  const idx = parseInt(el.dataset.trace, 10);
+  const isOff = el.classList.toggle('off');
+  Plotly.restyle('structure-div', {visible: !isOff}, [idx]);
 }
 
 /* Small orientation gizmo (bottom-left) that tracks the 3D camera so the
@@ -760,12 +1085,114 @@ function updateGizmo(){
 }
 
 /* ══════════════════════════════════════════════════════════
+   VIEWER TOOLBAR — rotate/pan/zoom/reset/projection + display toggles
+═══════════════════════════════════════════════════════════ */
+function setDragMode(mode, btn){
+  dragModeState = mode;
+  document.getElementById('vt-rotate').classList.toggle('active', mode === 'orbit');
+  document.getElementById('vt-pan').classList.toggle('active', mode === 'pan');
+  Plotly.relayout('structure-div', {'scene.dragmode': mode});
+}
+function zoomStructure(factor){
+  const gd = document.getElementById('structure-div');
+  const cam = gd && gd._fullLayout && gd._fullLayout.scene && gd._fullLayout.scene.camera;
+  const eye = (cam && cam.eye) || {x:1.5,y:1.4,z:1.05};
+  Plotly.relayout(gd, {'scene.camera.eye': {x:eye.x*factor, y:eye.y*factor, z:eye.z*factor}});
+}
+function resetCamera(){
+  Plotly.relayout('structure-div', {'scene.camera.eye': {x:1.5,y:1.4,z:1.05}});
+}
+function toggleProjection(btn){
+  projectionOrtho = !projectionOrtho;
+  btn.classList.toggle('active', projectionOrtho);
+  Plotly.relayout('structure-div', {'scene.camera.projection.type': projectionOrtho ? 'orthographic' : 'perspective'});
+}
+function toggleStructureLayer(layer, btn){
+  structureLayerState[layer] = !structureLayerState[layer];
+  if (btn) btn.classList.toggle('active', structureLayerState[layer]);
+  const gd = document.getElementById('structure-div');
+  if (!gd || !gd.data || !structureIdx) return;
+
+  if (layer === 'cell') Plotly.restyle(gd, {visible: structureLayerState.cell}, [structureIdx.cell]);
+  if (layer === 'bonds') Plotly.restyle(gd, {visible: structureLayerState.bonds}, [structureIdx.bonds]);
+  if (layer === 'poly' && structureIdx.polyIdx.length) Plotly.restyle(gd, {visible: structureLayerState.poly}, structureIdx.polyIdx);
+  if (layer === 'axes'){
+    const on = structureLayerState.axes;
+    Plotly.relayout(gd, {
+      'scene.xaxis.showticklabels': on, 'scene.xaxis.title': on ? 'x (Å)' : '', 'scene.xaxis.gridcolor': on ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.06)',
+      'scene.yaxis.showticklabels': on, 'scene.yaxis.title': on ? 'y (Å)' : '', 'scene.yaxis.gridcolor': on ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.06)',
+      'scene.zaxis.showticklabels': on, 'scene.zaxis.title': on ? 'z (Å)' : '', 'scene.zaxis.gridcolor': on ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.06)',
+    });
+    const axesCheck = document.getElementById('axes-check');
+    if (axesCheck) axesCheck.checked = on;
+    const vtAxes = document.getElementById('vt-axes');
+    if (vtAxes) vtAxes.classList.toggle('active', on);
+  }
+}
+function toggleSupercell(btn){
+  supercellOn = !supercellOn;
+  btn.classList.toggle('active', supercellOn);
+  if (!hasData) return;
+  const gd = document.getElementById('structure-div');
+  const prevCamera = gd && gd._fullLayout && gd._fullLayout.scene && gd._fullLayout.scene.camera;
+  renderStructure(prevCamera);
+}
+
+/* ══════════════════════════════════════════════════════════
+   WORKFLOW INDICATOR
+═══════════════════════════════════════════════════════════ */
+function setWorkflowStep(step){
+  for (let i=1;i<=5;i++){
+    const el = document.getElementById('wf-'+i);
+    if (!el) continue;
+    el.classList.remove('done','current');
+    if (i < step) el.classList.add('done');
+    else if (i === step) el.classList.add('current');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   SIDEBAR — collapsible sections + visualization/export controls
+═══════════════════════════════════════════════════════════ */
+function toggleSection(id){
+  document.getElementById(id).classList.toggle('collapsed');
+}
+function toggleSubsection(bodyId, btnId){
+  document.getElementById(bodyId).classList.toggle('collapsed');
+  document.getElementById(btnId).classList.toggle('collapsed');
+}
+function setTheme(value){
+  if (value === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+}
+function setViewerBackground(hex){
+  document.getElementById('viewport').style.background = hex;
+  document.getElementById('structure-wrap').style.background = hex;
+  Plotly.relayout('structure-div', {'scene.bgcolor': hex});
+}
+function setAtomTransparency(val){
+  document.getElementById('transparency-val').textContent = val + '%';
+  const gd = document.getElementById('structure-div');
+  if (!gd || !gd.data || !structureIdx) return;
+  Plotly.restyle(gd, {'marker.opacity': 1 - val/100}, [structureIdx.A, structureIdx.B]);
+}
+function setPolyOpacity(val){
+  document.getElementById('poly-opacity-val').textContent = val + '%';
+  const gd = document.getElementById('structure-div');
+  if (!gd || !gd.data || !structureIdx || !structureIdx.polyIdx.length) return;
+  Plotly.restyle(gd, {opacity: val/100}, structureIdx.polyIdx);
+}
+let selectedExportFormat = 'PNG';
+function selectExportFormat(fmt, btn){
+  selectedExportFormat = fmt;
+  document.querySelectorAll('.export-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ══════════════════════════════════════════════════════════
    STATUS BAR HELPERS
 ═══════════════════════════════════════════════════════════ */
 function setStatus(s){ document.getElementById('status-idle').textContent = s; }
-function toggleAdvanced(el){
-  setStatus(el.checked ? 'Advanced settings enabled' : 'Idle');
-}
 function rerenderIfLoaded(){ if (hasData) runPlot(); }
 function exportPlot(){
   if (!hasData) { alert('Load data and plot before exporting.'); return; }
@@ -801,6 +1228,7 @@ function runPlot(){
   const dot = document.getElementById('status-dot');
   dot.classList.add('run');
   setStatus('Rendering…');
+  setWorkflowStep(4);
   document.getElementById('plot-empty-msg').style.display = 'none';
 
   setTimeout(() => {
@@ -827,6 +1255,7 @@ function runPlot(){
     }
     dot.classList.remove('run');
     setStatus('Done');
+    setWorkflowStep(5);
   }, 250);
 }
 
@@ -1028,6 +1457,11 @@ function renderXRD(){
     fill:'tozeroy', fillcolor:'rgba(255,102,0,.12)', line:{color:'#ff6600', width:1.5},
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'2θ (degrees)'}, yaxis:{...baseLayout().yaxis, title:'Intensity (counts)'}}, PLOT_OPTS);
 }
+
+/* ══════════════════════════════════════════════════════════
+   INITIAL STATE
+═══════════════════════════════════════════════════════════ */
+setWorkflowStep(1);
 </script>
 </body>
 </html>

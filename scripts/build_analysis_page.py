@@ -45,6 +45,16 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
+            if 'id="viewer-toolbar"' in html:
+                score += 10_000_000
+            if "setWorkflowStep" in html:
+                score += 9_000_000
+            if "buildPolyhedraTraces" in html:
+                score += 8_500_000
+            if 'id="workflow"' in html:
+                score += 8_000_000
+            if 'html[data-theme="dark"]' in html:
+                score += 7_500_000
             if "#structure-wrap.mini #structure-dims{ display:none; }" in html:
                 score += 5_000_000
             if 'id="structure-wrap"' in html:
@@ -90,11 +100,14 @@ def main() -> None:
     for s in [
         "favicon.png",
         'href="/"',
+        'id="viewer-toolbar"',
+        'id="workflow"',
+        "setWorkflowStep",
+        "buildPolyhedraTraces",
+        "toggleStructureLayer",
+        'html[data-theme="dark"]',
         'id="structure-wrap"',
-        "#structure-wrap.mini #structure-dims{ display:none; }",
         "parseElementsFromFilename",
-        "PERIODIC_SYMBOLS",
-        "Structure viewer stays full-size",
         "Plotly.Plots.resize(document.getElementById('plot-div'))",
         "max-width:820px",
     ]:
