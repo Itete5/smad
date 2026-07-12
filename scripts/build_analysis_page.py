@@ -12,6 +12,7 @@ TRANSCRIPT_DIR = pathlib.Path(
 
 def extract_html() -> str:
     best = None
+    best_score = -1
     for transcript_path in TRANSCRIPT_DIR.rglob("*.jsonl"):
         for line in transcript_path.read_text(encoding="utf-8", errors="replace").splitlines():
             try:
@@ -30,17 +31,27 @@ def extract_html() -> str:
             text = re.sub(r"<user_query>\s*", "", text)
             text = re.sub(r"\s*</user_query>\s*$", "", text)
             if (
-                "<!DOCTYPE html>" in text
-                and "Analysis · SMAD" in text
-                and 'id="analysis-select"' in text
-                and 'id="plot-area"' in text
-                and "plotly-2.27.0.min.js" in text
-                and "renderRaman" in text
+                "<!DOCTYPE html>" not in text
+                or "Analysis · SMAD" not in text
+                or 'id="analysis-select"' not in text
+                or 'id="plot-area"' not in text
+                or "plotly-2.27.0.min.js" not in text
+                or "renderRaman" not in text
             ):
-                start = text.find("<!DOCTYPE html>")
-                end = text.rfind("</html>")
-                if start >= 0 and end > start:
-                    best = text[start : end + len("</html>")]
+                continue
+            start = text.find("<!DOCTYPE html>")
+            end = text.rfind("</html>")
+            if start < 0 or end <= start:
+                continue
+            html = text[start : end + len("</html>")]
+            score = len(html)
+            if "renderXANES" in html:
+                score += 1_000_000
+            if 'id="structure-panel"' in html:
+                score += 500_000
+            if score > best_score:
+                best_score = score
+                best = html
     if not best:
         raise SystemExit("Could not find Analysis HTML in transcript")
     return best
@@ -61,7 +72,16 @@ def fix_html(html: str) -> str:
 def main() -> None:
     html = fix_html(extract_html())
     ANALYSIS.write_text(html, encoding="utf-8", newline="\n")
-    print(f"Wrote {ANALYSIS} ({len(html):,} bytes)")
+    print(f"Wrote {ANALYSIS} ({html.count(chr(10)) + 1} lines, {len(html):,} bytes)")
+    for s in [
+        "favicon.png",
+        'href="/"',
+        "structure-panel",
+        "renderXANES",
+        "renderVibration",
+        "max-width:820px",
+    ]:
+        print(f"  {s}: {s in html}")
 
 
 if __name__ == "__main__":

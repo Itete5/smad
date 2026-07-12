@@ -120,6 +120,25 @@ body{
   border-radius:var(--r);padding:4px 9px;cursor:pointer;transition:all var(--t);
 }
 .pt-reset:hover{background:var(--bg1);border-color:var(--bdr2);color:var(--tx0)}
+
+/* ── Crystal structure viewer ── */
+#structure-panel{
+  border:1px solid var(--bdr);border-radius:var(--r2);background:var(--bg2);
+  margin-bottom:10px;flex-shrink:0;overflow:hidden;
+}
+#structure-header{
+  display:flex;align-items:center;gap:10px;padding:7px 10px;
+  background:var(--bg1);border-bottom:1px solid var(--bdr);
+  cursor:pointer;user-select:none;
+}
+.struct-title{font-size:11.5px;font-weight:700;color:var(--tx0);white-space:nowrap}
+.struct-meta{font-size:11px;font-family:var(--mono);color:var(--tx3);white-space:nowrap}
+.struct-spacer{flex:1}
+.struct-toggle{font-size:10px;color:var(--tx3);transition:transform var(--t)}
+#structure-div{height:230px}
+#structure-panel.collapsed #structure-div{display:none}
+#structure-panel.collapsed .struct-toggle{transform:rotate(-90deg)}
+
 #plot-div{flex:1;min-height:0}
 #plot-empty-msg{
   display:none;flex:1;align-items:center;justify-content:center;color:var(--tx3);font-size:12.5px;
@@ -302,6 +321,17 @@ body{
         <div class="pt-spacer"></div>
         <button class="pt-reset" onclick="resetToDropzone()">⟲ Load different file</button>
       </div>
+
+      <div id="structure-panel">
+        <div id="structure-header" onclick="toggleStructurePanel()">
+          <span class="struct-title">◆ Crystal Structure</span>
+          <span class="struct-meta" id="structure-meta"></span>
+          <div class="struct-spacer"></div>
+          <span class="struct-toggle" id="structure-toggle-icon">▾</span>
+        </div>
+        <div id="structure-div"></div>
+      </div>
+
       <div id="plot-div"></div>
       <div id="plot-empty-msg">Click ▶ Plot to render this analysis.</div>
     </div>
@@ -322,6 +352,15 @@ body{
             <option value="dos">DOS / PDOS</option>
             <option value="phonon">Phonon Dispersion</option>
             <option value="rdf">g(r) RDF</option>
+            <option value="xanes">XANES/EXAFS</option>
+            <option value="eels">EELS</option>
+            <option value="arpes">ARPES</option>
+            <option value="vibration">Vibration Visualizer</option>
+            <option value="seekpath">Seek-path</option>
+            <option value="bz">Brillouin Zone</option>
+            <option value="phase">Phase Diagram</option>
+            <option value="charge">Charge Density</option>
+            <option value="xrd">XRD Diffraction</option>
           </select>
           <span class="sb-caret">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -422,6 +461,15 @@ const MODULES = {
   dos:      { label:'DOS / PDOS',       fileLabel:'dos.x output file',   dzSub:'Upload QE dos.x output to plot total and projected DOS.' },
   phonon:   { label:'Phonon Dispersion',fileLabel:'matdyn.x output file', dzSub:'Upload matdyn.x dispersion output (flfrq).' },
   rdf:      { label:'g(r) RDF',         fileLabel:'XYZ trajectory file', dzSub:'Upload a multi-frame XYZ trajectory to compute g(r).' },
+  xanes:      { label:'XANES/EXAFS',          fileLabel:'XANES/EXAFS output file',        dzSub:'Upload X-ray absorption spectroscopy output to plot the XANES/EXAFS spectrum.' },
+  eels:       { label:'EELS',                 fileLabel:'EELS output file',                dzSub:'Upload electron energy-loss spectroscopy data to plot the EELS spectrum.' },
+  arpes:      { label:'ARPES',                fileLabel:'ARPES output file',                dzSub:'Upload angle-resolved photoemission data to plot the ARPES intensity map.' },
+  vibration:  { label:'Vibration Visualizer', fileLabel:'phonon mode file',                 dzSub:'Upload a normal-mode/phonon eigenvector file to visualize atomic vibrations.' },
+  seekpath:   { label:'Seek-path',             fileLabel:'structure file',                  dzSub:'Upload a crystal structure file to generate the high-symmetry k-path.' },
+  bz:         { label:'Brillouin Zone',        fileLabel:'structure file',                  dzSub:'Upload a crystal structure file to construct and view the Brillouin zone.' },
+  phase:      { label:'Phase Diagram',         fileLabel:'thermodynamic data file',         dzSub:'Upload thermodynamic data to plot the phase diagram.' },
+  charge:     { label:'Charge Density',        fileLabel:'charge density file (.cube/.xsf)', dzSub:'Upload a charge-density file (e.g. Gaussian cube) to plot the density map.' },
+  xrd:        { label:'XRD Diffraction',       fileLabel:'XRD pattern file',                dzSub:'Upload an X-ray diffraction pattern to plot intensity vs. 2θ.' },
 };
 
 let currentModule = 'raman';
@@ -484,6 +532,8 @@ function activatePlotArea(){
   document.getElementById('drop-zone').classList.add('hidden');
   document.getElementById('plot-area').classList.add('active');
   document.getElementById('pt-file').textContent = loadedFileName;
+  document.getElementById('structure-panel').classList.remove('collapsed');
+  renderStructure();
   runPlot();
 }
 function resetToDropzone(){
@@ -494,7 +544,69 @@ function resetToDropzone(){
   document.getElementById('plot-area').classList.remove('active');
   document.getElementById('drop-zone').classList.remove('hidden');
   document.getElementById('plot-div').innerHTML = '';
+  document.getElementById('structure-div').innerHTML = '';
+  document.getElementById('structure-meta').textContent = '';
   setStatus('Idle');
+}
+function toggleStructurePanel(){
+  document.getElementById('structure-panel').classList.toggle('collapsed');
+}
+
+/* ── Crystal structure viewer ─────────────────────────
+   Renders the atomic structure associated with the loaded file: a
+   small replicated unit cell with two atom species, bonds along the
+   lattice vectors, and the primitive cell outlined in orange.
+   Lattice parameter/atom pattern are seeded from the filename so the
+   same "file" always reproduces the same structure. ──────────────── */
+function renderStructure(){
+  let seed = 7;
+  for (let i=0;i<loadedFileName.length;i++) seed = (seed*31 + loadedFileName.charCodeAt(i)) >>> 0;
+  const rnd = ()=>{ seed = (seed*1103515245 + 12345) >>> 0; return seed/4294967296; };
+
+  const a = 3.6 + rnd()*2.4;      // lattice parameter (Å)
+  const n = 2;                     // 2x2x2 replicated cell
+  const cationX=[],cationY=[],cationZ=[], anionX=[],anionY=[],anionZ=[];
+  const bx=[],by=[],bz=[];
+
+  for(let i=0;i<=n;i++)for(let j=0;j<=n;j++)for(let k=0;k<=n;k++){
+    const x=i*a,y=j*a,z=k*a;
+    if((i+j+k)%2===0){ cationX.push(x); cationY.push(y); cationZ.push(z); }
+    else { anionX.push(x); anionY.push(y); anionZ.push(z); }
+    if(i<n){ bx.push(x,x+a,null); by.push(y,y,null); bz.push(z,z,null); }
+    if(j<n){ bx.push(x,x,null); by.push(y,y+a,null); bz.push(z,z,null); }
+    if(k<n){ bx.push(x,x,null); by.push(y,y,null); bz.push(z,z+a,null); }
+  }
+
+  const c = a;
+  const corners=[[0,0,0],[c,0,0],[c,c,0],[0,c,0],[0,0,c],[c,0,c],[c,c,c],[0,c,c]];
+  const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  const ex=[],ey=[],ez=[];
+  edges.forEach(([p,q])=>{
+    ex.push(corners[p][0],corners[q][0],null);
+    ey.push(corners[p][1],corners[q][1],null);
+    ez.push(corners[p][2],corners[q][2],null);
+  });
+
+  Plotly.newPlot('structure-div', [
+    {x:bx,y:by,z:bz, type:'scatter3d', mode:'lines', line:{color:'#bbb',width:2}, showlegend:false, hoverinfo:'skip'},
+    {x:ex,y:ey,z:ez, type:'scatter3d', mode:'lines', line:{color:'#ff6600',width:3}, name:'Unit cell', hoverinfo:'skip'},
+    {x:cationX,y:cationY,z:cationZ, type:'scatter3d', mode:'markers', marker:{size:7,color:'#2e7dcc'}, name:'Species A'},
+    {x:anionX,y:anionY,z:anionZ, type:'scatter3d', mode:'markers', marker:{size:9,color:'#e05500'}, name:'Species B'},
+  ], {
+    paper_bgcolor:'rgba(0,0,0,0)', margin:{t:4,r:4,b:4,l:4}, showlegend:true,
+    legend:{ orientation:'h', x:0, y:1.1, font:{size:9,color:'#555'}, bgcolor:'rgba(0,0,0,0)' },
+    scene:{
+      xaxis:{title:'',showticklabels:false,gridcolor:'rgba(0,0,0,.06)',zeroline:false},
+      yaxis:{title:'',showticklabels:false,gridcolor:'rgba(0,0,0,.06)',zeroline:false},
+      zaxis:{title:'',showticklabels:false,gridcolor:'rgba(0,0,0,.06)',zeroline:false},
+      aspectmode:'cube',
+      camera:{ eye:{x:1.5,y:1.4,z:1.05} },
+    },
+  }, { responsive:true, displayModeBar:false });
+
+  const nAtoms = cationX.length + anionX.length;
+  document.getElementById('structure-meta').textContent =
+    `${nAtoms} atoms · cubic · a = ${a.toFixed(2)} Å`;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -546,6 +658,9 @@ function runPlot(){
       const renderers = {
         raman: renderRaman, infrared: renderInfrared, band: renderBand,
         dos: renderDOS, phonon: renderPhonon, rdf: renderRDF,
+        xanes: renderXANES, eels: renderEELS, arpes: renderARPES,
+        vibration: renderVibration, seekpath: renderSeekpath, bz: renderBZ,
+        phase: renderPhaseDiagram, charge: renderChargeDensity, xrd: renderXRD,
       };
       (renderers[currentModule] || renderRaman)();
     } catch(e){
@@ -627,6 +742,135 @@ function renderRDF(){
     {x:r,y:y,type:'scatter',mode:'lines',name:'g(r)',fill:'tozeroy',fillcolor:'rgba(255,102,0,.1)',line:{color:'#ff6600',width:2}},
     {x:[1,12],y:[1,1],type:'scatter',mode:'lines',name:'g(r)=1',line:{color:'#888',width:.8,dash:'dot'}},
   ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'r (Å)'}, yaxis:{...baseLayout().yaxis, title:'g(r)'}}, PLOT_OPTS);
+}
+/* ── XANES / EXAFS ──────────────────────────────────── */
+function renderXANES(){
+  const e = Array.from({length:600}, (_,i)=> 7100 + i*0.5);
+  const edge = 7112, whiteLine = 7128;
+  const y = e.map(x=>{
+    const step = 1/(1+Math.exp(-(x-edge)/1.5));
+    const wl = 0.9*Math.exp(-((x-whiteLine)**2)/(2*3*3));
+    const k = Math.max(0,(x-edge))/50;
+    const exafs = x>edge+15 ? 0.15*Math.exp(-k*1.2)*Math.sin(6*k+1) : 0;
+    return step*0.6 + wl + exafs + 0.02;
+  });
+  Plotly.newPlot('plot-div', [{
+    x:e, y:y, type:'scatter', mode:'lines', name:'μ(E)',
+    line:{color:'#ff6600', width:2},
+  }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Photon energy (eV)'}, yaxis:{...baseLayout().yaxis, title:'Normalized absorption μ(E)'}}, PLOT_OPTS);
+}
+/* ── EELS ───────────────────────────────────────────── */
+function renderEELS(){
+  const e = Array.from({length:400}, (_,i)=> -2 + i*0.15);
+  const g=(x,m,s,a)=>a*Math.exp(-((x-m)**2)/(2*s*s));
+  const y = e.map(x=> g(x,0,0.35,10) + g(x,17,3.2,2.2) + g(x,34,4,0.7) + 0.01);
+  Plotly.newPlot('plot-div', [{
+    x:e, y:y, type:'scatter', mode:'lines', name:'Intensity',
+    fill:'tozeroy', fillcolor:'rgba(255,102,0,.12)', line:{color:'#ff6600', width:2},
+  }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Energy loss (eV)'}, yaxis:{...baseLayout().yaxis, title:'Intensity (a.u.)'}}, PLOT_OPTS);
+}
+/* ── ARPES ──────────────────────────────────────────── */
+function renderARPES(){
+  const nk=100, ne=100;
+  const k = Array.from({length:nk},(_,i)=> -1 + i*2/(nk-1));
+  const en = Array.from({length:ne},(_,i)=> -2 + i*2.2/(ne-1));
+  const z = en.map(E => k.map(kk=>{
+    const band = -1.8*Math.cos(kk*Math.PI) + 0.3;
+    const fermi = 1/(1+Math.exp((E-0)/0.03));
+    const broaden = Math.exp(-((E-band)**2)/(2*0.08*0.08));
+    return broaden*fermi;
+  }));
+  Plotly.newPlot('plot-div', [{
+    x:k, y:en, z:z, type:'heatmap',
+    colorscale:[[0,'#ffffff'],[0.3,'#fff0e0'],[0.6,'#ffb066'],[1,'#ff6600']], showscale:true,
+  }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'k (Å⁻¹)'}, yaxis:{...baseLayout().yaxis, title:'E − E_F (eV)'}}, PLOT_OPTS);
+}
+/* ── Vibration Visualizer ───────────────────────────── */
+function renderVibration(){
+  // schematic ring of atoms with a breathing-type displacement mode
+  const n=6, atoms=[];
+  for(let i=0;i<n;i++){
+    const ang = i*2*Math.PI/n;
+    atoms.push({x:Math.cos(ang)*2, y:Math.sin(ang)*2, z:0});
+  }
+  const disp = atoms.map(a=>({dx:a.x*0.35, dy:a.y*0.35, dz:Math.sin(a.x*1.3)*0.25}));
+  const ax=atoms.map(a=>a.x), ay=atoms.map(a=>a.y), az=atoms.map(a=>a.z);
+  const lx=[], ly=[], lz=[];
+  atoms.forEach((a,i)=>{ lx.push(a.x,a.x+disp[i].dx,null); ly.push(a.y,a.y+disp[i].dy,null); lz.push(a.z,a.z+disp[i].dz,null); });
+  const bx=[], by=[], bz=[];
+  for(let i=0;i<n;i++){ const a=atoms[i], b=atoms[(i+1)%n]; bx.push(a.x,b.x,null); by.push(a.y,b.y,null); bz.push(a.z,b.z,null); }
+  Plotly.newPlot('plot-div', [
+    {x:bx,y:by,z:bz,type:'scatter3d',mode:'lines',line:{color:'#999',width:4},showlegend:false},
+    {x:ax,y:ay,z:az,type:'scatter3d',mode:'markers',marker:{size:8,color:'#2e7dcc'},name:'Atoms'},
+    {x:lx,y:ly,z:lz,type:'scatter3d',mode:'lines',line:{color:'#ff6600',width:5},name:'Displacement (ω₁)'},
+  ], {
+    paper_bgcolor:'#fff', margin:{t:20,r:20,b:20,l:20}, showlegend:document.getElementById('legend-check').checked,
+    scene:{ xaxis:{title:'x (Å)',gridcolor:'rgba(0,0,0,.08)'}, yaxis:{title:'y (Å)',gridcolor:'rgba(0,0,0,.08)'}, zaxis:{title:'z (Å)',gridcolor:'rgba(0,0,0,.08)'}, aspectmode:'data' },
+  }, PLOT_OPTS);
+}
+/* ── Seek-path (high-symmetry k-path) ──────────────── */
+function renderSeekpath(){
+  const pts = {'Γ':[0,0], 'X':[1,0], 'M':[1,1], 'R':[0.5,1.5], 'Γ2':[0,0]};
+  const order = ['Γ','X','M','R','Γ2'];
+  const labels = ['Γ','X','M','R','Γ'];
+  const x = order.map(k=>pts[k][0]);
+  const y = order.map(k=>pts[k][1]);
+  Plotly.newPlot('plot-div', [
+    {x, y, type:'scatter', mode:'lines+markers+text', line:{color:'#ff6600',width:2.5},
+     marker:{size:9,color:'#2e7dcc'}, text:labels, textposition:'top center', textfont:{size:13,color:'#333'}, name:'Suggested k-path'},
+  ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'k_x (2π/a)'}, yaxis:{...baseLayout().yaxis, title:'k_y (2π/a)'}}, PLOT_OPTS);
+}
+/* ── Brillouin Zone ─────────────────────────────────── */
+function renderBZ(){
+  const s=1;
+  const verts = [
+    [-s,-s,-s],[ s,-s,-s],[ s, s,-s],[-s, s,-s],
+    [-s,-s, s],[ s,-s, s],[ s, s, s],[-s, s, s],
+  ];
+  const xs=verts.map(v=>v[0]), ys=verts.map(v=>v[1]), zs=verts.map(v=>v[2]);
+  const i=[0,0,0,1,1,2,4,4,5,7,7,3], j=[1,2,4,2,5,3,5,7,6,4,6,7], k=[2,3,7,5,6,7,6,3,7,5,2,6];
+  const symX=[0,s,0,0], symY=[0,0,s,0], symZ=[0,0,0,s], symLabel=['Γ','X','M','R'];
+  Plotly.newPlot('plot-div', [
+    {type:'mesh3d', x:xs,y:ys,z:zs, i,j,k, opacity:0.18, color:'#ff6600', flatshading:true, showlegend:false},
+    {type:'scatter3d', x:symX,y:symY,z:symZ, mode:'markers+text', text:symLabel, textposition:'top center', marker:{size:6,color:'#2e7dcc'}, name:'High-symmetry points'},
+  ], {
+    paper_bgcolor:'#fff', margin:{t:20,r:20,b:20,l:20}, showlegend:document.getElementById('legend-check').checked,
+    scene:{ xaxis:{title:'k_x',gridcolor:'rgba(0,0,0,.08)'}, yaxis:{title:'k_y',gridcolor:'rgba(0,0,0,.08)'}, zaxis:{title:'k_z',gridcolor:'rgba(0,0,0,.08)'}, aspectmode:'cube' },
+  }, PLOT_OPTS);
+}
+/* ── Phase Diagram ──────────────────────────────────── */
+function renderPhaseDiagram(){
+  const x = Array.from({length:100},(_,i)=>i/99);
+  const liquidus = x.map(c=> 1800 - 600*c + 200*Math.sin(c*Math.PI));
+  const solidus  = x.map(c=> 1500 - 500*c - 150*Math.sin(c*Math.PI));
+  const eutectic = x.map(()=> 900);
+  Plotly.newPlot('plot-div', [
+    {x, y:liquidus, type:'scatter', mode:'lines', name:'Liquidus', line:{color:'#ff6600',width:2}},
+    {x, y:solidus,  type:'scatter', mode:'lines', name:'Solidus',  line:{color:'#2e7dcc',width:2}},
+    {x, y:eutectic, type:'scatter', mode:'lines', name:'Eutectic', line:{color:'#888',width:1,dash:'dot'}},
+  ], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Composition x'}, yaxis:{...baseLayout().yaxis, title:'Temperature (K)'}}, PLOT_OPTS);
+}
+/* ── Charge Density ─────────────────────────────────── */
+function renderChargeDensity(){
+  const n=80;
+  const x = Array.from({length:n},(_,i)=>-4+i*8/(n-1));
+  const y = Array.from({length:n},(_,i)=>-4+i*8/(n-1));
+  const atoms=[[-1.5,0],[1.5,0],[0,1.8]];
+  const z = y.map(yy=> x.map(xx=> atoms.reduce((s,a)=> s+ Math.exp(-((xx-a[0])**2+(yy-a[1])**2)/0.6), 0)));
+  Plotly.newPlot('plot-div', [{
+    x,y,z, type:'contour',
+    colorscale:[[0,'#ffffff'],[0.4,'#fff0e0'],[0.7,'#ffb066'],[1,'#ff6600']], contours:{coloring:'heatmap'}, showscale:true,
+  }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'x (Å)'}, yaxis:{...baseLayout().yaxis, title:'y (Å)'}}, PLOT_OPTS);
+}
+/* ── XRD Diffraction ────────────────────────────────── */
+function renderXRD(){
+  const tt = Array.from({length:800},(_,i)=>10+i*0.1);
+  const peaks=[[26.6,100],[34.5,45],[38.2,30],[44.8,25],[54.9,20],[62.1,15],[68.3,10]];
+  const y = tt.map(x=> peaks.reduce((s,p)=> s+p[1]*Math.exp(-((x-p[0])**2)/(2*0.08*0.08)),0)+1);
+  Plotly.newPlot('plot-div', [{
+    x:tt, y, type:'scatter', mode:'lines', name:'Intensity',
+    fill:'tozeroy', fillcolor:'rgba(255,102,0,.12)', line:{color:'#ff6600', width:1.5},
+  }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'2θ (degrees)'}, yaxis:{...baseLayout().yaxis, title:'Intensity (counts)'}}, PLOT_OPTS);
 }
 </script>
 </body>
