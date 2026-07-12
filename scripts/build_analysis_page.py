@@ -45,6 +45,12 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
+            if 'id="structure-dims"' in html:
+                score += 3_000_000
+            if "ELEMENT_PAIRS" in html:
+                score += 2_500_000
+            if "Structure viewer stays full-size" in html:
+                score += 1_500_000
             if "shrinkStructureToCorner" in html:
                 score += 2_000_000
             if 'id="viewport"' in html:
@@ -78,10 +84,10 @@ def main() -> None:
     for s in [
         "favicon.png",
         'href="/"',
-        'id="viewport"',
+        'id="structure-dims"',
+        "ELEMENT_PAIRS",
+        "Structure viewer stays full-size",
         "shrinkStructureToCorner",
-        "structure-gizmo",
-        "renderXANES",
         "max-width:820px",
     ]:
         print(f"  {s}: {s in html}")

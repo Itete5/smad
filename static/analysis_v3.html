@@ -143,12 +143,21 @@ body{
   font-size:11px;font-weight:700;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);
 }
 #structure-gizmo{ position:absolute; left:14px; bottom:14px; width:64px; height:64px; z-index:3; pointer-events:none; }
+#structure-dims{
+  position:absolute; left:14px; top:14px; z-index:3; pointer-events:none;
+  background:rgba(255,255,255,.88); border:1px solid var(--bdr); border-radius:var(--r);
+  padding:8px 10px; font-family:var(--mono); box-shadow:0 1px 4px rgba(0,0,0,.12);
+}
+.dims-row{ display:flex; gap:14px; justify-content:space-between; font-size:11px; line-height:1.6; }
+.dims-lbl{ color:var(--tx3); }
+.dims-val{ color:var(--tx0); font-weight:700; }
 #structure-export-btn{
   position:absolute; top:10px; right:10px; z-index:4; width:28px; height:28px;
   border:1px solid var(--bdr); border-radius:var(--r); background:var(--bg3); color:var(--tx2);
   cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all var(--t);
 }
 #structure-export-btn:hover{background:var(--bg1);color:var(--tx0);border-color:var(--bdr2)}
+#structure-div.mini ~ #structure-dims,
 #structure-div.mini ~ #structure-legend,
 #structure-div.mini ~ #structure-gizmo,
 #structure-div.mini ~ #structure-export-btn{ display:none; }
@@ -358,6 +367,7 @@ body{
 
       <div id="viewport">
         <div id="structure-div"></div>
+        <div id="structure-dims"></div>
         <div id="structure-legend"></div>
         <svg id="structure-gizmo" viewBox="0 0 64 64"></svg>
         <button id="structure-export-btn" onclick="exportPlot()" title="Export view">
@@ -440,7 +450,7 @@ body{
         <div class="sb-label">Colour scheme</div>
         <div class="sb-select-wrap">
           <select class="sb-select">
-            <option selected>BURAI default</option>
+            <option selected>Default</option>
             <option>Publication B&amp;W</option>
             <option>Viridis</option>
           </select>
@@ -567,7 +577,8 @@ function activatePlotArea(){
   document.getElementById('pt-file').textContent = loadedFileName;
   document.getElementById('structure-div').classList.remove('mini');
   renderStructure();
-  runPlot();
+  // Structure viewer stays full-size here; the analysis plot (and the
+  // shrink-to-corner behavior) only happens once the user clicks ▶ Plot.
 }
 function resetToDropzone(){
   hasData = false;
@@ -582,6 +593,7 @@ function resetToDropzone(){
   document.getElementById('structure-div').classList.remove('mini');
   document.getElementById('structure-legend').innerHTML = '';
   document.getElementById('structure-gizmo').innerHTML = '';
+  document.getElementById('structure-dims').innerHTML = '';
   setStatus('Idle');
 }
 
@@ -609,6 +621,15 @@ function renderStructure(){
 
   const a = 3.6 + rnd()*2.4;      // lattice parameter (Å)
   const n = 2;                     // 2x2x2 replicated cell
+
+  // Pick a plausible element pair, seeded from the filename so the same
+  // "file" always reproduces the same structure/element labels.
+  const ELEMENT_PAIRS = [
+    ['Na','Cl'], ['Ti','O'], ['Si','O'], ['Ga','As'], ['Mg','O'],
+    ['Al','O'], ['Zn','O'], ['Ba','Ti'], ['Fe','O'], ['Cu','O'],
+  ];
+  const pair = ELEMENT_PAIRS[Math.floor(rnd()*ELEMENT_PAIRS.length)];
+  const elA = pair[0], elB = pair[1];
   const cationX=[],cationY=[],cationZ=[], anionX=[],anionY=[],anionZ=[];
   const bx=[],by=[],bz=[];
 
@@ -636,8 +657,8 @@ function renderStructure(){
   Plotly.newPlot('structure-div', [
     {x:bx,y:by,z:bz, type:'scatter3d', mode:'lines', line:{color:'#bbb',width:2}, showlegend:false, hoverinfo:'skip'},
     {x:ex,y:ey,z:ez, type:'scatter3d', mode:'lines', line:{color:'#ff6600',width:3}, name:'Unit cell', hoverinfo:'skip'},
-    {x:cationX,y:cationY,z:cationZ, type:'scatter3d', mode:'markers', marker:{size:7,color:COL_A}, name:'Species A', hoverinfo:'name'},
-    {x:anionX,y:anionY,z:anionZ, type:'scatter3d', mode:'markers', marker:{size:9,color:COL_B}, name:'Species B', hoverinfo:'name'},
+    {x:cationX,y:cationY,z:cationZ, type:'scatter3d', mode:'markers', marker:{size:7,color:COL_A}, name:elA, hoverinfo:'name'},
+    {x:anionX,y:anionY,z:anionZ, type:'scatter3d', mode:'markers', marker:{size:9,color:COL_B}, name:elB, hoverinfo:'name'},
   ], {
     paper_bgcolor:'rgba(0,0,0,0)', margin:{t:4,r:4,b:4,l:4}, showlegend:false,
     scene:{
@@ -653,8 +674,14 @@ function renderStructure(){
   });
 
   document.getElementById('structure-legend').innerHTML = `
-    <div class="legend-chip" style="background:${COL_A}">A</div>
-    <div class="legend-chip" style="background:${COL_B}">B</div>
+    <div class="legend-chip" style="background:${COL_A}">${elA}</div>
+    <div class="legend-chip" style="background:${COL_B}">${elB}</div>
+  `;
+
+  document.getElementById('structure-dims').innerHTML = `
+    <div class="dims-row"><span class="dims-lbl">Formula</span><span class="dims-val">${elA}${elB}</span></div>
+    <div class="dims-row"><span class="dims-lbl">a = b = c</span><span class="dims-val">${a.toFixed(3)} &Aring;</span></div>
+    <div class="dims-row"><span class="dims-lbl">&alpha;=&beta;=&gamma;</span><span class="dims-val">90&deg;</span></div>
   `;
 }
 
