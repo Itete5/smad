@@ -45,20 +45,18 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
-            if "isKnownTiOSO4Filename" in html:
-                score += 16_000_000
-            if "KNOWN_TIOSO4_MP_IDS" in html:
-                score += 15_500_000
-            if "isTiOSSystem(uniqueEls, loadedFileName)" in html:
-                score += 15_250_000
-            if "renderTiOSO4Structure" in html:
-                score += 15_000_000
-            if "buildTiOSO4Motif" in html:
-                score += 14_500_000
-            if "isTiOSSystem" in html:
-                score += 14_000_000
-            if "pickBinaryPair" in html:
-                score += 13_500_000
+            if "renderParsedStructure" in html:
+                score += 20_000_000
+            if "findBondsCutOffDictNN" in html:
+                score += 19_500_000
+            if "updateStructureAnalysisPanel" in html:
+                score += 19_000_000
+            if 'id="sec-structure-analysis"' in html:
+                score += 18_500_000
+            if "parseCIF" in html:
+                score += 18_000_000
+            if "SAMPLE_STRUCTURE_CIF" in html:
+                score += 17_500_000
             if 'id="viewer-toolbar"' in html:
                 score += 10_000_000
             if "setWorkflowStep" in html:
@@ -114,21 +112,20 @@ def main() -> None:
     for s in [
         "favicon.png",
         'href="/"',
-        "renderTiOSO4Structure",
-        "isKnownTiOSO4Filename",
-        "KNOWN_TIOSO4_MP_IDS",
-        "isTiOSSystem(uniqueEls, loadedFileName)",
-        "buildTiOSO4Motif",
-        "isTiOSSystem",
-        "pickBinaryPair",
+        "renderParsedStructure",
+        "findBondsCutOffDictNN",
+        "parseCIF",
+        'id="sec-structure-analysis"',
+        "updateStructureAnalysisPanel",
+        "SAMPLE_STRUCTURE_CIF",
         'id="viewer-toolbar"',
         'id="workflow"',
         "setWorkflowStep",
-        "buildPolyhedraTraces",
+        "buildPolyhedraFromNeighbors",
         "toggleStructureLayer",
         'html[data-theme="dark"]',
         'id="structure-wrap"',
-        "parseElementsFromFilename",
+        "validateStructure",
         "Plotly.Plots.resize(document.getElementById('plot-div'))",
         "max-width:820px",
     ]:

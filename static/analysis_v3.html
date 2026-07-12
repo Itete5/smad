@@ -501,6 +501,16 @@ body{
         </div>
       </div>
 
+      <div class="sb-section" id="sec-structure-analysis">
+        <button class="sb-sec-toggle" onclick="toggleSection('sec-structure-analysis')">
+          <span>Structure Analysis</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sb-sec-body" id="structure-analysis-body">
+          <div class="muted-note" style="padding:0 14px 10px">Load a structure to see bond lengths, coordination, and validation results.</div>
+        </div>
+      </div>
+
       <div class="sb-section" id="sec-simulation">
         <button class="sb-sec-toggle" onclick="toggleSection('sec-simulation')">
           <span>Simulation</span>
@@ -731,26 +741,82 @@ function dzFileChosen(file){
   if(!file) return;
   document.getElementById('raman-file').value = file.name;
   loadedFileName = file.name;
-  showLoaded(file.name);
-  setStatus('Loaded: ' + file.name);
-  hasData = true;
-  setTimeout(activatePlotArea, 500);
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result);
+    let structure = null, parseError = null;
+    try {
+      const fmt = detectStructureFormat(file.name, text);
+      if (fmt === 'cif') structure = parseCIF(text);
+      else if (fmt === 'poscar') structure = parsePOSCAR(text);
+      else if (fmt === 'xyz') structure = parseXYZ(text);
+      else parseError = 'Unrecognized structure format (supported: .cif, POSCAR/.vasp, .xyz).';
+    } catch(err){
+      console.error(err);
+      parseError = err.message;
+    }
+    currentStructure = structure;
+    if (parseError){
+      setStatus('Loaded (no structure preview): ' + file.name);
+    } else {
+      setStatus('Loaded: ' + file.name);
+    }
+    showLoaded(file.name);
+    hasData = true;
+    activatePlotArea(parseError);
+  };
+  reader.onerror = () => { alert('Could not read this file.'); };
+  reader.readAsText(file);
 }
+
+/* A single, real, verified sample structure (rock-salt NaCl, Fm-3m) --
+   goes through the exact same parse -> symmetry-expand -> bond ->
+   coordinate -> validate pipeline as any user upload, rather than
+   being special-cased. */
+const SAMPLE_STRUCTURE_CIF = `data_NaCl
+_cell_length_a 5.6402
+_cell_length_b 5.6402
+_cell_length_c 5.6402
+_cell_angle_alpha 90.0
+_cell_angle_beta 90.0
+_cell_angle_gamma 90.0
+_symmetry_space_group_name_H-M 'F m -3 m'
+loop_
+_symmetry_equiv_pos_as_xyz
+'x, y, z'
+'x+1/2, y+1/2, z'
+'x+1/2, y, z+1/2'
+'x, y+1/2, z+1/2'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+Na1 Na 0.0 0.0 0.0
+Cl1 Cl 0.5 0.5 0.5
+`;
 function dzLoadSample(){
-  const name = 'sample_' + currentModule + '.dat';
+  const name = 'sample_NaCl.cif';
   document.getElementById('raman-file').value = name;
   loadedFileName = name;
-  showLoaded(name);
-  setStatus('Sample data loaded');
-  hasData = true;
-  setTimeout(activatePlotArea, 350);
+  try {
+    currentStructure = parseCIF(SAMPLE_STRUCTURE_CIF);
+    showLoaded(name);
+    setStatus('Sample structure loaded (NaCl, rock salt, Fm-3m)');
+    hasData = true;
+    activatePlotArea();
+  } catch(err){
+    console.error(err);
+    setStatus('Error loading sample data: ' + err.message);
+  }
 }
 function showLoaded(name){
   document.getElementById('dz-fname').textContent = name;
   document.getElementById('dz-loaded').classList.add('show');
 }
 
-function activatePlotArea(){
+function activatePlotArea(parseError){
   document.getElementById('drop-zone').classList.add('hidden');
   document.getElementById('plot-area').classList.add('active');
   document.getElementById('pt-file').textContent = loadedFileName;
@@ -766,12 +832,22 @@ function activatePlotArea(){
   document.getElementById('vt-proj').classList.remove('active');
   const axesCheck = document.getElementById('axes-check');
   if (axesCheck) axesCheck.checked = false;
-  renderStructure();
+  if (currentStructure){
+    renderParsedStructure();
+  } else {
+    document.getElementById('structure-div').innerHTML = '';
+    document.getElementById('structure-legend').innerHTML = '';
+    document.getElementById('structure-gizmo').innerHTML = '';
+    document.getElementById('structure-dims').innerHTML =
+      `<div class="dims-title">No structure preview</div><div class="dims-row"><span class="dims-val" style="color:#a05a00">${parseError || 'This file is not a recognized CIF, POSCAR/VASP, or XYZ structure.'}</span></div>`;
+    updateStructureAnalysisPanel(null);
+  }
   setWorkflowStep(2);
 }
 function resetToDropzone(){
   hasData = false;
   loadedFileName = '';
+  currentStructure = null; currentBuilt = null; currentBonds = []; currentCoordination = []; currentValidation = { ok:true, warnings:[] };
   document.getElementById('raman-file').value = '';
   document.getElementById('dz-loaded').classList.remove('show');
   document.getElementById('plot-area').classList.remove('active');
@@ -783,6 +859,7 @@ function resetToDropzone(){
   document.getElementById('structure-legend').innerHTML = '';
   document.getElementById('structure-gizmo').innerHTML = '';
   document.getElementById('structure-dims').innerHTML = '';
+  updateStructureAnalysisPanel(null);
   setStatus('Idle');
   setWorkflowStep(1);
 }
@@ -794,297 +871,622 @@ function shrinkStructureToCorner(){
   setTimeout(()=>{ if (window.Plotly) Plotly.Plots.resize(document.getElementById('structure-div')); }, 160);
 }
 
-const PERIODIC_SYMBOLS = ["He","Li","Be","Ne","Na","Mg","Al","Si","Cl","Ar","Ca","Sc","Ti","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr","Rb","Sr","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","Np","Pu",
-  "H","B","C","N","O","F","P","S","K","V","Y","I","W","U"];
-const PERIODIC_SET = new Set(PERIODIC_SYMBOLS);
+/* ═══════════════════════════════════════════════════════════
+   REAL STRUCTURE PIPELINE (replaces filename-guessing entirely)
 
-function parseElementsFromFilename(name, rnd){
-  const base = (name||'').replace(/\.[a-zA-Z0-9]+$/, '');
-  const found = [];
-  for (let i=0;i<base.length;i++){
-    const c1 = base[i];
-    if (!/[A-Z]/.test(c1)) continue;
-    const two = base.slice(i,i+2);
-    if (base[i+1] && /[a-z]/.test(base[i+1]) && PERIODIC_SET.has(two)){
-      found.push(two); i++; continue;
+   Stage mapping to the requested architecture:
+     1. Parse & validate  -> parseCIF / parsePOSCAR / parseXYZ
+     2. Symmetry          -> space group read from CIF header (real,
+                             not computed) + crystal-system classified
+                             from the real lattice metric (heuristic;
+                             true spglib-equivalent symmetry-operation
+                             detection isn't feasible client-side, so
+                             this is disclosed rather than faked)
+     3. Neighbor-finding  -> findBondsCutOffDictNN(): the CutOffDictNN
+                             method (covalent-radius-sum × tolerance),
+                             generalized to any element pair, honoring
+                             periodicity via a ghost-shell of neighbor
+                             cells
+     4. Validation        -> validateStructure(): volume, overlap,
+                             coordination sanity, formula tally
+     5. Render            -> Plotly scatter3d/mesh3d (WebGL-backed)
+     6. Analysis panel     -> real bond-length stats, coordination
+                             table, validation warnings. (DFT/AI
+                             insight fields are intentionally omitted:
+                             no backend to compute or query them.)
+═══════════════════════════════════════════════════════════ */
+
+/* ---- Covalent radii (Å), single-bond values (Cordero et al. 2008,
+   approximate). Used only to seed the CutOffDictNN-style cutoff; not
+   a substitute for a full bonding-model but a standard, defensible
+   choice for generic structure viewers. ---- */
+const COVALENT_RADIUS = {
+  H:0.31,He:0.28,Li:1.28,Be:0.96,B:0.84,C:0.76,N:0.71,O:0.66,F:0.57,Ne:0.58,
+  Na:1.66,Mg:1.41,Al:1.21,Si:1.11,P:1.07,S:1.05,Cl:1.02,Ar:1.06,
+  K:2.03,Ca:1.76,Sc:1.70,Ti:1.60,V:1.53,Cr:1.39,Mn:1.39,Fe:1.32,Co:1.26,Ni:1.24,
+  Cu:1.32,Zn:1.22,Ga:1.22,Ge:1.20,As:1.19,Se:1.20,Br:1.20,Kr:1.16,
+  Rb:2.20,Sr:1.95,Y:1.90,Zr:1.75,Nb:1.64,Mo:1.54,Tc:1.47,Ru:1.46,Rh:1.42,Pd:1.39,
+  Ag:1.45,Cd:1.44,In:1.42,Sn:1.39,Sb:1.39,Te:1.38,I:1.39,Xe:1.40,
+  Cs:2.44,Ba:2.15,La:2.07,Ce:2.04,Pr:2.03,Nd:2.01,Pm:1.99,Sm:1.98,Eu:1.98,Gd:1.96,
+  Tb:1.94,Dy:1.92,Ho:1.92,Er:1.89,Tm:1.90,Yb:1.87,Lu:1.87,
+  Hf:1.75,Ta:1.70,W:1.62,Re:1.51,Os:1.44,Ir:1.41,Pt:1.36,Au:1.36,Hg:1.32,
+  Tl:1.45,Pb:1.46,Bi:1.48,Po:1.40,At:1.50,Rn:1.50,
+  Fr:2.60,Ra:2.21,Ac:2.15,Th:2.06,Pa:2.00,U:1.96,Np:1.90,Pu:1.87,
+};
+function covalentRadius(el){ return COVALENT_RADIUS[el] || 1.5; }
+
+/* ---- Deterministic per-element color: curated CPK-like table for
+   common elements, hash-based fallback for anything else so no
+   element ever silently reuses another's color. ---- */
+const ELEMENT_COLOR = {
+  H:'#dddddd',C:'#404040',N:'#3050f8',O:'#ff2020',F:'#90e050',Cl:'#1fef1f',
+  Na:'#ab5cf2',Mg:'#8aff00',Al:'#bfa6a6',Si:'#f0c8a0',P:'#ff8000',S:'#e0c33f',
+  K:'#8f40d4',Ca:'#3dff00',Ti:'#7fb8e0',V:'#a6a6ab',Cr:'#8a99c7',Mn:'#9c7ac7',
+  Fe:'#e06633',Co:'#f090a0',Ni:'#50d050',Cu:'#c88033',Zn:'#7d80b0',
+  Ba:'#00c900',Sr:'#00ff00',Y:'#94ffff',Zr:'#94e0e0',Nb:'#73c2c9',Mo:'#54b5b5',
+  Ag:'#c0c0c0',Au:'#ffd123',Pb:'#575961',Sn:'#668080',Br:'#a62929',I:'#940094',
+};
+function colorForElement(el){
+  if (ELEMENT_COLOR[el]) return ELEMENT_COLOR[el];
+  let h=0; for (let i=0;i<el.length;i++) h=(h*31+el.charCodeAt(i))>>>0;
+  const hue = h % 360;
+  return `hsl(${hue},60%,55%)`;
+}
+
+/* ---- File-format detection & parsers ---- */
+function detectStructureFormat(filename, text){
+  const ext = (filename.split('.').pop()||'').toLowerCase();
+  if (ext === 'cif') return 'cif';
+  if (ext === 'xyz') return 'xyz';
+  if (ext === 'poscar' || ext === 'vasp' || /^poscar$/i.test(filename)) return 'poscar';
+  // Content sniffing fallback (extension-less or mislabeled uploads)
+  if (/_cell_length_a|_atom_site_/i.test(text)) return 'cif';
+  const lines = text.split(/\r?\n/);
+  if (lines.length > 2 && /^\s*\d+\s*$/.test(lines[0]||'')) return 'xyz';
+  if (lines.length > 7 && (/^\s*(Direct|Cartesian|direct|cartesian)/.test(lines[7]||lines[6]||''))) return 'poscar';
+  return 'unknown';
+}
+
+function parseCIF(text){
+  const num = s => parseFloat(String(s).replace(/\(.+?\)/g,''));
+  const get = (re) => { const m = text.match(re); return m ? m[1].trim() : null; };
+  const a = num(get(/_cell_length_a\s+([\d.\-]+)/i));
+  const b = num(get(/_cell_length_b\s+([\d.\-]+)/i));
+  const c = num(get(/_cell_length_c\s+([\d.\-]+)/i));
+  const alpha = num(get(/_cell_angle_alpha\s+([\d.\-]+)/i));
+  const beta  = num(get(/_cell_angle_beta\s+([\d.\-]+)/i));
+  const gamma = num(get(/_cell_angle_gamma\s+([\d.\-]+)/i));
+  const spaceGroup = get(/_symmetry_space_group_name_H-M\s+'?"?([^\n'"]+)'?"?/i) ||
+                     get(/_space_group_name_H-M_alt\s+'?"?([^\n'"]+)'?"?/i) || null;
+
+  if ([a,b,c,alpha,beta,gamma].some(v => v==null || isNaN(v))){
+    throw new Error('CIF is missing one or more _cell_length_*/_cell_angle_* tags.');
+  }
+
+  // Locate the atom_site loop and its column order (real CIF parsing,
+  // not a fixed-column assumption).
+  const lines = text.split(/\r?\n/);
+  let loopStart = -1;
+  for (let i=0;i<lines.length;i++){
+    if (/^\s*loop_\s*$/.test(lines[i])){
+      let j=i+1, hasSite=false;
+      while (j<lines.length && /^\s*_/.test(lines[j])){ if (/_atom_site_/.test(lines[j])) hasSite=true; j++; }
+      if (hasSite){ loopStart = i; break; }
     }
-    if (PERIODIC_SET.has(c1)) found.push(c1);
   }
-  return [...new Set(found)];
+  if (loopStart === -1) throw new Error('CIF has no _atom_site_ loop to read atomic positions from.');
+
+  const cols = [];
+  let li = loopStart+1;
+  while (li<lines.length && /^\s*_/.test(lines[li])){ cols.push(lines[li].trim()); li++; }
+  const idxOf = (tag) => cols.findIndex(c => c.toLowerCase() === tag);
+  const iLabel = idxOf('_atom_site_label');
+  const iType  = idxOf('_atom_site_type_symbol');
+  const iX = idxOf('_atom_site_fract_x'), iY = idxOf('_atom_site_fract_y'), iZ = idxOf('_atom_site_fract_z');
+  if (iX<0||iY<0||iZ<0) throw new Error('CIF atom_site loop is missing fractional x/y/z columns.');
+
+  const sites = [];
+  while (li<lines.length && lines[li].trim() && !/^\s*(loop_|_|#)/.test(lines[li])){
+    const parts = lines[li].trim().split(/\s+/);
+    if (parts.length < cols.length){ li++; continue; }
+    const rawEl = (iType>=0 ? parts[iType] : parts[iLabel]) || '';
+    const el = (rawEl.match(/^[A-Z][a-z]?/)||['X'])[0];
+    sites.push({
+      element: el,
+      frac: [num(parts[iX]), num(parts[iY]), num(parts[iZ])],
+    });
+    li++;
+  }
+  if (!sites.length) throw new Error('CIF atom_site loop contained no readable atom rows.');
+
+  const symOps = parseSymOps(text);
+  const expandedSites = symOps ? expandBySymmetry(sites, symOps) : sites;
+
+  return {
+    format:'cif', lattice:{a,b,c,alpha,beta,gamma}, sites: expandedSites,
+    spaceGroupFromFile: spaceGroup,
+    symmetryExpanded: !!symOps,
+    asymmetricUnitCount: sites.length,
+  };
 }
 
-/* Picks a display pair for the generic binary-lattice renderer. Kept
-   separate from parseElementsFromFilename so callers can inspect the
-   *full* detected element set first (e.g. to notice a Ti/O/S ternary
-   system) before it gets collapsed down to just two species. */
-function pickBinaryPair(unique, rnd){
-  if (unique.length >= 2) return [unique[0], unique[1]];
-  if (unique.length === 1){
-    const el = unique[0];
-    const anionLike = ['O','S','N','F','Cl'].includes(el);
-    return anionLike ? ['Si', el] : [el, 'O'];
+function parsePOSCAR(text){
+  const lines = text.split(/\r?\n/);
+  const scale = parseFloat(lines[1]);
+  const vec = i => lines[i].trim().split(/\s+/).map(Number).map(v=>v*(scale<0?1:scale));
+  const av = vec(2), bv = vec(3), cv = vec(4);
+  let li = 5;
+  let species = lines[li].trim().split(/\s+/);
+  let counts;
+  if (/^[A-Za-z]/.test(species[0]) && isNaN(Number(species[0]))){
+    li++; counts = lines[li].trim().split(/\s+/).map(Number); li++;
+  } else {
+    counts = species.map(Number); species = counts.map((_,i)=>'X'+(i+1)); li++;
   }
-  const ELEMENT_PAIRS = [
-    ['Na','Cl'], ['Ti','O'], ['Si','O'], ['Ga','As'], ['Mg','O'],
-    ['Al','O'], ['Zn','O'], ['Ba','Ti'], ['Fe','O'], ['Cu','O'],
+  const mode = (lines[li]||'').trim();
+  const isDirect = /^[Dd]/.test(mode);
+  li++;
+
+  const sites = [];
+  for (let s=0; s<species.length; s++){
+    for (let n=0; n<counts[s]; n++){
+      const parts = lines[li].trim().split(/\s+/).map(Number);
+      li++;
+      if (isDirect){
+        sites.push({ element: species[s], frac: [parts[0], parts[1], parts[2]] });
+      } else {
+        // Cartesian POSCAR: store cartesian directly, frac left null;
+        // handled specially in buildSupercellSites().
+        sites.push({ element: species[s], cart: [parts[0]*scale, parts[1]*scale, parts[2]*scale] });
+      }
+    }
+  }
+  const matrix = [av,bv,cv];
+  const { a,b,c,alpha,beta,gamma } = paramsFromMatrix(matrix);
+  return { format:'poscar', lattice:{a,b,c,alpha,beta,gamma,matrix}, sites, spaceGroupFromFile: null };
+}
+
+function parseXYZ(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+  const n = parseInt(lines[0], 10);
+  if (!n || isNaN(n)) throw new Error('XYZ file: first line is not a valid atom count.');
+  const sites = [];
+  for (let i=0;i<n;i++){
+    const parts = lines[2+i].trim().split(/\s+/);
+    sites.push({ element: parts[0], cart: parts.slice(1,4).map(Number) });
+  }
+  if (!sites.length) throw new Error('XYZ file contained no atom rows.');
+  return { format:'xyz', lattice:null, sites, spaceGroupFromFile: null };
+}
+
+/* Parses an explicit _symmetry_equiv_pos_as_xyz /
+   _space_group_symop_operation_xyz loop if present. Many real CIFs list
+   only the crystallographic asymmetric unit and rely on these operators
+   (or an equivalent space-group lookup) to generate the full cell --
+   skipping this step silently produces an incomplete/wrong structure. */
+function parseSymOps(text){
+  const lines = text.split(/\r?\n/);
+  let loopStart = -1;
+  for (let i=0;i<lines.length;i++){
+    if (/^\s*loop_\s*$/.test(lines[i])){
+      let j=i+1, hasSymop=false;
+      while (j<lines.length && /^\s*_/.test(lines[j])){ if (/_symmetry_equiv_pos_as_xyz|_space_group_symop_operation_xyz/i.test(lines[j])) hasSymop=true; j++; }
+      if (hasSymop){ loopStart=i; break; }
+    }
+  }
+  if (loopStart===-1) return null;
+  let li = loopStart+1;
+  while (li<lines.length && /^\s*_/.test(lines[li])) li++;
+  const ops = [];
+  while (li<lines.length && lines[li].trim() && !/^\s*(loop_|_|#)/.test(lines[li])){
+    const row = lines[li].trim();
+    const m = row.match(/'([^']+)'|"([^"]+)"/);
+    const opStr = m ? (m[1]||m[2]) : row.replace(/^\d+\s+/, '');
+    ops.push(opStr);
+    li++;
+  }
+  return ops.length ? ops : null;
+}
+
+/* Evaluates a single symmetry-operator triplet like "x,y,z" or
+   "-x+1/2,y+1/2,-z" against a fractional coordinate. Strictly
+   whitelists characters both before AND after substitution before
+   using Function() to evaluate arithmetic -- this runs on untrusted
+   file content, so no other character can ever reach the evaluator. */
+function applySymOp(opStr, frac){
+  const parts = opStr.split(',').map(s=>s.trim());
+  if (parts.length !== 3) return null;
+  const rawSafe = /^[0-9xyzXYZ+\-*/. ]+$/;
+  try {
+    return parts.map(p=>{
+      if (!rawSafe.test(p)) throw new Error('unsafe symop token');
+      let e = p.replace(/[xX]/g, `(${frac[0]})`).replace(/[yY]/g, `(${frac[1]})`).replace(/[zZ]/g, `(${frac[2]})`);
+      if (!/^[0-9+\-*/. ()]+$/.test(e)) throw new Error('unsafe evaluated expression');
+      let v = Function('"use strict"; return (' + e + ')')();
+      v = v - Math.floor(v);
+      return v;
+    });
+  } catch(err){ return null; }
+}
+
+function expandBySymmetry(sites, symOps){
+  const seen = new Map();
+  const out = [];
+  const keyOf = (el,f) => el+':'+f.map(v=>Math.round(v*1000)).join(',');
+  sites.forEach(s=>{
+    symOps.forEach(op=>{
+      const f = applySymOp(op, s.frac);
+      if (!f) return;
+      const key = keyOf(s.element, f);
+      if (!seen.has(key)){ seen.set(key,true); out.push({ element:s.element, frac:f }); }
+    });
+  });
+  return out.length ? out : sites;
+}
+function latticeMatrixFromParams(a,b,c,alpha,beta,gamma){
+  const d2r = Math.PI/180;
+  const al=alpha*d2r, be=beta*d2r, ga=gamma*d2r;
+  const v1 = [a, 0, 0];
+  const v2 = [b*Math.cos(ga), b*Math.sin(ga), 0];
+  const cx = c*Math.cos(be);
+  const cy = c*(Math.cos(al) - Math.cos(be)*Math.cos(ga)) / Math.sin(ga);
+  const cz2 = c*c - cx*cx - cy*cy;
+  const cz = Math.sqrt(Math.max(cz2, 0));
+  const v3 = [cx, cy, cz];
+  return [v1, v2, v3];
+}
+function paramsFromMatrix(m){
+  const len = v => Math.hypot(v[0],v[1],v[2]);
+  const dot = (u,v) => u[0]*v[0]+u[1]*v[1]+u[2]*v[2];
+  const ang = (u,v) => Math.acos(dot(u,v)/(len(u)*len(v))) * 180/Math.PI;
+  return { a:len(m[0]), b:len(m[1]), c:len(m[2]), alpha:ang(m[1],m[2]), beta:ang(m[0],m[2]), gamma:ang(m[0],m[1]) };
+}
+function matVec(m, f){
+  return [
+    m[0][0]*f[0]+m[1][0]*f[1]+m[2][0]*f[2],
+    m[0][1]*f[0]+m[1][1]*f[1]+m[2][1]*f[2],
+    m[0][2]*f[0]+m[1][2]*f[1]+m[2][2]*f[2],
   ];
-  return ELEMENT_PAIRS[Math.floor(rnd()*ELEMENT_PAIRS.length)];
+}
+function cellVolume(m){
+  const [a1,a2,a3] = m;
+  const cx = a2[1]*a3[2]-a2[2]*a3[1], cy = a2[2]*a3[0]-a2[0]*a3[2], cz = a2[0]*a3[1]-a2[1]*a3[0];
+  return Math.abs(a1[0]*cx + a1[1]*cy + a1[2]*cz);
 }
 
-/* Recognises the Ti/O/S oxysulfate system so it gets routed to a
-   chemically correct octahedra+tetrahedra renderer instead of the
-   generic binary rock-salt lattice below. Two checks, both narrow and
-   exact (never a fuzzy per-letter scan across the whole filename --
-   that would misfire on ordinary words: e.g. "sample_vibration.dat"
-   contains the substrings "ti" (vibra-TI-on), "o", and "s" (Sample),
-   which would wrongly hijack the Vibration Visualizer's own sample
-   data into this renderer):
-     1. The strict, case-sensitive element scan above found Ti+O+S.
-     2. The filename is a known Materials Project ID (mp-559283, which
-        is TiOSO4) or literally contains "tioso4" -- MP IDs are opaque
-        numbers with no chemistry encoded in them, so filenames like
-        "mp-559283.cif" have zero uppercase letters and can't be
-        caught by symbol-scanning at all. */
-const KNOWN_TIOSO4_MP_IDS = new Set(['mp-559283']);
-function isKnownTiOSO4Filename(name){
-  const base = (name||'').toLowerCase();
-  const mpMatch = base.match(/mp-\d+/);
-  if (mpMatch && KNOWN_TIOSO4_MP_IDS.has(mpMatch[0])) return true;
-  return /tioso4/.test(base);
-}
-function isTiOSSystem(unique, filename){
-  return (unique.includes('Ti') && unique.includes('O') && unique.includes('S')) || isKnownTiOSO4Filename(filename);
+const ANGLE_TOL = 3, LEN_TOL_FRAC = 0.02;
+function nearlyEqual(x,y,tol){ return Math.abs(x-y) <= tol; }
+function classifyCrystalSystem(a,b,c,alpha,beta,gamma){
+  const lenTol = Math.max(a,b,c)*LEN_TOL_FRAC;
+  const ab = nearlyEqual(a,b,lenTol), bc = nearlyEqual(b,c,lenTol), ac = nearlyEqual(a,c,lenTol);
+  const A90 = nearlyEqual(alpha,90,ANGLE_TOL), B90 = nearlyEqual(beta,90,ANGLE_TOL), G90 = nearlyEqual(gamma,90,ANGLE_TOL);
+  const G120 = nearlyEqual(gamma,120,ANGLE_TOL);
+  if (ab && bc && ac && A90 && B90 && G90) return 'Cubic';
+  if (ab && !bc && A90 && B90 && G90) return 'Tetragonal';
+  if (ab && bc && ac && nearlyEqual(alpha,beta,ANGLE_TOL) && nearlyEqual(beta,gamma,ANGLE_TOL) && !A90) return 'Trigonal (rhombohedral)';
+  if (ab && A90 && B90 && G120) return 'Hexagonal';
+  if (A90 && G90 && !B90) return 'Monoclinic';
+  if (A90 && B90 && G90) return 'Orthorhombic';
+  return 'Triclinic';
 }
 
+function reduceFormula(counts){
+  const gcd = (x,y)=> y===0 ? x : gcd(y, x%y);
+  const vals = Object.values(counts);
+  const g = vals.reduce((acc,v)=>gcd(acc,v), vals[0]);
+  return Object.entries(counts).map(([el,n])=> el + (n/g===1?'':(n/g))).join('');
+}
+
+/* ---- Build a rendered supercell (or a bare cluster for XYZ) with a
+   one-cell "ghost" margin used only for neighbor-finding, so atoms at
+   the visible edge get correct coordination/bonds instead of being
+   artificially truncated. ---- */
+function buildSupercellSites(structure, n){
+  const hasLattice = !!structure.lattice;
+  const matrix = hasLattice
+    ? (structure.lattice.matrix || latticeMatrixFromParams(structure.lattice.a, structure.lattice.b, structure.lattice.c, structure.lattice.alpha, structure.lattice.beta, structure.lattice.gamma))
+    : null;
+
+  if (!hasLattice){
+    // Molecule/cluster (XYZ): no periodicity, render as-is.
+    const sites = structure.sites.map(s => ({ element: s.element, pos: s.cart, isCore: true }));
+    return { sites, matrix: null, hasLattice: false };
+  }
+
+  const sites = [];
+  const lo = -1, hi = n; // ghost shell: one extra cell on the low side, one on the high side
+  for (let i=lo;i<=hi;i++)for(let j=lo;j<=hi;j++)for(let k=lo;k<=hi;k++){
+    const isCore = (i>=0 && i<n && j>=0 && j<n && k>=0 && k<n);
+    structure.sites.forEach(s=>{
+      const f = s.frac ? s.frac : null;
+      let cart;
+      if (f){
+        cart = matVec(matrix, [f[0]+i, f[1]+j, f[2]+k]);
+      } else if (s.cart){
+        // Cartesian-mode POSCAR sites: only meaningful within the base
+        // cell; replicate by adding the corresponding lattice offset.
+        const offset = matVec(matrix, [i,j,k]);
+        cart = [s.cart[0]+offset[0], s.cart[1]+offset[1], s.cart[2]+offset[2]];
+      } else return;
+      sites.push({ element: s.element, pos: cart, isCore });
+    });
+  }
+  // Safety cap for pathologically large cells/supercells.
+  if (sites.length > 6000){
+    throw new Error(`Structure too large to render interactively (${sites.length} atoms in this supercell). Try disabling the supercell toggle.`);
+  }
+  return { sites, matrix, hasLattice: true };
+}
+
+/* ---- CutOffDictNN-style neighbor finding: bond if distance <=
+   (r_i + r_j) * tolerance. Generalized to any element pair via the
+   covalent-radius table above -- this is the client-side equivalent
+   of pymatgen's CutOffDictNN, one of the three neighbor-finding
+   methods requested. O(n^2) pair check, fine for the atom counts a
+   viewer like this renders (capped at 6000 above). ---- */
+function findBondsCutOffDictNN(sites, toleranceFactor){
+  const tol = toleranceFactor || 1.15;
+  // Note: a single covalent-radius-sum cutoff cannot cleanly separate a
+  // real single covalent bond (e.g. diamond's C-C at 1.545 Å) from a
+  // non-bonding same-element lattice contact (e.g. Mg-Mg at 2.98 Å in
+  // MgO) when both happen to fall in a similar radius-ratio range --
+  // that's precisely why more sophisticated methods like CrystalNN use
+  // Voronoi/electronegativity weighting instead of a flat cutoff. Rather
+  // than risk silently breaking real homonuclear bonds by over-tightening
+  // the cutoff, this stays uniform and any resulting over-counted
+  // same-element coordination is surfaced explicitly in validation
+  // warnings below instead.
+  const bonds = [];
+  const n = sites.length;
+  for (let i=0;i<n;i++){
+    if (!sites[i].isCore) continue;
+    for (let j=0;j<n;j++){
+      if (i===j) continue;
+      const dx=sites[i].pos[0]-sites[j].pos[0], dy=sites[i].pos[1]-sites[j].pos[1], dz=sites[i].pos[2]-sites[j].pos[2];
+      const d2 = dx*dx+dy*dy+dz*dz;
+      const cutoff = (covalentRadius(sites[i].element)+covalentRadius(sites[j].element)) * tol;
+      if (d2 > 0.01 && d2 <= cutoff*cutoff){
+        if (i<j || !sites[j].isCore) bonds.push({ i, j, d: Math.sqrt(d2) });
+      }
+    }
+  }
+  const seen = new Set();
+  return bonds.filter(b=>{
+    const key = b.i<b.j ? `${b.i}-${b.j}` : `${b.j}-${b.i}`;
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+}
+
+function computeCoordination(sites, bonds){
+  const coord = sites.map(()=>[]);
+  bonds.forEach(b=>{ coord[b.i].push(b.j); coord[b.j].push(b.i); });
+  return coord;
+}
+
+/* ---- Real validation, mirroring the requested "Structure validation"
+   stage: composition, bond lengths, coordination, unit cell. ---- */
+function validateStructure(structure, sites, bonds, coordination){
+  const warnings = [];
+  if (structure.lattice){
+    const matrix = structure.lattice.matrix || latticeMatrixFromParams(structure.lattice.a,structure.lattice.b,structure.lattice.c,structure.lattice.alpha,structure.lattice.beta,structure.lattice.gamma);
+    const vol = cellVolume(matrix);
+    if (!(vol > 0.01)) warnings.push(`Unit cell volume is essentially zero (${vol.toFixed(3)} Å³) — check cell parameters.`);
+  }
+  const coreIdx = sites.map((s,i)=>s.isCore?i:-1).filter(i=>i>=0);
+  const isolated = coreIdx.filter(i => coordination[i].length === 0);
+  if (isolated.length){
+    warnings.push(`${isolated.length} atom(s) have no detected neighbors within the covalent cutoff (possibly isolated ions, a very ionic/long-bonded structure, or an unusually small cell).`);
+  }
+  bonds.forEach(b=>{
+    if (b.d < 0.55) warnings.push(`Suspiciously short contact: ${sites[b.i].element}-${sites[b.j].element} at ${b.d.toFixed(3)} Å (possible overlapping sites / disorder in the file).`);
+  });
+  // Same-element "bonds" are the weakest part of a plain covalent-radius
+  // cutoff: in ionic/metallic lattices they're frequently non-bonding
+  // next-nearest neighbors rather than real bonds. But a pure homonuclear
+  // covalent network (diamond's C-C, elemental Si, S8 rings, etc.) is
+  // real chemistry, not an artifact -- the actual ionic-artifact
+  // signature is an element bonding to *both* itself *and* a different
+  // element (e.g. Mg-O *and* Mg-Mg), so only flag it in that case.
+  const homoCounts = {}, heteroCounts = {};
+  coreIdx.forEach(i=>{
+    coordination[i].forEach(j=>{
+      if (sites[i].element === sites[j].element) homoCounts[sites[i].element] = (homoCounts[sites[i].element]||0)+1;
+      else heteroCounts[sites[i].element] = (heteroCounts[sites[i].element]||0)+1;
+    });
+  });
+  Object.entries(homoCounts).forEach(([el,count])=>{
+    const elCoreCount = coreIdx.filter(i=>sites[i].element===el).length || 1;
+    if (count / elCoreCount >= 2 && heteroCounts[el] > 0){
+      warnings.push(`${el}-${el} contacts contribute heavily to ${el}'s apparent coordination alongside its bonds to other elements — in ionic/metallic structures these same-element contacts are often non-bonding lattice neighbors rather than true bonds. Coordination numbers for ${el} may be overcounted; treat with caution.`);
+    }
+  });
+  const counts = {};
+  structure.sites.forEach(s=>{ counts[s.element] = (counts[s.element]||0)+1; });
+  if (Object.keys(counts).length === 0) warnings.push('No recognizable elements found in the file.');
+  return { ok: warnings.length===0, warnings, formulaCounts: counts };
+}
+
+function bondStatsByPair(sites, bonds){
+  const stats = {};
+  bonds.forEach(b=>{
+    const a = sites[b.i].element, c = sites[b.j].element;
+    const key = [a,c].sort().join('-');
+    if (!stats[key]) stats[key] = { min:Infinity, max:-Infinity, sum:0, n:0 };
+    const s = stats[key];
+    s.min = Math.min(s.min, b.d); s.max = Math.max(s.max, b.d); s.sum += b.d; s.n++;
+  });
+  return stats;
+}
+
+function coordinationSummary(sites, coordination){
+  const byElement = {};
+  sites.forEach((s,i)=>{
+    if (!s.isCore) return;
+    if (!byElement[s.element]) byElement[s.element] = [];
+    byElement[s.element].push(coordination[i].length);
+  });
+  const out = {};
+  Object.entries(byElement).forEach(([el, arr])=>{
+    const min = Math.min(...arr), max = Math.max(...arr);
+    out[el] = min===max ? `${min}` : `${min}-${max}`;
+  });
+  return out;
+}
+
+/* ---- Rendering (Plotly scatter3d/mesh3d -- WebGL-backed) ---- */
 const structureLayerState = { cell:true, bonds:true, poly:false, axes:false };
 let supercellOn = false;
 let projectionOrtho = false;
 let dragModeState = 'orbit';
 let structureIdx = null;
-let structureSpeciesVisible = { A:true, B:true };
+let currentStructure = null;
+let currentBuilt = null;
+let currentBonds = [];
+let currentCoordination = [];
+let currentValidation = { ok:true, warnings:[] };
 
-function buildPolyhedraTraces(n, a, opacity){
+function buildPolyhedraFromNeighbors(built, coordination, opacity){
   const traces = [];
-  for(let i=1;i<n;i++)for(let j=1;j<n;j++)for(let k=1;k<n;k++){
-    const neighbors = [
-      [(i-1)*a, j*a, k*a], [(i+1)*a, j*a, k*a],
-      [i*a, (j-1)*a, k*a], [i*a, (j+1)*a, k*a],
-      [i*a, j*a, (k-1)*a], [i*a, j*a, (k+1)*a],
-    ];
+  built.sites.forEach((s,i)=>{
+    if (!s.isCore) return;
+    const nbrs = coordination[i];
+    if (nbrs.length < 4) return;
+    const pts = nbrs.map(j=>built.sites[j].pos);
     traces.push({
-      type:'mesh3d', alphahull:0, flatshading:true, color:'#ff6600',
-      x:neighbors.map(p=>p[0]), y:neighbors.map(p=>p[1]), z:neighbors.map(p=>p[2]),
-      opacity, showlegend:false, hoverinfo:'skip', name:'Polyhedra',
+      type:'mesh3d', alphahull:0, flatshading:true, color: colorForElement(s.element), opacity,
+      x:pts.map(p=>p[0]), y:pts.map(p=>p[1]), z:pts.map(p=>p[2]),
+      showlegend:false, hoverinfo:'skip', name:`${s.element} coordination polyhedron`,
       visible: structureLayerState.poly,
     });
-  }
+  });
   return traces;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Ti/O/S oxysulfate renderer (chemically correct coordination)
-   Coordination numbers, bond-length ranges, and corner-sharing
-   topology are drawn from the verified mp-559283 (TiOSO4, Pmc2_1)
-   structure description: every Ti is 6-coordinate (TiO6 octahedra,
-   Ti-O 1.79-2.12 Å), every S is 4-coordinate (SO4 tetrahedra, S-O
-   1.45-1.48 Å), and octahedra corner-share with 2 neighboring TiO6
-   + 4 SO4 tetrahedra. This is a representative schematic motif —
-   the deposited structure's full 8-Ti/8-S/28-O fractional
-   coordinates weren't available to reproduce exactly — but the
-   chemistry (coordination numbers, bond lengths, sharing topology)
-   is real rather than invented.
-═══════════════════════════════════════════════════════════ */
-function buildTiOSO4Motif(rnd){
-  const TiO = 1.79 + rnd()*(2.12-1.79);
-  const SO  = 1.45 + rnd()*(1.48-1.45);
-  const tilt = (5 + rnd()*5) * Math.PI/180; // 1-17 deg tilt range per doc
-
-  const tiPos = [], sPos = [], oPos = [];
-  const tiOBonds = [], sOBonds = [];
-  const tiOctahedra = [], sTetrahedra = [];
-
-  const rotY = (v, th) => [ v[0]*Math.cos(th)+v[2]*Math.sin(th), v[1], -v[0]*Math.sin(th)+v[2]*Math.cos(th) ];
-
-  const nTi = 3;
-  let cursor = [0,0,0];
-  const sharedO = [];
-
-  for (let t=0; t<nTi; t++){
-    const th = (t % 2 === 0 ? tilt : -tilt);
-    const dirs = [
-      rotY([ 1,0,0], th), rotY([-1,0,0], th),
-      rotY([ 0,1,0], th), rotY([ 0,-1,0], th),
-      rotY([ 0,0,1], th), rotY([ 0,0,-1], th),
-    ];
-    const oCoords = dirs.map(d => [cursor[0]+d[0]*TiO, cursor[1]+d[1]*TiO, cursor[2]+d[2]*TiO]);
-
-    if (t>0){ oCoords[1] = sharedO[t-1]; }
-    sharedO[t] = oCoords[0];
-
-    tiPos.push(cursor.slice());
-    oCoords.forEach((o,idx) => { if (!(t>0 && idx===1)) oPos.push(o); tiOBonds.push([cursor, o]); });
-    tiOctahedra.push({ center: cursor.slice(), oCoords });
-
-    for (let e=2; e<6; e++){
-      const bridgeO = oCoords[e];
-      const outward = [bridgeO[0]-cursor[0], bridgeO[1]-cursor[1], bridgeO[2]-cursor[2]];
-      const norm = Math.hypot(...outward) || 1;
-      const uOut = outward.map(v=>v/norm);
-      const sCenter = [ bridgeO[0]+uOut[0]*SO, bridgeO[1]+uOut[1]*SO, bridgeO[2]+uOut[2]*SO ];
-
-      const tetraDirs = [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(v=>{
-        const n=Math.hypot(...v); return v.map(x=>x/n);
-      });
-      const sOCoords = [bridgeO];
-      for (let d=0; d<3; d++){
-        const dir = tetraDirs[d];
-        const o = [ sCenter[0]+dir[0]*SO, sCenter[1]+dir[1]*SO, sCenter[2]+dir[2]*SO ];
-        sOCoords.push(o); oPos.push(o); sOBonds.push([sCenter, o]);
-      }
-      sOBonds.push([sCenter, bridgeO]);
-      sPos.push(sCenter);
-      sTetrahedra.push({ center: sCenter, oCoords: sOCoords });
-    }
-
-    cursor = [cursor[0] + 2*TiO*Math.cos(th), cursor[1], cursor[2] + 2*TiO*Math.sin(th)];
+function updateDimsPanel(structure, built){
+  const coreCount = built.sites.filter(s=>s.isCore).length;
+  const counts = {};
+  structure.sites.forEach(s=>{ counts[s.element]=(counts[s.element]||0)+1; });
+  let html = '<div class="dims-title">Structure</div>';
+  html += `<div class="dims-row"><span class="dims-lbl">Formula</span><span class="dims-val">${reduceFormula(counts)}</span></div>`;
+  html += `<div class="dims-row"><span class="dims-lbl">Format</span><span class="dims-val">${structure.format.toUpperCase()}</span></div>`;
+  html += `<div class="dims-row"><span class="dims-lbl">Space group</span><span class="dims-val">${structure.spaceGroupFromFile || 'Not in file'}</span></div>`;
+  if (structure.lattice){
+    const sys = classifyCrystalSystem(structure.lattice.a,structure.lattice.b,structure.lattice.c,structure.lattice.alpha,structure.lattice.beta,structure.lattice.gamma);
+    const vol = cellVolume(built.matrix);
+    html += `<div class="dims-row"><span class="dims-lbl">Crystal system</span><span class="dims-val">${sys}</span></div>`;
+    html += `<div class="dims-row"><span class="dims-lbl">Atoms shown</span><span class="dims-val">${coreCount}</span></div>`;
+    html += `<div class="dims-row"><span class="dims-lbl">Volume</span><span class="dims-val">${vol.toFixed(1)} &Aring;&sup3;</span></div>`;
+    html += `<div class="dims-row sep"><span class="dims-lbl">a, b, c</span><span class="dims-val">${structure.lattice.a.toFixed(3)}, ${structure.lattice.b.toFixed(3)}, ${structure.lattice.c.toFixed(3)} &Aring;</span></div>`;
+    html += `<div class="dims-row"><span class="dims-lbl">&alpha;,&beta;,&gamma;</span><span class="dims-val">${structure.lattice.alpha.toFixed(1)}, ${structure.lattice.beta.toFixed(1)}, ${structure.lattice.gamma.toFixed(1)}&deg;</span></div>`;
+  } else {
+    html += `<div class="dims-row"><span class="dims-lbl">Crystal system</span><span class="dims-val">N/A (molecule)</span></div>`;
+    html += `<div class="dims-row"><span class="dims-lbl">Atoms</span><span class="dims-val">${coreCount}</span></div>`;
   }
-
-  return { TiO, SO, tiPos, sPos, oPos, tiOBonds, sOBonds, tiOctahedra, sTetrahedra };
+  document.getElementById('structure-dims').innerHTML = html;
 }
 
-function renderTiOSO4Structure(rnd){
-  const motif = buildTiOSO4Motif(rnd);
-  const COL_TI = '#7fb8e0', COL_S = '#e0c33f', COL_O = '#d64545';
-
-  const tiX=motif.tiPos.map(p=>p[0]), tiY=motif.tiPos.map(p=>p[1]), tiZ=motif.tiPos.map(p=>p[2]);
-  const sX=motif.sPos.map(p=>p[0]), sY=motif.sPos.map(p=>p[1]), sZ=motif.sPos.map(p=>p[2]);
-  const oX=motif.oPos.map(p=>p[0]), oY=motif.oPos.map(p=>p[1]), oZ=motif.oPos.map(p=>p[2]);
-
-  const flatten = (bonds) => {
-    const x=[],y=[],z=[];
-    bonds.forEach(([p,q])=>{ x.push(p[0],q[0],null); y.push(p[1],q[1],null); z.push(p[2],q[2],null); });
-    return {x,y,z};
-  };
-  const tiOB = flatten(motif.tiOBonds);
-  const sOB  = flatten(motif.sOBonds);
-
-  const polyOpacityInput = document.getElementById('poly-opacity-range');
-  const polyOpacity = polyOpacityInput ? polyOpacityInput.value/100 : 0.35;
-  const transparencyInput = document.getElementById('transparency-range');
-  const atomOpacity = transparencyInput ? 1 - transparencyInput.value/100 : 1;
-
-  const polyTraces = [];
-  motif.tiOctahedra.forEach(oct=>{
-    polyTraces.push({
-      type:'mesh3d', alphahull:0, flatshading:true, color:COL_TI, opacity:polyOpacity,
-      x:oct.oCoords.map(p=>p[0]), y:oct.oCoords.map(p=>p[1]), z:oct.oCoords.map(p=>p[2]),
-      showlegend:false, hoverinfo:'skip', name:'TiO6 octahedron', visible:structureLayerState.poly,
-    });
-  });
-  motif.sTetrahedra.forEach(tet=>{
-    polyTraces.push({
-      type:'mesh3d', alphahull:0, flatshading:true, color:COL_S, opacity:polyOpacity,
-      x:tet.oCoords.map(p=>p[0]), y:tet.oCoords.map(p=>p[1]), z:tet.oCoords.map(p=>p[2]),
-      showlegend:false, hoverinfo:'skip', name:'SO4 tetrahedron', visible:structureLayerState.poly,
-    });
-  });
-
-  const axesOn = structureLayerState.axes;
-  const axisSpec = (label)=>({
-    title: axesOn ? label : '', showticklabels: axesOn,
-    gridcolor: axesOn ? 'rgba(0,0,0,.18)' : 'rgba(0,0,0,.06)', zeroline:false,
-  });
-
-  const traces = [
-    {x:tiOB.x,y:tiOB.y,z:tiOB.z, type:'scatter3d', mode:'lines', line:{color:'#9ec9e8',width:3}, showlegend:false, hoverinfo:'skip', visible:structureLayerState.bonds, name:'Ti-O'},
-    {x:sOB.x,y:sOB.y,z:sOB.z, type:'scatter3d', mode:'lines', line:{color:'#e8d67f',width:3}, showlegend:false, hoverinfo:'skip', visible:structureLayerState.bonds, name:'S-O'},
-    {x:tiX,y:tiY,z:tiZ, type:'scatter3d', mode:'markers', marker:{size:10,color:COL_TI,opacity:atomOpacity}, name:'Ti', hoverinfo:'name'},
-    {x:sX,y:sY,z:sZ, type:'scatter3d', mode:'markers', marker:{size:8,color:COL_S,opacity:atomOpacity}, name:'S', hoverinfo:'name'},
-    {x:oX,y:oY,z:oZ, type:'scatter3d', mode:'markers', marker:{size:5,color:COL_O,opacity:atomOpacity}, name:'O', hoverinfo:'name'},
-    ...polyTraces,
-  ];
-  // No cell-outline trace here: this is a schematic bonding motif, not a
-  // literal unit-cell replication, so the "Toggle unit cell" button is
-  // intentionally a no-op in this mode.
-  structureIdx = { bonds:[0,1], cell:null, A:2, B:4, S:3, polyIdx: polyTraces.map((_,idx)=>5+idx) };
-
-  Plotly.newPlot('structure-div', traces, {
-    paper_bgcolor:'rgba(0,0,0,0)', margin:{t:4,r:4,b:4,l:4}, showlegend:false,
-    scene:{
-      xaxis:axisSpec('x (Å)'), yaxis:axisSpec('y (Å)'), zaxis:axisSpec('z (Å)'),
-      aspectmode:'data', dragmode: dragModeState,
-      camera:{ eye:{x:1.6,y:1.3,z:1.1}, projection:{ type: projectionOrtho ? 'orthographic' : 'perspective' } },
-    },
-  }, { responsive:true, displayModeBar:false }).then(function(gd){
-    gd.on('plotly_relayout', updateGizmo); updateGizmo();
-  });
-
-  document.getElementById('structure-legend').innerHTML = `
-    <div class="legend-chip" style="background:${COL_TI}" data-trace="2" onclick="toggleSpecies(this)" title="Click to show/hide">Ti</div>
-    <div class="legend-chip" style="background:${COL_S}" data-trace="3" onclick="toggleSpecies(this)" title="Click to show/hide">S</div>
-    <div class="legend-chip" style="background:${COL_O}" data-trace="4" onclick="toggleSpecies(this)" title="Click to show/hide">O</div>
-  `;
-
-  const nAtoms = motif.tiPos.length + motif.sPos.length + motif.oPos.length;
-  document.getElementById('structure-dims').innerHTML = `
-    <div class="dims-title">Structure</div>
-    <div class="dims-row"><span class="dims-lbl">Formula</span><span class="dims-val">TiOSO&#8324;</span></div>
-    <div class="dims-row"><span class="dims-lbl">Space group</span><span class="dims-val">Pmc2&#8321; (#26)</span></div>
-    <div class="dims-row"><span class="dims-lbl">Crystal system</span><span class="dims-val">Orthorhombic</span></div>
-    <div class="dims-row"><span class="dims-lbl">Atoms shown</span><span class="dims-val">${nAtoms} (schematic motif)</span></div>
-    <div class="dims-row sep"><span class="dims-lbl">Ti-O bond</span><span class="dims-val">${motif.TiO.toFixed(3)} &Aring;</span></div>
-    <div class="dims-row"><span class="dims-lbl">S-O bond</span><span class="dims-val">${motif.SO.toFixed(3)} &Aring;</span></div>
-    <div class="dims-row"><span class="dims-lbl">Coordination</span><span class="dims-val">Ti:6 / S:4</span></div>
-  `;
-}
-
-function renderStructure(presetCamera){
-  let seed = 7;
-  for (let i=0;i<loadedFileName.length;i++) seed = (seed*31 + loadedFileName.charCodeAt(i)) >>> 0;
-  const rnd = ()=>{ seed = (seed*1103515245 + 12345) >>> 0; return seed/4294967296; };
-
-  const uniqueEls = parseElementsFromFilename(loadedFileName, rnd);
-  if (isTiOSSystem(uniqueEls, loadedFileName)){
-    renderTiOSO4Structure(rnd);
+function updateStructureAnalysisPanel(ctx){
+  const body = document.getElementById('structure-analysis-body');
+  if (!body) return;
+  if (!ctx){
+    body.innerHTML = '<div class="muted-note" style="padding:0 14px 10px">Load a structure to see bond lengths, coordination, and validation results.</div>';
     return;
   }
+  const { structure, built, bonds, coordination, validation } = ctx;
+  const bondStats = bondStatsByPair(built.sites, bonds);
+  const coordSum = coordinationSummary(built.sites, coordination);
+  let html = '';
 
-  const a = 3.6 + rnd()*2.4;
-  const n = supercellOn ? 3 : 2;
-
-  const [elA, elB] = pickBinaryPair(uniqueEls, rnd);
-  const cationX=[],cationY=[],cationZ=[], anionX=[],anionY=[],anionZ=[];
-  const bx=[],by=[],bz=[];
-
-  for(let i=0;i<=n;i++)for(let j=0;j<=n;j++)for(let k=0;k<=n;k++){
-    const x=i*a,y=j*a,z=k*a;
-    if((i+j+k)%2===0){ cationX.push(x); cationY.push(y); cationZ.push(z); }
-    else { anionX.push(x); anionY.push(y); anionZ.push(z); }
-    if(i<n){ bx.push(x,x+a,null); by.push(y,y,null); bz.push(z,z,null); }
-    if(j<n){ bx.push(x,x,null); by.push(y,y+a,null); bz.push(z,z,null); }
-    if(k<n){ bx.push(x,x,null); by.push(y,y,null); bz.push(z,z+a,null); }
+  if (structure.format === 'cif'){
+    if (structure.symmetryExpanded){
+      html += `<div class="muted-note" style="padding:0 14px 8px">Expanded from ${structure.asymmetricUnitCount} asymmetric-unit atom(s) using the file's symmetry operators.</div>`;
+    } else {
+      html += `<div class="muted-note" style="padding:0 14px 8px;color:#a05a00">This CIF has no explicit symmetry-operator loop — only the ${structure.sites.length} literally listed atom(s) are shown. If this file only lists an asymmetric unit, the rendered structure may be incomplete.</div>`;
+    }
   }
 
-  const c = a;
-  const corners=[[0,0,0],[c,0,0],[c,c,0],[0,c,0],[0,0,c],[c,0,c],[c,c,c],[0,c,c]];
-  const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
-  const ex=[],ey=[],ez=[];
-  edges.forEach(([p,q])=>{
-    ex.push(corners[p][0],corners[q][0],null);
-    ey.push(corners[p][1],corners[q][1],null);
-    ez.push(corners[p][2],corners[q][2],null);
+  html += '<div class="sb-label" style="padding:0 14px">Bond lengths (CutOffDictNN)</div><div style="padding:0 14px 10px;font-family:var(--mono);font-size:11px;line-height:1.6">';
+  const pairKeys = Object.keys(bondStats);
+  if (!pairKeys.length) html += 'No bonds detected within the covalent-radius cutoff.';
+  else pairKeys.forEach(k=>{
+    const s = bondStats[k];
+    html += `${k}: ${s.min.toFixed(3)}&ndash;${s.max.toFixed(3)} &Aring; (avg ${(s.sum/s.n).toFixed(3)}, n=${s.n})<br>`;
   });
+  html += '</div>';
 
-  const COL_A = '#7fb8e0', COL_B = '#e0c33f';
-  structureSpeciesVisible = { A:true, B:true };
+  html += '<div class="sb-label" style="padding:0 14px">Coordination</div><div style="padding:0 14px 10px;font-family:var(--mono);font-size:11px;line-height:1.6">';
+  Object.entries(coordSum).forEach(([el,c])=>{ html += `${el}: ${c}-fold<br>`; });
+  html += '</div>';
+
+  if (validation.warnings.length){
+    html += '<div class="sb-label" style="padding:0 14px;color:#a05a00">Validation warnings</div><div style="padding:0 14px 10px;font-size:11px;line-height:1.5;color:#a05a00">';
+    validation.warnings.forEach(w=>{ html += '⚠ '+w+'<br>'; });
+    html += '</div>';
+  } else {
+    html += '<div style="padding:0 14px 10px;font-size:11px;color:var(--grn)">✓ No validation issues detected.</div>';
+  }
+  body.innerHTML = html;
+}
+
+function renderParsedStructure(presetCamera){
+  if (!currentStructure) return;
+  const n = currentStructure.lattice ? (supercellOn ? 3 : 2) : 1;
+  let built;
+  try {
+    built = buildSupercellSites(currentStructure, n);
+  } catch(err){
+    document.getElementById('structure-dims').innerHTML = `<div class="dims-title">Error</div><div class="dims-row"><span class="dims-val" style="color:#c0392b">${err.message}</span></div>`;
+    updateStructureAnalysisPanel(null);
+    return;
+  }
+  const bonds = findBondsCutOffDictNN(built.sites);
+  const coordination = computeCoordination(built.sites, bonds);
+  const validation = validateStructure(currentStructure, built.sites, bonds, coordination);
+  currentBuilt = built; currentBonds = bonds; currentCoordination = coordination; currentValidation = validation;
+
+  const coreSites = built.sites.filter(s=>s.isCore);
+  const elements = [...new Set(coreSites.map(s=>s.element))];
 
   const polyOpacityInput = document.getElementById('poly-opacity-range');
   const polyOpacity = polyOpacityInput ? polyOpacityInput.value/100 : 0.35;
   const transparencyInput = document.getElementById('transparency-range');
   const atomOpacity = transparencyInput ? 1 - transparencyInput.value/100 : 1;
 
-  const polyTraces = buildPolyhedraTraces(n, a, polyOpacity);
-  structureIdx = { bonds:0, cell:1, A:2, B:3, polyIdx: polyTraces.map((_,idx)=>4+idx) };
+  const bx=[],by=[],bzz=[];
+  bonds.forEach(b=>{
+    const p = built.sites[b.i].pos, q = built.sites[b.j].pos;
+    bx.push(p[0],q[0],null); by.push(p[1],q[1],null); bzz.push(p[2],q[2],null);
+  });
+  const bondsTrace = { type:'scatter3d', mode:'lines', x:bx,y:by,z:bzz, line:{color:'#999',width:2}, showlegend:false, hoverinfo:'skip', visible:structureLayerState.bonds };
+
+  let cellTrace = null;
+  if (built.hasLattice){
+    const m = built.matrix;
+    const corners = [[0,0,0],[n,0,0],[n,n,0],[0,n,0],[0,0,n],[n,0,n],[n,n,n],[0,n,n]].map(f=>matVec(m,f));
+    const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+    const ex=[],ey=[],ez=[];
+    edges.forEach(([p,q])=>{ ex.push(corners[p][0],corners[q][0],null); ey.push(corners[p][1],corners[q][1],null); ez.push(corners[p][2],corners[q][2],null); });
+    cellTrace = { type:'scatter3d', mode:'lines', x:ex,y:ey,z:ez, line:{color:'#ff6600',width:3}, name:'Unit cell', hoverinfo:'skip', visible: structureLayerState.cell };
+  }
+
+  const speciesTraces = elements.map(el=>{
+    const pts = coreSites.filter(s=>s.element===el);
+    return {
+      type:'scatter3d', mode:'markers',
+      x:pts.map(p=>p.pos[0]), y:pts.map(p=>p.pos[1]), z:pts.map(p=>p.pos[2]),
+      marker:{ size: 5+Math.min(6, covalentRadius(el)*3), color: colorForElement(el), opacity: atomOpacity },
+      name: el, hoverinfo:'name',
+    };
+  });
+
+  const polyTraces = buildPolyhedraFromNeighbors(built, coordination, polyOpacity);
+
+  const traces = [bondsTrace];
+  structureIdx = { bonds:0, cell:null, species:{}, polyIdx:[] };
+  if (cellTrace){ traces.push(cellTrace); structureIdx.cell = traces.length-1; }
+  speciesTraces.forEach(t=>{ traces.push(t); structureIdx.species[t.name] = traces.length-1; });
+  polyTraces.forEach(t=>{ traces.push(t); structureIdx.polyIdx.push(traces.length-1); });
 
   const axesOn = structureLayerState.axes;
   const axisSpec = (label)=>({
@@ -1093,42 +1495,24 @@ function renderStructure(presetCamera){
   });
   const eye = (presetCamera && presetCamera.eye) || {x:1.5,y:1.4,z:1.05};
 
-  Plotly.newPlot('structure-div', [
-    {x:bx,y:by,z:bz, type:'scatter3d', mode:'lines', line:{color:'#bbb',width:2}, showlegend:false, hoverinfo:'skip', visible:structureLayerState.bonds},
-    {x:ex,y:ey,z:ez, type:'scatter3d', mode:'lines', line:{color:'#ff6600',width:3}, name:'Unit cell', hoverinfo:'skip', visible:structureLayerState.cell},
-    {x:cationX,y:cationY,z:cationZ, type:'scatter3d', mode:'markers', marker:{size:7,color:COL_A,opacity:atomOpacity}, name:elA, hoverinfo:'name'},
-    {x:anionX,y:anionY,z:anionZ, type:'scatter3d', mode:'markers', marker:{size:9,color:COL_B,opacity:atomOpacity}, name:elB, hoverinfo:'name'},
-    ...polyTraces,
-  ], {
+  Plotly.newPlot('structure-div', traces, {
     paper_bgcolor:'rgba(0,0,0,0)', margin:{t:4,r:4,b:4,l:4}, showlegend:false,
     scene:{
       xaxis:axisSpec('x (Å)'), yaxis:axisSpec('y (Å)'), zaxis:axisSpec('z (Å)'),
-      aspectmode:'cube',
+      aspectmode: built.hasLattice ? 'data' : 'cube',
       dragmode: dragModeState,
       camera:{ eye, projection:{ type: projectionOrtho ? 'orthographic' : 'perspective' } },
     },
   }, { responsive:true, displayModeBar:false }).then(function(gd){
-    gd.on('plotly_relayout', updateGizmo);
-    updateGizmo();
+    gd.on('plotly_relayout', updateGizmo); updateGizmo();
   });
 
-  document.getElementById('structure-legend').innerHTML = `
-    <div class="legend-chip" style="background:${COL_A}" data-trace="${structureIdx.A}" onclick="toggleSpecies(this)" title="Click to show/hide">${elA}</div>
-    <div class="legend-chip" style="background:${COL_B}" data-trace="${structureIdx.B}" onclick="toggleSpecies(this)" title="Click to show/hide">${elB}</div>
-  `;
+  document.getElementById('structure-legend').innerHTML = elements.map(el =>
+    `<div class="legend-chip" style="background:${colorForElement(el)}" data-trace="${structureIdx.species[el]}" onclick="toggleSpecies(this)" title="Click to show/hide">${el}</div>`
+  ).join('');
 
-  const nAtoms = cationX.length + anionX.length;
-  const volume = a*a*a;
-  document.getElementById('structure-dims').innerHTML = `
-    <div class="dims-title">Structure</div>
-    <div class="dims-row"><span class="dims-lbl">Formula</span><span class="dims-val">${elA}${elB}</span></div>
-    <div class="dims-row"><span class="dims-lbl">Space group</span><span class="dims-val">Pm-3m</span></div>
-    <div class="dims-row"><span class="dims-lbl">Crystal system</span><span class="dims-val">Cubic</span></div>
-    <div class="dims-row"><span class="dims-lbl">Atoms</span><span class="dims-val">${nAtoms}</span></div>
-    <div class="dims-row"><span class="dims-lbl">Volume</span><span class="dims-val">${volume.toFixed(1)} &Aring;&sup3;</span></div>
-    <div class="dims-row sep"><span class="dims-lbl">a = b = c</span><span class="dims-val">${a.toFixed(3)} &Aring;</span></div>
-    <div class="dims-row"><span class="dims-lbl">&alpha;=&beta;=&gamma;</span><span class="dims-val">90&deg;</span></div>
-  `;
+  updateDimsPanel(currentStructure, built);
+  updateStructureAnalysisPanel({ structure: currentStructure, built, bonds, coordination, validation });
 }
 
 function toggleSpecies(el){
@@ -1145,22 +1529,18 @@ function updateGizmo(){
   const eye = cam.eye || {x:1.5,y:1.4,z:1.05};
   const up = cam.up || {x:0,y:0,z:1};
   const center = cam.center || {x:0,y:0,z:0};
-
   let fx=center.x-eye.x, fy=center.y-eye.y, fz=center.z-eye.z;
   const flen=Math.hypot(fx,fy,fz)||1; fx/=flen; fy/=flen; fz/=flen;
   let rx=fy*up.z-fz*up.y, ry=fz*up.x-fx*up.z, rz=fx*up.y-fy*up.x;
   const rlen=Math.hypot(rx,ry,rz)||1; rx/=rlen; ry/=rlen; rz/=rlen;
   const ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
-
   const proj=(vx,vy,vz)=>({ x: vx*rx+vy*ry+vz*rz, y: vx*ux+vy*uy+vz*uz });
   const X=proj(1,0,0), Y=proj(0,1,0), Z=proj(0,0,1);
-
   const svg = document.getElementById('structure-gizmo');
   const cx=32, cy=32, L=24;
   const arm=(v,color)=>{
     const x2=(cx+v.x*L).toFixed(1), y2=(cy-v.y*L).toFixed(1);
-    return `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="3.5" stroke-linecap="round"/>
-            <circle cx="${x2}" cy="${y2}" r="3" fill="${color}"/>`;
+    return `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="3.5" stroke-linecap="round"/><circle cx="${x2}" cy="${y2}" r="3" fill="${color}"/>`;
   };
   svg.innerHTML = arm(Z,'#2a9d2a') + arm(X,'#b02020') + arm(Y,'#2e7dcc');
 }
@@ -1190,12 +1570,8 @@ function toggleStructureLayer(layer, btn){
   if (btn) btn.classList.toggle('active', structureLayerState[layer]);
   const gd = document.getElementById('structure-div');
   if (!gd || !gd.data || !structureIdx) return;
-
   if (layer === 'cell' && structureIdx.cell != null) Plotly.restyle(gd, {visible: structureLayerState.cell}, [structureIdx.cell]);
-  if (layer === 'bonds') {
-    const bondIdx = Array.isArray(structureIdx.bonds) ? structureIdx.bonds : [structureIdx.bonds];
-    Plotly.restyle(gd, {visible: structureLayerState.bonds}, bondIdx);
-  }
+  if (layer === 'bonds') Plotly.restyle(gd, {visible: structureLayerState.bonds}, [structureIdx.bonds]);
   if (layer === 'poly' && structureIdx.polyIdx.length) Plotly.restyle(gd, {visible: structureLayerState.poly}, structureIdx.polyIdx);
   if (layer === 'axes'){
     const on = structureLayerState.axes;
@@ -1213,10 +1589,10 @@ function toggleStructureLayer(layer, btn){
 function toggleSupercell(btn){
   supercellOn = !supercellOn;
   btn.classList.toggle('active', supercellOn);
-  if (!hasData) return;
+  if (!hasData || !currentStructure) return;
   const gd = document.getElementById('structure-div');
   const prevCamera = gd && gd._fullLayout && gd._fullLayout.scene && gd._fullLayout.scene.camera;
-  renderStructure(prevCamera);
+  renderParsedStructure(prevCamera);
 }
 
 function setWorkflowStep(step){
@@ -1248,10 +1624,8 @@ function setViewerBackground(hex){
 function setAtomTransparency(val){
   document.getElementById('transparency-val').textContent = val + '%';
   const gd = document.getElementById('structure-div');
-  if (!gd || !gd.data || !structureIdx) return;
-  const idxs = [structureIdx.A, structureIdx.B];
-  if (structureIdx.S != null) idxs.push(structureIdx.S);
-  Plotly.restyle(gd, {'marker.opacity': 1 - val/100}, idxs);
+  if (!gd || !gd.data || !structureIdx || !structureIdx.species) return;
+  Plotly.restyle(gd, {'marker.opacity': 1 - val/100}, Object.values(structureIdx.species));
 }
 function setPolyOpacity(val){
   document.getElementById('poly-opacity-val').textContent = val + '%';
