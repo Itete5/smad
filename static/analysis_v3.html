@@ -831,11 +831,29 @@ function pickBinaryPair(unique, rnd){
   return ELEMENT_PAIRS[Math.floor(rnd()*ELEMENT_PAIRS.length)];
 }
 
-/* Recognises the Ti/O/S oxysulfate system (e.g. mp-559283, TiOSO4.cif) so
-   it gets routed to a chemically correct octahedra+tetrahedra renderer
-   instead of the generic binary rock-salt lattice below. */
-function isTiOSSystem(unique){
-  return unique.includes('Ti') && unique.includes('O') && unique.includes('S');
+/* Recognises the Ti/O/S oxysulfate system so it gets routed to a
+   chemically correct octahedra+tetrahedra renderer instead of the
+   generic binary rock-salt lattice below. Two checks, both narrow and
+   exact (never a fuzzy per-letter scan across the whole filename --
+   that would misfire on ordinary words: e.g. "sample_vibration.dat"
+   contains the substrings "ti" (vibra-TI-on), "o", and "s" (Sample),
+   which would wrongly hijack the Vibration Visualizer's own sample
+   data into this renderer):
+     1. The strict, case-sensitive element scan above found Ti+O+S.
+     2. The filename is a known Materials Project ID (mp-559283, which
+        is TiOSO4) or literally contains "tioso4" -- MP IDs are opaque
+        numbers with no chemistry encoded in them, so filenames like
+        "mp-559283.cif" have zero uppercase letters and can't be
+        caught by symbol-scanning at all. */
+const KNOWN_TIOSO4_MP_IDS = new Set(['mp-559283']);
+function isKnownTiOSO4Filename(name){
+  const base = (name||'').toLowerCase();
+  const mpMatch = base.match(/mp-\d+/);
+  if (mpMatch && KNOWN_TIOSO4_MP_IDS.has(mpMatch[0])) return true;
+  return /tioso4/.test(base);
+}
+function isTiOSSystem(unique, filename){
+  return (unique.includes('Ti') && unique.includes('O') && unique.includes('S')) || isKnownTiOSO4Filename(filename);
 }
 
 const structureLayerState = { cell:true, bonds:true, poly:false, axes:false };
@@ -1026,7 +1044,7 @@ function renderStructure(presetCamera){
   const rnd = ()=>{ seed = (seed*1103515245 + 12345) >>> 0; return seed/4294967296; };
 
   const uniqueEls = parseElementsFromFilename(loadedFileName, rnd);
-  if (isTiOSSystem(uniqueEls)){
+  if (isTiOSSystem(uniqueEls, loadedFileName)){
     renderTiOSO4Structure(rnd);
     return;
   }

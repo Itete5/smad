@@ -45,6 +45,12 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
+            if "isKnownTiOSO4Filename" in html:
+                score += 16_000_000
+            if "KNOWN_TIOSO4_MP_IDS" in html:
+                score += 15_500_000
+            if "isTiOSSystem(uniqueEls, loadedFileName)" in html:
+                score += 15_250_000
             if "renderTiOSO4Structure" in html:
                 score += 15_000_000
             if "buildTiOSO4Motif" in html:
@@ -109,6 +115,9 @@ def main() -> None:
         "favicon.png",
         'href="/"',
         "renderTiOSO4Structure",
+        "isKnownTiOSO4Filename",
+        "KNOWN_TIOSO4_MP_IDS",
+        "isTiOSSystem(uniqueEls, loadedFileName)",
         "buildTiOSO4Motif",
         "isTiOSSystem",
         "pickBinaryPair",
