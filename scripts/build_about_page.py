@@ -43,6 +43,10 @@ def extract_html() -> str:
                 continue
             html = text[start : end + len("</html>")]
             score = len(html)
+            if "hpc-cluster.png" in html:
+                score += 2_000_000
+            if "Compute infrastructure" in html:
+                score += 1_500_000
             if "jay-rwaka.jpg" in html:
                 score += 1_000_000
             if 'id="theme-toggle"' in html:
@@ -71,6 +75,13 @@ def fix_html(html: str) -> str:
     )
     html = html.replace('src="jay-rwaka.jpg"', 'src="/static/jay-rwaka.jpg"')
     html = html.replace("src='jay-rwaka.jpg'", 'src="/static/jay-rwaka.jpg"')
+    html = re.sub(
+        r'src=(["\'])(?:\./)?hpc-cluster\.png\1',
+        r'src="/static/hpc-cluster.png"',
+        html,
+    )
+    html = html.replace('src="hpc-cluster.png"', 'src="/static/hpc-cluster.png"')
+    html = html.replace("src='hpc-cluster.png'", 'src="/static/hpc-cluster.png"')
     # Prefer known SMAD GitHub link if present as bare github.com
     html = html.replace(
         'href="https://github.com" target="_blank"',
@@ -89,6 +100,8 @@ def main() -> None:
     for s in [
         "favicon.png",
         "/static/jay-rwaka.jpg",
+        "/static/hpc-cluster.png",
+        "Compute infrastructure",
         'id="theme-toggle"',
         "panel-team",
         "Creator, SMAD",

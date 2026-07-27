@@ -147,6 +147,16 @@
     .platform-item h3{font-size:14.5px;margin:0 0 3px;color:var(--tx0);font-weight:600}
     .platform-item p{margin:0;color:var(--tx2);font-size:13px;line-height:1.65}
 
+    /* ── PLATFORM HPC PHOTO ── */
+    .platform-photo-wrap{margin:8px 0 0}
+    .platform-photo{
+      display:block;width:100%;max-height:420px;object-fit:cover;object-position:center;
+      border-radius:var(--r2);border:1px solid var(--bdr2);
+    }
+    .platform-photo-caption{
+      margin:10px 0 0;font-size:12.5px;color:var(--tx2);line-height:1.6;
+    }
+
     /* ── TEAM ── */
     .team-row{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
     .founder-photo{
@@ -253,6 +263,27 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <h2>Compute infrastructure</h2>
+                <p>
+                    Behind the browser interface, SMAD jobs land on a purpose-built high-performance computing
+                    cluster — a multi-node rack that runs DFT, molecular dynamics, Monte Carlo sampling, and
+                    force-field training without leaving the platform workflow.
+                </p>
+                <figure class="platform-photo-wrap">
+                    <img
+                        src="/static/hpc-cluster.png"
+                        alt="SMAD high-performance computing cluster: multi-shelf rack of compute nodes, network switch, and power supplies"
+                        class="platform-photo"
+                    >
+                    <figcaption class="platform-photo-caption">
+                        The SMAD HPC cluster — networked compute nodes, switch fabric, and shared power,
+                        built to host the live calculations behind smad.live.
+                    </figcaption>
+                </figure>
+            </div>
+
             <p class="muted">Modules are pluggable — institutions can swap in their own codes, schedulers, or surrogate models behind the same interface.</p>
         </div>
 
