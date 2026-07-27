@@ -78,31 +78,16 @@
       height:52px;background:var(--bg0);border-bottom:1px solid var(--bdr);
       display:flex;align-items:center;padding:0 22px;position:sticky;top:0;z-index:20;
     }
-    .brand{
-      font-weight:700;font-size:16px;color:var(--tx0);text-decoration:none;
-      letter-spacing:.02em;margin-right:auto;
-    }
-    #nav-links{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
-    .nav-link{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:7px 12px;font-size:12.5px;color:var(--tx2);text-decoration:none;
-      border-radius:var(--r);transition:background var(--t),color var(--t);
+    .nav-home{
+      display:inline-flex;align-items:center;gap:6px;margin-right:auto;
+      padding:7px 10px 7px 0;font-size:12.5px;font-weight:600;color:var(--tx0);
+      text-decoration:none;border-radius:var(--r);
+      transition:color var(--t);
       white-space:nowrap;
     }
-    .nav-link svg{flex-shrink:0}
-    .nav-link:hover{background:var(--bg2);color:var(--tx0)}
-    .nav-link.active{color:var(--acc);font-weight:600}
-    .nav-toggle{display:none;background:none;border:1px solid var(--bdr);border-radius:var(--r);
-      color:var(--tx1);padding:6px 10px;cursor:pointer;font-size:14px}
-    @media (max-width:900px){
-      #nav-links{
-        display:none;position:absolute;top:52px;left:0;right:0;background:var(--bg1);
-        flex-direction:column;align-items:stretch;border-bottom:1px solid var(--bdr);padding:6px;
-      }
-      #nav-links.open{display:flex}
-      .nav-toggle{display:inline-block}
-      .nav-link{padding:10px 12px}
-    }
+    .nav-home svg{flex-shrink:0}
+    .nav-home:hover{color:var(--acc)}
+    #theme-toggle{margin-right:0}
 
     /* ── MAIN ── */
     main{padding:40px 0 70px}
@@ -194,17 +179,10 @@
 
 <!-- NAVBAR -->
 <nav id="navbar">
-    <a class="brand" href="/">SMAD</a>
-    <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-    <button class="nav-toggle" onclick="document.getElementById('nav-links').classList.toggle('open')">☰</button>
-    <div id="nav-links">
-        <a class="nav-link" href="/">
-            <svg width="14" height="14" viewBox="0 0 367 232" fill="currentColor" aria-hidden="true">
-                <g transform="translate(0,232) scale(0.1,-0.1)">
-                    <path d="M1710 1954 c-484 -254 -619 -324 -629 -324 -7 0 -11 37 -11 110 l0
+    <a class="nav-home" href="/" title="SMAD Home">
+        <svg width="14" height="14" viewBox="0 0 367 232" fill="currentColor" aria-hidden="true">
+            <g transform="translate(0,232) scale(0.1,-0.1)">
+                <path d="M1710 1954 c-484 -254 -619 -324 -629 -324 -7 0 -11 37 -11 110 l0
 110 -155 0 -155 0 0 -198 0 -197 -287 -150 -288 -150 178 -3 c161 -2 182 -1
 210 17 29 17 1034 544 1199 628 l67 35 83 -42 c46 -24 128 -66 183 -95 55 -29
 240 -126 410 -215 454 -238 515 -270 570 -301 49 -27 54 -28 232 -31 99 -2
@@ -219,11 +197,14 @@
 145 -32 0 c-18 0 -60 -13 -93 -28z M1490 395 l0 -145 150 0 150 0 0 145 0 145
 -150 0 -150 0 0 -145z M1882 398 l3 -143 148 -3 147 -3 0 146 0 145 -150 0
 -151 0 3 -142z"/>
-                </g>
-            </svg>
-            SMAD Home
-        </a>
-    </div>
+            </g>
+        </svg>
+        SMAD Home
+    </a>
+    <button id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
 </nav>
 
 <main>
