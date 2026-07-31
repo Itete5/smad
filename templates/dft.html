@@ -944,6 +944,12 @@ body.mode-menu-open #bb-icon-close{display:flex}
           <option value="stick">Sticks</option>
           <option value="wire">Wireframe</option>
         </select>
+        <select class="evo-sel" id="evo-dl-fmt" onchange="evoDownloadFmt(this.value);this.value=''" style="font-size:9.5px" title="Download selected structure">
+          <option value="">⬇ CIF / …</option>
+          <option value="cif">CIF</option>
+          <option value="poscar">POSCAR</option>
+          <option value="xyz">XYZ</option>
+        </select>
       </div>
     </div>
 
@@ -3569,6 +3575,94 @@ function evoExportCSV(){
   const rows=EVO.population.map(s=>[s.id,s.gen,s.parents.join('|'),s.mutation,s.sg,s.energy??'',s.enthalpy??'',s.fitness??'',s.status].join(',')).join('\n');
   const b=new Blob([header+rows],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='evolution_results.csv';a.click();URL.revokeObjectURL(u);
 }
+
+/* ── Download selected structure as CIF / POSCAR / XYZ ───────────────── */
+function evoCellFromStructure(s){
+  const brav=s.bravais||'SC', cellTpl=CELL_VECS[brav]||CELL_VECS.SC;
+  const a0=s.a||4, c0=s.c||a0, cz=['HEX','TET'].includes(brav)?c0:a0;
+  const vecs=cellTpl.map((row,i)=>row.map(x=>x*(i===2?cz:a0)));
+  const len=u=>Math.sqrt(u[0]*u[0]+u[1]*u[1]+u[2]*u[2]);
+  const dot=(u,w)=>u[0]*w[0]+u[1]*w[1]+u[2]*w[2];
+  const ang=(u,w)=>{const d=len(u)*len(w);return d<1e-12?90:Math.acos(Math.max(-1,Math.min(1,dot(u,w)/d)))*180/Math.PI;};
+  return {
+    a:len(vecs[0]), b:len(vecs[1]), c:len(vecs[2]),
+    alpha:ang(vecs[1],vecs[2]), beta:ang(vecs[0],vecs[2]), gamma:ang(vecs[0],vecs[1]),
+    vecs,
+  };
+}
+function evoStructureToCIF(s, meta={}){
+  if(!s||!s.atoms?.length)return null;
+  const cell=evoCellFromStructure(s);
+  const name=(s.formula||'structure').replace(/\s+/g,'_');
+  const sg=meta.sg||'P 1';
+  let cif=`# SMAD Evolution${meta.id!=null?' #'+meta.id:''}${meta.energy!=null?', E='+meta.energy.toFixed(5)+' Ry/atom':''}\n`;
+  cif+=`data_${name}\n_chemical_formula_sum '${s.formula||name}'\n`;
+  cif+=`_cell_length_a ${cell.a.toFixed(6)}\n_cell_length_b ${cell.b.toFixed(6)}\n_cell_length_c ${cell.c.toFixed(6)}\n`;
+  cif+=`_cell_angle_alpha ${cell.alpha.toFixed(4)}\n_cell_angle_beta ${cell.beta.toFixed(4)}\n_cell_angle_gamma ${cell.gamma.toFixed(4)}\n`;
+  cif+=`_symmetry_space_group_name_H-M '${sg}'\nloop_\n_atom_site_label\n_atom_site_type_symbol\n_atom_site_fract_x\n_atom_site_fract_y\n_atom_site_fract_z\n`;
+  const counts={};
+  s.atoms.forEach(a=>{
+    const el=a.el||'X';
+    counts[el]=(counts[el]||0)+1;
+    const f=a.f||[0,0,0];
+    cif+=`${(el+counts[el]).padEnd(8)} ${el.padEnd(4)} ${(+f[0]).toFixed(6)}  ${(+f[1]).toFixed(6)}  ${(+f[2]).toFixed(6)}\n`;
+  });
+  return cif;
+}
+function evoStructureToPOSCAR(s){
+  if(!s||!s.atoms?.length)return null;
+  const cell=evoCellFromStructure(s);
+  const els=[]; const counts={};
+  s.atoms.forEach(a=>{const el=a.el||'X'; if(!counts[el]){counts[el]=0;els.push(el);} counts[el]++;});
+  let t=`${s.formula||'structure'}  # SMAD Evolution\n1.0\n`;
+  cell.vecs.forEach(v=>{t+=`  ${v.map(x=>x.toFixed(8).padStart(14)).join(' ')}\n`;});
+  t+=els.join('  ')+'\n'+els.map(e=>counts[e]).join('  ')+'\nDirect\n';
+  els.forEach(el=>{
+    s.atoms.filter(a=>(a.el||'X')===el).forEach(a=>{
+      const f=a.f||[0,0,0];
+      t+=`  ${(+f[0]).toFixed(8).padStart(12)}  ${(+f[1]).toFixed(8).padStart(12)}  ${(+f[2]).toFixed(8).padStart(12)}\n`;
+    });
+  });
+  return t;
+}
+function evoStructureToXYZ(s){
+  if(!s||!s.atoms?.length)return null;
+  const cell=evoCellFromStructure(s);
+  const v=cell.vecs;
+  let t=`${s.atoms.length}\n${s.formula||'structure'} Lattice="${v.flat().map(x=>x.toFixed(6)).join(' ')}" Properties=species:S:1:pos:R:3 pbc="T T T"\n`;
+  s.atoms.forEach(a=>{
+    const f=a.f||[0,0,0];
+    const x=v[0][0]*f[0]+v[1][0]*f[1]+v[2][0]*f[2];
+    const y=v[0][1]*f[0]+v[1][1]*f[1]+v[2][1]*f[2];
+    const z=v[0][2]*f[0]+v[1][2]*f[1]+v[2][2]*f[2];
+    t+=`${(a.el||'X').padEnd(4)} ${x.toFixed(6).padStart(12)} ${y.toFixed(6).padStart(12)} ${z.toFixed(6).padStart(12)}\n`;
+  });
+  return t;
+}
+function evoTriggerDownload(text, filename){
+  const b=new Blob([text],{type:'text/plain'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=filename;a.click();
+  URL.revokeObjectURL(u);
+}
+function evoDownloadFmt(fmt){
+  if(!fmt)return;
+  const es=EVO.population.find(s=>s.id===EVO.selectedIdx);
+  if(!es?.structure?.atoms?.length){
+    if(typeof logHPC==='function')logHPC('[Evo] Select a structure first to download');
+    else if(typeof log==='function')log('[Evo] Select a structure first to download');
+    return;
+  }
+  const base=(es.structure.formula||'evo')+'_id'+es.id;
+  let text=null, filename=base;
+  if(fmt==='cif'){text=evoStructureToCIF(es.structure,{id:es.id,sg:es.sg||'P 1',energy:es.energy});filename=base+'.cif';}
+  else if(fmt==='poscar'){text=evoStructureToPOSCAR(es.structure);filename=base+'.POSCAR';}
+  else if(fmt==='xyz'){text=evoStructureToXYZ(es.structure);filename=base+'.xyz';}
+  if(!text)return;
+  evoTriggerDownload(text, filename);
+  if(typeof logHPC==='function')logHPC(`[Evo] Downloaded ${filename}`);
+}
+
 function evoExportResults(){
   const b=new Blob([JSON.stringify({generation:EVO.generation,population:EVO.population,chartData:{gen:EVO.chartGen,bestE:EVO.chartBestE,diversity:EVO.chartDiversity}},null,2)],{type:'application/json'});
   const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='evolution_session.json';a.click();URL.revokeObjectURL(u);
