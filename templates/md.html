@@ -3264,17 +3264,446 @@ function parseFormula(f){
   while((m=re.exec(f))!==null)if(m[1])out.push({el:m[1],n:parseInt(m[2]||'1')});
   return out;
 }
-const StructureGenerator={
-  random(formula,zMin,zMax){
-    const z=zMin+Math.floor(Math.random()*(zMax-zMin+1));
-    const els=parseFormula(formula);
-    if(!els.length)els.push({el:'Si',n:1});
-    const bravais=['FCC','BCC','SC','HEX','TET','ORTH'][Math.floor(Math.random()*6)];
-    const a=3.5+Math.random()*4.5;
-    const c=['HEX','TET'].includes(bravais)?a*(0.8+Math.random()*1.2):a;
-    const atoms=[];
-    els.forEach(({el,n})=>{for(let i=0;i<n*z;i++)atoms.push({el,f:[Math.random(),Math.random(),Math.random()]});});
-    return {formula:els.map(e=>e.el+e.n).join(''),bravais,a:parseFloat(a.toFixed(4)),c:parseFloat(c.toFixed(4)),atoms};
+
+/* ════════════════════════════════════════════════════════════════════
+   SYMMETRY-CONSTRAINED RANDOM STRUCTURE GENERATOR
+   Drop-in replacement for StructureGenerator.random() in the SMAD app.
+
+   Combines:
+   - USPEX-style:   pick a random spacegroup, fill its general
+                    (Wyckoff) positions with random free parameters,
+                    let symmetry operations generate the rest of the cell.
+   - CALYPSO-style: estimate a sensible cell volume from the sum of
+                    covalent-radius spheres (instead of a uniform-random
+                    lattice constant), so cells aren't absurdly
+                    over/under-packed before relaxation even starts.
+   - AIRSS-style:   hard minimum-interatomic-distance rejection
+                    sampling as the safety net, and a guaranteed-to-work
+                    P1 (no symmetry) fallback if every symmetric attempt
+                    fails for a given composition.
+
+   SCOPE / HONESTY NOTE:
+   This implements a curated set of 10 SYMMORPHIC space groups across
+   exactly the three lattice systems the existing SMAD viewer can
+   render and relax correctly today: cubic, tetragonal, hexagonal
+   (CELL_VECS.SC / .TET / .HEX in the app already support these with
+   independent a and c). Orthorhombic / monoclinic / triclinic and
+   non-symmorphic groups (glide planes, screw axes — i.e. operations
+   with fractional translation components) are deliberately excluded:
+   the app's ORTH/MONO/TRI templates only ever use a single scalar `a`
+   and can't currently represent independent b or non-90/120° angles,
+   so generating those symmetries would silently produce structures
+   the viewer draws and relaxes incorrectly. Extending the viewer to
+   support full a,b,c,alpha,beta,gamma is a separate, larger task
+   (touches cfBuildPositions, cfDrawCell, buildQEInputText, evoQEInput).
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ---- minimal covalent radius table (Å) — mirror of CF_CRADII in the app ---- */
+const SYMM_CRADII = {
+  H:.31,He:.28,Li:1.28,Be:.96,B:.84,C:.77,N:.71,O:.66,F:.57,Ne:.58,
+  Na:1.66,Mg:1.41,Al:1.21,Si:1.11,P:1.07,S:1.05,Cl:1.02,Ar:1.06,
+  K:2.03,Ca:1.76,Sc:1.70,Ti:1.60,V:1.53,Cr:1.39,Mn:1.50,Fe:1.32,Co:1.26,
+  Ni:1.24,Cu:1.32,Zn:1.22,Ga:1.22,Ge:1.20,As:1.19,Se:1.20,Br:1.20,
+  Rb:2.20,Sr:1.95,Y:1.90,Zr:1.75,Nb:1.64,Mo:1.54,Ru:1.46,Rh:1.42,Pd:1.39,
+  Ag:1.45,Cd:1.44,In:1.42,Sn:1.39,Sb:1.39,Te:1.38,I:1.39,
+  Cs:2.44,Ba:2.15,La:2.07,Hf:1.75,Ta:1.70,W:1.62,Re:1.51,Os:1.44,Ir:1.41,
+  Pt:1.36,Au:1.36,Hg:1.32,Tl:1.45,Pb:1.46,Bi:1.48,U:1.96,
+  default:1.20,
+};
+
+/* ---- point-group operation generators (derived, not hand-copied) ---- */
+
+/* Full cubic holohedry Oh (order 48): all permutations of (x,y,z) x all
+   sign combinations. This is exactly the symmetry group of a cube, so
+   it's correct by construction — no hand-typed matrices, no transcription
+   risk. Covers Pm-3m / Im-3m / Fm-3m symmorphic groups when combined
+   with the right centering. */
+function cfPermSignOps3() {
+  const perms = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+  const signs = [[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]];
+  const ops = [];
+  perms.forEach(p => signs.forEach(s => {
+    ops.push((x, y, z) => {
+      const v = [x, y, z];
+      return [s[0]*v[p[0]], s[1]*v[p[1]], s[2]*v[p[2]]];
+    });
+  }));
+  return ops; // 48
+}
+
+/* Tetragonal holohedry 4/mmm (order 16): permutations/signs of (x,y)
+   (the square's symmetry, 8 ops) times {z, -z}. Same "correct by
+   construction" trick as cubic, restricted to 2D. */
+function cfTetragonalOps() {
+  const perms = [[0,1],[1,0]];
+  const signs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+  const base = [];
+  perms.forEach(p => signs.forEach(s => {
+    base.push((x, y) => { const v = [x, y]; return [s[0]*v[p[0]], s[1]*v[p[1]]]; });
+  }));
+  const ops = [];
+  base.forEach(fn => {
+    ops.push((x, y, z) => { const [nx, ny] = fn(x, y); return [nx, ny, z]; });
+    ops.push((x, y, z) => { const [nx, ny] = fn(x, y); return [nx, ny, -z]; });
+  });
+  return ops; // 16
+}
+
+/* Hexagonal/trigonal in-plane operations, derived by iterating the
+   standard hexagonal 6-fold rotation matrix M:(x,y)->(x-y,x) rather
+   than recalled from memory, then composing with an in-plane mirror
+   R:(x,y)->(y,x). fold6=true gives the 6-fold (hexagonal) subset,
+   fold6=false gives the 3-fold (trigonal) subset. zFlip adds the
+   horizontal mirror/inversion doubling (×2) for the centrosymmetric
+   groups (6/mmm, -3m1); omit it for the polar ones (3m1). */
+function cfHexInPlane2D(fold6) {
+  const rotSeq = [];
+  let v = (x, y) => [x, y];
+  for (let k = 0; k < 6; k++) {
+    const prev = v;
+    rotSeq.push(prev);
+    v = (x, y) => { const [px, py] = prev(x, y); return [px - py, px]; };
+  }
+  const rotOnly = fold6 ? rotSeq : [rotSeq[0], rotSeq[2], rotSeq[4]];
+  const mirror = (x, y) => [y, x];
+  const ops2d = [];
+  rotOnly.forEach(fn => ops2d.push(fn));
+  rotOnly.forEach(fn => ops2d.push((x, y) => { const [rx, ry] = fn(x, y); return mirror(rx, ry); }));
+  return ops2d; // 12 (fold6=true) or 6 (fold6=false)
+}
+function cfHexOps3D(fold6, zFlip) {
+  const ops2d = cfHexInPlane2D(fold6);
+  const ops = [];
+  ops2d.forEach(fn => {
+    ops.push((x, y, z) => { const [nx, ny] = fn(x, y); return [nx, ny, z]; });
+    if (zFlip) ops.push((x, y, z) => { const [nx, ny] = fn(x, y); return [nx, ny, -z]; });
+  });
+  return ops;
+}
+
+/* ---- centering translations ---- */
+const SYMM_CENTERING = {
+  P: [[0,0,0]],
+  I: [[0,0,0],[0.5,0.5,0.5]],
+  F: [[0,0,0],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5]],
+  R: [[0,0,0],[2/3,1/3,1/3],[1/3,2/3,2/3]], // hexagonal setting, obverse
+};
+
+/* ---- curated space group table (symmorphic only, 3 lattice systems) ---- */
+const SYMM_SPACEGROUPS = [
+  { name:'Pm-3m',        number:221, system:'cubic',      centering:'P', ops:cfPermSignOps3() },
+  { name:'Im-3m',        number:229, system:'cubic',      centering:'I', ops:cfPermSignOps3() },
+  { name:'Fm-3m',        number:225, system:'cubic',      centering:'F', ops:cfPermSignOps3() },
+  { name:'Fd-3m*',       number:227, system:'cubic',      centering:'F', ops:cfPermSignOps3(),
+    note:'approximated via Fm-3m operations; the true diamond glide is not modeled' },
+  { name:'P4/mmm',       number:123, system:'tetragonal', centering:'P', ops:cfTetragonalOps() },
+  { name:'I4/mmm',       number:139, system:'tetragonal', centering:'I', ops:cfTetragonalOps() },
+  { name:'P6/mmm',       number:191, system:'hexagonal',  centering:'P', ops:cfHexOps3D(true,  true) },
+  { name:'P-3m1',        number:164, system:'hexagonal',  centering:'P', ops:cfHexOps3D(false, true) },
+  { name:'P3m1',         number:156, system:'hexagonal',  centering:'P', ops:cfHexOps3D(false, false) },
+  { name:'R-3m',         number:166, system:'hexagonal',  centering:'R', ops:cfHexOps3D(false, true) },
+];
+
+/* ---- lattice vector convention — must exactly match the app's CELL_VECS
+   for SC/TET/HEX so distance-checking here agrees with what the viewer
+   will actually render ---- */
+const SYMM_CELL_VECS = {
+  SC:  [[1,0,0],[0,1,0],[0,0,1]],
+  TET: [[1,0,0],[0,1,0],[0,0,1]],
+  HEX: [[1,0,0],[-0.5,0.8660254037844386,0],[0,0,1]],
+};
+function symmFracToCart(f, bravais, a0, cz) {
+  const cell = SYMM_CELL_VECS[bravais];
+  const [fx, fy, fz] = f;
+  return [
+    (cell[0][0]*fx + cell[1][0]*fy + cell[2][0]*fz) * a0,
+    (cell[0][1]*fx + cell[1][1]*fy + cell[2][1]*fz) * a0,
+    (cell[0][2]*fx + cell[1][2]*fy + cell[2][2]*fz) * cz,
+  ];
+}
+function symmCz(bravais, a, c) { return (bravais === 'TET' || bravais === 'HEX') ? c : a; }
+
+/* ---- formula parsing (same convention as the app's parseFormula) ---- */
+function symmParseFormula(f) {
+  const re = /([A-Z][a-z]?)(\d*)/g, out = [];
+  let m;
+  while ((m = re.exec(f)) !== null) if (m[1]) out.push({ el: m[1], n: parseInt(m[2] || '1') });
+  return out;
+}
+
+/* ---- CALYPSO-style volume estimate from covalent-radius spheres ---- */
+function symmEstimateVolume(elementCounts) {
+  let sphereVol = 0;
+  elementCounts.forEach(({ el, count }) => {
+    const r = SYMM_CRADII[el] || SYMM_CRADII.default;
+    sphereVol += count * (4/3) * Math.PI * r*r*r;
+  });
+  const packingFactor = 1.6 + Math.random() * 1.4; // 1.6–3.0
+  return sphereVol * packingFactor;
+}
+
+/* ---- lattice parameters consistent with the crystal system ---- */
+function symmGenerateLattice(system, targetVolume) {
+  if (system === 'cubic') {
+    const a = Math.cbrt(targetVolume);
+    return { a, c: a };
+  }
+  if (system === 'tetragonal') {
+    const ratio = 0.6 + Math.random() * 1.2; // c/a in [0.6, 1.8]
+    const a = Math.cbrt(targetVolume / ratio);
+    return { a, c: ratio * a };
+  }
+  if (system === 'hexagonal') {
+    const ratio = 0.6 + Math.random() * 2.0; // c/a in [0.6, 2.6]
+    const k = Math.sqrt(3) / 2; // sin(120deg)
+    const a = Math.cbrt(targetVolume / (k * ratio));
+    return { a, c: ratio * a };
+  }
+  throw new Error('unsupported system ' + system);
+}
+
+/* ---- minimum-interatomic-distance check (checks periodic images) ---- */
+function symmMinDistOK(atomsFrac, bravais, a, c, tolFactor) {
+  const cz = symmCz(bravais, a, c);
+  const cart = atomsFrac.map(at => symmFracToCart(at.f, bravais, a, cz));
+  const shifts = [-1, 0, 1];
+  for (let i = 0; i < atomsFrac.length; i++) {
+    for (let j = i; j < atomsFrac.length; j++) {
+      for (const sx of shifts) for (const sy of shifts) for (const sz of shifts) {
+        if (i === j && sx === 0 && sy === 0 && sz === 0) continue;
+        const fj = [atomsFrac[j].f[0]+sx, atomsFrac[j].f[1]+sy, atomsFrac[j].f[2]+sz];
+        const pj = symmFracToCart(fj, bravais, a, cz);
+        const dx = cart[i][0]-pj[0], dy = cart[i][1]-pj[1], dz = cart[i][2]-pj[2];
+        const d = Math.sqrt(dx*dx+dy*dy+dz*dz);
+        const ri = SYMM_CRADII[atomsFrac[i].el] || SYMM_CRADII.default;
+        const rj = SYMM_CRADII[atomsFrac[j].el] || SYMM_CRADII.default;
+        const minD = (ri + rj) * tolFactor;
+        if (d > 1e-4 && d < minD) return false;
+      }
+    }
+  }
+  return true;
+}
+
+/* ---- special-position (Wyckoff) support ----
+   The general position alone (previous version of this file) is the
+   LARGEST-multiplicity, lowest-site-symmetry orbit — for cubic groups
+   that's 48/96/192 depending on centering. Real structures very often
+   need far fewer atoms than that per cell (diamond Si is 2 atoms in
+   the primitive cell; rocksalt MgO is 2 atoms; conventional-cell
+   equivalents are still only 4-8). Those fit because they sit on
+   SPECIAL positions — fixed points on a symmetry element (an axis,
+   plane, or center) whose orbit is smaller because some operations
+   map the point to itself instead of to a new point.
+
+   Rather than hand-transcribing Wyckoff tables (real transcription-
+   error risk), the multiplicity of any candidate point is computed
+   directly by applying the already-verified operations to it and
+   counting the distinct images — this is exactly what the orbit *is*,
+   so it's correct by construction for whatever ops/centering a
+   spacegroup actually has. */
+const SYMM_CANDIDATE_SPECIAL_POINTS = [
+  [0,0,0], [0.5,0.5,0.5], [0.5,0.5,0], [0.5,0,0.5], [0,0.5,0.5],
+  [0.5,0,0], [0,0.5,0], [0,0,0.5],
+  [0.25,0.25,0.25], [0.75,0.75,0.75], [0.25,0.75,0.75], [0.75,0.25,0.75],
+  [0.75,0.75,0.25], [0.25,0.25,0.75], [0.75,0.25,0.25], [0.25,0.75,0.25],
+  [1/3,2/3,0], [2/3,1/3,0], [1/3,2/3,0.5], [2/3,1/3,0.5],
+  [0,0,0.25], [0,0,0.75],
+];
+
+function symmOrbitOf(sg, seedPoint) {
+  const centerings = SYMM_CENTERING[sg.centering];
+  const seen = new Map(); // key -> [fx,fy,fz]
+  for (const op of sg.ops) {
+    const [ox, oy, oz] = op(seedPoint[0], seedPoint[1], seedPoint[2]);
+    for (const ct of centerings) {
+      const fx = ((ox+ct[0]) % 1 + 1) % 1;
+      const fy = ((oy+ct[1]) % 1 + 1) % 1;
+      const fz = ((oz+ct[2]) % 1 + 1) % 1;
+      const key = fx.toFixed(4) + ',' + fy.toFixed(4) + ',' + fz.toFixed(4);
+      if (!seen.has(key)) seen.set(key, [fx, fy, fz]);
+    }
+  }
+  return [...seen.values()];
+}
+
+/* mult -> list of usable seeds for that multiplicity. `null` seed means
+   "true general position: draw a random free (x,y,z)". Built once per
+   spacegroup and cached on the sg object. */
+function symmBuildWyckoffTable(sg) {
+  const table = {};
+  const generalMult = sg.ops.length * SYMM_CENTERING[sg.centering].length;
+  table[generalMult] = [null];
+  SYMM_CANDIDATE_SPECIAL_POINTS.forEach(p => {
+    const m = symmOrbitOf(sg, p).length;
+    if (!table[m]) table[m] = [];
+    if (table[m].length < 4 && !table[m].includes(p)) table[m].push(p);
+  });
+  return table;
+}
+
+/* Find a multiset of available multiplicities (repetition allowed)
+   summing exactly to `target`, preferring fewer/larger sites first
+   (more realistic — real structures rarely spread one element over
+   many distinct Wyckoff sites). Simple bounded DFS; the candidate
+   multiplicity set is small (<12 values) so this is cheap. */
+function symmFindMultiplicityCombo(availableMults, target, maxSites = 4) {
+  const mults = [...new Set(availableMults)].sort((a, b) => b - a);
+  function dfs(remaining, sitesLeft, startIdx) {
+    if (remaining === 0) return [];
+    if (sitesLeft === 0) return null;
+    for (let i = startIdx; i < mults.length; i++) {
+      const m = mults[i];
+      if (m <= remaining) {
+        const rest = dfs(remaining - m, sitesLeft - 1, i); // i, not i+1: reuse allowed
+        if (rest !== null) return [m, ...rest];
+      }
+    }
+    return null;
+  }
+  return dfs(target, maxSites, 0);
+}
+
+/* ---- fill Wyckoff positions (general + special) for one random draw ---- */
+function symmFillWyckoff(sg, elementCounts) {
+  if (!sg._wyckoffTable) sg._wyckoffTable = symmBuildWyckoffTable(sg);
+  const table = sg._wyckoffTable;
+  const availableMults = Object.keys(table).map(Number);
+
+  const atoms = [];
+  for (const ec of elementCounts) {
+    const combo = symmFindMultiplicityCombo(availableMults, ec.count);
+    if (!combo) return null; // this spacegroup structurally cannot host this element's count
+    for (const m of combo) {
+      const seeds = table[m];
+      const seed = seeds[Math.floor(Math.random() * seeds.length)];
+      const point = seed === null ? [Math.random(), Math.random(), Math.random()] : seed;
+      symmOrbitOf(sg, point).forEach(f => atoms.push({ el: ec.el, f }));
+    }
+  }
+  return atoms;
+}
+
+/* ---- AIRSS-style fallback: no symmetry, pure random + rejection ---- */
+function symmFallbackP1(elementCounts, tolFactor, maxTries = 300) {
+  for (let t = 0; t < maxTries; t++) {
+    const vol = symmEstimateVolume(elementCounts) * (1 + t*0.01); // widen slowly if struggling
+    const a = Math.cbrt(vol);
+    const atoms = [];
+    elementCounts.forEach(ec => {
+      for (let i = 0; i < ec.count; i++) atoms.push({ el: ec.el, f: [Math.random(), Math.random(), Math.random()] });
+    });
+    if (symmMinDistOK(atoms, 'SC', a, a, tolFactor)) {
+      return {
+        formula: elementCounts.map(e => e.el + e.count).join(''),
+        bravais: 'SC', a, c: a, atoms,
+        _meta: { spacegroup: 'P1 (fallback, no symmetry)', spacegroupNumber: 1 },
+      };
+    }
+  }
+  // absolute last resort — pad volume generously so it's at least non-overlapping-ish
+  const vol = symmEstimateVolume(elementCounts) * 1.6;
+  const a = Math.cbrt(vol);
+  const atoms = [];
+  elementCounts.forEach(ec => { for (let i = 0; i < ec.count; i++) atoms.push({ el: ec.el, f: [Math.random(), Math.random(), Math.random()] }); });
+  return {
+    formula: elementCounts.map(e => e.el + e.count).join(''),
+    bravais: 'SC', a, c: a, atoms,
+    _meta: { spacegroup: 'P1 (fallback, unconstrained)', spacegroupNumber: 1 },
+  };
+}
+
+/* ---- main entry point ---- */
+const SymmetryStructureGenerator = {
+  generate(formulaStr, zMin, zMax, opts = {}) {
+    const tolFactor = opts.tolFactor ?? 0.55;
+    const maxSpacegroupAttempts = opts.maxSpacegroupAttempts ?? 40;
+    const maxLatticeAttempts = opts.maxLatticeAttempts ?? 3;
+    const maxCoordAttemptsPerLattice = opts.maxCoordAttemptsPerLattice ?? 15;
+
+    const baseEls = symmParseFormula(formulaStr);
+    if (!baseEls.length) baseEls.push({ el: 'Si', n: 1 });
+    const z = zMin + Math.floor(Math.random() * (zMax - zMin + 1));
+    const elementCounts = baseEls.map(e => ({ el: e.el, count: e.n * z }));
+    const totalAtoms = elementCounts.reduce((s, e) => s + e.count, 0);
+
+    const pool = [...SYMM_SPACEGROUPS].sort(() => Math.random() - 0.5);
+
+    for (let attempt = 0; attempt < maxSpacegroupAttempts; attempt++) {
+      const sg = pool[attempt % pool.length];
+      if (!sg._wyckoffTable) sg._wyckoffTable = symmBuildWyckoffTable(sg);
+      const availableMults = Object.keys(sg._wyckoffTable).map(Number);
+      const feasible = elementCounts.every(ec => symmFindMultiplicityCombo(availableMults, ec.count) !== null);
+      if (!feasible) continue; // no combination of this group's Wyckoff sites hits this element's count
+
+      for (let latticeTry = 0; latticeTry < maxLatticeAttempts; latticeTry++) {
+        const vol = symmEstimateVolume(elementCounts);
+        const { a, c } = symmGenerateLattice(sg.system, vol);
+        const bravais = sg.system === 'cubic' ? 'SC' : sg.system === 'tetragonal' ? 'TET' : 'HEX';
+
+        for (let coordTry = 0; coordTry < maxCoordAttemptsPerLattice; coordTry++) {
+          const atoms = symmFillWyckoff(sg, elementCounts);
+          if (!atoms || atoms.length !== totalAtoms) continue; // combo infeasible or an orbit collapsed unexpectedly
+          if (symmMinDistOK(atoms, bravais, a, c, tolFactor)) {
+            return {
+              formula: elementCounts.map(e => e.el + e.count).join(''),
+              bravais, a, c, atoms,
+              _meta: { spacegroup: sg.name, spacegroupNumber: sg.number, z, volumeEstimate: vol },
+            };
+          }
+        }
+      }
+    }
+
+    return symmFallbackP1(elementCounts, tolFactor);
+  },
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   DROP-IN REPLACEMENT for the app's `StructureGenerator` object.
+   Same call signature as the original — random(formula, zMin, zMax,
+   useSymmetry) — so PopulationManager.generateInitial() needs no
+   changes. `mitosis()` is untouched (still a simple strain+jitter of
+   a parent, which is legitimate as-is).
+
+   When useSymmetry is false, falls back to the ORIGINAL fully-random
+   placement so the "Symmetry-aware Generator" checkbox in the UI
+   remains a genuine on/off toggle rather than always-on.
+   ════════════════════════════════════════════════════════════════════ */
+const StructureGenerator = {
+  random(formula, zMin, zMax, useSymmetry) {
+    if (useSymmetry === false) {
+      // original naive behavior, preserved as an explicit opt-out
+      const z = zMin + Math.floor(Math.random() * (zMax - zMin + 1));
+      const els = symmParseFormula(formula);
+      if (!els.length) els.push({ el: 'Si', n: 1 });
+      const bravais = ['FCC','BCC','SC','HEX','TET','ORTH'][Math.floor(Math.random()*6)];
+      const a = 3.5 + Math.random()*4.5;
+      const c = ['HEX','TET'].includes(bravais) ? a*(0.8+Math.random()*1.2) : a;
+      const atoms = [];
+      els.forEach(({ el, n }) => { for (let i=0;i<n*z;i++) atoms.push({ el, f:[Math.random(),Math.random(),Math.random()] }); });
+      return { formula: els.map(e=>e.el+e.n).join(''), bravais, a: parseFloat(a.toFixed(4)), c: parseFloat(c.toFixed(4)), atoms };
+    }
+
+    const result = SymmetryStructureGenerator.generate(formula, zMin, zMax);
+
+    // Surface the chosen spacegroup in the app's console if it's available
+    const _symMsg = `[symgen] ${result.formula} via ${result._meta.spacegroup} `+
+        `(SG#${result._meta.spacegroupNumber}, Z=${result._meta.z ?? '—'}) — `+
+        `${result.atoms.length} atoms, a=${result.a.toFixed(3)}Å, c=${result.c.toFixed(3)}Å`;
+    if (typeof log === 'function') log(_symMsg);
+    else if (typeof logHPC === 'function') logHPC(_symMsg);
+
+    return { formula: result.formula, bravais: result.bravais, a: result.a, c: result.c, atoms: result.atoms };
+  },
+
+  /* unchanged from the original app — small strain + coordinate jitter of a parent */
+  mitosis(parent) {
+    const s = JSON.parse(JSON.stringify(parent.structure));
+    s.a *= (0.97 + Math.random() * 0.06);
+    s.c = (s.c || s.a) * (0.97 + Math.random() * 0.06);
+    s.atoms = s.atoms.map(a => ({ ...a, f: a.f.map(x => ((x + 0.04*(Math.random()-.5) + 1) % 1)) }));
+    return s;
   },
 };
 
