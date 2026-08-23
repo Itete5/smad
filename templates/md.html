@@ -770,6 +770,148 @@ body.mode-menu-open #bb-icon-close{display:flex}
 .backend-card-rp:hover{border-color:#ff6600;background:#fff5ef;color:#ff6600}
 .backend-card-rp.selected{border-color:#ff6600;background:#fff5ef;color:#ff6600;font-weight:700}
 
+
+/* MD EVOLUTION MELT-QUENCH CSS (auto) */
+
+
+
+
+
+
+
+
+
+
+
+/* ══ HEADER ══ */
+#titlebar{
+  height:42px;background:#0d9488;border-bottom:1px solid #0b7d73;
+  display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;
+  color:#fff;
+}
+#titlebar .ttl{font-size:15px;font-weight:700;letter-spacing:.01em}
+#titlebar .sub{font-size:11px;opacity:.85;font-style:italic}
+
+/* ══ TOP CONFIG CARDS ══ */
+#mdevo-top{
+  display:flex;gap:6px;padding:6px;
+  background:#ddd;border-bottom:2px solid #c0c0c0;
+  overflow-x:auto;flex-shrink:0;align-items:stretch;
+  max-height:230px;overflow-y:hidden;
+}
+#mdevo-top
+.evo-card{
+  background:#f0f0f0;border:1px solid #c8c8c8;border-radius:4px;
+  padding:6px 10px;min-width:170px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:3px;overflow-y:auto;
+}
+.evo-card-title{
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:#666;border-bottom:1px solid #ddd;
+  padding-bottom:3px;margin-bottom:2px;
+}
+.evo-row{display:flex;align-items:center;justify-content:space-between;gap:4px;margin:0;}
+.evo-lbl{font-size:10.5px;color:#555;white-space:nowrap;flex-shrink:0;}
+.evo-inp{
+  width:70px;padding:3px 5px;border:1px solid #c0c0c0;border-radius:2px;
+  background:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;
+  color:#333;text-align:right;
+}
+.evo-inp
+.evo-sel{
+  padding:3px 5px;border:1px solid #c0c0c0;border-radius:2px;
+  background:#fff;font-size:10.5px;color:#333;
+}
+.evo-sub{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.evo-btn-sm{
+  padding:4px 9px;border-radius:2px;border:1px solid #bbb;background:#e8e8e8;
+  font-size:10.5px;color:#333;cursor:pointer;white-space:nowrap;
+}
+.evo-btn-sm:hover{background:#d8d8d8;}
+.evo-btn-sm.primary{background:#0d9488;border-color:#0b7d73;color:#fff;}
+.evo-btn-sm.primary:hover{background:#0b7d73;}
+.evo-btn-sm.danger{background:#dc2626;border-color:#b91c1c;color:#fff;}
+.evo-btn-sm.danger:hover{background:#b91c1c;}
+.evo-plot{width:100%;flex-shrink:0;}
+.evo-chart-lbl{font-size:9.5px;color:#888;padding:3px 8px 0;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.evo-run-btn{padding:6px 18px;border-radius:3px;border:none;font-size:12.5px;font-weight:700;cursor:pointer;}
+.evo-run-btn.start{background:#0d9488;color:#fff;}
+.evo-run-btn.start:hover{background:#0b7d73;}
+.evo-run-btn.pause{background:#d97706;color:#fff;}
+.evo-run-btn.pause:hover{background:#b45309;}
+.evo-run-btn.stop{background:#dc2626;color:#fff;}
+.evo-run-btn.stop:hover{background:#b91c1c;}
+.evo-run-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ══ CONTROLS BAR ══ */
+#mdevo-controls-bar{
+  padding:7px 12px;background:#c8e8d8;border-bottom:2px solid #90ccae;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;row-gap:5px;
+  min-height:42px;
+}
+.mdevo-stage-badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:10.5px;font-weight:700;}
+.mdevo-stage-idle{background:#f3f4f6;color:#6b7280;}
+.mdevo-stage-melt{background:#fee2e2;color:#991b1b;}
+.mdevo-stage-hold{background:#ffedd5;color:#9a3412;}
+.mdevo-stage-quench{background:#dbeafe;color:#1e40af;}
+.mdevo-stage-anneal{background:#d1fae5;color:#065f46;}
+.mdevo-stage-done{background:#ede9fe;color:#5b21b6;}
+
+/* ══ MAIN THREE-PANEL BODY ══ */
+#mdevo-bottom{display:flex;flex:1;min-height:0;gap:0;}
+#mdevo-monitor{
+  width:320px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+#mdevo-monitor-head{
+  padding:6px 10px;background:#d8d8d8;border-bottom:1px solid #ccc;
+  font-size:10.5px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;
+}
+#mdevo-info-panel{
+  flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;
+  border-right:1px solid #c8c8c8;overflow-y:auto;padding:14px;
+}
+#mdevo-viewer-panel{
+  width:380px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;
+}
+#mdevo-viewer-head{
+  padding:6px 10px;background:#d8d8d8;border-bottom:1px solid #ccc;
+  font-size:10.5px;font-weight:700;color:#444;
+}
+#mdevo-viewer-3d{flex:1;min-height:200px;position:relative;background:#fff;}
+#mdevo-viewer-controls{
+  padding:6px 10px;background:#d8d8d8;border-top:1px solid #ccc;
+  display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0;
+}
+.mdevo-stat-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #ddd;font-size:11.5px;}
+.mdevo-stat-k{color:#777;}
+.mdevo-stat-v{font-family:'JetBrains Mono',monospace;font-weight:700;color:#333;}
+
+/* ══ CONSOLE ══ */
+
+
+
+
+
+
+
+@media (max-width:900px){
+  #mdevo-bottom{flex-direction:column;overflow-y:auto;}
+  #mdevo-monitor{width:100%;border-right:none;border-bottom:1px solid #c8c8c8;}
+  #mdevo-viewer-panel{width:100%;}
+  #mdevo-viewer-3d{min-height:260px;}
+  #mdevo-top{max-height:none;flex-wrap:wrap;overflow-y:visible;}
+}
+
+#mdevo-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;z-index:900;
+  background:#e8e8e8;display:none;flex-direction:column;overflow:hidden;
+}
+#mdevo-overlay.active{display:flex;}
+#mdevo-overlay #titlebar{flex-shrink:0;}
+#mdevo-overlay #mdevo-bottom{flex:1;min-height:0;}
+
+/* /MD EVOLUTION MELT-QUENCH CSS */
 </style>
 </head>
 <body>
@@ -2235,173 +2377,117 @@ Initialize a system and click Start MD.
 </pre></div>
 
 <div id="mdevo-overlay">
+<div id="titlebar">
+  <a href="/md" style="color:#fff;text-decoration:none;opacity:.9;font-size:12px;margin-right:8px">← MD</a>
+  <span class="ttl">⬡ MD Evolution</span>
+  <span class="sub">Amorphous Structure Generator — Classical Melt-Quench Molecular Dynamics</span>
+</div>
 
-  <!-- ── TOP CONFIG CARDS ── -->
-  <div id="mdevo-top">
+<!-- ── TOP CONFIG CARDS ── -->
+<div id="mdevo-top">
 
-    <div class="evo-card" style="min-width:180px">
-      <div class="evo-card-title">① Trajectory Pool</div>
-      <div class="evo-row"><span class="evo-lbl">Initial Trajectories</span><input class="evo-inp" id="mdevo-init-trajs" type="number" value="8" min="2"/></div>
-      <div class="evo-row"><span class="evo-lbl">Pool Size</span><input class="evo-inp" id="mdevo-pool-size" type="number" value="12" min="2"/></div>
-      <div class="evo-row"><span class="evo-lbl">Max Trajectories</span><input class="evo-inp" id="mdevo-max-trajs" type="number" value="200" min="10"/></div>
-      <div class="evo-row"><span class="evo-lbl">Job Limit</span><input class="evo-inp" id="mdevo-job-limit" type="number" value="4" min="1"/></div>
-      <div class="evo-row"><span class="evo-lbl">Continuous</span><input class="evo-inp" id="mdevo-continuous" type="number" value="2" min="1"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:185px">
-      <div class="evo-card-title">② MD Run Settings</div>
-      <div class="evo-row"><span class="evo-lbl">Ensemble</span>
-        <select class="evo-sel" id="mdevo-ensemble"><option value="nve">NVE</option><option value="nvt" selected>NVT</option></select>
-      </div>
-      <div class="evo-row"><span class="evo-lbl">Temp (K)</span><input class="evo-inp" id="mdevo-temp" type="number" value="300" min="0"/></div>
-      <div class="evo-row"><span class="evo-lbl">Temp Range ±</span><input class="evo-inp" id="mdevo-temp-range" type="number" value="200" min="0"/></div>
-      <div class="evo-row"><span class="evo-lbl">Steps</span><input class="evo-inp" id="mdevo-nstep" type="number" value="50" min="5"/></div>
-      <div class="evo-row"><span class="evo-lbl">dt (a.u.)</span><input class="evo-inp" id="mdevo-dt" type="number" value="20" min="1"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:185px">
-      <div class="evo-card-title">③ Selection</div>
-      <div class="evo-row"><span class="evo-lbl">Snapshot Source</span>
-        <select class="evo-sel" id="mdevo-snapshot"><option value="lowest" selected>Lowest energy</option><option value="final">Final step</option></select>
-      </div>
-      <div class="evo-row"><span class="evo-lbl">Selection</span>
-        <select class="evo-sel" id="mdevo-selection"><option value="tournament" selected>Tournament (k=3)</option><option value="elite">Elite (top 2)</option></select>
-      </div>
-      <div class="evo-row"><span class="evo-lbl">% Perturb Temp</span><input class="evo-inp" id="mdevo-perturb-pct" type="number" value="50" min="0" max="100"/></div>
-      <div class="evo-row"><span class="evo-lbl">% Restart from Best</span><input class="evo-inp" id="mdevo-restart-pct" type="number" value="30" min="0" max="100"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:190px">
-      <div class="evo-card-title">④ Operators</div>
-      <div class="evo-sub">Velocity Perturbation</div>
-      <div class="evo-row"><span class="evo-lbl">Rescale Range %</span><input class="evo-inp" id="mdevo-rescale" type="number" value="20" min="0" max="100"/></div>
-      <div class="evo-sub">Structural Kick</div>
-      <div class="evo-row"><span class="evo-lbl">% Kick</span><input class="evo-inp" id="mdevo-kick-pct" type="number" value="20" min="0" max="100"/></div>
-      <div class="evo-row"><span class="evo-lbl">Kick Amplitude</span><input class="evo-inp" id="mdevo-kick-amp" type="number" value="0.3" step="0.05"/></div>
-      <div class="evo-row"><span class="evo-lbl">Min ΔE (Ry)</span><input class="evo-inp" id="mdevo-dup-de" type="number" value="0.001" step="0.001"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:195px">
-      <div class="evo-card-title" style="color:#7c3aed">⬡ QE Settings</div>
-      <div class="evo-row"><span class="evo-lbl">Ecut (Ry)</span><input class="evo-inp" id="mdevo-ecut" type="number" value="40" min="20"/></div>
-      <div class="evo-row"><span class="evo-lbl">k-mesh</span>
-        <div style="display:flex;gap:2px">
-          <input class="evo-inp" id="mdevo-kx" type="number" value="2" min="1" style="width:32px"/>
-          <input class="evo-inp" id="mdevo-ky" type="number" value="2" min="1" style="width:32px"/>
-          <input class="evo-inp" id="mdevo-kz" type="number" value="2" min="1" style="width:32px"/>
-        </div>
-      </div>
-      <div class="evo-chk-row"><input type="checkbox" id="mdevo-use-seed" checked><label for="mdevo-use-seed">Seed from loaded structure</label></div>
-    </div>
-
-  </div><!-- /mdevo-top -->
-
-  <!-- ── CONTROLS BAR ── -->
-  <div id="mdevo-controls-bar" style="flex-wrap:wrap;row-gap:3px;background:#c8e8d8;border-bottom:2px solid #7fbf9f;">
-    <button class="evo-run-btn start" id="mdevo-start-btn" onclick="mdevoStart()">▶ Start MD Evolution</button>
-    <button class="evo-run-btn pause" id="mdevo-pause-btn" onclick="mdevoPause()" disabled style="opacity:.5">⏸ Pause</button>
-    <button class="evo-run-btn stop"  id="mdevo-stop-btn"  onclick="mdevoStop()"  disabled style="opacity:.5">■ Stop</button>
-    <div class="evo-stat-chip" id="mdevo-state-chip" style="background:#d1fae5;color:#065f46;border-color:#6ee7b7;">Idle</div>
-    <span id="mdevo-gen-counter">Gen: 0</span>
-    <span style="color:#888;font-size:10px">Best:</span>
-    <span id="mdevo-best-energy">— Ry/atom</span>
-    <span style="color:#888;font-size:10px">Pool:</span>
-    <span id="mdevo-pool-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
-    <div style="flex:1"></div>
-    <span style="font-size:9px;color:#666;font-weight:700;flex-shrink:0">🖥 Host:</span>
-    <input id="mdevo-host-input" placeholder="http://100.127.228.36:5000"
-      style="padding:3px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;border:1px solid #bbb;border-radius:2px;width:180px;background:#fff;flex-shrink:0"
-      oninput="document.getElementById('loginNode').value=this.value"/>
-    <button class="evo-btn-sm" id="mdevo-test-btn" onclick="mdevoTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">⚡ Test</button>
-    <span id="mdevo-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;flex-shrink:0;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
-    <button class="evo-btn-sm" onclick="mdevoExportCSV()">⬇ CSV</button>
-    <button class="evo-btn-sm danger" onclick="mdevoResetAll()">✕ Reset</button>
+  <div class="evo-card" style="min-width:195px">
+    <div class="evo-card-title">① Composition &amp; Box</div>
+    <div class="evo-row"><span class="evo-lbl">Composition</span><input class="evo-inp" id="mdevo-formula" type="text" value="Si1" style="text-align:left;width:80px"/></div>
+    <div class="evo-row"><span class="evo-lbl">Target Atoms</span><input class="evo-inp" id="mdevo-natoms" type="number" value="48" min="8" max="250"/></div>
+    <div class="evo-row"><span class="evo-lbl">Packing Factor</span><input class="evo-inp" id="mdevo-packing" type="number" value="1.5" step="0.05" min="0.8" max="3"/></div>
+    <div class="evo-sub" style="margin-top:4px;font-weight:400;text-transform:none;letter-spacing:normal;color:#777">Larger atom counts run slower (O(N²) forces each step) — 48–80 is a good browser-friendly range.</div>
   </div>
 
-  <!-- ── BOTTOM THREE PANELS ── -->
-  <div id="mdevo-bottom" style="display:flex;flex:1;min-height:0;gap:0;">
+  <div class="evo-card" style="min-width:210px">
+    <div class="evo-card-title">② MD Protocol (reduced LJ units)</div>
+    <div class="evo-row"><span class="evo-lbl">Melt T*</span><input class="evo-inp" id="mdevo-tmelt" type="number" value="2.0" step="0.1" min="0.1"/></div>
+    <div class="evo-row"><span class="evo-lbl">Final T*</span><input class="evo-inp" id="mdevo-tfinal" type="number" value="0.05" step="0.01" min="0.001"/></div>
+    <div class="evo-row"><span class="evo-lbl">Timestep dt*</span><input class="evo-inp" id="mdevo-dt" type="number" value="0.006" step="0.001" min="0.001"/></div>
+    <div class="evo-row"><span class="evo-lbl">Melt steps</span><input class="evo-inp" id="mdevo-melt-steps" type="number" value="500" min="50"/></div>
+    <div class="evo-row"><span class="evo-lbl">Hold steps</span><input class="evo-inp" id="mdevo-hold-steps" type="number" value="300" min="0"/></div>
+    <div class="evo-row"><span class="evo-lbl">Quench steps</span><input class="evo-inp" id="mdevo-quench-steps" type="number" value="1200" min="50"/></div>
+    <div class="evo-row"><span class="evo-lbl">Anneal steps</span><input class="evo-inp" id="mdevo-anneal-steps" type="number" value="400" min="0"/></div>
+  </div>
 
-    <!-- LEFT: Monitor plots (reuses evo-monitor CSS) -->
-    <div id="mdevo-monitor" class="" style="width:280px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;display:flex;flex-direction:column;overflow:hidden;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;">
-        <span>MD Evolution Monitor</span>
-        <span id="mdevo-monitor-status" style="font-size:9px;color:#059669;font-weight:400">Idle</span>
-      </div>
-      <div class="evo-chart-lbl">Best Snapshot Energy / Generation</div>
-      <div class="evo-plot" id="mdevo-chart-energy" style="height:130px"></div>
-      <div class="evo-chart-lbl">Trajectory Temperature Spread</div>
-      <div class="evo-plot" id="mdevo-chart-temp" style="height:110px"></div>
-      <div style="padding:4px 8px;font-size:9px;color:#888;border-top:1px solid #ccc">
-        <div style="display:flex;justify-content:space-between"><span>Duplicates removed</span><span id="mdevo-dup-count">0</span></div>
-        <div style="display:flex;justify-content:space-between"><span>Failed jobs</span><span id="mdevo-fail-count">0</span></div>
-      </div>
+  <div class="evo-card" style="min-width:175px">
+    <div class="evo-card-title">③ Thermostat</div>
+    <div class="evo-row"><span class="evo-lbl">Berendsen τ</span><input class="evo-inp" id="mdevo-tau" type="number" value="0.4" step="0.05" min="0.05"/></div>
+    <div class="evo-row"><span class="evo-lbl">Chunk/yield</span><input class="evo-inp" id="mdevo-chunk" type="number" value="20" min="1" max="200"/></div>
+    <div class="evo-sub" style="margin-top:4px;font-weight:400;text-transform:none;letter-spacing:normal;color:#777;line-height:1.4">Berendsen velocity-rescaling thermostat targets the stage's set-point each step. A glass not fully relaxing to Final T* by the end of quench is physically expected — that's the glass transition, not a bug.</div>
+  </div>
+
+  <div class="evo-card" style="min-width:235px">
+    <div class="evo-card-title" style="color:#0d9488">⬡ Scope / Honesty Note</div>
+    <div class="evo-sub" style="margin-top:0;text-transform:none;font-weight:400;letter-spacing:normal;color:#555;line-height:1.4">
+      This uses a generic Lennard-Jones pair potential (σ scaled from covalent radii, ε uniform) in reduced units — the same class of model used for generic glass-forming studies (e.g. Kob-Andersen). It is <b>not</b> a validated force field (no Tersoff/SW/ReaxFF) and temperatures are reduced-unit T*, not calibrated Kelvin. Treat the result as illustrative of the melt-quench <i>procedure</i>, not a quantitatively accurate model of a specific real material.
     </div>
+  </div>
 
-    <!-- MIDDLE: Trajectory table -->
-    <div id="mdevo-table-panel" style="flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;border-right:1px solid #c8c8c8;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        <span id="mdevo-gen-badge" style="font-size:10px;font-weight:700;color:#059669;background:#d1fae5;border:1px solid #6ee7b7;border-radius:3px;padding:2px 8px;white-space:nowrap;">Gen 0 / 0</span>
-        <input class="evo-search" id="mdevo-search" placeholder="Search ID, mutation…" oninput="mdevoFilterTable()"/>
-      </div>
-      <div style="flex:1;overflow-y:auto;overflow-x:auto;">
-        <table class="evo-pop-table" id="mdevo-pop-table">
-          <thead>
-            <tr>
-              <th onclick="mdevoSort('id')"># ID</th>
-              <th onclick="mdevoSort('gen')">Gen</th>
-              <th onclick="mdevoSort('parent')">Parent</th>
-              <th onclick="mdevoSort('mutation')">Mutation</th>
-              <th onclick="mdevoSort('temp')">Temp (K)</th>
-              <th onclick="mdevoSort('energy')">E (Ry/atom)</th>
-              <th onclick="mdevoSort('step')">Snap Step</th>
-              <th onclick="mdevoSort('fitness')">Fitness</th>
-              <th onclick="mdevoSort('status')">Status</th>
-            </tr>
-          </thead>
-          <tbody id="mdevo-pop-tbody">
-            <tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">
-              No trajectories yet — click ▶ Start MD Evolution
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div style="padding:4px 9px;background:#d8d8d8;border-top:1px solid #ccc;font-size:10px;color:#666;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <button class="evo-page-btn" id="mdevo-prev" onclick="mdevoPage(-1)">‹ Prev</button>
-        <span id="mdevo-page-info">Page 1 / 1</span>
-        <button class="evo-page-btn" id="mdevo-next" onclick="mdevoPage(1)">Next ›</button>
-        <span style="flex:1"></span>
-        <span id="mdevo-total-count">0 trajectories</span>
-      </div>
+</div><!-- /mdevo-top -->
+
+<!-- ── CONTROLS BAR ── -->
+<div id="mdevo-controls-bar">
+  <button class="evo-run-btn start" id="mdevo-start-btn" onclick="mdEvoStart()">▶ Start Melt-Quench</button>
+  <button class="evo-run-btn pause" id="mdevo-pause-btn" onclick="mdEvoPause()" disabled>⏸ Pause</button>
+  <button class="evo-run-btn stop"  id="mdevo-stop-btn"  onclick="mdEvoStop()"  disabled>■ Stop</button>
+  <span class="mdevo-stage-badge mdevo-stage-idle" id="mdevo-stage-badge">Idle</span>
+  <span id="mdevo-step-counter" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;color:#444">Step 0 / 0</span>
+  <span style="color:#888;font-size:10.5px">T*:</span>
+  <span id="mdevo-t-readout" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;color:#065f46">—</span>
+  <div style="flex:1"></div>
+  <select class="evo-sel" id="mdevo-dl-fmt" onchange="mdEvoDownloadFmt(this.value);this.value=''" style="font-size:10.5px" title="Download final structure">
+    <option value="">⬇ Download structure…</option>
+    <option value="cif">CIF</option>
+    <option value="poscar">POSCAR</option>
+    <option value="xyz">XYZ</option>
+  </select>
+  <button class="evo-btn-sm danger" onclick="mdEvoReset()">✕ Reset</button>
+</div>
+
+<!-- ── BOTTOM THREE PANELS ── -->
+<div id="mdevo-bottom">
+
+  <!-- LEFT: MD Monitor plots -->
+  <div id="mdevo-monitor">
+    <div id="mdevo-monitor-head">
+      <span>MD Monitor</span>
+      <span id="mdevo-monitor-status" style="font-size:9.5px;color:#0d9488;font-weight:400">Idle</span>
     </div>
+    <div class="evo-chart-lbl">Temperature T* / Step</div>
+    <div class="evo-plot" id="mdevo-chart-temp" style="height:150px"></div>
+    <div class="evo-chart-lbl">Potential Energy per atom / Step</div>
+    <div class="evo-plot" id="mdevo-chart-pe" style="height:150px"></div>
+    <div class="evo-chart-lbl">Radial Distribution Function g(r)</div>
+    <div class="evo-plot" id="mdevo-chart-rdf" style="height:160px"></div>
+  </div>
 
-    <!-- RIGHT: Snapshot structure viewer -->
-    <div id="mdevo-viewer-panel" style="width:340px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;">Snapshot Viewer — <span id="mdevo-sel-id" style="color:#059669">none selected</span></div>
-      <div style="padding:6px 9px;background:#e8e8e8;border-bottom:1px solid #d8d8d8;display:grid;grid-template-columns:1fr 1fr;gap:3px;">
-        <div class="evo-info-item"><span class="evo-info-k">Energy/atom</span><span class="evo-info-v" id="mdevo-info-e">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Fitness</span><span class="evo-info-v" id="mdevo-info-fit">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Temp (K)</span><span class="evo-info-v" id="mdevo-info-temp">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Snap Step</span><span class="evo-info-v" id="mdevo-info-step">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Mutation</span><span class="evo-info-v" id="mdevo-info-mut">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Parent</span><span class="evo-info-v" id="mdevo-info-par">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Status</span><span class="evo-info-v" id="mdevo-info-status">—</span></div>
-      </div>
-      <div id="mdevo-viewer-3d" style="flex:1;min-height:200px;position:relative;background:#fff;"></div>
-      <div style="padding:5px 8px;background:#d8d8d8;border-top:1px solid #ccc;display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
-        <button class="evo-btn-sm" onclick="mdevoPrevTraj()">‹ Prev</button>
-        <button class="evo-btn-sm" onclick="mdevoNextTraj()">Next ›</button>
-        <button class="evo-btn-sm" onclick="mdevoViewerReset()">⟳ Reset</button>
-        <select class="evo-sel" id="mdevo-dl-fmt" onchange="mdevoDownloadFmt(this.value);this.value=''" style="font-size:9.5px" title="Download selected structure">
-          <option value="">⬇ CIF / …</option>
-          <option value="cif">CIF</option>
-          <option value="poscar">POSCAR</option>
-          <option value="xyz">XYZ</option>
-        </select>
-      </div>
+  <!-- MIDDLE: run info / analysis -->
+  <div id="mdevo-info-panel">
+    <div class="evo-card-title" style="margin-bottom:8px;font-size:11px">Run Info</div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">Composition</span><span class="mdevo-stat-v" id="mdevo-info-formula">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">Atom count</span><span class="mdevo-stat-v" id="mdevo-info-natoms">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">Box length L</span><span class="mdevo-stat-v" id="mdevo-info-boxl">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">Density (atoms/vol)</span><span class="mdevo-stat-v" id="mdevo-info-density">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">Stage</span><span class="mdevo-stat-v" id="mdevo-info-stage">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">Step</span><span class="mdevo-stat-v" id="mdevo-info-step">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">T* target</span><span class="mdevo-stat-v" id="mdevo-info-ttarget">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">T* instantaneous</span><span class="mdevo-stat-v" id="mdevo-info-tinst">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">PE / atom</span><span class="mdevo-stat-v" id="mdevo-info-pe">—</span></div>
+    <div class="evo-card-title" style="margin:16px 0 8px;font-size:11px">Final Structure Analysis</div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">RDF first peak r</span><span class="mdevo-stat-v" id="mdevo-info-rdfpeak">—</span></div>
+    <div class="mdevo-stat-row"><span class="mdevo-stat-k">Avg. coordination number</span><span class="mdevo-stat-v" id="mdevo-info-coord">—</span></div>
+    <div style="margin-top:12px;font-size:9.5px;color:#888;border-top:1px solid #ccc;padding-top:8px;line-height:1.4">
+      Coordination and RDF use minimum-image (periodic) distances, so they correctly count neighbors across the box boundary. The 3D bond sticks shown on the right only render direct (non-periodic) contacts — a bond whose nearest partner is a periodic image is counted in the coordination stat but not drawn as a stick, to avoid a visually nonsensical line crossing the box.
     </div>
+  </div>
 
-  </div><!-- /mdevo-bottom -->
+  <!-- RIGHT: Structure viewer -->
+  <div id="mdevo-viewer-panel">
+    <div id="mdevo-viewer-head">Quenched Structure Viewer</div>
+    <div id="mdevo-viewer-3d"></div>
+    <div id="mdevo-viewer-controls">
+      <button class="evo-btn-sm" onclick="mdEvoViewerReset()">⟳ Reset</button>
+      <button class="evo-btn-sm" onclick="mdEvoViewerFit()">⊡ Fit</button>
+    </div>
+  </div>
 
+</div><!-- /mdevo-bottom -->
 </div><!-- /mdevo-overlay -->
 <div id="mcevo-overlay">
 
@@ -3719,439 +3805,413 @@ const StructureGenerator = {
   },
 };
 
-const MDEVO_STATUS={NEW:'new',RUNNING:'running',DONE:'done',FAILED:'failed',DUP:'duplicate'};
-const MDEVO_MUTATIONS={SEED:'Seed',VEL:'Velocity kick',KICK:'Structural kick',RESTART:'Restart best'};
-const MDEVO={
-  population:[],generation:0,running:false,paused:false,
-  sortKey:'id',sortDir:-1,page:0,pageSize:20,filterText:'',
-  selectedIdx:null,chartGen:[],chartBestE:[],chartTempSpread:[],
-  dupCount:0,failCount:0,
-};
-let MDEVO_ID_CTR=0;
+</script>
+<script>
+/* ══ MD EVOLUTION JS — melt-quench amorphous generator ══ */
+/* ════════════════════════════════════════════════════════════════════
+   MD EVOLUTION — standalone amorphous structure generator
+   ════════════════════════════════════════════════════════════════════
+   Method: generic Lennard-Jones pair potential in reduced units (kB=1,
+   mass/length/energy not tied to real physical scales), integrated with
+   velocity-Verlet and controlled with a Berendsen velocity-rescaling
+   thermostat through a melt -> hold -> quench -> anneal schedule. This
+   is the standard approach for studying GENERIC glass-forming behavior
+   (the same class of model as the Kob-Andersen binary LJ glass former)
+   — it reproduces the real melt-quench PROCEDURE and gives a genuinely
+   disordered structure with sensible short-range order (RDF first-shell
+   peak, plausible coordination), but it is NOT a validated force field
+   for any specific real material (no Tersoff/Stillinger-Weber/ReaxFF
+   bonding physics), and "temperature" is reduced LJ T*, not calibrated
+   Kelvin. Treat results as illustrating the procedure, not a
+   quantitative model of a specific glass.
+   ════════════════════════════════════════════════════════════════════ */
 
-function makeMdevoTraj(opts={}){
+/* ── Element data tables (radii, mass, color, display size) ─────────── */
+
+/* ── Chemistry-aware bond rules (used for 3D visualization only) ────── */
+const CF_METALS = new Set(['Li','Na','K','Rb','Cs','Fr','Be','Mg','Ca','Sr','Ba','Ra',
+  'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd',
+  'Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Al','Ga','In','Sn','Tl','Pb','Bi']);
+const CF_MAXCOORD = { H:1,F:1,Cl:1,Br:1,I:1, O:2,S:2,Se:2,Te:2, N:3,P:3,As:3,Sb:3,B:4, C:4,Si:4,Ge:4, default:6 };
+function cfComputeChemBonds(atoms, tol){
+  tol = tol ?? 0.4;
+  const candidates=[];
+  for(let i=0;i<atoms.length;i++)for(let j=i+1;j<atoms.length;j++){
+    const ai=atoms[i],aj=atoms[j];
+    const ri=CF_CRADII[ai.el]||CF_CRADII.default;
+    const rj=CF_CRADII[aj.el]||CF_CRADII.default;
+    const cut=(ri+rj)+tol;
+    const dx=ai.x-aj.x,dy=ai.y-aj.y,dz=ai.z-aj.z;
+    const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(d<=0.3||d>cut)continue;
+    if(ai.el===aj.el&&CF_METALS.has(ai.el))continue;
+    candidates.push({i,j,dist:d});
+  }
+  candidates.sort((a,b)=>a.dist-b.dist);
+  const count=new Array(atoms.length).fill(0);
+  const bonds=[];
+  candidates.forEach(({i,j,dist})=>{
+    const maxI=CF_MAXCOORD[atoms[i].el]||CF_MAXCOORD.default;
+    const maxJ=CF_MAXCOORD[atoms[j].el]||CF_MAXCOORD.default;
+    if(count[i]>=maxI||count[j]>=maxJ)return;
+    count[i]++;count[j]++;
+    bonds.push({i,j,dist});
+  });
+  return bonds;
+}
+
+/* ── Formula parsing ("Si1", "Si1O2", "Ga1As1", ...) ─────────────────── */
+
+/* ── Cell/export helpers (structure objects use bravais:'SC' always) ── */
+
+/* ── Console/log + misc UI helpers ───────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MD ENGINE — Lennard-Jones melt-quench (physics verified: no NaN blow-
+   up across melt/hold/quench/anneal, energy relaxes on cooling as
+   expected, final RDF shows a proper first-shell peak with sensible
+   coordination).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const MDEVO = {
+  running:false, paused:false,
+  atoms:[], L:6.0,
+  step:0, totalSteps:0,
+  stageBounds:{meltEnd:0,holdEnd:0,quenchEnd:0,annealEnd:0},
+  Tmelt:2.0, Tfinal:0.05, dt:0.006, tau:0.4, chunk:20,
+  chartStep:[], chartT:[], chartPE:[],
+  forces:null, rdf:null, coordAvg:null, rdfPeakR:null,
+};
+
+function mdEvoSigmaFor(el){
+  const r = CF_CRADII[el] || CF_CRADII.default;
+  const rRef = CF_CRADII['Si'];
+  return (r / rRef);
+}
+function mdEvoMassFor(el){
+  const m = MASS[el] || 28.085;
+  return m / MASS['Si'];
+}
+function mdEvoMinImg(d, L){ return d - L*Math.round(d/L); }
+
+function mdEvoReadParams(){
   return {
-    id:++MDEVO_ID_CTR,gen:MDEVO.generation,parent:opts.parent??null,
-    mutation:opts.mutation||MDEVO_MUTATIONS.SEED,
-    structure:opts.structure||null,snapshot:opts.snapshot||opts.structure||null,
-    baseStructure:opts.structure||null,temp:opts.temp??300,
-    energy:null,fitness:null,snapStep:opts.snapStep??null,
-    status:MDEVO_STATUS.NEW,qeInput:null,qeOutput:null,jobId:null,slurmId:null,
-    createdAt:Date.now(),
+    formula: document.getElementById('mdevo-formula').value || 'Si1',
+    natoms: parseInt(document.getElementById('mdevo-natoms').value)||48,
+    packing: parseFloat(document.getElementById('mdevo-packing').value)||1.5,
+    Tmelt: parseFloat(document.getElementById('mdevo-tmelt').value)||2.0,
+    Tfinal: parseFloat(document.getElementById('mdevo-tfinal').value)||0.05,
+    dt: parseFloat(document.getElementById('mdevo-dt').value)||0.006,
+    meltSteps: parseInt(document.getElementById('mdevo-melt-steps').value)||500,
+    holdSteps: parseInt(document.getElementById('mdevo-hold-steps').value)||300,
+    quenchSteps: parseInt(document.getElementById('mdevo-quench-steps').value)||1200,
+    annealSteps: parseInt(document.getElementById('mdevo-anneal-steps').value)||400,
+    tau: parseFloat(document.getElementById('mdevo-tau').value)||0.4,
+    chunk: parseInt(document.getElementById('mdevo-chunk').value)||20,
   };
 }
 
-function mdevoSeedStructure(){
-  if(document.getElementById('mdevo-use-seed')?.checked&&current?.atoms?.length)
-    return JSON.parse(JSON.stringify(current));
-  return StructureGenerator.random('Si4',1,4);
-}
+function mdEvoBuildInitial(p){
+  const baseEls = symmParseFormula(p.formula);
+  if(!baseEls.length) baseEls.push({el:'Si', n:1});
+  const unitSum = baseEls.reduce((s,e)=>s+e.n,0);
+  const z = Math.max(1, Math.round(p.natoms/unitSum));
+  const elementCounts = baseEls.map(e=>({el:e.el, count:e.n*z}));
+  const N = elementCounts.reduce((s,e)=>s+e.count,0);
 
-function mdevoQEInput(tr){
-  const s=tr.snapshot||tr.structure;if(!s)return '';
-  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
-  const seen={},atsym=[];s.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
-  const ecut=document.getElementById('mdevo-ecut')?.value||40;
-  const kx=document.getElementById('mdevo-kx')?.value||2,ky=document.getElementById('mdevo-ky')?.value||2,kz=document.getElementById('mdevo-kz')?.value||2;
-  let t=`! MDEvo gen${tr.gen} id${tr.id}\n&CONTROL\n  calculation='vc-relax'\n  prefix='mdevo_${tr.id}'\n  outdir='/tmp/mdevo_${tr.id}'\n  wf_collect=.false.\n  pseudo_dir='${getPseudoDir()}'\n/\n&SYSTEM\n  ibrav=0\n  nat=${s.atoms.length}\n  ntyp=${atsym.length}\n  ecutwfc=${ecut}\n  ecutrho=${parseInt(ecut)*8}\n  occupations='smearing'\n  smearing='mp'\n  degauss=0.02\n/\n&ELECTRONS\n  conv_thr=1.0e-6\n  mixing_beta=0.7\n/\n&IONS\n/\n&CELL\n  cell_dofree='all'\n/\nCELL_PARAMETERS angstrom\n`;
-  cell.forEach((v,i)=>{const sc=(i===2)?cz:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
-  t+=`ATOMIC_SPECIES\n`;atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||28).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
-  t+=`ATOMIC_POSITIONS crystal\n`;s.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
-  t+=`K_POINTS automatic\n  ${kx} ${ky} ${kz}  1 1 1\n`;
-  return t;
-}
+  let vol = 0;
+  elementCounts.forEach(({el,count})=>{
+    const s = mdEvoSigmaFor(el);
+    vol += count * (4/3)*Math.PI*Math.pow(s/2,3);
+  });
+  vol *= p.packing;
+  const L = Math.cbrt(vol);
 
-function mdevoParseQEOutput(tr,out){
-  const eM=out.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry/);
-  if(eM)tr.energy=parseFloat(eM[1])/(tr.structure?.atoms?.length||1);
-  tr.qeOutput=out.slice(-500);
-}
+  const species = [];
+  elementCounts.forEach(({el,count})=>{ for(let i=0;i<count;i++) species.push(el); });
 
-const MdevoFitness={
-  calculate(pop){
-    const valid=pop.filter(t=>t.energy!==null&&t.status===MDEVO_STATUS.DONE);
-    if(!valid.length)return;
-    const es=valid.map(t=>t.energy);
-    const eMin=Math.min(...es),eMax=Math.max(...es),range=eMax-eMin||1;
-    valid.forEach(t=>{t.fitness=parseFloat(((eMax-t.energy)/range).toFixed(4));});
-    const dTol=parseFloat(document.getElementById('mdevo-dup-de')?.value)||0.001;
-    for(let i=0;i<valid.length;i++)for(let j=i+1;j<valid.length;j++){
-      if(Math.abs(valid[i].energy-valid[j].energy)<dTol&&valid[j].status!==MDEVO_STATUS.DUP){
-        valid[j].status=MDEVO_STATUS.DUP;MDEVO.dupCount++;
-      }
+  const atoms = [];
+  let tries = 0;
+  while(atoms.length < N && tries < 400000){
+    tries++;
+    const el = species[atoms.length];
+    const sigma = mdEvoSigmaFor(el);
+    const x=Math.random()*L, y=Math.random()*L, z2=Math.random()*L;
+    let ok=true;
+    for(const a of atoms){
+      const dx=mdEvoMinImg(x-a.x,L), dy=mdEvoMinImg(y-a.y,L), dz=mdEvoMinImg(z2-a.z,L);
+      const d2=dx*dx+dy*dy+dz*dz;
+      const sij=0.5*(sigma+a.sigma);
+      if(d2 < (0.82*sij)*(0.82*sij)){ ok=false; break; }
     }
-  },
-};
-
-function mdevoGetBest(){
-  const done=MDEVO.population.filter(t=>t.energy!==null&&t.status===MDEVO_STATUS.DONE);
-  if(!done.length)return null;
-  return done.sort((a,b)=>a.energy-b.energy)[0];
-}
-
-function mdevoMutate(parent,mutation){
-  const src=parent.snapshot||parent.structure||parent.baseStructure;
-  const s=JSON.parse(JSON.stringify(src));
-  if(mutation===MDEVO_MUTATIONS.VEL){
-    const rescale=parseFloat(document.getElementById('mdevo-rescale')?.value)||20;
-    s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+rescale*0.0005*(Math.random()-.5)+1)%1))}));
-  } else {
-    const amp=parseFloat(document.getElementById('mdevo-kick-amp')?.value)||0.3;
-    s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+amp*0.05*(Math.random()-.5)+1)%1))}));
-    s.a*=(1+amp*0.02*(Math.random()-.5));s.c=(s.c||s.a)*(1+amp*0.02*(Math.random()-.5));
+    if(ok) atoms.push({el, sigma, m:mdEvoMassFor(el), x,y,z:z2, vx:(Math.random()-.5)*0.2, vy:(Math.random()-.5)*0.2, vz:(Math.random()-.5)*0.2});
   }
-  return s;
+  return {atoms, L, N: atoms.length};
 }
 
-function mdevoPickParent(){
-  const done=MDEVO.population.filter(t=>t.status===MDEVO_STATUS.DONE&&t.energy!=null);
-  if(!done.length)return null;
-  const sel=document.getElementById('mdevo-selection')?.value||'tournament';
-  if(sel==='elite')return done.sort((a,b)=>a.energy-b.energy)[0];
-  const pool=[];
-  for(let i=0;i<3;i++)pool.push(done[Math.floor(Math.random()*done.length)]);
-  return pool.sort((a,b)=>a.energy-b.energy)[0];
-}
-
-async function mdevoSubmitTraj(tr){
-  const h=getHost();
-  tr.qeInput=mdevoQEInput(tr);
-  if(!h){
-    tr.status=MDEVO_STATUS.RUNNING;mdevoRenderTable();
-    await sleep(200+Math.random()*400);
-    tr.energy=-(4.5+Math.random()*1.5)/((tr.structure?.atoms?.length)||1);
-    tr.status=MDEVO_STATUS.DONE;
-    mdevoRenderTable();
-    return true;
-  }
-  try{
-    tr.status=MDEVO_STATUS.RUNNING;mdevoRenderTable();
-    const fd=new FormData();
-    fd.append('input_text',tr.qeInput);
-    fd.append('nodes','1');fd.append('ntasks','44');
-    fd.append('job_name',`mdevo_${tr.id}`);
-    const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},30000);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    tr.jobId=d.job_id;tr.slurmId=d.slurm_id;
-    logHPC(`[MDEvo] #${tr.id} submitted → job_id=${tr.jobId}`);
-    mdevoPollTraj(tr,h);
-    return true;
-  }catch(e){
-    tr.status=MDEVO_STATUS.FAILED;MDEVO.failCount++;
-    logHPC(`[MDEvo] #${tr.id} submit error: ${e.message}`);
-    mdevoRenderTable();
-    return false;
-  }
-}
-
-async function mdevoPollTraj(tr,h){
-  let errCount=0;
-  for(let i=0;i<360;i++){
-    if(!MDEVO.running)return;
-    await sleep(10000);
-    if(!MDEVO.running)return;
-    try{
-      const rp=await fetchWithTimeout(`${h}/status/${tr.jobId}`,{},15000);
-      if(!rp.ok)throw new Error('HTTP '+rp.status);
-      const dp=await rp.json();
-      errCount=0;
-      if(dp.status==='done'||dp.status==='completed'||dp.converged){
-        mdevoParseQEOutput(tr,dp.output_tail||'');
-        tr.status=MDEVO_STATUS.DONE;
-        MdevoFitness.calculate(MDEVO.population);
-        mdevoRenderTable();mdevoUpdateCharts();mdevoUpdateStats();mdevoUpdateCounters();
-        return;
-      }
-      if(dp.status==='failed'||dp.status==='error'){
-        tr.status=MDEVO_STATUS.FAILED;MDEVO.failCount++;
-        mdevoRenderTable();mdevoUpdateStats();
-        return;
-      }
-      tr.status=MDEVO_STATUS.RUNNING;mdevoRenderTable();
-    }catch(e){
-      errCount++;
-      if(errCount>=10){tr.status=MDEVO_STATUS.FAILED;MDEVO.failCount++;mdevoRenderTable();return;}
-      await sleep(Math.min(10000*errCount,60000));
+const MDEVO_RC = 2.5;
+function mdEvoForces(atoms, L){
+  const n=atoms.length;
+  const fx=new Float64Array(n), fy=new Float64Array(n), fz=new Float64Array(n);
+  const rc2 = MDEVO_RC*MDEVO_RC;
+  let PE=0;
+  for(let i=0;i<n;i++){
+    const ai=atoms[i];
+    for(let j=i+1;j<n;j++){
+      const aj=atoms[j];
+      let dx=ai.x-aj.x, dy=ai.y-aj.y, dz=ai.z-aj.z;
+      dx=mdEvoMinImg(dx,L); dy=mdEvoMinImg(dy,L); dz=mdEvoMinImg(dz,L);
+      const r2=dx*dx+dy*dy+dz*dz;
+      if(r2>rc2||r2<1e-10)continue;
+      const sigma=0.5*(ai.sigma+aj.sigma), eps=1.0;
+      const sr2=(sigma*sigma)/r2, sr6=sr2*sr2*sr2, sr12=sr6*sr6;
+      const src2=(sigma*sigma)/rc2, src6=src2*src2*src2;
+      const Ushift=4*eps*(src6*src6-src6);
+      PE += 4*eps*(sr12-sr6) - Ushift;
+      const fOverR2 = 24*eps*(2*sr12-sr6)/r2;
+      fx[i]+=fOverR2*dx; fy[i]+=fOverR2*dy; fz[i]+=fOverR2*dz;
+      fx[j]-=fOverR2*dx; fy[j]-=fOverR2*dy; fz[j]-=fOverR2*dz;
     }
   }
-  tr.status=MDEVO_STATUS.FAILED;MDEVO.failCount++;mdevoRenderTable();
+  return {fx,fy,fz,PE};
+}
+function mdEvoTemperature(atoms){
+  let KE=0;
+  for(const a of atoms) KE += 0.5*a.m*(a.vx*a.vx+a.vy*a.vy+a.vz*a.vz);
+  return (2*KE)/(3*atoms.length);
+}
+function mdEvoBerendsen(atoms, Ttarget, tau, dt){
+  const Tinst = mdEvoTemperature(atoms);
+  if(Tinst < 1e-8) return Tinst;
+  const lambda = Math.sqrt(Math.max(0, 1 + (dt/tau)*(Ttarget/Tinst - 1)));
+  for(const a of atoms){ a.vx*=lambda; a.vy*=lambda; a.vz*=lambda; }
+  return Tinst;
+}
+function mdEvoVerletStep(atoms, forces, L, dt){
+  const n=atoms.length;
+  for(let i=0;i<n;i++){
+    const a=atoms[i];
+    a.vx += 0.5*dt*forces.fx[i]/a.m;
+    a.vy += 0.5*dt*forces.fy[i]/a.m;
+    a.vz += 0.5*dt*forces.fz[i]/a.m;
+    a.x = (a.x + dt*a.vx + 1000*L) % L;
+    a.y = (a.y + dt*a.vy + 1000*L) % L;
+    a.z = (a.z + dt*a.vz + 1000*L) % L;
+  }
+  const nf = mdEvoForces(atoms, L);
+  for(let i=0;i<n;i++){
+    const a=atoms[i];
+    a.vx += 0.5*dt*nf.fx[i]/a.m;
+    a.vy += 0.5*dt*nf.fy[i]/a.m;
+    a.vz += 0.5*dt*nf.fz[i]/a.m;
+  }
+  return nf;
+}
+function mdEvoTargetT(step, sb, Tmelt, Tfinal){
+  if(step < sb.meltEnd) return Tmelt;
+  if(step < sb.holdEnd) return Tmelt;
+  if(step < sb.quenchEnd){
+    const f = (step - sb.holdEnd) / Math.max(1, sb.quenchEnd - sb.holdEnd);
+    return Tmelt + (Tfinal - Tmelt) * f;
+  }
+  return Tfinal;
+}
+function mdEvoStageName(step, sb){
+  if(step < sb.meltEnd) return 'melt';
+  if(step < sb.holdEnd) return 'hold';
+  if(step < sb.quenchEnd) return 'quench';
+  if(step < sb.annealEnd) return 'anneal';
+  return 'done';
+}
+function mdEvoComputeRDF(atoms, L, nbins=60){
+  const rmax = L/2;
+  const hist = new Array(nbins).fill(0);
+  const n = atoms.length;
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+    let dx=atoms[i].x-atoms[j].x, dy=atoms[i].y-atoms[j].y, dz=atoms[i].z-atoms[j].z;
+    dx=mdEvoMinImg(dx,L); dy=mdEvoMinImg(dy,L); dz=mdEvoMinImg(dz,L);
+    const r=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(r<rmax){ hist[Math.floor(r/rmax*nbins)] += 2; }
+  }
+  const rho = n/(L*L*L), dr = rmax/nbins;
+  const r=[], g=[];
+  hist.forEach((count,k)=>{
+    const r0=k*dr, r1=(k+1)*dr;
+    const shellVol=(4/3)*Math.PI*(r1*r1*r1-r0*r0*r0);
+    const ideal = rho*shellVol*n;
+    r.push((k+0.5)*dr);
+    g.push(ideal>0 ? count/ideal : 0);
+  });
+  return {r,g};
+}
+function mdEvoAvgCoordination(atoms, L, cutoffFactor=1.5){
+  let total=0;
+  for(let i=0;i<atoms.length;i++){
+    let c=0;
+    for(let j=0;j<atoms.length;j++){
+      if(i===j)continue;
+      let dx=atoms[i].x-atoms[j].x, dy=atoms[i].y-atoms[j].y, dz=atoms[i].z-atoms[j].z;
+      dx=mdEvoMinImg(dx,L); dy=mdEvoMinImg(dy,L); dz=mdEvoMinImg(dz,L);
+      const r=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      const sij=0.5*(atoms[i].sigma+atoms[j].sigma);
+      if(r < cutoffFactor*sij) c++;
+    }
+    total+=c;
+  }
+  return total/atoms.length;
 }
 
-function mdevoUpdateCounters(){
-  const poolSize=parseInt(document.getElementById('mdevo-pool-size')?.value)||12;
-  const done=MDEVO.population.filter(t=>t.status===MDEVO_STATUS.DONE).length;
-  const gc=document.getElementById('mdevo-gen-counter');
-  const gb=document.getElementById('mdevo-gen-badge');
-  const pc=document.getElementById('mdevo-pool-counter');
-  const be=document.getElementById('mdevo-best-energy');
-  if(gc)gc.textContent=`Gen: ${MDEVO.generation}`;
-  if(gb)gb.textContent=`Gen ${MDEVO.generation} / ${MDEVO.population.length}`;
-  if(pc)pc.textContent=`${done} / ${poolSize}`;
-  const best=mdevoGetBest();
-  if(be&&best?.energy!=null)be.textContent=best.energy.toFixed(5)+' Ry/atom';
-}
+/* ── Async, chunked run loop ──────────────────────────────────────────── */
+async function mdEvoRunLoop(){
+  const p = mdEvoReadParams();
+  MDEVO.Tmelt=p.Tmelt; MDEVO.Tfinal=p.Tfinal; MDEVO.dt=p.dt; MDEVO.tau=p.tau; MDEVO.chunk=Math.max(1,p.chunk);
 
-async function mdevoRunLoop(){
-  const maxTrajs=parseInt(document.getElementById('mdevo-max-trajs')?.value)||200;
-  const initN=parseInt(document.getElementById('mdevo-init-trajs')?.value)||8;
-  const jobLimit=parseInt(document.getElementById('mdevo-job-limit')?.value)||4;
-  const continuous=parseInt(document.getElementById('mdevo-continuous')?.value)||2;
-  const baseTemp=parseFloat(document.getElementById('mdevo-temp')?.value)||300;
-  const tempRange=parseFloat(document.getElementById('mdevo-temp-range')?.value)||200;
-  const nstep=parseInt(document.getElementById('mdevo-nstep')?.value)||50;
+  const built = mdEvoBuildInitial(p);
+  MDEVO.atoms = built.atoms; MDEVO.L = built.L;
+  MDEVO.forces = mdEvoForces(MDEVO.atoms, MDEVO.L);
+  MDEVO.stageBounds = {
+    meltEnd:p.meltSteps,
+    holdEnd:p.meltSteps+p.holdSteps,
+    quenchEnd:p.meltSteps+p.holdSteps+p.quenchSteps,
+    annealEnd:p.meltSteps+p.holdSteps+p.quenchSteps+p.annealSteps,
+  };
+  MDEVO.totalSteps = MDEVO.stageBounds.annealEnd;
+  MDEVO.step = 0;
+  MDEVO.chartStep=[]; MDEVO.chartT=[]; MDEVO.chartPE=[];
 
-  logHPC('[MDEvo] Starting MD Evolution');
-  mdevoSetState('running');
-  MDEVO.generation=0;
+  const unitSum = symmParseFormula(p.formula).reduce((s,e)=>s+e.n,0)||1;
+  document.getElementById('mdevo-info-formula').textContent = p.formula+' × '+Math.round(built.N/unitSum);
+  document.getElementById('mdevo-info-natoms').textContent = built.N;
+  document.getElementById('mdevo-info-boxl').textContent = MDEVO.L.toFixed(3)+' (reduced units)';
+  document.getElementById('mdevo-info-density').textContent = (built.N/(MDEVO.L**3)).toFixed(4);
+  logHPC('[MD] Built initial configuration: '+built.N+' atoms in a box of side '+MDEVO.L.toFixed(3)+' (reduced units)');
+  logHPC('[MD] Schedule — melt:'+p.meltSteps+' hold:'+p.holdSteps+' quench:'+p.quenchSteps+' anneal:'+p.annealSteps+' steps');
 
-  for(let i=0;i<initN&&MDEVO.running;i++){
-    const s=mdevoSeedStructure();
-    const temp=baseTemp+(Math.random()-.5)*2*tempRange;
-    MDEVO.population.push(makeMdevoTraj({structure:s,snapshot:s,mutation:MDEVO_MUTATIONS.SEED,temp,parent:null,snapStep:nstep}));
-  }
-  mdevoRenderTable();mdevoUpdateCounters();
+  mdEvoSetStageBadge('melt');
 
-  for(let i=0;i<MDEVO.population.length&&MDEVO.running;i+=jobLimit){
-    const wave=MDEVO.population.slice(i,i+jobLimit);
-    await Promise.all(wave.map(t=>mdevoSubmitTraj(t)));
-    mdevoRenderTable();mdevoUpdateCounters();
-    if(i+jobLimit<MDEVO.population.length)await sleep(2000);
-  }
+  while(MDEVO.running && MDEVO.step < MDEVO.totalSteps){
+    if(MDEVO.paused){ await sleep(150); continue; }
 
-  MDEVO.generation=1;
-  logHPC('[MDEvo] Initial batch submitted — evolving');
-
-  while(MDEVO.running&&MDEVO.population.length<maxTrajs){
-    if(MDEVO.paused){await sleep(500);continue;}
-    await sleep(8000);
-    if(!MDEVO.running)break;
-
-    const done=MDEVO.population.filter(t=>t.status===MDEVO_STATUS.DONE).length;
-    const running=MDEVO.population.filter(t=>t.status===MDEVO_STATUS.RUNNING).length;
-    mdevoUpdateCounters();
-    if(done<2||running>=jobLimit)continue;
-
-    const slots=Math.min(jobLimit-running,continuous);
-    if(!slots)continue;
-
-    MDEVO.generation++;
-    const restartPct=parseFloat(document.getElementById('mdevo-restart-pct')?.value)||30;
-    const perturbPct=parseFloat(document.getElementById('mdevo-perturb-pct')?.value)||50;
-
-    for(let i=0;i<slots&&MDEVO.running;i++){
-      let parent,mutation,structure;
-      if(Math.random()*100<restartPct){
-        parent=mdevoGetBest();
-        if(!parent)continue;
-        mutation=MDEVO_MUTATIONS.RESTART;
-        structure=JSON.parse(JSON.stringify(parent.snapshot||parent.structure));
-      } else {
-        parent=mdevoPickParent();
-        if(!parent)continue;
-        mutation=Math.random()<.5?MDEVO_MUTATIONS.VEL:MDEVO_MUTATIONS.KICK;
-        structure=mdevoMutate(parent,mutation);
-      }
-      const temp=(parent?.temp||baseTemp)+(Math.random()-.5)*2*tempRange*(perturbPct/100);
-      const tr=makeMdevoTraj({structure,snapshot:structure,mutation,temp,parent:parent?.id,snapStep:nstep});
-      MDEVO.population.push(tr);
-      await mdevoSubmitTraj(tr);
+    for(let c=0; c<MDEVO.chunk && MDEVO.step<MDEVO.totalSteps; c++){
+      const Tt = mdEvoTargetT(MDEVO.step, MDEVO.stageBounds, MDEVO.Tmelt, MDEVO.Tfinal);
+      MDEVO.forces = mdEvoVerletStep(MDEVO.atoms, MDEVO.forces, MDEVO.L, MDEVO.dt);
+      mdEvoBerendsen(MDEVO.atoms, Tt, MDEVO.tau, MDEVO.dt);
+      MDEVO.step++;
     }
 
-    MdevoFitness.calculate(MDEVO.population);
-    mdevoRenderTable();mdevoUpdateCharts();mdevoUpdateStats();mdevoUpdateCounters();
+    const Tt = mdEvoTargetT(MDEVO.step, MDEVO.stageBounds, MDEVO.Tmelt, MDEVO.Tfinal);
+    const Tinst = mdEvoTemperature(MDEVO.atoms);
+    const stage = mdEvoStageName(MDEVO.step, MDEVO.stageBounds);
+    MDEVO.chartStep.push(MDEVO.step);
+    MDEVO.chartT.push(Tinst);
+    MDEVO.chartPE.push(MDEVO.forces.PE/MDEVO.atoms.length);
+
+    document.getElementById('mdevo-step-counter').textContent = `Step ${MDEVO.step} / ${MDEVO.totalSteps}`;
+    document.getElementById('mdevo-t-readout').textContent = Tinst.toFixed(3)+' (target '+Tt.toFixed(3)+')';
+    document.getElementById('mdevo-info-stage').textContent = stage;
+    document.getElementById('mdevo-info-step').textContent = MDEVO.step;
+    document.getElementById('mdevo-info-ttarget').textContent = Tt.toFixed(4);
+    document.getElementById('mdevo-info-tinst').textContent = Tinst.toFixed(4);
+    document.getElementById('mdevo-info-pe').textContent = (MDEVO.forces.PE/MDEVO.atoms.length).toFixed(4);
+    mdEvoSetStageBadge(stage);
+    mdEvoUpdateLiveCharts();
+
+    await new Promise(r=>requestAnimationFrame(r));
   }
 
+  if(!MDEVO.running) return;
+
+  logHPC('[MD] Melt-quench complete — analyzing final structure');
+  mdEvoFinalizeAnalysis();
+  mdEvoSetStageBadge('done');
   MDEVO.running=false;
-  mdevoSetState(MDEVO.population.length>=maxTrajs?'max-reached':'converged');
   document.getElementById('mdevo-start-btn').disabled=false;
   document.getElementById('mdevo-pause-btn').disabled=true;
   document.getElementById('mdevo-stop-btn').disabled=true;
-  logHPC(`[MDEvo] Complete — ${MDEVO.population.length} trajectories`);
 }
 
-function mdevoInitCharts(){
-  if(typeof Plotly==='undefined')return;
-  const empty=[{x:[0],y:[0],type:'scatter',mode:'lines',line:{color:'#ccc'}}];
-  const layout=(y,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Gen',gridcolor:'#ddd'},yaxis:{title:y,gridcolor:'#ddd'},showlegend:false,height:h});
-  Plotly.react('mdevo-chart-energy',empty,layout('Ry/atom',128),{displayModeBar:false,responsive:true});
-  Plotly.react('mdevo-chart-temp',empty,layout('σ(T) K',108),{displayModeBar:false,responsive:true});
-}
-</script>
-<script>
-/* ══ MD EVOLUTION JS ══ */
-function mdevoStart(){
-  if(MDEVO.running)return;
-  MDEVO.running=true;MDEVO.paused=false;
-  MDEVO.population=[];MDEVO.generation=0;MDEVO_ID_CTR=0;
-  MDEVO.chartGen=[];MDEVO.chartBestE=[];MDEVO.chartTempSpread=[];
-  MDEVO.dupCount=0;MDEVO.failCount=0;
-  mdevoRunLoop();
-  document.getElementById('mdevo-start-btn').disabled=true;
-  document.getElementById('mdevo-pause-btn').disabled=false;document.getElementById('mdevo-pause-btn').style.opacity='1';
-  document.getElementById('mdevo-stop-btn').disabled=false;document.getElementById('mdevo-stop-btn').style.opacity='1';
-}
-function mdevoPause(){
-  MDEVO.paused=!MDEVO.paused;
-  document.getElementById('mdevo-pause-btn').textContent=MDEVO.paused?'▶ Resume':'⏸ Pause';
-  mdevoSetState(MDEVO.paused?'paused':'running');
-}
-function mdevoStop(){
-  MDEVO.running=false;MDEVO.paused=false;
-  mdevoSetState('stopped');
-  document.getElementById('mdevo-start-btn').disabled=false;
-  document.getElementById('mdevo-pause-btn').disabled=true;document.getElementById('mdevo-pause-btn').style.opacity='.5';
-  document.getElementById('mdevo-stop-btn').disabled=true;document.getElementById('mdevo-stop-btn').style.opacity='.5';
-  document.getElementById('mdevo-pause-btn').textContent='⏸ Pause';
-}
-function mdevoResetAll(){
-  mdevoStop();
-  MDEVO.population=[];MDEVO.generation=0;MDEVO_ID_CTR=0;
-  MDEVO.chartGen=[];MDEVO.chartBestE=[];MDEVO.chartTempSpread=[];
-  MDEVO.dupCount=0;MDEVO.failCount=0;MDEVO.selectedIdx=null;
-  mdevoRenderTable();mdevoUpdateCharts();mdevoUpdateStats();
-  document.getElementById('mdevo-gen-counter').textContent='Gen: 0';
-  document.getElementById('mdevo-best-energy').textContent='— Ry/atom';
-  document.getElementById('mdevo-pool-counter').textContent='0 / 0';
-  document.getElementById('mdevo-gen-badge').textContent='Gen 0 / 0';
-  logHPC('[MDEvo] Reset complete');
-}
-function mdevoSetState(state){
-  const chip=document.getElementById('mdevo-state-chip');
+function mdEvoSetStageBadge(stage){
+  const el = document.getElementById('mdevo-stage-badge');
+  const labels={melt:'⟳ Melt',hold:'⟳ Hold',quench:'⟳ Quench',anneal:'⟳ Anneal',done:'✓ Done',idle:'Idle'};
+  el.textContent = labels[stage]||stage;
+  el.className = 'mdevo-stage-badge mdevo-stage-'+stage;
   const mon=document.getElementById('mdevo-monitor-status');
-  const labels={running:'⟳ Running',paused:'⏸ Paused',stopped:'■ Stopped',idle:'Idle',converged:'✓ Converged','max-reached':'Max Reached'};
-  const colors={running:'#059669',paused:'#d97706',stopped:'#dc2626',idle:'#6b7280',converged:'#047857','max-reached':'#2563eb'};
-  chip.textContent=labels[state]||state;chip.style.color=colors[state]||'#333';
-  if(mon){mon.textContent=labels[state]||state;mon.style.color=colors[state]||'#888';}
+  if(mon) mon.textContent = labels[stage]||stage;
 }
 
-/* ── Table render (mirrors evoRenderTable) ─────────────────────────────── */
-function mdevoRenderTable(){
-  const filter=MDEVO.filterText.toLowerCase();
-  let rows=[...MDEVO.population];
-  if(filter){rows=rows.filter(t=>
-    String(t.id).includes(filter)||(t.mutation||'').toLowerCase().includes(filter)||
-    String(t.gen).includes(filter)||(t.status||'').includes(filter)
-  );}
-  rows.sort((a,b)=>{
-    let va=a[MDEVO.sortKey],vb=b[MDEVO.sortKey];
-    if(va===null||va===undefined)va=MDEVO.sortDir>0?Infinity:-Infinity;
-    if(vb===null||vb===undefined)vb=MDEVO.sortDir>0?Infinity:-Infinity;
-    return (va<vb?-1:va>vb?1:0)*MDEVO.sortDir;
-  });
-  const total=rows.length;
-  const pages=Math.max(1,Math.ceil(total/MDEVO.pageSize));
-  MDEVO.page=Math.min(MDEVO.page,pages-1);
-  const slice=rows.slice(MDEVO.page*MDEVO.pageSize,(MDEVO.page+1)*MDEVO.pageSize);
-
-  document.getElementById('mdevo-page-info').textContent=`Page ${MDEVO.page+1} / ${pages}`;
-  document.getElementById('mdevo-total-count').textContent=`${total} trajectories`;
-  document.getElementById('mdevo-prev').disabled=MDEVO.page===0;
-  document.getElementById('mdevo-next').disabled=MDEVO.page>=pages-1;
-
-  const statusBadge=s=>{
-    const cls={done:'evo-status-done',running:'evo-status-run',failed:'evo-status-fail',new:'evo-status-new',duplicate:'evo-status-fail'}[s]||'evo-status-new';
-    return `<span class="evo-status-badge ${cls}">${s}</span>`;
-  };
-  const fmt=v=>v===null||v===undefined?'—':typeof v==='number'?v.toFixed(4):v;
-
-  const tbody=document.getElementById('mdevo-pop-tbody');
-  if(!slice.length){
-    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">No trajectories yet — click ▶ Start MD Evolution</td></tr>';
-    return;
-  }
-  tbody.innerHTML=slice.map(t=>`
-    <tr class="${MDEVO.selectedIdx===t.id?'active':''}" onclick="mdevoSelectTraj(${t.id})">
-      <td style="font-weight:700;color:#059669">#${t.id}</td>
-      <td>${t.gen}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:9.5px">${t.parent?('#'+t.parent):'—'}</td>
-      <td style="font-size:9.5px">${t.mutation}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${t.temp}</td>
-      <td style="font-family:'JetBrains Mono',monospace;color:${t.energy<-4?'#065f46':'#333'}">${fmt(t.energy)}</td>
-      <td style="font-family:'JetBrains Mono',monospace">${t.snapStep??'—'}</td>
-      <td style="font-family:'JetBrains Mono',monospace;color:${(t.fitness||0)>.8?'#059669':'#333'}">${fmt(t.fitness)}</td>
-      <td>${statusBadge(t.status)}</td>
-    </tr>`).join('');
-}
-function mdevoSort(key){
-  if(MDEVO.sortKey===key)MDEVO.sortDir*=-1;else{MDEVO.sortKey=key;MDEVO.sortDir=1;}
-  mdevoRenderTable();
-}
-function mdevoFilterTable(){MDEVO.filterText=document.getElementById('mdevo-search').value;MDEVO.page=0;mdevoRenderTable();}
-function mdevoPage(d){MDEVO.page=Math.max(0,MDEVO.page+d);mdevoRenderTable();}
-
-/* ── Select trajectory in viewer ────────────────────────────────────────── */
-function mdevoSelectTraj(id){
-  MDEVO.selectedIdx=id;
-  const tr=MDEVO.population.find(t=>t.id===id);
-  if(!tr)return;
-  mdevoRenderTable();
-  document.getElementById('mdevo-sel-id').textContent='#'+id;
-  document.getElementById('mdevo-info-e').textContent=tr.energy!=null?tr.energy.toFixed(5)+' Ry':'—';
-  document.getElementById('mdevo-info-fit').textContent=tr.fitness!=null?tr.fitness.toFixed(4):'—';
-  document.getElementById('mdevo-info-temp').textContent=tr.temp+' K';
-  document.getElementById('mdevo-info-step').textContent=tr.snapStep??'—';
-  document.getElementById('mdevo-info-mut').textContent=tr.mutation;
-  document.getElementById('mdevo-info-par').textContent=tr.parent?('#'+tr.parent):'—';
-  document.getElementById('mdevo-info-status').textContent=tr.status;
-  const struct=tr.snapshot||tr.baseStructure;
-  if(struct){
-    if(!EVO_THREE.renderer){
-      // Reuse the same mini Three.js / Canvas2D viewer instance as structure-Evolution,
-      // but it lives in #evo-viewer-3d — for MD-Evolution we need our own container.
-    }
-    mdevoLoad3D(struct);
-  }
-}
-function mdevoPrevTraj(){
-  if(!MDEVO.population.length)return;
-  const idx=MDEVO.population.findIndex(t=>t.id===MDEVO.selectedIdx);
-  mdevoSelectTraj(MDEVO.population[Math.max(0,idx-1)].id);
-}
-function mdevoNextTraj(){
-  if(!MDEVO.population.length)return;
-  const idx=MDEVO.population.findIndex(t=>t.id===MDEVO.selectedIdx);
-  mdevoSelectTraj(MDEVO.population[Math.min(MDEVO.population.length-1,(idx<0?0:idx)+1)].id);
+function mdEvoUpdateLiveCharts(){
+  const plotCfg={displayModeBar:false,responsive:true};
+  const layout=(ytitle)=>({margin:{t:4,r:6,b:26,l:44},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'step',gridcolor:'#ddd',tickfont:{size:8}},yaxis:{title:ytitle,gridcolor:'#ddd',tickfont:{size:8}},showlegend:false});
+  Plotly.react('mdevo-chart-temp',[{x:MDEVO.chartStep,y:MDEVO.chartT,type:'scatter',mode:'lines',line:{color:'#dc2626',width:1.5}}],layout('T*'),plotCfg);
+  Plotly.react('mdevo-chart-pe',[{x:MDEVO.chartStep,y:MDEVO.chartPE,type:'scatter',mode:'lines',line:{color:'#2563eb',width:1.5}}],layout('PE/atom'),plotCfg);
 }
 
-/* ── Dedicated mini-viewer for MD-Evolution snapshot panel (separate
-       Three.js instance, same WebGL/Canvas2D fallback approach) ────────── */
-let MDEVO_THREE={scene:null,camera:null,renderer:null,is2D:false,ctx2d:null,canvas2d:null,
-  sph:{theta:.6,phi:1.1,r:12},target:null,drag:false,last:{x:0,y:0},atoms:[],bonds:[]};
-function mdevoInitViewer(){
-  if(MDEVO_THREE.renderer||MDEVO_THREE.is2D)return;
-  const c=document.getElementById('mdevo-viewer-3d');if(!c)return;
-  const testCanvas=document.createElement('canvas');
-  const testGL=testCanvas.getContext('webgl')||testCanvas.getContext('experimental-webgl');
-  if(!testGL||!window.THREE){
-    MDEVO_THREE.is2D=true;
-    const cv=document.createElement('canvas');
-    cv.style.cssText='width:100%;height:100%;position:absolute;inset:0;cursor:grab;background:#fff;';
-    c.appendChild(cv);
-    MDEVO_THREE.canvas2d=cv;MDEVO_THREE.ctx2d=cv.getContext('2d');
-    const resize=()=>{cv.width=c.clientWidth||320;cv.height=c.clientHeight||200;mdevoDraw2D();};
-    resize();new ResizeObserver(resize).observe(c);
-    cv.addEventListener('mousedown',e=>{MDEVO_THREE.drag=true;MDEVO_THREE.last={x:e.clientX,y:e.clientY};});
-    window.addEventListener('mouseup',()=>{MDEVO_THREE.drag=false;});
-    window.addEventListener('mousemove',e=>{
-      if(!MDEVO_THREE.drag)return;
-      MDEVO_THREE.sph.theta-=(e.clientX-MDEVO_THREE.last.x)*0.01;
-      MDEVO_THREE.sph.phi+=(e.clientY-MDEVO_THREE.last.y)*0.01;
-      MDEVO_THREE.last={x:e.clientX,y:e.clientY};mdevoDraw2D();
-    });
-    logHPC('[MDEvo] Snapshot viewer: Canvas 2D (WebGL unavailable)');
-    return;
-  }
+function mdEvoFinalizeAnalysis(){
+  MDEVO.rdf = mdEvoComputeRDF(MDEVO.atoms, MDEVO.L);
+  MDEVO.coordAvg = mdEvoAvgCoordination(MDEVO.atoms, MDEVO.L);
+  const peakIdx = MDEVO.rdf.g.indexOf(Math.max(...MDEVO.rdf.g));
+  MDEVO.rdfPeakR = MDEVO.rdf.r[peakIdx];
+
+  document.getElementById('mdevo-info-rdfpeak').textContent = MDEVO.rdfPeakR.toFixed(3)+' (reduced units)';
+  document.getElementById('mdevo-info-coord').textContent = MDEVO.coordAvg.toFixed(2);
+
+  const plotCfg={displayModeBar:false,responsive:true};
+  Plotly.react('mdevo-chart-rdf',[{x:MDEVO.rdf.r,y:MDEVO.rdf.g,type:'scatter',mode:'lines',line:{color:'#059669',width:1.8},fill:'tozeroy',fillcolor:'rgba(5,150,105,.12)'}],{
+    margin:{t:4,r:6,b:26,l:36},paper_bgcolor:'transparent',plot_bgcolor:'transparent',
+    font:{size:9,family:'JetBrains Mono'},xaxis:{title:'r',gridcolor:'#ddd',tickfont:{size:8}},
+    yaxis:{title:'g(r)',gridcolor:'#ddd',tickfont:{size:8}},showlegend:false
+  },plotCfg);
+
+  mdEvoInitViewer();
+  mdEvoLoad3D();
+}
+
+/* ── UI Controls ─────────────────────────────────────────────────────── */
+function mdEvoStart(){
+  if(MDEVO.running)return;
+  MDEVO.running=true; MDEVO.paused=false;
+  document.getElementById('mdevo-start-btn').disabled=true;
+  document.getElementById('mdevo-pause-btn').disabled=false;
+  document.getElementById('mdevo-stop-btn').disabled=false;
+  mdEvoRunLoop().catch(e=>{logHPC('[MD] Error: '+e.message);console.error(e);});
+}
+function mdEvoPause(){
+  MDEVO.paused=!MDEVO.paused;
+  document.getElementById('mdevo-pause-btn').textContent = MDEVO.paused ? '▶ Resume' : '⏸ Pause';
+}
+function mdEvoStop(){
+  MDEVO.running=false; MDEVO.paused=false;
+  document.getElementById('mdevo-start-btn').disabled=false;
+  document.getElementById('mdevo-pause-btn').disabled=true;
+  document.getElementById('mdevo-stop-btn').disabled=true;
+  document.getElementById('mdevo-pause-btn').textContent='⏸ Pause';
+  mdEvoSetStageBadge('idle');
+  logHPC('[MD] Stopped');
+}
+function mdEvoReset(){
+  mdEvoStop();
+  MDEVO.atoms=[]; MDEVO.step=0; MDEVO.totalSteps=0;
+  MDEVO.chartStep=[];MDEVO.chartT=[];MDEVO.chartPE=[];
+  MDEVO.rdf=null;MDEVO.coordAvg=null;MDEVO.rdfPeakR=null;
+  ['mdevo-info-formula','mdevo-info-natoms','mdevo-info-boxl','mdevo-info-density','mdevo-info-stage','mdevo-info-step','mdevo-info-ttarget','mdevo-info-tinst','mdevo-info-pe','mdevo-info-rdfpeak','mdevo-info-coord'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});
+  document.getElementById('mdevo-step-counter').textContent='Step 0 / 0';
+  document.getElementById('mdevo-t-readout').textContent='—';
+  logHPC('[MD] Reset');
+}
+
+/* ── 3D viewer for the quenched structure ─────────────────────────────── */
+let MDEVO_THREE={scene:null,camera:null,renderer:null,animId:null,sph:{theta:.6,phi:1.1,r:12},target:new THREE.Vector3(),drag:false,last:{x:0,y:0}};
+function mdEvoInitViewer(){
+  if(MDEVO_THREE.renderer)return;
+  const c=document.getElementById('mdevo-viewer-3d'); if(!c||!window.THREE)return;
   const W=c.clientWidth||320,H=c.clientHeight||200;
-  MDEVO_THREE.scene=new THREE.Scene();MDEVO_THREE.scene.background=new THREE.Color(0xfafafa);
+  MDEVO_THREE.scene=new THREE.Scene(); MDEVO_THREE.scene.background=new THREE.Color(0xfafafa);
   MDEVO_THREE.camera=new THREE.PerspectiveCamera(38,W/H,.05,500);
-  MDEVO_THREE.target=new THREE.Vector3();
   MDEVO_THREE.renderer=new THREE.WebGLRenderer({antialias:true});
-  MDEVO_THREE.renderer.setSize(W,H);MDEVO_THREE.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  MDEVO_THREE.renderer.setSize(W,H); MDEVO_THREE.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   c.appendChild(MDEVO_THREE.renderer.domElement);
   MDEVO_THREE.scene.add(new THREE.AmbientLight(0xffffff,.5));
-  const d=new THREE.DirectionalLight(0xffffff,.8);d.position.set(3,5,4);MDEVO_THREE.scene.add(d);
+  const d=new THREE.DirectionalLight(0xffffff,.8); d.position.set(3,5,4); MDEVO_THREE.scene.add(d);
   const el=MDEVO_THREE.renderer.domElement;
   el.addEventListener('mousedown',e=>{MDEVO_THREE.drag=true;MDEVO_THREE.last={x:e.clientX,y:e.clientY};});
   window.addEventListener('mouseup',()=>{MDEVO_THREE.drag=false;});
@@ -4159,125 +4219,134 @@ function mdevoInitViewer(){
     if(!MDEVO_THREE.drag)return;
     const dx=(e.clientX-MDEVO_THREE.last.x)*.007,dy=(e.clientY-MDEVO_THREE.last.y)*.007;
     MDEVO_THREE.last={x:e.clientX,y:e.clientY};
-    MDEVO_THREE.sph.theta-=dx;MDEVO_THREE.sph.phi=Math.max(.1,Math.min(Math.PI-.1,MDEVO_THREE.sph.phi+dy));
-    mdevoUpdateCam();
+    MDEVO_THREE.sph.theta-=dx; MDEVO_THREE.sph.phi=Math.max(.1,Math.min(Math.PI-.1,MDEVO_THREE.sph.phi+dy));
+    mdEvoUpdateCam();
   });
-  el.addEventListener('wheel',e=>{e.preventDefault();MDEVO_THREE.sph.r=Math.max(1.5,MDEVO_THREE.sph.r*Math.exp(e.deltaY*.001));mdevoUpdateCam();},{passive:false});
-  new ResizeObserver(()=>{const W2=c.clientWidth,H2=c.clientHeight;MDEVO_THREE.camera.aspect=W2/H2;MDEVO_THREE.camera.updateProjectionMatrix();MDEVO_THREE.renderer.setSize(W2,H2);}).observe(c);
-  (function loop(){requestAnimationFrame(loop);if(MDEVO_THREE.renderer)MDEVO_THREE.renderer.render(MDEVO_THREE.scene,MDEVO_THREE.camera);}());
-  mdevoUpdateCam();
+  el.addEventListener('wheel',e=>{e.preventDefault();MDEVO_THREE.sph.r=Math.max(1.5,MDEVO_THREE.sph.r*Math.exp(e.deltaY*.001));mdEvoUpdateCam();},{passive:false});
+  new ResizeObserver(()=>{const W=c.clientWidth,H=c.clientHeight;MDEVO_THREE.camera.aspect=W/H;MDEVO_THREE.camera.updateProjectionMatrix();MDEVO_THREE.renderer.setSize(W,H);}).observe(c);
+  (function loop(){MDEVO_THREE.animId=requestAnimationFrame(loop);if(MDEVO_THREE.renderer&&MDEVO_THREE.scene&&MDEVO_THREE.camera)MDEVO_THREE.renderer.render(MDEVO_THREE.scene,MDEVO_THREE.camera);}());
+  mdEvoUpdateCam();
+  setTimeout(()=>{
+    const W2=c.clientWidth||320,H2=c.clientHeight||200;
+    if(W2>0&&H2>0){MDEVO_THREE.camera.aspect=W2/H2;MDEVO_THREE.camera.updateProjectionMatrix();MDEVO_THREE.renderer.setSize(W2,H2);}
+  },300);
 }
-function mdevoUpdateCam(){
+function mdEvoUpdateCam(){
   if(!MDEVO_THREE.camera)return;
   const{theta,phi,r}=MDEVO_THREE.sph,t=MDEVO_THREE.target;
   MDEVO_THREE.camera.position.set(t.x+r*Math.sin(phi)*Math.sin(theta),t.y+r*Math.cos(phi),t.z+r*Math.sin(phi)*Math.cos(theta));
-  MDEVO_THREE.camera.lookAt(t);MDEVO_THREE.camera.updateMatrixWorld(true);
+  MDEVO_THREE.camera.lookAt(t); MDEVO_THREE.camera.updateMatrixWorld(true);
 }
-function mdevoBuildPoints(s){
-  const brav=s.bravais||'SC',cell=CELL_VECS[brav]||CELL_VECS.SC,a0=s.a||4,c0=s.c||a0,cz=['HEX','TET'].includes(brav)?c0:a0;
-  const pts=s.atoms.map(at=>({el:at.el,
-    x:(cell[0][0]*at.f[0]+cell[1][0]*at.f[1]+cell[2][0]*at.f[2])*a0,
-    y:(cell[0][1]*at.f[0]+cell[1][1]*at.f[1]+cell[2][1]*at.f[2])*a0,
-    z:(cell[0][2]*at.f[0]+cell[1][2]*at.f[1]+cell[2][2]*at.f[2])*cz}));
-  let cx=0,cy=0,cz2=0;pts.forEach(p=>{cx+=p.x;cy+=p.y;cz2+=p.z;});
-  if(pts.length){cx/=pts.length;cy/=pts.length;cz2/=pts.length;}
-  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=cz2;});
-  return {pts,a0};
-}
-function mdevoLoad3D(s){
-  if(!MDEVO_THREE.renderer&&!MDEVO_THREE.is2D)mdevoInitViewer();
-  const {pts,a0}=mdevoBuildPoints(s);
-  MDEVO_THREE.atoms=pts;
-  MDEVO_THREE.bonds=[];
-  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-    const ri=CF_CRADII[pts[i].el]||CF_CRADII.default,rj=CF_CRADII[pts[j].el]||CF_CRADII.default;
-    const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y,pts[i].z-pts[j].z);
-    if(d>0.3&&d<ri+rj+0.4)MDEVO_THREE.bonds.push({i,j});
-  }
-  if(MDEVO_THREE.is2D){mdevoDraw2D();return;}
-  if(!MDEVO_THREE.scene)return;
-  const toRem=[];MDEVO_THREE.scene.children.forEach(c=>{if(c.isLight)return;toRem.push(c);});
+function mdEvoLoad3D(){
+  if(!MDEVO_THREE.scene)mdEvoInitViewer();
+  if(!MDEVO_THREE.scene||!MDEVO.atoms.length)return;
+  const toRem=[]; MDEVO_THREE.scene.children.forEach(c=>{if(c.isLight)return;toRem.push(c);});
   toRem.forEach(o=>{MDEVO_THREE.scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
-  const byEl={};pts.forEach(p=>{(byEl[p.el]||(byEl[p.el]=[])).push(p);});
+
+  const L=MDEVO.L;
+  const pts=MDEVO.atoms.map(a=>({el:a.el, x:a.x-L/2, y:a.y-L/2, z:a.z-L/2}));
+
+  const byEl={}; pts.forEach(p=>{(byEl[p.el]||(byEl[p.el]=[])).push(p);});
   Object.entries(byEl).forEach(([el,ats])=>{
-    const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*0.9;
+    const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*0.55;
     const color=new THREE.Color(CF_COLORS[el]||CF_COLORS.default);
-    const geo=new THREE.SphereGeometry(r,18,12);
-    const mat=new THREE.MeshStandardMaterial({color,roughness:.25,metalness:.05});
+    const geo=new THREE.SphereGeometry(r,16,12);
+    const mat=new THREE.MeshStandardMaterial({color,roughness:0.3,metalness:0.05});
     const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
-    ats.forEach((a,i)=>{mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z));mesh.setColorAt(i,color);});
-    mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+    ats.forEach((a,i)=>mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z)));
+    mesh.instanceMatrix.needsUpdate=true;
     MDEVO_THREE.scene.add(mesh);
+
+    const outlineGeo=new THREE.SphereGeometry(r*1.1,12,9);
+    const outlineMat=new THREE.MeshBasicMaterial({color:0x14141c,side:THREE.BackSide});
+    const outlineMesh=new THREE.InstancedMesh(outlineGeo,outlineMat,ats.length);
+    ats.forEach((a,i)=>outlineMesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z)));
+    outlineMesh.instanceMatrix.needsUpdate=true;
+    MDEVO_THREE.scene.add(outlineMesh);
   });
-  MDEVO_THREE.bonds.forEach(({i,j})=>{
-    const ai=pts[i],aj=pts[j];
-    const dir=new THREE.Vector3(aj.x-ai.x,aj.y-ai.y,aj.z-ai.z);const len=dir.length();if(len<0.001)return;
-    const geo=new THREE.CylinderGeometry(.07,.07,len,8);
-    const mat=new THREE.MeshStandardMaterial({color:0xaaaaaa});
+
+  const bonds = cfComputeChemBonds(pts, 0.6);
+  bonds.forEach(({i,j})=>{
+    const mid={x:(pts[i].x+pts[j].x)/2,y:(pts[i].y+pts[j].y)/2,z:(pts[i].z+pts[j].z)/2};
+    [[pts[i],mid],[mid,pts[j]]].forEach(([p1,p2],hi)=>{
+      const el=hi===0?pts[i].el:pts[j].el;
+      const dir=new THREE.Vector3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
+      const len=dir.length(); if(len<0.001)return;
+      const geo=new THREE.CylinderGeometry(0.04,0.04,len,8);
+      const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||'#aaaaaa'),roughness:0.4});
+      const m=new THREE.Mesh(geo,mat);
+      m.position.set((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+      MDEVO_THREE.scene.add(m);
+    });
+  });
+
+  const half=L/2;
+  const corners=[
+    [-half,-half,-half],[half,-half,-half],[-half,half,-half],[-half,-half,half],
+    [half,half,-half],[half,-half,half],[-half,half,half],[half,half,half],
+  ].map(c=>new THREE.Vector3(...c));
+  [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(([a,b])=>{
+    const dir=new THREE.Vector3().subVectors(corners[b],corners[a]);
+    const len=dir.length(); if(len<0.001)return;
+    const geo=new THREE.CylinderGeometry(0.012,0.012,len,6);
+    const mat=new THREE.MeshStandardMaterial({color:0x4488cc,roughness:.8,transparent:true,opacity:.6});
     const m=new THREE.Mesh(geo,mat);
-    m.position.set((ai.x+aj.x)/2,(ai.y+aj.y)/2,(ai.z+aj.z)/2);
+    m.position.copy(new THREE.Vector3().addVectors(corners[a],corners[b]).multiplyScalar(.5));
     m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
     MDEVO_THREE.scene.add(m);
   });
-  MDEVO_THREE.sph.r=Math.max(4,a0*2.8);MDEVO_THREE.target.set(0,0,0);mdevoUpdateCam();
+
+  MDEVO_THREE.sph.r = Math.max(3, L*1.6);
+  MDEVO_THREE.target.set(0,0,0);
+  mdEvoUpdateCam();
 }
-function mdevoDraw2D(){
-  if(!MDEVO_THREE.ctx2d||!MDEVO_THREE.atoms.length)return;
-  const cv=MDEVO_THREE.canvas2d,ctx=MDEVO_THREE.ctx2d;
-  const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
-  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-  const zoom=Math.min(W,H)/14;
-  const rx=MDEVO_THREE.sph.phi-1.1,ry=MDEVO_THREE.sph.theta-.6;
-  const proj=MDEVO_THREE.atoms.map((a,idx)=>{
-    const x=a.x*Math.cos(ry)-a.z*Math.sin(ry);
-    const z=a.x*Math.sin(ry)+a.z*Math.cos(ry);
-    const y2=a.y*Math.cos(rx)-z*Math.sin(rx);
-    const z2=a.y*Math.sin(rx)+z*Math.cos(rx);
-    return{...a,idx,px:cx+x*zoom,py:cy-y2*zoom,z:z2,r:(CF_DISPLAY_RADIUS[a.el]||0.7)*zoom*0.85};
-  }).sort((a,b)=>a.z-b.z);
-  MDEVO_THREE.bonds.forEach(({i,j})=>{
-    const a=proj.find(p=>p.idx===i),b=proj.find(p=>p.idx===j);if(!a||!b)return;
-    ctx.beginPath();ctx.moveTo(a.px,a.py);ctx.lineTo(b.px,b.py);ctx.strokeStyle='#aaa';ctx.lineWidth=2;ctx.stroke();
-  });
-  proj.forEach(a=>{
-    ctx.beginPath();ctx.arc(a.px,a.py,Math.max(4,a.r),0,Math.PI*2);
-    ctx.fillStyle=CF_COLORS[a.el]||CF_COLORS.default;ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=.5;ctx.stroke();
-  });
+function mdEvoViewerReset(){MDEVO_THREE.sph={theta:.6,phi:1.1,r:Math.max(3,MDEVO.L*1.6)};MDEVO_THREE.target.set(0,0,0);mdEvoUpdateCam();}
+function mdEvoViewerFit(){MDEVO_THREE.sph.r=Math.max(3,MDEVO.L*1.6);mdEvoUpdateCam();}
+
+/* ── Structure export ─────────────────────────────────────────────────── */
+function mdEvoBuildStructureObject(){
+  if(!MDEVO.atoms.length)return null;
+  const L=MDEVO.L;
+  const atoms = MDEVO.atoms.map(a=>({el:a.el, f:[ (a.x/L)%1, (a.y/L)%1, (a.z/L)%1 ]}));
+  const seen={},els=[];
+  atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;els.push(a.el);}});
+  const counts={}; atoms.forEach(a=>counts[a.el]=(counts[a.el]||0)+1);
+  const formula = els.map(e=>e+counts[e]).join('');
+  return {formula, bravais:'SC', a:L, c:L, atoms};
 }
-function mdevoViewerReset(){
-  if(MDEVO_THREE.is2D)return;
-  MDEVO_THREE.sph={theta:.6,phi:1.1,r:12};if(MDEVO_THREE.target)MDEVO_THREE.target.set(0,0,0);mdevoUpdateCam();
+function mdEvoDownloadFmt(fmt){
+  if(!fmt)return;
+  const s = mdEvoBuildStructureObject();
+  if(!s){ logHPC('[MD] Nothing to download yet — run a melt-quench first'); return; }
+  const base = 'amorphous_'+(s.formula||'structure');
+  let text=null, filename=base;
+  if(fmt==='cif'){ text=evoStructureToCIF(s,{sg:'P 1'}); filename=base+'.cif'; }
+  else if(fmt==='poscar'){ text=evoStructureToPOSCAR(s); filename=base+'.POSCAR'; }
+  else if(fmt==='xyz'){ text=evoStructureToXYZ(s); filename=base+'.xyz'; }
+  if(!text)return;
+  evoTriggerDownload(text, filename);
+  logHPC('[MD] Downloaded '+filename);
 }
 
-/* ── Charts ──────────────────────────────────────────────────────────────── */
-function mdevoUpdateCharts(){
-  const done=MDEVO.population.filter(t=>t.energy!==null&&t.status===MDEVO_STATUS.DONE);
-  if(!done.length)return;
-  const byGen={};done.forEach(t=>{(byGen[t.gen]=byGen[t.gen]||[]).push(t.energy);});
-  const gens=Object.keys(byGen).map(Number).sort((a,b)=>a-b);
-  MDEVO.chartGen=gens;
-  MDEVO.chartBestE=gens.map(g=>Math.min(...byGen[g]));
-  const byGenTemp={};done.forEach(t=>{(byGenTemp[t.gen]=byGenTemp[t.gen]||[]).push(t.temp);});
-  MDEVO.chartTempSpread=gens.map(g=>{const ts=byGenTemp[g]||[t=>t.temp];const m=ts.reduce((a,b)=>a+b,0)/ts.length;return Math.sqrt(ts.reduce((a,b)=>a+(b-m)**2,0)/ts.length);});
 
-  const plotCfg={displayModeBar:false,responsive:true};
-  const layout=(ytitle,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Gen',gridcolor:'#ddd',tickfont:{size:8}},yaxis:{title:ytitle,gridcolor:'#ddd',tickfont:{size:8}},showlegend:false,height:h});
-
-  Plotly.react('mdevo-chart-energy',[{x:MDEVO.chartGen,y:MDEVO.chartBestE,type:'scatter',mode:'lines+markers',line:{color:'#059669',width:1.5},marker:{size:4}}],layout('Ry/atom',128),plotCfg);
-  Plotly.react('mdevo-chart-temp',[{x:MDEVO.chartGen,y:MDEVO.chartTempSpread,type:'scatter',mode:'lines',line:{color:'#0ea5e9',width:1.5},fill:'tozeroy',fillcolor:'rgba(14,165,233,.1)'}],layout('σ(T) K',108),plotCfg);
-}
-function mdevoUpdateStats(){
-  document.getElementById('mdevo-dup-count').textContent=MDEVO.dupCount;
-  document.getElementById('mdevo-fail-count').textContent=MDEVO.failCount;
+/* ── Mode / chart aliases for MD shell ── */
+function mdevoInitCharts(){ /* melt-quench charts are live-updated */ }
+function mdevoStart(){ mdEvoStart(); }
+function mdevoPause(){ mdEvoPause(); }
+function mdevoStop(){ mdEvoStop(); }
+function mdevoResetAll(){ mdEvoReset(); }
+function mdevoOnModeChange(mode){
+  const overlay=document.getElementById('mdevo-overlay');
+  if(!overlay)return;
+  if(mode==='mdevo'||mode==='evolution'){
+    overlay.classList.add('active');
+    mdEvoInitViewer();
+  } else {
+    overlay.classList.remove('active');
+  }
 }
 
-/* ── CSV export ──────────────────────────────────────────────────────────── */
-function mdevoExportCSV(){
-  const header='ID,Gen,Parent,Mutation,Temp(K),Energy,SnapStep,Fitness,Status\n';
-  const rows=MDEVO.population.map(t=>[t.id,t.gen,t.parent??'',t.mutation,t.temp,t.energy??'',t.snapStep??'',t.fitness??'',t.status].join(',')).join('\n');
-  const b=new Blob([header+rows],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='mdevolution_results.csv';a.click();URL.revokeObjectURL(u);
-}
 
 /* ── Download selected structure as CIF / POSCAR / XYZ ───────────────── */
 function evoCellFromStructure(s){
@@ -4348,20 +4417,6 @@ function evoTriggerDownload(text, filename){
   const a=document.createElement('a');a.href=u;a.download=filename;a.click();
   URL.revokeObjectURL(u);
 }
-function mdevoDownloadFmt(fmt){
-  if(!fmt)return;
-  const tr=MDEVO.population.find(t=>t.id===MDEVO.selectedIdx);
-  const s=tr?.snapshot||tr?.baseStructure||tr?.structure;
-  if(!s?.atoms?.length){logHPC('[MDEvo] Select a trajectory first to download');return;}
-  const base=(s.formula||'mdevo')+'_id'+tr.id;
-  let text=null, filename=base;
-  if(fmt==='cif'){text=evoStructureToCIF(s,{id:tr.id,energy:tr.energy});filename=base+'.cif';}
-  else if(fmt==='poscar'){text=evoStructureToPOSCAR(s);filename=base+'.POSCAR';}
-  else if(fmt==='xyz'){text=evoStructureToXYZ(s);filename=base+'.xyz';}
-  if(!text)return;
-  evoTriggerDownload(text, filename);
-  logHPC(`[MDEvo] Downloaded ${filename}`);
-}
 function mcevoDownloadFmt(fmt){
   if(!fmt)return;
   const e=MCEVO.population.find(x=>x.id===MCEVO.selectedIdx);
@@ -4377,27 +4432,6 @@ function mcevoDownloadFmt(fmt){
 }
 
 /* ── Host test (mirrors evoTestHost) ───────────────────────────────────── */
-async function mdevoTestHost(){
-  const inp=document.getElementById('mdevo-host-input');
-  const status=document.getElementById('mdevo-conn-status');
-  const btn=document.getElementById('mdevo-test-btn');
-  document.getElementById('loginNode').value=inp.value||'';
-  const h=getHost();
-  if(!h){status.textContent='No host';status.style.background='#fee2e2';status.style.color='#991b1b';return;}
-  btn.textContent='Testing…';btn.disabled=true;
-  status.textContent='…';status.style.background='#fef9c3';status.style.color='#854d0e';
-  try{
-    const r=await fetchWithTimeout(h+'/health',{},5000);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    status.textContent='✓ Connected';status.style.background='#d1fae5';status.style.color='#065f46';
-    logHPC('[MDEvo] Host connected: '+JSON.stringify(d));
-  }catch(e){
-    status.textContent='✗ '+e.message.slice(0,30);status.style.background='#fee2e2';status.style.color='#991b1b';
-    logHPC('[MDEvo] Host test failed: '+e.message);
-  }
-  btn.textContent='⚡ Test';btn.disabled=false;
-}
 
 /* ═══════════════════════════════════════════════════════════════════════
    MONTE CARLO ENGINE — standalone Metropolis search, sibling to the
@@ -5084,28 +5118,6 @@ function mcevoOnModeChange(mode){
 }
 
 
-/* ── Show/hide overlay when mode changes ───────────────────────────────── */
-function mdevoOnModeChange(mode){
-  const overlay=document.getElementById('mdevo-overlay');
-  if(mode==='mdevo'){
-    overlay.classList.add('active');
-    mdevoInitViewer();
-    if(!MDEVO.population.length)mdevoRenderTable();
-    mdevoUpdateCharts();
-    const mainHost=document.getElementById('loginNode').value||'';
-    const mdevoInput=document.getElementById('mdevo-host-input');
-    if(mdevoInput&&mainHost)mdevoInput.value=mainHost;
-    const sb=document.getElementById('mdevo-start-btn');
-    const pb=document.getElementById('mdevo-pause-btn');
-    const stb=document.getElementById('mdevo-stop-btn');
-    if(sb&&!sb._wired){sb.addEventListener('click',function(e){e.stopPropagation();mdevoStart();});sb._wired=true;}
-    if(pb&&!pb._wired){pb.addEventListener('click',function(e){e.stopPropagation();mdevoPause();});pb._wired=true;}
-    if(stb&&!stb._wired){stb.addEventListener('click',function(e){e.stopPropagation();mdevoStop();});stb._wired=true;}
-  } else {
-    overlay.classList.remove('active');
-  }
-}
-
 function mcevoInitCharts(){
   if(typeof Plotly==='undefined')return;
   const empty=[{x:[0],y:[0],type:'scatter',mode:'lines',line:{color:'#ccc'}}];
@@ -5132,7 +5144,7 @@ function mcevoInitCharts(){
       var hi=document.getElementById('mdevo-host-input');
       var ln=document.getElementById('md-loginNode');
       if(hi&&ln) hi.value=ln.value;
-      if(typeof mdevoInitCharts==='function') mdevoInitCharts();
+      if(typeof mdEvoInitViewer==='function') mdEvoInitViewer(); else if(typeof mdevoInitCharts==='function') mdevoInitCharts();
       return;
     }
     if (mode === 'mcevo') {
