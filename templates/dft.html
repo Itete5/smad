@@ -33,11 +33,13 @@ input,select,textarea{font-family:inherit}
 #dft-3dviewer{width:100%;height:100%;min-height:300px;position:absolute;inset:0;cursor:grab}
 #dft-3dviewer:active{cursor:grabbing}
 
-/* CF Status bar inside viewer */
+/* CF Status bar inside viewer — hidden per request; elements stay in the
+   DOM (JS still writes to them harmlessly) so nothing else has to change */
 #cf-statusbar{
+  display:none;
   position:absolute;bottom:0;left:0;right:0;height:22px;
   background:rgba(245,245,245,.92);border-top:1px solid #ddd;
-  display:flex;align-items:center;gap:0;z-index:15;
+  align-items:center;gap:0;z-index:15;
   font-family:'JetBrains Mono',monospace;font-size:10px;color:#555;
   pointer-events:none;
 }
@@ -716,7 +718,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
     SMAD Home
   </a>
   <div class="file-tab active">
-    <span id="tabFilename">GaAs.cif</span>
+    <span id="tabFilename">MgB2.cif</span>
     <span class="tab-close">×</span>
   </div>
   <div style="flex:1"></div>
@@ -1078,6 +1080,22 @@ body.mode-menu-open #bb-icon-close{display:flex}
     </div>
     <div id="rp-scroll">
 
+      <!-- CRYSTAL GENERATOR -->
+      <div class="acc-section">
+        <div class="acc-head" onclick="toggleAcc('genBody','genArrow')">
+          <span class="acc-arrow" id="genArrow">▼</span><span class="acc-title">Crystal Generator</span>
+        </div>
+        <div class="acc-body" id="genBody">
+          <div class="field-row"><div class="field-label">Formula</div><div class="field-val"><input class="burai-input" id="genFormula" type="text" value="Si8" style="text-align:left"/></div></div>
+          <div class="field-row"><div class="field-label">Z range</div><div class="field-val sc-row">
+            <input class="sc-inp" id="genZMin" type="number" value="1" min="1"/><span>–</span><input class="sc-inp" id="genZMax" type="number" value="4" min="1"/>
+          </div></div>
+          <div class="sp-check-row" style="margin-top:6px"><input type="checkbox" id="genUseSymmetry" checked><label for="genUseSymmetry">Symmetry-aware generation</label></div>
+          <button class="gen-btn" style="width:100%;margin-top:8px;border-radius:3px;padding:6px" onclick="generateCrystal()">⚛ Generate Structure</button>
+          <div id="genResultInfo" style="margin-top:6px;font-size:10px;color:#666;font-family:'JetBrains Mono',monospace;min-height:14px">—</div>
+        </div>
+      </div>
+
       <!-- CELL -->
       <div class="acc-section">
         <div class="acc-head" onclick="toggleAcc('cellBody','cellArrow')">
@@ -1310,6 +1328,7 @@ Set cluster host → Run DFT → view results.
 /* ════════════ DATA ════════════ */
 const STRUCTS={
   gaas:{name:'GaAs zincblende',formula:'GaAs',bravais:'FCC',a:5.653,atoms:[{el:'Ga',f:[0,0,0]},{el:'As',f:[.25,.25,.25]}]},
+  mgb2:{name:'MgB2 (AlB2-type)',formula:'MgB2',bravais:'HEX',a:3.086,c:3.524,atoms:[{el:'Mg',f:[0,0,0]},{el:'B',f:[1/3,2/3,.5]},{el:'B',f:[2/3,1/3,.5]}]},
   si:  {name:'Si diamond',formula:'Si',bravais:'FCC',a:5.431,atoms:[{el:'Si',f:[0,0,0]},{el:'Si',f:[.25,.25,.25]}]},
   cu:  {name:'Cu FCC',formula:'Cu',bravais:'FCC',a:3.615,atoms:[{el:'Cu',f:[0,0,0]}]},
   fe:  {name:'Fe BCC',formula:'Fe',bravais:'BCC',a:2.866,atoms:[{el:'Fe',f:[0,0,0]}]},
@@ -1338,7 +1357,7 @@ const FAN_ITEMS=[
 const LABELS={scf:'SCF',optimize:'Optimize',band:'Band',dos:'DOS',md:'MD',abmd:'ab-MD',phonon:'Phonon',tddft:'TD-DFT',neb:'NEB',geometry:'Geometry',evolution:'⬡ Evolution'};
 
 /* ════════════ STATE ════════════ */
-let current=JSON.parse(JSON.stringify(STRUCTS.gaas)),supercell=[1,1,1];
+let current=JSON.parse(JSON.stringify(STRUCTS.mgb2)),supercell=[1,1,1];
 let showBonds=true,consoleOpen=false,settingsOpen=false,hbOpen=false;
 let activeMode=null; // null = no selection yet (fan not clicked)
 
@@ -1769,7 +1788,11 @@ function cfUpdateStatus(){
 /* ── Gizmo ─────────────────────────────────────────────────────────────── */
 function drawGizmo(){
   const cv=document.getElementById('xyz-gizmo');if(!cv||!CF.camera)return;
-  const ctx=cv.getContext('2d'),W=88,H=88,cx=26,cy=62,L=28;
+  // cx/cy sit at the true center of the 88×88 canvas (not off-center like
+  // before) and L is small enough that even the label offset (L*1.34)
+  // never exceeds the canvas bounds — so a/b/c stay visible at every
+  // rotation angle instead of clipping off the near edge.
+  const ctx=cv.getContext('2d'),W=88,H=88,cx=W/2,cy=H/2,L=24;
   ctx.clearRect(0,0,W,H);
   const inv=new THREE.Matrix4().extractRotation(CF.camera.matrixWorldInverse);
   const axes=[{v:new THREE.Vector3(1,0,0),c:'#dd2222',l:'a'},{v:new THREE.Vector3(0,1,0),c:'#22aa22',l:'b'},{v:new THREE.Vector3(0,0,1),c:'#2244cc',l:'c'}];
@@ -1842,8 +1865,48 @@ function updateStatus(){document.getElementById('stFormula').textContent=current
 function applySupercell(){supercell=[+document.getElementById('scX').value||1,+document.getElementById('scY').value||1,+document.getElementById('scZ').value||1];draw3D();}
 
 /* ════════════ PRESETS ════════════ */
-function initPresets(){const sel=document.getElementById('presetSel');sel.innerHTML=Object.entries(STRUCTS).map(([k,v])=>`<option value="${k}">${v.formula} — ${v.name}</option>`).join('');sel.value='gaas';}
+function initPresets(){const sel=document.getElementById('presetSel');sel.innerHTML=Object.entries(STRUCTS).map(([k,v])=>`<option value="${k}">${v.formula} — ${v.name}</option>`).join('');sel.value='mgb2';}
 function loadPreset(){const k=document.getElementById('presetSel').value;if(STRUCTS[k])loadStructure(STRUCTS[k]);}
+
+/* ════════════ CRYSTAL GENERATOR (right panel button) ════════════
+   Thin UI wrapper around the existing StructureGenerator (defined
+   further down, in the Evolution Engine section) — same generator the
+   Evolution mode uses for its initial population, just invoked once
+   here for a single structure and loaded straight into the main viewer. */
+function generateCrystal(){
+  const formula=(document.getElementById('genFormula').value||'').trim()||'Si8';
+  const zMin=parseInt(document.getElementById('genZMin').value)||1;
+  const zMax=Math.max(zMin,parseInt(document.getElementById('genZMax').value)||zMin);
+  const useSymmetry=document.getElementById('genUseSymmetry').checked;
+  const infoEl=document.getElementById('genResultInfo');
+
+  if(typeof StructureGenerator==='undefined'){
+    infoEl.textContent='✗ Generator not loaded yet — try again in a moment';
+    return;
+  }
+
+  infoEl.textContent='Generating…';
+  // Defer one tick so "Generating…" actually paints before the (synchronous) search runs
+  setTimeout(()=>{
+    try{
+      const t0=performance.now();
+      const result=StructureGenerator.random(formula,zMin,zMax,useSymmetry);
+      const dt=(performance.now()-t0).toFixed(0);
+      if(!result||!result.atoms||!result.atoms.length){
+        infoEl.textContent='✗ Generation failed — try a different formula/Z range';
+        log('[gen] Failed to generate a structure for '+formula);
+        return;
+      }
+      loadStructure(result);
+      infoEl.textContent=`✓ ${result.formula} · ${result.bravais} · ${result.atoms.length} atoms · ${dt}ms`;
+      log(`[gen] Generated ${result.formula} (${result.bravais}, ${result.atoms.length} atoms) in ${dt}ms`);
+    }catch(e){
+      infoEl.textContent='✗ Error: '+e.message;
+      log('[gen] Error: '+e.message);
+    }
+  },10);
+}
+window.generateCrystal=generateCrystal;
 
 /* ════════════ FILE PARSING ════════════ */
 function processFile(file){const r=new FileReader();r.onload=e=>{if(parseAny(e.target.result,file.name))log('[file] Loaded: '+file.name);else log('[file] Could not parse: '+file.name);};r.readAsText(file);}
