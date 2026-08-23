@@ -45,6 +45,11 @@ def extract_html() -> str:
             score = len(html)
             if "max-width:860px" in html:
                 score += 1_000_000
+            # Prefer newer chemistry-aware bonds / evo validation builds
+            if "cfComputeChemBonds" in html:
+                score += 2_000_000
+            if "evoGenerateValidVariant" in html:
+                score += 2_000_000
             if score > best_score:
                 best_score = score
                 best = html

@@ -1393,6 +1393,55 @@ const CF_CRADII={H:.31,He:.28,Li:1.28,Be:.96,B:.84,C:.77,N:.71,O:.66,F:.57,Ne:.5
 const CF_COLORS={H:'#ffffff',He:'#d9ffff',Li:'#cc80ff',Be:'#c2ff00',B:'#ffb5b5',C:'#909090',N:'#3050f8',O:'#ff0d0d',F:'#90e050',Ne:'#b3e3f5',Na:'#ab5cf2',Mg:'#8aff00',Al:'#bfa6a6',Si:'#f0c8a0',P:'#ff8000',S:'#ffff30',Cl:'#1ff01f',Ar:'#80d1e3',K:'#8f40d4',Ca:'#3dff00',Sc:'#e6e6e6',Ti:'#bfc2c7',V:'#a6a6ab',Cr:'#8a99c7',Mn:'#9c7ac7',Fe:'#e06633',Co:'#f090a0',Ni:'#50d050',Cu:'#c88033',Zn:'#7d80b0',Ga:'#c28f8f',Ge:'#668f8f',As:'#bd80e3',Se:'#ffa100',Br:'#a62929',Kr:'#5cb8d1',Rb:'#702eb0',Sr:'#00ff00',Y:'#94ffff',Zr:'#94e0e0',Nb:'#73c2c9',Mo:'#54b5b5',Ru:'#248f8f',Rh:'#0a7d8c',Pd:'#006985',Ag:'#c0c0c0',Cd:'#ffd98f',In:'#a67573',Sn:'#668080',Sb:'#9e63b5',Te:'#d47a00',I:'#940094',Xe:'#429eb0',Cs:'#57178f',Ba:'#00c900',La:'#70d4ff',Hf:'#4dc2ff',Ta:'#4da6ff',W:'#2194d6',Re:'#267dab',Os:'#266696',Ir:'#175487',Pt:'#d0d0e0',Au:'#ffd123',Hg:'#b8b8d0',Tl:'#a6544d',Pb:'#575961',Bi:'#9e4fb5',U:'#008fff',default:'#888888'};
 const CF_DISPLAY_RADIUS={H:.25,C:.35,N:.33,O:.32,F:.30,Na:.90,Mg:.80,Al:.72,Si:.68,P:.65,S:.64,Cl:.62,K:1.25,Ca:1.10,Ti:1.00,V:.96,Cr:.88,Mn:.95,Fe:.85,Co:.82,Ni:.80,Cu:.83,Zn:.80,Ga:.80,Ge:.78,As:.77,Se:.78,Br:.78,Rb:1.40,Sr:1.25,Zr:1.10,Nb:1.04,Mo:.98,Ru:.93,Rh:.90,Pd:.88,Ag:.93,Cd:.94,Sn:.90,Sb:.90,Te:.89,I:.90,Cs:1.65,Ba:1.40,La:1.35,Hf:1.10,W:1.04,Re:.98,Os:.92,Ir:.90,Pt:.88,Au:.88,Pb:.98,Bi:1.00,U:1.28,default:.78};
 
+/* ── Chemistry rules for bond drawing ─────────────────────────────────
+   Plain covalent-radius-sum cutoffs draw a "bond" for any two atoms
+   close enough, with no regard for whether that's chemically sensible.
+   Two rules on top fix that:
+   1. Homonuclear METAL-METAL contacts (Na-Na, Fe-Fe, ...) are metallic
+      bonding — a delocalized electron sea, not a discrete bond — so we
+      don't draw a stick there. Homonuclear NONMETAL/metalloid contacts
+      (B-B, Si-Si, S-S, halogens, ...) are real covalent bonds and stay.
+   2. Every atom's bond count is capped at a typical maximum
+      coordination number for that element, keeping only its shortest
+      (strongest) contacts. This stops a generous distance tolerance
+      from drawing an implausibly over-coordinated atom. */
+const CF_METALS = new Set(['Li','Na','K','Rb','Cs','Fr','Be','Mg','Ca','Sr','Ba','Ra',
+  'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd',
+  'Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Al','Ga','In','Sn','Tl','Pb','Bi']);
+const CF_MAXCOORD = {
+  H:1,F:1,Cl:1,Br:1,I:1,
+  O:2,S:2,Se:2,Te:2,
+  N:3,P:3,As:3,Sb:3,B:4,
+  C:4,Si:4,Ge:4,
+  default:6,
+};
+function cfComputeChemBonds(atoms, tol){
+  tol = tol ?? 0.4;
+  const candidates=[];
+  for(let i=0;i<atoms.length;i++)for(let j=i+1;j<atoms.length;j++){
+    const ai=atoms[i],aj=atoms[j];
+    const ri=CF_CRADII[ai.el]||CF_CRADII.default;
+    const rj=CF_CRADII[aj.el]||CF_CRADII.default;
+    const cut=(ri+rj)+tol;
+    const dx=ai.x-aj.x,dy=ai.y-aj.y,dz=ai.z-aj.z;
+    const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(d<=0.3||d>cut)continue;
+    if(ai.el===aj.el&&CF_METALS.has(ai.el))continue; // rule 1: no homonuclear metal-metal "bond"
+    candidates.push({i,j,dist:d});
+  }
+  candidates.sort((a,b)=>a.dist-b.dist);
+  const count=new Array(atoms.length).fill(0);
+  const bonds=[];
+  candidates.forEach(({i,j,dist})=>{
+    const maxI=CF_MAXCOORD[atoms[i].el]||CF_MAXCOORD.default;
+    const maxJ=CF_MAXCOORD[atoms[j].el]||CF_MAXCOORD.default;
+    if(count[i]>=maxI||count[j]>=maxJ)return; // rule 2: coordination cap, shortest bonds win
+    count[i]++;count[j]++;
+    bonds.push({i,j,dist});
+  });
+  return bonds;
+}
+
 /* ── Engine state ─────────────────────────────────────────────────────── */
 const CF={
   scene:null,camera:null,renderer:null,
@@ -1655,16 +1704,7 @@ function cfBuildPositions(){
   return pts;
 }
 function cfBuildBonds(atoms){
-  const bonds=[];
-  for(let i=0;i<atoms.length;i++)for(let j=i+1;j<atoms.length;j++){
-    const ri=CF_CRADII[atoms[i].el]||CF_CRADII.default;
-    const rj=CF_CRADII[atoms[j].el]||CF_CRADII.default;
-    const cut=(ri+rj)+CF.bondTol;
-    const dx=atoms[i].x-atoms[j].x,dy=atoms[i].y-atoms[j].y,dz=atoms[i].z-atoms[j].z;
-    const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
-    if(d>0.3&&d<=cut)bonds.push({i,j,dist:d});
-  }
-  return bonds;
+  return cfComputeChemBonds(atoms, CF.bondTol);
 }
 
 function draw3D(){
@@ -1678,7 +1718,10 @@ function draw3D(){
   if(!CF.scene)return;
   CF.selected=[];
   // Dispose
-  Object.values(CF.instancedAtoms).forEach(({mesh})=>{CF.scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();});
+  Object.values(CF.instancedAtoms).forEach(({mesh,outlineMesh})=>{
+    CF.scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();
+    if(outlineMesh){CF.scene.remove(outlineMesh);outlineMesh.geometry.dispose();outlineMesh.material.dispose();}
+  });
   CF.instancedAtoms={};
   cfDisposeGroup(CF.bondGroup);cfDisposeGroup(CF.cellGroup);
 
@@ -1702,7 +1745,19 @@ function draw3D(){
       mesh.instanceMatrix.needsUpdate=true;
       if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
       CF.scene.add(mesh);
-      CF.instancedAtoms[el]={mesh,count:ats.length,atoms:ats};
+
+      // Dark backface silhouette outline (classic "toon outline" trick):
+      // a slightly larger copy of the sphere, rendered back-face-only in
+      // a near-black color, so every atom reads as a distinct sphere
+      // rather than blurring into touching neighbors or bond sticks.
+      const outlineGeo=new THREE.SphereGeometry(r*1.08,16,12);
+      const outlineMat=new THREE.MeshBasicMaterial({color:0x14141c,side:THREE.BackSide});
+      const outlineMesh=new THREE.InstancedMesh(outlineGeo,outlineMat,ats.length);
+      ats.forEach((a,i)=>{outlineMesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z));});
+      outlineMesh.instanceMatrix.needsUpdate=true;
+      CF.scene.add(outlineMesh);
+
+      CF.instancedAtoms[el]={mesh,outlineMesh,count:ats.length,atoms:ats};
     });
   }
 
@@ -2904,6 +2959,60 @@ const StructureGenerator = {
   },
 };
 
+/* ── Generic structure validator (any Bravais type) ────────────────────
+   symmMinDistOK/symmFracToCart above only understand SC/TET/HEX (the
+   symmetry generator's own output space). Crossover and mutation can
+   combine or perturb structures that came from the ORIGINAL naive
+   generator (useSymmetry=false), which can carry FCC/BCC/ORTH/MONO/TRI
+   too, so validation here reuses the app's own CELL_VECS (which already
+   covers all of those) instead of the narrower SYMM_CELL_VECS. */
+function evoGenericMinDistOK(atomsFrac, bravais, a, c, tolFactor){
+  const cell=CELL_VECS[bravais]||CELL_VECS.SC;
+  const cz=['HEX','TET'].includes(bravais)?c:a;
+  const toCart=f=>[
+    (cell[0][0]*f[0]+cell[1][0]*f[1]+cell[2][0]*f[2])*a,
+    (cell[0][1]*f[0]+cell[1][1]*f[1]+cell[2][1]*f[2])*a,
+    (cell[0][2]*f[0]+cell[1][2]*f[1]+cell[2][2]*f[2])*cz,
+  ];
+  const shifts=[-1,0,1];
+  for(let i=0;i<atomsFrac.length;i++){
+    const pi=toCart(atomsFrac[i].f);
+    for(let j=i;j<atomsFrac.length;j++){
+      for(const sx of shifts)for(const sy of shifts)for(const sz of shifts){
+        if(i===j&&sx===0&&sy===0&&sz===0)continue;
+        const fj=[atomsFrac[j].f[0]+sx,atomsFrac[j].f[1]+sy,atomsFrac[j].f[2]+sz];
+        const pj=toCart(fj);
+        const dx=pi[0]-pj[0],dy=pi[1]-pj[1],dz=pi[2]-pj[2];
+        const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+        const ri=SYMM_CRADII[atomsFrac[i].el]||SYMM_CRADII.default;
+        const rj=SYMM_CRADII[atomsFrac[j].el]||SYMM_CRADII.default;
+        if(d>1e-4&&d<(ri+rj)*tolFactor)return false;
+      }
+    }
+  }
+  return true;
+}
+function evoValidateStructure(s,tolFactor=0.55){
+  if(!s||!s.atoms||!s.atoms.length)return false;
+  return evoGenericMinDistOK(s.atoms,s.bravais||'SC',s.a||4,s.c||s.a||4,tolFactor);
+}
+/* Run a generator (crossover/mutation) up to maxTries times; accept the
+   first result that satisfies the same distance/validity principle used
+   for initial generation. If every attempt fails, repair by falling back
+   to a fresh symmetry-constrained structure (SymmetryStructureGenerator)
+   rather than ever handing the EA an overlapping-atom structure. */
+function evoGenerateValidVariant(generatorFn, fallbackFormula, maxTries=8){
+  for(let t=0;t<maxTries;t++){
+    try{
+      const s=generatorFn();
+      if(evoValidateStructure(s))return s;
+    }catch(e){/* try again */}
+  }
+  if(typeof logHPC==='function')
+    logHPC('[Evo] Operator produced an invalid (overlapping-atom) structure after retries — repairing via symmetry-constrained generation');
+  return StructureGenerator.random(fallbackFormula,1,2,true);
+}
+
 /* Parse "Si8" or "Ga1As1" style formula */
 function parseFormula(f){
   const re=/([A-Z][a-z]?)(\d*)/g,out=[];let m;
@@ -2935,7 +3044,7 @@ const MutationEngine={
   },
   crossover(p1,p2){
     const s1=p1.structure,s2=p2.structure;
-    if(!s1||!s2)return StructureGenerator.random(document.getElementById('evo-formula').value||'Si4',1,2,false);
+    if(!s1||!s2)return StructureGenerator.random(document.getElementById('evo-formula').value||'Si4',1,2,true);
     const frac=0.25+Math.random()*0.5; // random split fraction
     const minContrib=parseFloat(document.getElementById('evo-cross-min').value)||0.25;
     const f=Math.max(minContrib,Math.min(1-minContrib,frac));
@@ -3169,20 +3278,33 @@ const PopulationManager={
       const p1=SelectionEngine.tournament(EVO.population);
       const p2=SelectionEngine.tournament(EVO.population);
       if(p1&&p2&&p1!==p2){
-        es=makeEvoStruct({structure:MutationEngine.crossover(p1,p2),mutation:EVO_MUTATIONS.CROSS,parents:[p1.id,p2.id]});
+        const s=evoGenerateValidVariant(()=>MutationEngine.crossover(p1,p2),formula);
+        es=makeEvoStruct({structure:s,mutation:EVO_MUTATIONS.CROSS,parents:[p1.id,p2.id]});
         (EVO.mutSuccess[EVO_MUTATIONS.CROSS]||(EVO.mutSuccess[EVO_MUTATIONS.CROSS]=0));
       }
     } else if(dice<crossPct+stripPct){
       const p=SelectionEngine.tournament(EVO.population);
-      if(p){es=makeEvoStruct({structure:MutationEngine.stripple(p),mutation:EVO_MUTATIONS.STRIP,parents:[p.id]});}
+      if(p){
+        const s=evoGenerateValidVariant(()=>MutationEngine.stripple(p),formula);
+        es=makeEvoStruct({structure:s,mutation:EVO_MUTATIONS.STRIP,parents:[p.id]});
+      }
     } else if(dice<crossPct+stripPct+permPct){
       const p=SelectionEngine.tournament(EVO.population);
-      if(p){es=makeEvoStruct({structure:MutationEngine.permustrain(p),mutation:EVO_MUTATIONS.PERM,parents:[p.id]});}
+      if(p){
+        const s=evoGenerateValidVariant(()=>MutationEngine.permustrain(p),formula);
+        es=makeEvoStruct({structure:s,mutation:EVO_MUTATIONS.PERM,parents:[p.id]});
+      }
     } else {
       const p=SelectionEngine.tournament(EVO.population);
-      if(p){es=makeEvoStruct({structure:MutationEngine.symmetryMutation(p),mutation:EVO_MUTATIONS.SYM,parents:[p.id]});}
+      if(p){
+        const s=evoGenerateValidVariant(()=>MutationEngine.symmetryMutation(p),formula);
+        es=makeEvoStruct({structure:s,mutation:EVO_MUTATIONS.SYM,parents:[p.id]});
+      }
     }
-    if(!es){es=makeEvoStruct({structure:StructureGenerator.random(formula,1,2,false),mutation:EVO_MUTATIONS.RAND});}
+    // No eligible parents at all yet (e.g. very early in the run) — fall
+    // back to a fresh symmetry-constrained structure, same principle used
+    // for the initial population, rather than the old fully-random one.
+    if(!es){es=makeEvoStruct({structure:StructureGenerator.random(formula,1,2,true),mutation:EVO_MUTATIONS.RAND});}
     PopulationManager.add(es);
     return es;
   },
@@ -3529,33 +3651,35 @@ function evoLoad3D(s){
     mesh.instanceMatrix.needsUpdate=true;
     if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
     EVO_THREE.scene.add(mesh);
+
+    // Dark silhouette outline — same trick as the main viewer, so atoms
+    // stay distinctly visible in the Evolution structure window too.
+    const outlineGeo=new THREE.SphereGeometry(r*1.08,14,10);
+    const outlineMat=new THREE.MeshBasicMaterial({color:0x14141c,side:THREE.BackSide});
+    const outlineMesh=new THREE.InstancedMesh(outlineGeo,outlineMat,ats.length);
+    ats.forEach((a,i)=>{outlineMesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z));});
+    outlineMesh.instanceMatrix.needsUpdate=true;
+    EVO_THREE.scene.add(outlineMesh);
   });
 
-  // ── Bonds ──
-  for(let i=0;i<pts.length;i++){
-    for(let j=i+1;j<pts.length;j++){
-      const ri=CF_CRADII[pts[i].el]||CF_CRADII.default;
-      const rj=CF_CRADII[pts[j].el]||CF_CRADII.default;
-      const cut=ri+rj+0.4;
-      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dz=pts[i].z-pts[j].z;
-      const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
-      if(d>0.3&&d<cut){
-        const mid={x:(pts[i].x+pts[j].x)/2,y:(pts[i].y+pts[j].y)/2,z:(pts[i].z+pts[j].z)/2};
-        // Two-tone bond (each half element color)
-        [[pts[i],mid],[mid,pts[j]]].forEach(([p1,p2],hi)=>{
-          const el=hi===0?pts[i].el:pts[j].el;
-          const dir=new THREE.Vector3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
-          const len=dir.length();if(len<0.001)return;
-          const geo=new THREE.CylinderGeometry(0.08,0.08,len,10);
-          const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||'#aaaaaa'),roughness:0.4});
-          const m=new THREE.Mesh(geo,mat);
-          m.position.set((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
-          m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
-          EVO_THREE.scene.add(m);
-        });
-      }
-    }
-  }
+  // ── Bonds — chemistry-aware (no homonuclear metal-metal sticks,
+  //    coordination-capped so atoms don't get implausibly over-bonded) ──
+  const evoBonds=cfComputeChemBonds(pts, 0.4);
+  evoBonds.forEach(({i,j})=>{
+    const mid={x:(pts[i].x+pts[j].x)/2,y:(pts[i].y+pts[j].y)/2,z:(pts[i].z+pts[j].z)/2};
+    // Two-tone bond (each half element color)
+    [[pts[i],mid],[mid,pts[j]]].forEach(([p1,p2],hi)=>{
+      const el=hi===0?pts[i].el:pts[j].el;
+      const dir=new THREE.Vector3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
+      const len=dir.length();if(len<0.001)return;
+      const geo=new THREE.CylinderGeometry(0.08,0.08,len,10);
+      const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||'#aaaaaa'),roughness:0.4});
+      const m=new THREE.Mesh(geo,mat);
+      m.position.set((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+      EVO_THREE.scene.add(m);
+    });
+  });
 
   // ── Unit cell box ──
   const ax=new THREE.Vector3(cell[0][0]*a0,cell[0][1]*a0,cell[0][2]*cz);
