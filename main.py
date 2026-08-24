@@ -266,6 +266,11 @@ async def md_evolution_page(request: Request):
     return templates.TemplateResponse(request, "md_evolution.html")
 
 
+@app.get("/md/force-field", response_class=HTMLResponse)
+async def md_force_field_page(request: Request):
+    return templates.TemplateResponse(request, "md_force_field.html")
+
+
 @app.get("/structures", response_class=HTMLResponse)
 async def structures_page():
     return FileResponse(

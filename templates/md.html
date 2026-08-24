@@ -913,8 +913,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
     <!-- Mode tabs inside right panel -->
     <div class="rp-tab-bar">
       <button class="rp-tab active" data-rptab="md-sim" onclick="switchRpTab('md-sim',this)">MD</button>
-      <button class="rp-tab" data-rptab="md-geo" onclick="switchRpTab('md-geo',this)">Geometry</button>
-      <button class="rp-tab" data-rptab="md-aiff" onclick="switchRpTab('md-aiff',this)">Force-Field Gen.</button>
+      <button class="rp-tab" data-rptab="md-aiff" onclick="location.href='/md/force-field'">Force Field</button>
       <button class="rp-tab" data-rptab="md-evo" onclick="location.href='/md/evolution'">MD Evolution</button>
       <button class="rp-tab" data-rptab="md-mc" onclick="switchRpTab('md-mc',this)">Monte Carlo</button>
 
@@ -1034,8 +1033,8 @@ body.mode-menu-open #bb-icon-close{display:flex}
             <div style="font-size:10px;color:#888;margin-top:4px">ReaxFF: requires ffield.reax parameter file.</div>
           </div>
           <div id="ff-mlip" style="display:none">
-            <div style="font-size:10.5px;color:#666;padding:4px 0 8px">MACE · NequIP · CHGNet · DeePMD — use AI Force-Field tab to train and deploy.</div>
-            <button class="gen-btn" style="width:100%;border-radius:3px;padding:5px;font-size:11px" onclick="switchRpTab('md-aiff',document.querySelector('[data-rptab=md-aiff]'))">→ AI Force-Field Generator</button>
+            <div style="font-size:10.5px;color:#666;padding:4px 0 8px">MACE · NequIP · CHGNet · DeePMD — open Force Field to explore classical and ML potentials.</div>
+            <button class="gen-btn" style="width:100%;border-radius:3px;padding:5px;font-size:11px" onclick="location.href='/md/force-field'">→ Force Field</button>
           </div>
         </div>
       </div>
@@ -1131,629 +1130,8 @@ body.mode-menu-open #bb-icon-close{display:flex}
 
     </div><!-- /rptab-md-sim -->
 
-    <!-- ════════════════════════════════
-         TAB: GEOMETRY
-    ════════════════════════════════ -->
-    <div class="rp-tabpane" id="rptab-md-geo">
-
-      <!-- Cell -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('geoCell','geoCellA')">
-          <span class="acc-arrow" id="geoCellA">▼</span><span class="acc-title">Cell</span>
-        </div>
-        <div class="acc-body" id="geoCell">
-          <div class="sub-head">Lattice Constants</div>
-          <div class="field-row"><div class="field-label">Bravais</div>
-            <div class="field-val"><select class="burai-select" id="geo-bravais">
-              <option>FCC (Fm-3m)</option><option>BCC (Im-3m)</option><option>Simple Cubic</option>
-              <option>Hexagonal</option><option>Diamond</option><option>Zincblende</option>
-            </select></div>
-          </div>
-          <div class="field-row"><div class="field-label">A</div>
-            <div class="field-val"><input class="burai-input" id="geo-a" type="number" value="5.65318" step="0.001"/>
-            <button class="spin-btn" onclick="spinF('geo-a',.01)">+</button><button class="spin-btn minus" onclick="spinF('geo-a',-.01)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">B</div>
-            <div class="field-val"><input class="burai-input" id="geo-b" type="number" value="5.65318" step="0.001"/>
-            <button class="spin-btn" onclick="spinF('geo-b',.01)">+</button><button class="spin-btn minus" onclick="spinF('geo-b',-.01)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">C</div>
-            <div class="field-val"><input class="burai-input" id="geo-c" type="number" value="5.65318" step="0.001"/>
-            <button class="spin-btn" onclick="spinF('geo-c',.01)">+</button><button class="spin-btn minus" onclick="spinF('geo-c',-.01)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Alpha</div>
-            <div class="field-val"><input class="burai-input" type="number" value="90.00000" step="0.5"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Beta</div>
-            <div class="field-val"><input class="burai-input" type="number" value="90.00000" step="0.5"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Gamma</div>
-            <div class="field-val"><input class="burai-input" type="number" value="90.00000" step="0.5"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="sub-head">Lattice Vectors</div>
-          <div class="vec-matrix">
-            <div class="vec-row"><span class="vec-idx">a</span><input class="vec-inp" id="g-v00" readonly/><input class="vec-inp" id="g-v01" readonly/><input class="vec-inp" id="g-v02" readonly/></div>
-            <div class="vec-row"><span class="vec-idx">b</span><input class="vec-inp" id="g-v10" readonly/><input class="vec-inp" id="g-v11" readonly/><input class="vec-inp" id="g-v12" readonly/></div>
-            <div class="vec-row"><span class="vec-idx">c</span><input class="vec-inp" id="g-v20" readonly/><input class="vec-inp" id="g-v21" readonly/><input class="vec-inp" id="g-v22" readonly/></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Electronic -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('geoElec','geoElecA')">
-          <span class="acc-arrow" id="geoElecA" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">Electronic</span>
-        </div>
-        <div class="acc-body hidden" id="geoElec">
-          <div class="field-row"><div class="field-label">XC</div>
-            <div class="field-val"><select class="burai-select"><option selected>PBE (GGA)</option><option>LDA</option><option>PBEsol</option><option>HSE06</option><option>SCAN</option></select></div>
-          </div>
-          <div class="field-row"><div class="field-label">Ecutwfc (Ry)</div>
-            <div class="field-val"><input class="burai-input" type="number" value="60" step="5"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">k-mesh</div>
-            <div class="field-val sc-row"><input class="sc-inp" value="6" type="number" min="1"/><span>×</span><input class="sc-inp" value="6" type="number" min="1"/><span>×</span><input class="sc-inp" value="6" type="number" min="1"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Smearing</div>
-            <div class="field-val"><input class="burai-input" type="number" value="0.020" step="0.005"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Calculation</div>
-            <div class="field-val"><select class="burai-select"><option>SCF</option><option>Relax</option><option>vc-relax</option><option>MD</option></select></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Elements -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('geoEls','geoElsA')">
-          <span class="acc-arrow" id="geoElsA" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">Elements</span>
-        </div>
-        <div class="acc-body hidden" id="geoEls">
-          <table class="el-table"><thead><tr><th>El</th><th>Pseudopotential</th></tr></thead>
-            <tbody><tr><td><span class="el-sph" style="background:#c28f8f"></span>Ga</td><td>ga.pbe-n-rrkjus_psl</td></tr>
-            <tr><td><span class="el-sph" style="background:#bd80e3"></span>As</td><td>as.pbe-n-rrkjus_psl</td></tr></tbody>
-          </table>
-          <div style="margin-top:7px"><div class="hpc-label">Pseudo library</div>
-            <select class="burai-select" style="width:100%;margin-top:3px"><option>SSSP efficiency</option><option>SSSP precision</option><option>PSlibrary 1.0.0</option></select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Atoms -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('geoAtoms','geoAtomsA')">
-          <span class="acc-arrow" id="geoAtomsA" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">Atoms</span>
-        </div>
-        <div class="acc-body hidden" id="geoAtoms">
-          <table class="atom-table"><thead><tr><th>El</th><th>x</th><th>y</th><th>z</th></tr></thead>
-            <tbody><tr><td>Ga</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
-            <tr><td>As</td><td>0.250</td><td>0.250</td><td>0.250</td></tr></tbody>
-          </table>
-          <div style="margin-top:7px"><div class="hpc-label" style="margin-bottom:3px">Supercell</div>
-            <div class="sc-row"><input class="sc-inp" value="1" type="number" min="1" max="6"/><span>×</span><input class="sc-inp" value="1" type="number" min="1" max="6"/><span>×</span><input class="sc-inp" value="1" type="number" min="1" max="6"/>
-            <button class="gen-btn" style="padding:3px 8px;border-radius:3px;font-size:10px">Apply</button></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Import -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('geoImport','geoImportA')">
-          <span class="acc-arrow" id="geoImportA" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">Import / Presets</span>
-        </div>
-        <div class="acc-body hidden" id="geoImport">
-          <div class="dz-area"><input type="file" accept=".cif,.vasp,.xyz"/><div>⬆ Drop CIF · POSCAR · XYZ</div></div>
-          <div class="hpc-label" style="margin:6px 0 3px">Presets</div>
-          <select class="burai-select" style="width:100%" size="5">
-            <option>GaAs (Zincblende)</option><option>Si (Diamond)</option><option>Al (FCC)</option>
-            <option>Cu (FCC)</option><option>Fe (BCC)</option><option>NaCl (Rock salt)</option>
-            <option>MgO (Rock salt)</option><option>TiO₂ (Rutile)</option><option>BaTiO₃ (Perovskite)</option>
-          </select>
-          <button class="gen-btn" style="width:100%;margin-top:5px;border-radius:3px;padding:5px">Load preset</button>
-          <button class="gen-btn" style="width:100%;margin-top:4px;border-radius:3px;padding:5px;background:#2e7dcc" onclick="switchRpTab('md-sim',document.querySelector('[data-rptab=md-sim]'))">→ Send to MD Simulation</button>
-        </div>
-      </div>
-
-    </div><!-- /rptab-md-geo -->
-
-    <!-- ════════════════════════════════
-         TAB: AI FORCE-FIELD
-    ════════════════════════════════ -->
-    <div class="rp-tabpane" id="rptab-md-aiff">
-
-      <!-- ① OVERVIEW STRIP -->
-      <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:3px;padding:8px 10px;margin-bottom:0;display:flex;align-items:flex-start;gap:8px;">
-        <span style="font-size:14px;flex-shrink:0">🧠</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:11px;font-weight:700;color:#5b21b6;margin-bottom:2px" id="nba-rp-title">Training is running (epoch 78/120)</div>
-          <div style="font-size:10px;color:#7c3aed" id="nba-rp-desc">E-RMSE=2.3 meV/atom. Review learning curves, check for divergence.</div>
-        </div>
-      </div>
-
-      <!-- READINESS SCORE -->
-      <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#e8e8e8;border-bottom:1px solid #ccc;">
-        <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400;" id="rp-readiness-num">72</div>
-        <div style="flex:1">
-          <div style="font-size:9px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Training Readiness</div>
-          <div style="height:5px;background:#ccc;border-radius:2px;overflow:hidden"><div style="height:100%;width:72%;background:#cc8400;border-radius:2px" id="rp-readiness-bar"></div></div>
-        </div>
-        <div style="font-size:9px;color:#888;white-space:nowrap">72 / 100</div>
-      </div>
-
-      <!-- KEY METRICS (always visible) -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#ccc;border-bottom:1px solid #ccc;">
-        <div style="background:#fff;padding:6px 8px;text-align:center">
-          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">E RMSE</div>
-          <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#111" id="rp-ermse">2.3</div>
-          <div style="font-size:8.5px;color:#888">meV/at</div>
-        </div>
-        <div style="background:#fff;padding:6px 8px;text-align:center">
-          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">F RMSE</div>
-          <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#111" id="rp-frmse">62</div>
-          <div style="font-size:8.5px;color:#888">meV/Å</div>
-        </div>
-        <div style="background:#fff;padding:6px 8px;text-align:center">
-          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">Val gate</div>
-          <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400" id="rp-valgate">8/9</div>
-          <div style="font-size:8.5px;color:#888">gates pass</div>
-        </div>
-        <div style="background:#fff;padding:6px 8px;text-align:center">
-          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">σ RMSE</div>
-          <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#111">0.41</div>
-          <div style="font-size:8.5px;color:#888">GPa</div>
-        </div>
-        <div style="background:#fff;padding:6px 8px;text-align:center">
-          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">R²</div>
-          <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#2a9d2a">0.9987</div>
-          <div style="font-size:8.5px;color:#888">energy</div>
-        </div>
-        <div style="background:#fff;padding:6px 8px;text-align:center">
-          <div style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px">AL iter</div>
-          <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#111">4</div>
-          <div style="font-size:8.5px;color:#2a9d2a">−61% RMSE</div>
-        </div>
-      </div>
-
-      <div id="rp-scroll-aiff" style="flex:1;overflow-y:auto;overflow-x:hidden">
-
-      <!-- ① PROJECT -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffProjB','aiffProjBA')">
-          <span class="acc-arrow" id="aiffProjBA">▼</span><span class="acc-title">① Project</span>
-        </div>
-        <div class="acc-body" id="aiffProjB">
-          <div class="field-row"><div class="field-label">Name</div>
-            <div class="field-val"><input class="burai-input" value="H3S High-Pressure" style="text-align:left"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Elements</div>
-            <div class="field-val"><input class="burai-input" value="H, S" style="text-align:left"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Material class</div>
-            <div class="field-val"><select class="burai-select">
-              <option selected>Superconducting hydride</option>
-              <option>Metallic alloy</option><option>Ionic crystal</option>
-              <option>Oxide</option><option>Molecular</option><option>High-pressure</option>
-            </select></div>
-          </div>
-          <div class="field-row"><div class="field-label">DFT source</div>
-            <div class="field-val"><select class="burai-select"><option selected>Quantum ESPRESSO</option><option>VASP</option><option>FHI-aims</option><option>CP2K</option></select></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ② PREPARE DATA -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffDataB','aiffDataBA')">
-          <span class="acc-arrow" id="aiffDataBA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">② Prepare Data</span>
-          <span style="margin-left:auto;font-size:9px;font-family:'JetBrains Mono',monospace;color:#2a9d2a">1,842</span>
-        </div>
-        <div class="acc-body hidden" id="aiffDataB">
-          <!-- Dataset stats -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:8px;">
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Structures</div>
-              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace">1,842</div>
-              <div style="font-size:8.5px;color:#888">1474/184/184</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Total atoms</div>
-              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace">97,862</div>
-              <div style="font-size:8.5px;color:#888">avg 53/struct</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">With forces</div>
-              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400">97.8%</div>
-              <div style="font-size:8.5px;color:#888">1,801 / 1,842</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">With stresses</div>
-              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400">96.4%</div>
-              <div style="font-size:8.5px;color:#888">1,776 / 1,842</div>
-            </div>
-          </div>
-          <!-- Blockers -->
-          <div style="background:#fdeaea;border:1px solid #ef9a9a;border-radius:2px;padding:5px 8px;font-size:10px;color:#b02020;margin-bottom:5px">
-            <b>Force outliers: 27 structures</b> — |F| &gt; 35 eV/Å may destabilise training.
-          </div>
-          <div style="background:#fff8e1;border:1px solid #ffcc80;border-radius:2px;padding:5px 8px;font-size:10px;color:#cc8400;margin-bottom:8px">
-            <b>Missing stress labels (3.6%)</b> — 66 structures lack stress tensors.
-          </div>
-          <!-- Train/Val/Test split -->
-          <div class="sub-head">Dataset Split</div>
-          <div class="field-row"><div class="field-label">Train</div>
-            <div class="field-val"><input type="range" min="50" max="95" value="80" style="flex:1;accent-color:#ff6600" oninput="aiffUpdateSplit(this.value)"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;width:32px" id="aiff-train-pct">80%</span></div>
-          </div>
-          <div class="field-row"><div class="field-label">Strategy</div>
-            <div class="field-val"><select class="burai-select"><option selected>Random (stratified T/P)</option><option>Sequential</option><option>Structure-based</option></select></div>
-          </div>
-          <div class="field-row"><div class="field-label">Seed</div>
-            <div class="field-val"><input class="burai-input" type="number" value="42"/></div>
-          </div>
-          <!-- DFT labels import -->
-          <div class="sub-head">DFT Labels</div>
-          <div class="field-row"><div class="field-label">Extract</div>
-            <div class="field-val" style="flex-wrap:wrap;gap:4px">
-              <label style="display:flex;align-items:center;gap:3px;font-size:10px;white-space:nowrap"><input type="checkbox" checked style="accent-color:#ff6600"> Forces</label>
-              <label style="display:flex;align-items:center;gap:3px;font-size:10px;white-space:nowrap"><input type="checkbox" checked style="accent-color:#ff6600"> Stresses</label>
-              <label style="display:flex;align-items:center;gap:3px;font-size:10px;white-space:nowrap"><input type="checkbox" style="accent-color:#ff6600"> Charges</label>
-            </div>
-          </div>
-          <button class="gen-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-top:4px" onclick="aiffLog('Importing DFT labels from cluster...','ok')">⬆ Import Dataset from QE</button>
-          <!-- Sampling strategies -->
-          <div class="sub-head">Generate Additional Data</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px">
-            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" checked style="accent-color:#ff6600"> AIMD Snapshots</label>
-            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" style="accent-color:#ff6600"> Geometry Opt.</label>
-            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" checked style="accent-color:#ff6600"> Random Displace.</label>
-            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" style="accent-color:#ff6600"> Cell Strain</label>
-            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" checked style="accent-color:#ff6600"> Active Learning</label>
-            <label style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" style="accent-color:#ff6600"> Metropolis MC</label>
-          </div>
-          <div class="field-row"><div class="field-label">T range (K)</div>
-            <div class="field-val"><input class="burai-input" type="number" value="300" style="width:48px"/>–<input class="burai-input" type="number" value="1500" style="width:48px"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">P range (GPa)</div>
-            <div class="field-val"><input class="burai-input" type="number" value="100" style="width:48px"/>–<input class="burai-input" type="number" value="250" style="width:48px"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Snapshots/job</div>
-            <div class="field-val"><input class="burai-input" type="number" value="50"/></div>
-          </div>
-          <!-- Cost estimate -->
-          <div style="background:#f0f0f0;border:1px solid #ccc;border-radius:2px;padding:6px 8px;margin-top:6px;font-size:10px">
-            <div style="font-weight:700;color:#555;margin-bottom:4px">⚡ Est. Resource Cost</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;color:#666">
-              <span>DFT calcs:</span><span style="font-family:'JetBrains Mono',monospace">~650</span>
-              <span>CPU·node·h:</span><span style="font-family:'JetBrains Mono',monospace">~312</span>
-              <span>Storage:</span><span style="font-family:'JetBrains Mono',monospace">~1.8 GB</span>
-            </div>
-          </div>
-          <button class="run-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-top:5px" onclick="aiffLog('Submitting sampling jobs to cluster...','ok')">▶ Submit Sampling Jobs</button>
-        </div>
-      </div>
-
-      <!-- ③ CONFIGURE MODEL -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffCfgB','aiffCfgBA')">
-          <span class="acc-arrow" id="aiffCfgBA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">③ Configure Model</span>
-        </div>
-        <div class="acc-body hidden" id="aiffCfgB">
-          <!-- Presets -->
-          <div class="sub-head">Material Presets</div>
-          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px">
-            <button style="padding:2px 7px;font-size:10px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Applied Hydride preset','ok')">💧 Hydride</button>
-            <button style="padding:2px 7px;font-size:10px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Applied Oxide preset','ok')">🔴 Oxide</button>
-            <button style="padding:2px 7px;font-size:10px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Applied Metallic preset','ok')">🪙 Metallic</button>
-            <button style="padding:2px 7px;font-size:10px;border:1px solid #ff6600;border-radius:2px;background:#fff5ef;color:#ff6600;cursor:pointer;font-weight:700">⬛ High-P ✓</button>
-          </div>
-          <!-- Backend -->
-          <div class="sub-head">ML Backend</div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;margin-bottom:8px">
-            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'HDNNP')">HDNNP</div>
-            <div class="backend-card-rp selected" onclick="aiffSelectBackend(this,'SANNP')">SANNP ✓</div>
-            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'Delta-NNP')">Δ-NNP</div>
-            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'MACE')">MACE</div>
-            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'NequIP')">NequIP</div>
-            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'DeePMD')">DeePMD</div>
-            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'CHGNet')">CHGNet</div>
-            <div class="backend-card-rp" onclick="aiffSelectBackend(this,'DeltaReaxFF')">Δ+ReaxFF</div>
-          </div>
-          <!-- Descriptor -->
-          <div class="sub-head">Descriptor</div>
-          <div class="field-row"><div class="field-label">Type</div>
-            <div class="field-val"><select class="burai-select"><option selected>SANNP many-body</option><option>Behler G2/G4</option><option>Chebyshev</option><option>Weighted SF</option></select></div>
-          </div>
-          <div class="field-row"><div class="field-label">Cutoff (Å)</div>
-            <div class="field-val"><input class="burai-input" id="aiff-cutoff" type="number" value="6.5" step="0.5"/>
-            <button class="spin-btn" onclick="spinF('aiff-cutoff',.5)">+</button><button class="spin-btn minus" onclick="spinF('aiff-cutoff',-.5)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Radial basis</div>
-            <div class="field-val"><input class="burai-input" type="number" value="16"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Angular basis</div>
-            <div class="field-val"><input class="burai-input" type="number" value="8"/></div>
-          </div>
-          <!-- Architecture -->
-          <div class="sub-head">Network Architecture</div>
-          <div class="field-row"><div class="field-label">Hidden layers</div>
-            <div class="field-val"><input class="burai-input" value="128, 64, 32" style="text-align:left"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Activation</div>
-            <div class="field-val"><select class="burai-select"><option selected>Tanh</option><option>ELU</option><option>GELU</option><option>Swish</option></select></div>
-          </div>
-          <div class="field-row"><div class="field-label">Element embed.</div>
-            <div class="field-val"><select class="burai-select"><option selected>One-hot</option><option>Trainable</option><option>Charge-dep.</option></select></div>
-          </div>
-          <!-- Hyperparameters -->
-          <div class="sub-head">Hyperparameters</div>
-          <div class="field-row"><div class="field-label">Epochs</div>
-            <div class="field-val"><input class="burai-input" id="aiff-epochs" type="number" value="120"/>
-            <button class="spin-btn" onclick="spinF('aiff-epochs',10)">+</button><button class="spin-btn minus" onclick="spinF('aiff-epochs',-10)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Batch size</div>
-            <div class="field-val"><input class="burai-input" type="number" value="32"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Learning rate</div>
-            <div class="field-val"><input class="burai-input" type="number" value="0.001" step="0.0001"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Optimizer</div>
-            <div class="field-val"><select class="burai-select"><option selected>Adam</option><option>AdamW</option><option>L-BFGS</option></select></div>
-          </div>
-          <div class="field-row"><div class="field-label">Early stop</div>
-            <div class="field-val"><input class="burai-input" type="number" value="15" title="patience epochs"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Precision</div>
-            <div class="field-val"><select class="burai-select"><option selected>float64</option><option>float32</option></select></div>
-          </div>
-          <!-- Loss weights -->
-          <div class="sub-head">Loss Weights</div>
-          <div class="field-row"><div class="field-label">Energy</div>
-            <div class="field-val"><input class="burai-input" id="aiff-we" type="number" value="1.0" step="0.1"/>
-            <button class="spin-btn" onclick="spinF('aiff-we',.1)">+</button><button class="spin-btn minus" onclick="spinF('aiff-we',-.1)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Force</div>
-            <div class="field-val"><input class="burai-input" id="aiff-wf" type="number" value="10.0" step="0.5"/>
-            <button class="spin-btn" onclick="spinF('aiff-wf',.5)">+</button><button class="spin-btn minus" onclick="spinF('aiff-wf',-.5)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Stress</div>
-            <div class="field-val"><input class="burai-input" id="aiff-ws" type="number" value="0.01" step="0.005"/>
-            <button class="spin-btn" onclick="spinF('aiff-ws',.005)">+</button><button class="spin-btn minus" onclick="spinF('aiff-ws',-.005)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Charge</div>
-            <div class="field-val"><input class="burai-input" type="number" value="0.0" step="0.01"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Seed</div>
-            <div class="field-val"><input class="burai-input" type="number" value="42"/></div>
-          </div>
-          <!-- Cost estimate -->
-          <div style="background:#f0f0f0;border:1px solid #ccc;border-radius:2px;padding:5px 8px;margin-top:5px;font-size:10px">
-            <div style="font-weight:700;color:#555;margin-bottom:3px">⚡ Est. Training Cost</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;color:#666">
-              <span>GPU hours:</span><span style="font-family:'JetBrains Mono',monospace">~2.4</span>
-              <span>Walltime:</span><span style="font-family:'JetBrains Mono',monospace">~45 min</span>
-              <span>Checkpoint:</span><span style="font-family:'JetBrains Mono',monospace">~42 MB</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ TRAIN -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffTrainBodyRP','aiffTrainBodyRPA')">
-          <span class="acc-arrow" id="aiffTrainBodyRPA">▼</span>
-          <span class="acc-title">④ Train</span>
-          <span style="margin-left:auto;font-size:9px;background:#d4edda;border:1px solid #66bb6a;border-radius:10px;padding:1px 6px;color:#2a9d2a;font-weight:700">● Running</span>
-        </div>
-        <div class="acc-body" id="aiffTrainBodyRP">
-          <!-- Progress -->
-          <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#555;margin-bottom:4px">
-            Epoch <span id="rp-epoch">78</span> / 120 · Slurm JOB-3847
-          </div>
-          <div style="font-size:9.5px;color:#888;margin-bottom:4px">GPU: <b id="rp-gpu">4.1/8 GB</b> · ETA: <b id="rp-eta">~18 min</b> · LR: <b id="rp-lr">3.2e-4</b></div>
-          <div style="height:5px;background:#ccc;border-radius:2px;overflow:hidden;margin-bottom:8px">
-            <div style="height:100%;width:65%;background:#ff6600;border-radius:2px" id="rp-aiff-prog"></div>
-          </div>
-          <!-- Mini plot -->
-          <div style="height:90px;background:#fff;border:1px solid #ccc;border-radius:2px;margin-bottom:7px" id="rp-aiff-plot"></div>
-          <!-- Console -->
-          <div class="sub-head">Console</div>
-          <div style="height:80px;overflow-y:auto;background:#1a1a1a;border-radius:2px;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#7ee787;line-height:1.5;margin-bottom:7px" id="rp-aiff-con">
-            <div>[09:41:02] Loaded SANNP checkpoint v2.0.9</div>
-            <div>[09:41:03] Dataset: 1474 train / 184 val</div>
-            <div style="color:#79c0ff">[09:51:50] Epoch 78 | E=2.3 | F=62</div>
-          </div>
-          <!-- Slurm settings -->
-          <div class="sub-head">Cluster / Slurm</div>
-          <div class="field-row"><div class="field-label">Partition</div>
-            <div class="field-val"><input class="burai-input" value="normal" style="text-align:left"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Nodes</div>
-            <div class="field-val"><input class="burai-input" type="number" value="1"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">GPU/node</div>
-            <div class="field-val"><input class="burai-input" type="number" value="1"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Walltime</div>
-            <div class="field-val"><input class="burai-input" value="12:00:00" style="text-align:left"/></div>
-          </div>
-          <!-- Historical runs -->
-          <div class="sub-head">Historical Runs</div>
-          <div style="font-size:10px;font-family:'JetBrains Mono',monospace">
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid #e0e0e0">
-              <span style="color:#888">JOB-3847</span>
-              <span style="flex:1;color:#333">v2.1.0 SANNP</span>
-              <span style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:1px 5px;font-size:8.5px;color:#1565c0">Running</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid #e0e0e0">
-              <span style="color:#888">JOB-3836</span>
-              <span style="flex:1;color:#333">v2.0.9 SANNP</span>
-              <span style="font-size:9px;color:#888">E=3.1</span>
-              <button style="font-size:8.5px;padding:1px 5px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Rolled back to v2.0.9','ok')">Restore</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0">
-              <span style="color:#888">JOB-3820</span>
-              <span style="flex:1;color:#333">v2.0.8 HDNNP</span>
-              <span style="font-size:9px;color:#888">E=5.8</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑤ VALIDATE -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffValBodyRP','aiffValBodyRPA')">
-          <span class="acc-arrow" id="aiffValBodyRPA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">⑤ Validate</span>
-          <span style="margin-left:auto;font-size:9px;background:#fff8e1;border:1px solid #ffcc80;border-radius:10px;padding:1px 6px;color:#cc8400;font-weight:700">8/9 ✓</span>
-        </div>
-        <div class="acc-body hidden" id="aiffValBodyRP">
-          <!-- Deployment readiness -->
-          <div style="display:flex;align-items:center;gap:8px;background:#fff8e1;border:1px solid #ffcc80;border-radius:2px;padding:6px 8px;margin-bottom:7px">
-            <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#cc8400">89</div>
-            <div style="flex:1">
-              <div style="font-size:9px;color:#888;margin-bottom:3px;font-weight:700">Deployment Readiness</div>
-              <div style="height:5px;background:#ccc;border-radius:2px;overflow:hidden"><div style="height:100%;width:89%;background:#cc8400;border-radius:2px"></div></div>
-            </div>
-          </div>
-          <!-- Validation profile -->
-          <div class="field-row"><div class="field-label">Profile</div>
-            <div class="field-val"><select class="burai-select">
-              <option>Research Preview (2 gates)</option>
-              <option selected>Screening Model (6 gates)</option>
-              <option>Production MD (9 gates)</option>
-            </select></div>
-          </div>
-          <!-- Checklist -->
-          <div style="margin:7px 0">
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">E RMSE &lt; 5 meV/at</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">2.3</span></div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">F RMSE &lt; 100 meV/Å</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">62</span></div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">σ RMSE &lt; 1 GPa</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">0.41</span></div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">R² &gt; 0.99</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">0.9987</span></div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">Stable NVT MD (1000 K)</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a9d2a">Pass</span></div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">Stable NPT MD</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a9d2a">Pass</span></div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">Extrap. score &lt; 0.15</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">0.07</span></div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px;border-bottom:1px solid #e8e8e8"><span style="color:#2a9d2a;font-weight:700;flex-shrink:0">✓</span><span style="flex:1">E MAE &lt; 3 meV/at</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#888">1.8</span></div>
-            <div style="display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10.5px"><span style="color:#b02020;font-weight:700;flex-shrink:0">✗</span><span style="flex:1">Phonon test</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b02020">15% dev</span></div>
-          </div>
-          <div style="background:#fdeaea;border:1px solid #ef9a9a;border-radius:2px;padding:5px 8px;font-size:10px;color:#b02020;margin-bottom:5px">
-            ⚠ Phonon test failing — high-freq modes deviate &gt;15% from DFT.<br>
-            <button style="margin-top:4px;font-size:9px;padding:2px 7px;border:1px solid #ccc;border-radius:2px;background:#fff;cursor:pointer" onclick="aiffLog('Override acknowledged','warn')">Override &amp; Acknowledge</button>
-          </div>
-          <button class="run-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-top:3px" onclick="aiffLog('Running full validation suite...','inf')">▶ Run Validation Suite</button>
-        </div>
-      </div>
-
-      <!-- ⑥ IMPROVE (Active Learning) -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffImpBodyRP','aiffImpBodyRPA')">
-          <span class="acc-arrow" id="aiffImpBodyRPA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">⑥ Active Learning</span>
-          <span style="margin-left:auto;font-size:9px;background:#fff5ef;border:1px solid #ff6600;border-radius:10px;padding:1px 6px;color:#ff6600;font-weight:700">23 pending</span>
-        </div>
-        <div class="acc-body hidden" id="aiffImpBodyRP">
-          <!-- AL progress -->
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:8px">
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;text-align:center">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">AL iterations</div>
-              <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace">4</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;text-align:center">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Structs added</div>
-              <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace">+487</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;text-align:center">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">RMSE Δ</div>
-              <div style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#2a9d2a">−61%</div>
-            </div>
-          </div>
-          <div class="field-row"><div class="field-label">Uncertainty</div>
-            <div class="field-val"><select class="burai-select"><option selected>Ensemble disagree.</option><option>Descriptor distance</option><option>Force threshold</option><option>Committee variance</option></select></div>
-          </div>
-          <div class="field-row"><div class="field-label">Threshold</div>
-            <div class="field-val"><input class="burai-input" type="number" value="0.05" step="0.01"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Ensemble size</div>
-            <div class="field-val"><input class="burai-input" type="number" value="5"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Max cand./iter</div>
-            <div class="field-val"><input class="burai-input" type="number" value="50"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Budget (CPU·h)</div>
-            <div class="field-val"><input class="burai-input" type="number" value="500"/>
-            <button class="spin-btn">+</button><button class="spin-btn minus">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Auto-submit</div>
-            <div class="field-val"><select class="burai-select"><option>No — confirm first</option><option selected>Yes, below budget</option></select></div>
-          </div>
-          <div style="display:flex;gap:4px;margin-top:6px">
-            <button class="gen-btn" style="flex:1;border-radius:3px;padding:4px;font-size:10.5px" onclick="aiffLog('Running ML-MD sampling...','ok')">▶ Run ML-MD</button>
-            <button class="run-btn" style="flex:1;border-radius:3px;padding:4px;font-size:10.5px" onclick="aiffLog('Submitting candidates to DFT...','ok')">⬆ Submit DFT</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑦ DEPLOY -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('aiffDepBodyRP','aiffDepBodyRPA')">
-          <span class="acc-arrow" id="aiffDepBodyRPA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">⑦ Deploy</span>
-        </div>
-        <div class="acc-body hidden" id="aiffDepBodyRP">
-          <!-- Model info -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:8px">
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Model</div>
-              <div style="font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace">h3s_sannp_v2.1.0</div>
-              <div style="font-size:8.5px;color:#888">42.3 MB</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8.5px;color:#888;text-transform:uppercase">Dataset</div>
-              <div style="font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace">v4 · 1842</div>
-              <div style="font-size:8.5px;color:#888">Elements: H, S</div>
-            </div>
-          </div>
-          <!-- Lineage (condensed) -->
-          <div style="font-size:9px;color:#888;background:#f5f5f5;border:1px solid #ddd;border-radius:2px;padding:5px 8px;font-family:'JetBrains Mono',monospace;margin-bottom:7px;line-height:1.8">
-            v1(1355) → JOB-3820(HDNNP) → v4(1842) → <b style="color:#ff6600">JOB-3847(SANNP)</b> → 8/9 gates → Deploy
-          </div>
-          <!-- LAMMPS preview -->
-          <div class="sub-head">LAMMPS Input Preview</div>
-          <div style="background:#1a1a1a;border-radius:2px;padding:7px 9px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#7ee787;line-height:1.7;margin-bottom:7px;max-height:100px;overflow:auto">
-            <span style="color:#6e7681">pair_style</span>  sannp  6.5<br>
-            <span style="color:#6e7681">pair_coeff</span>  * * h3s_sannp_v2.1.0.model H S<br>
-            <span style="color:#6e7681">timestep</span>    0.001<br>
-            <span style="color:#6e7681">fix</span>         1 all nvt temp 1000 1000 0.1
-          </div>
-          <!-- Est. production cost -->
-          <div style="background:#f0f0f0;border:1px solid #ccc;border-radius:2px;padding:5px 8px;margin-bottom:7px;font-size:10px">
-            <div style="font-weight:700;color:#555;margin-bottom:3px">⚡ Est. Production MD Cost</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;color:#666">
-              <span>Node·hours:</span><span style="font-family:'JetBrains Mono',monospace">~192</span>
-              <span>Storage (traj.):</span><span style="font-family:'JetBrains Mono',monospace">~12 GB</span>
-            </div>
-          </div>
-          <button class="run-btn" style="width:100%;border-radius:3px;padding:5px;font-size:10.5px;margin-bottom:4px" onclick="aiffLog('Deploying model to LAMMPS on cluster...','ok')">🚀 Deploy to LAMMPS</button>
-          <button class="gen-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-bottom:4px" onclick="aiffLog('Packaging model files...','ok')">📦 Package Model</button>
-          <button class="gen-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;margin-bottom:4px;background:#2e7dcc" onclick="aiffLog('Exporting Model Card...','ok')">📋 Export Model Card</button>
-          <button class="gen-btn" style="width:100%;border-radius:3px;padding:4px;font-size:10.5px;background:#555" onclick="switchRpTab('md-sim',document.querySelector('[data-rptab=md-sim]'))">⬡ Send to MD Simulation</button>
-        </div>
-      </div>
-
-      </div><!-- /rp-scroll-aiff -->
-    </div><!-- /rptab-md-aiff -->
-
+    
+    
     <!-- ════════════════════════════════
          TAB: MD EVOLUTION
     ════════════════════════════════ -->
@@ -1835,7 +1213,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
           <div class="field-row"><div class="field-label">Type</div>
             <div class="field-val"><select class="burai-select"><option>Lennard-Jones</option><option>EAM / MEAM</option><option>ReaxFF</option><option>SANNP (AI FF)</option><option>MACE (AI FF)</option></select></div>
           </div>
-          <div style="font-size:10px;color:#888;margin-top:3px">For AI force fields, train first in the AI Force-Field tab.</div>
+          <div style="font-size:10px;color:#888;margin-top:3px">For classical / ML potentials, open Force Field from the mode menu.</div>
         </div>
       </div>
 
@@ -2206,8 +1584,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
 <!-- ══ MODE MENU (bottom-right fly-in) ══ -->
 <div id="mode-menu">
   <div class="mm-item active" data-mode="md" onclick="selectModeItem('md',event)"><span class="mm-lbl" style="color:#34d399;font-weight:700">MD Simulations</span></div>
-  <div class="mm-item" data-mode="geometry" onclick="selectModeItem('geometry',event)"><span class="mm-lbl">Geometry</span></div>
-  <div class="mm-item" data-mode="aiff" onclick="selectModeItem('aiff',event)"><span class="mm-lbl">Force-Field Generator</span></div>
+  <div class="mm-item" data-mode="aiff" onclick="location.href='/md/force-field'"><span class="mm-lbl">Force Field</span></div>
   <div class="mm-item" data-mode="evolution" onclick="location.href='/md/evolution'"><span class="mm-lbl" style="color:#34d399;font-weight:700">⬡ MD Evolution</span></div>
   <div class="mm-item" data-mode="mcevo" onclick="selectModeItem('mcevo',event)"><span class="mm-lbl" style="color:#fb923c;font-weight:700">⬡ Monte Carlo Evolution</span></div>
   <div class="mm-item" data-mode="mc" onclick="selectModeItem('mc',event)"><span class="mm-lbl" style="color:#ea580c;font-weight:700">⬡ Monte Carlo</span></div>
@@ -2470,16 +1847,6 @@ function switchRpTab(tabId, btn){
       <button class="gen-btn" id="md-init-btn" onclick="mdInitSim()">⚙ Initialize</button>
       <button class="run-btn" id="md-start-btn" onclick="mdStartSim()">▶ Start MD</button>
       <button onclick="mdStopSim()" style="padding:6px 10px;border-radius:3px;background:#777;border:none;color:#fff;font-size:11px;cursor:pointer">■ Stop</button>`;
-  } else if(tabId==='md-geo'){
-    strip.innerHTML=`
-      <button class="gen-btn" onclick="mdLog('Generated QE input.','ok')">⚙ Generate</button>
-      <button class="run-btn" onclick="mdLog('Submitting DFT job...','inf')">▶ Run DFT</button>
-      <button onclick="mdLog('Job stopped.','warn')" style="padding:6px 10px;border-radius:3px;background:#777;border:none;color:#fff;font-size:11px;cursor:pointer">■ Stop</button>`;
-  } else if(tabId==='md-aiff'){
-    strip.innerHTML=`
-      <button class="gen-btn" onclick="mdLog('Starting training...','ok')">▶ Train</button>
-      <button class="run-btn" style="background:#2e7dcc" onclick="mdLog('Deploying model...','inf')">🚀 Deploy</button>
-      <button onclick="mdLog('Training stopped.','warn')" style="padding:6px 10px;border-radius:3px;background:#777;border:none;color:#fff;font-size:11px;cursor:pointer">■ Stop</button>`;
   } else if(tabId==='md-mc'){
     strip.innerHTML=`
       <button class="gen-btn" id="mc-run-btn" onclick="mcStart()" style="flex:1.2">▶ Start MC</button>
@@ -2493,7 +1860,7 @@ function switchRpTab(tabId, btn){
       <button onclick="evoReset()" style="padding:6px 10px;border-radius:3px;background:#cc3333;border:none;color:#fff;font-size:11px;cursor:pointer">↺ Reset</button>`;
   }
   // Update mode label
-  const labels={'md-sim':'MD Simulations','md-geo':'Geometry','md-aiff':'Force-Field Generator','md-evo':'MD Evolution','md-mc':'Monte Carlo'};
+  const labels={'md-sim':'MD Simulations','md-evo':'MD Evolution','md-mc':'Monte Carlo'};
   const lbl=document.getElementById('bb-mode-label');
   if(lbl) lbl.textContent=labels[tabId]||'MD Simulations';
 }
@@ -2545,7 +1912,7 @@ function closeModeMenu(){
 function selectModeItem(mode, e){
   e?.stopPropagation();
   closeModeMenu();
-  const tabMap={'md':'md-sim','geometry':'md-geo','aiff':'md-aiff','evolution':'md-evo'};
+  const tabMap={'md':'md-sim','evolution':'md-evo'};
   const tabId=tabMap[mode]||'md-sim';
   const btn=document.querySelector(`[data-rptab="${tabId}"]`);
   switchRpTab(tabId,btn);
@@ -4972,7 +4339,7 @@ function mcevoInitCharts(){
       return;
     }
     // Normal tab modes
-    var tabMap={'md':'md-sim','geometry':'md-geo','aiff':'md-aiff','mc':'md-mc'};
+    var tabMap={'md':'md-sim','mc':'md-mc'};
     var tabId=tabMap[mode]||'md-sim';
     var btn=document.querySelector('[data-rptab="'+tabId+'"]');
     switchRpTab && switchRpTab(tabId,btn);

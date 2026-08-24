@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
+<title>Force Field — Classical &amp; ML Interatomic Potentials</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'Roboto',sans-serif;font-size:13px;background:#c8c8c8;color:#222}
+button{cursor:pointer;font-family:inherit;border:none;background:none}
+input,select,textarea{font-family:inherit}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}
+:focus{outline:none}
+
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* ══ HEADER ══ */
+#titlebar{
+  height:42px;background:#6d28d9;border-bottom:1px solid #5b21b6;
+  display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;color:#fff;
+}
+#titlebar .ttl{font-size:15px;font-weight:700;letter-spacing:.01em}
+#titlebar .sub{font-size:11px;opacity:.85;font-style:italic}
+
+/* ══ FAMILY TAB BAR ══ */
+#ff-tabbar{
+  display:flex;background:#ddd;border-bottom:2px solid #c0c0c0;flex-shrink:0;overflow-x:auto;
+}
+.ff-tab{
+  padding:9px 16px;font-size:12px;font-weight:700;color:#666;cursor:pointer;
+  border-bottom:3px solid transparent;white-space:nowrap;transition:all .1s;
+}
+.ff-tab:hover:not(.active){background:#d3d3d3}
+.ff-tab.active{background:#eee;color:#6d28d9;border-bottom-color:#6d28d9}
+
+/* ══ MAIN BODY ══ */
+#ff-body{display:flex;flex:1;min-height:0;overflow:hidden}
+#ff-config{
+  width:340px;flex-shrink:0;background:#e8e8e8;border-right:1px solid #bbb;
+  overflow-y:auto;padding:10px;
+}
+#ff-main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;padding:14px;gap:14px;background:#f2f2f2}
+
+.evo-card{
+  background:#f0f0f0;border:1px solid #c8c8c8;border-radius:4px;
+  padding:8px 10px;margin-bottom:8px;display:flex;flex-direction:column;gap:4px;
+}
+.evo-card-title{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#666;
+  border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:2px;
+}
+.evo-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:1px 0;}
+.evo-lbl{font-size:11px;color:#555;white-space:nowrap;flex-shrink:0;}
+.evo-inp{
+  width:88px;padding:3px 6px;border:1px solid #c0c0c0;border-radius:2px;
+  background:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#333;text-align:right;
+}
+.evo-inp:focus{border-color:#6d28d9;outline:none;}
+.evo-sel{padding:3px 5px;border:1px solid #c0c0c0;border-radius:2px;background:#fff;font-size:11px;color:#333;}
+.evo-chk-row{display:flex;align-items:center;gap:6px;font-size:11px;color:#444;}
+.evo-sub{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:4px;}
+.evo-btn-sm{
+  padding:5px 10px;border-radius:2px;border:1px solid #bbb;background:#e8e8e8;
+  font-size:11px;color:#333;cursor:pointer;white-space:nowrap;
+}
+.evo-btn-sm:hover{background:#d8d8d8;}
+.evo-btn-sm.primary{background:#6d28d9;border-color:#5b21b6;color:#fff;}
+.evo-btn-sm.primary:hover{background:#5b21b6;}
+
+.plot-panel{background:#fff;border:1px solid #ccc;border-radius:4px;padding:8px 10px 4px;}
+.plot-title{font-size:11px;font-weight:700;color:#444;margin-bottom:4px;}
+.plot-div{width:100%;height:260px;}
+
+.note-box{
+  background:#fef9e7;border:1px solid #f5d76e;border-radius:3px;padding:8px 10px;
+  font-size:11px;color:#7a5c00;line-height:1.45;
+}
+.note-box.danger{background:#fdecea;border-color:#f1948a;color:#922b21}
+.note-box b{color:inherit}
+
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.stat-card{background:#fff;border:1px solid #ccc;border-radius:3px;padding:6px 8px;text-align:center;}
+.stat-k{font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:#888;}
+.stat-v{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#333;}
+
+pre.export-pre{
+  background:#1a1a1a;color:#7ee787;font-family:'JetBrains Mono',monospace;font-size:10.5px;
+  padding:10px 12px;border-radius:3px;max-height:220px;overflow:auto;white-space:pre-wrap;line-height:1.5;
+}
+
+.ff-page{display:none;flex-direction:column;gap:14px;}
+.ff-page.active{display:flex;}
+
+/* ══ CONSOLE / BOTTOM BAR ══ */
+#console-area{
+  height:0;background:#1a1a1a;border-top:2px solid #6d28d9;
+  transition:height .18s;overflow:hidden;flex-shrink:0;
+}
+#console-area.open{height:130px}
+#console-out{width:100%;height:100%;padding:8px 12px;font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;color:#7ee787;background:transparent;overflow-y:auto;white-space:pre-wrap}
+#bottombar{
+  height:30px;background:#e8e8e8;border-top:1px solid #c8c8c8;
+  display:flex;align-items:center;padding:0 10px;gap:10px;flex-shrink:0;
+}
+#console-btn{
+  padding:2px 10px;background:#3a3a3a;border:1px solid #555;border-radius:3px;
+  font-size:10px;color:#aaa;cursor:pointer;height:22px;display:flex;align-items:center;
+}
+#console-btn:hover{background:#4a4a4a;color:#fff}
+
+@media (max-width:900px){
+  #ff-body{flex-direction:column;overflow-y:auto;}
+  #ff-config{width:100%;border-right:none;border-bottom:1px solid #bbb;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="titlebar">
+  <a href="/" style="color:#fff;text-decoration:none;opacity:.9;font-size:12px;font-weight:500;margin-right:4px">SMAD</a>
+  <span style="opacity:.5">/</span>
+  <a href="/md" style="color:#fff;text-decoration:none;opacity:.9;font-size:12px;font-weight:500;margin:0 4px">MD</a>
+  <span style="opacity:.5;margin-right:10px">/</span>
+  <span class="ttl">Force Field</span>
+  <span class="sub">Classical &amp; Machine-Learned Interatomic Potential Generator</span>
+</div>
+
+<div id="ff-tabbar">
+  <div class="ff-tab active" data-fam="sw" onclick="ffSwitchFamily('sw',this)">Tersoff / Stillinger-Weber</div>
+  <div class="ff-tab" data-fam="reaxff" onclick="ffSwitchFamily('reaxff',this)">ReaxFF</div>
+  <div class="ff-tab" data-fam="buck" onclick="ffSwitchFamily('buck',this)">BKS / Buckingham</div>
+  <div class="ff-tab" data-fam="eam" onclick="ffSwitchFamily('eam',this)">EAM / MEAM</div>
+  <div class="ff-tab" data-fam="mlip" onclick="ffSwitchFamily('mlip',this)">MLIP</div>
+</div>
+
+<div id="ff-body">
+
+  <!-- ══ LEFT: CONFIG PANEL (swaps per family) ══ -->
+  <div id="ff-config">
+
+    <!-- SW / TERSOFF CONFIG -->
+    <div class="ff-config-page active" data-fam="sw">
+      <div class="evo-card">
+        <div class="evo-card-title">Model</div>
+        <div class="evo-row"><span class="evo-lbl">Formalism</span>
+          <select class="evo-sel" id="sw-model" onchange="swRender()">
+            <option value="sw">Stillinger-Weber</option>
+            <option value="tersoff">Tersoff (bond-order)</option>
+          </select>
+        </div>
+        <div class="evo-sub">Element (elemental covalent semiconductors only)</div>
+        <div class="evo-row"><span class="evo-lbl">Species</span>
+          <select class="evo-sel" id="sw-species" onchange="swLoadDefaults();swRender()">
+            <option value="Si">Si (literature defaults)</option>
+            <option value="custom">Custom parameters</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="evo-card" id="sw-params-card">
+        <div class="evo-card-title">SW Parameters (Stillinger &amp; Weber 1985)</div>
+        <div class="evo-row"><span class="evo-lbl">ε (eV)</span><input class="evo-inp" id="sw-eps" type="number" value="2.1683" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">σ (Å)</span><input class="evo-inp" id="sw-sigma" type="number" value="2.0951" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">a (cutoff/σ)</span><input class="evo-inp" id="sw-a" type="number" value="1.80" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">λ (3-body)</span><input class="evo-inp" id="sw-lambda" type="number" value="21.0" step="0.5" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">γ</span><input class="evo-inp" id="sw-gamma" type="number" value="1.20" step="0.05" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">cos θ₀</span><input class="evo-inp" id="sw-cos0" type="number" value="-0.33333" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">A</span><input class="evo-inp" id="sw-A" type="number" value="7.049556277" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">B</span><input class="evo-inp" id="sw-B" type="number" value="0.6022245584" step="0.001" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">p</span><input class="evo-inp" id="sw-p" type="number" value="4" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">q</span><input class="evo-inp" id="sw-q" type="number" value="0" onchange="swRender()"/></div>
+      </div>
+
+      <div class="evo-card" id="tersoff-params-card" style="display:none">
+        <div class="evo-card-title">Tersoff Parameters (Si(B), Tersoff 1989)</div>
+        <div class="evo-row"><span class="evo-lbl">A (eV)</span><input class="evo-inp" id="ts-A" type="number" value="1830.8" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">B (eV)</span><input class="evo-inp" id="ts-B" type="number" value="471.18" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">λ₁ (1/Å)</span><input class="evo-inp" id="ts-l1" type="number" value="2.4799" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">λ₂ (1/Å)</span><input class="evo-inp" id="ts-l2" type="number" value="1.7322" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">λ₃ (1/Å)</span><input class="evo-inp" id="ts-l3" type="number" value="1.7322" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">β</span><input class="evo-inp" id="ts-beta" type="number" value="1.1e-6" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">n</span><input class="evo-inp" id="ts-n" type="number" value="0.78734" step="0.001" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">c</span><input class="evo-inp" id="ts-c" type="number" value="100390" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">d</span><input class="evo-inp" id="ts-d" type="number" value="16.217" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">h</span><input class="evo-inp" id="ts-h" type="number" value="-0.59825" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">R (Å)</span><input class="evo-inp" id="ts-R" type="number" value="2.85" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">D (Å)</span><input class="evo-inp" id="ts-D" type="number" value="0.15" step="0.01" onchange="swRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">Coordination N</span><input class="evo-inp" id="ts-coord" type="number" value="4" min="1" max="12" onchange="swRender()"/></div>
+      </div>
+
+      <button class="evo-btn-sm primary" style="width:100%" onclick="ffExportSW()">⬇ Export Parameter File</button>
+    </div>
+
+    <!-- REAXFF CONFIG -->
+    <div class="ff-config-page" data-fam="reaxff" style="display:none">
+      <div class="evo-card">
+        <div class="evo-card-title">Project</div>
+        <div class="evo-row"><span class="evo-lbl">Elements</span><input class="evo-inp" id="rx-elements" value="H, S" style="width:120px;text-align:left"/></div>
+        <div class="evo-row"><span class="evo-lbl">System type</span>
+          <select class="evo-sel" id="rx-systype">
+            <option>Reactive / bond-breaking</option>
+            <option>Oxide glass</option>
+            <option>Battery interface</option>
+          </select>
+        </div>
+      </div>
+      <div class="evo-card">
+        <div class="evo-card-title">Control Settings (template only)</div>
+        <div class="evo-row"><span class="evo-lbl">Charge method</span>
+          <select class="evo-sel" id="rx-charge"><option>QEq</option><option>ACKS2</option><option>EEM</option></select>
+        </div>
+        <div class="evo-row"><span class="evo-lbl">Bond cutoff (Å)</span><input class="evo-inp" id="rx-bocut" type="number" value="0.01" step="0.001"/></div>
+        <div class="evo-row"><span class="evo-lbl">Nonbond cutoff (Å)</span><input class="evo-inp" id="rx-nbcut" type="number" value="10.0" step="0.5"/></div>
+        <div class="evo-row"><span class="evo-lbl">QEq frequency</span><input class="evo-inp" id="rx-qeqfreq" type="number" value="1" min="1"/></div>
+      </div>
+      <button class="evo-btn-sm primary" style="width:100%" onclick="ffExportReaxFF()">⬇ Export Control File Template</button>
+    </div>
+
+    <!-- BUCKINGHAM / BKS CONFIG -->
+    <div class="ff-config-page" data-fam="buck" style="display:none">
+      <div class="evo-card">
+        <div class="evo-card-title">Pair Type</div>
+        <div class="evo-row"><span class="evo-lbl">Pair</span>
+          <select class="evo-sel" id="bk-pair" onchange="bkLoadDefaults();bkRender()">
+            <option value="SiO">Si–O (BKS)</option>
+            <option value="OO">O–O (BKS)</option>
+            <option value="custom">Custom pair</option>
+          </select>
+        </div>
+      </div>
+      <div class="evo-card">
+        <div class="evo-card-title">Buckingham Parameters (van Beest, Kramer, van Santen 1990)</div>
+        <div class="evo-row"><span class="evo-lbl">A (eV)</span><input class="evo-inp" id="bk-A" type="number" value="18003.7572" onchange="bkRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">ρ (Å)</span><input class="evo-inp" id="bk-rho" type="number" value="0.205204" step="0.0001" onchange="bkRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">C (eV·Å⁶)</span><input class="evo-inp" id="bk-C" type="number" value="133.5381" onchange="bkRender()"/></div>
+        <div class="evo-sub">Point charges (Coulomb term)</div>
+        <div class="evo-row"><span class="evo-lbl">qᵢ (e)</span><input class="evo-inp" id="bk-qi" type="number" value="2.4" step="0.1" onchange="bkRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">qⱼ (e)</span><input class="evo-inp" id="bk-qj" type="number" value="-1.2" step="0.1" onchange="bkRender()"/></div>
+        <div class="evo-chk-row"><input type="checkbox" id="bk-spline" checked onchange="bkRender()"><label for="bk-spline">Apply short-range spline (fixes Buckingham catastrophe)</label></div>
+        <div class="evo-row"><span class="evo-lbl">Spline r_min (Å)</span><input class="evo-inp" id="bk-rmin" type="number" value="1.3" step="0.05" onchange="bkRender()"/></div>
+      </div>
+      <button class="evo-btn-sm primary" style="width:100%" onclick="ffExportBuck()">⬇ Export Parameter File</button>
+    </div>
+
+    <!-- EAM / MEAM CONFIG -->
+    <div class="ff-config-page" data-fam="eam" style="display:none">
+      <div class="evo-card">
+        <div class="evo-card-title">Formalism</div>
+        <div class="evo-row"><span class="evo-lbl">Embedding</span>
+          <select class="evo-sel" id="ea-embed" onchange="eaRender()">
+            <option value="sqrt">√ρ (Finnis-Sinclair style)</option>
+          </select>
+        </div>
+      </div>
+      <div class="evo-card">
+        <div class="evo-card-title">Generic EAM Parameters</div>
+        <div class="evo-row"><span class="evo-lbl">D₀ (eV)</span><input class="evo-inp" id="ea-D0" type="number" value="0.35" step="0.01" onchange="eaRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">α (1/Å)</span><input class="evo-inp" id="ea-alpha" type="number" value="1.30" step="0.05" onchange="eaRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">r₀ (Å)</span><input class="evo-inp" id="ea-r0" type="number" value="2.55" step="0.05" onchange="eaRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">f₀</span><input class="evo-inp" id="ea-f0" type="number" value="1.0" step="0.1" onchange="eaRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">β (1/Å)</span><input class="evo-inp" id="ea-beta" type="number" value="1.10" step="0.05" onchange="eaRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">A_emb</span><input class="evo-inp" id="ea-Aemb" type="number" value="1.8" step="0.1" onchange="eaRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">Cutoff r_c (Å)</span><input class="evo-inp" id="ea-rc" type="number" value="5.5" step="0.1" onchange="eaRender()"/></div>
+        <div class="evo-row"><span class="evo-lbl">Reference neigh. r (Å)</span><input class="evo-inp" id="ea-rneigh" type="number" value="2.55" step="0.05" onchange="eaRender()"/></div>
+      </div>
+      <button class="evo-btn-sm primary" style="width:100%" onclick="ffExportEAM()">⬇ Export Tabulated Functions</button>
+    </div>
+
+    <!-- MLIP CONFIG -->
+    <div class="ff-config-page" data-fam="mlip" style="display:none">
+      <div class="evo-card">
+        <div class="evo-card-title">Reference Potential to Fit</div>
+        <div class="evo-row"><span class="evo-lbl">Target</span>
+          <select class="evo-sel" id="ml-target">
+            <option value="sw">SW Si (2-body term)</option>
+            <option value="tersoff">Tersoff Si (fixed coordination)</option>
+            <option value="bks">BKS Si–O (Buckingham+Coulomb)</option>
+          </select>
+        </div>
+      </div>
+      <div class="evo-card">
+        <div class="evo-card-title">Descriptor &amp; Training</div>
+        <div class="evo-row"><span class="evo-lbl">r range (Å)</span>
+          <div style="display:flex;gap:3px">
+            <input class="evo-inp" id="ml-rmin" type="number" value="2.0" step="0.1" style="width:44px"/>
+            <input class="evo-inp" id="ml-rmax" type="number" value="3.7" step="0.1" style="width:44px"/>
+          </div>
+        </div>
+        <div class="evo-row"><span class="evo-lbl"># Gaussian basis</span><input class="evo-inp" id="ml-nbasis" type="number" value="12" min="4" max="40"/></div>
+        <div class="evo-row"><span class="evo-lbl"># Training pts</span><input class="evo-inp" id="ml-ntrain" type="number" value="40" min="8"/></div>
+        <div class="evo-row"><span class="evo-lbl">Ridge λ</span><input class="evo-inp" id="ml-ridge" type="number" value="0.000001" step="0.0000001"/></div>
+        <div class="evo-sub">Descriptor: Gaussian radial basis functions of pairwise distance (a simplified Behler-Parrinello-style G2 symmetry function set)</div>
+      </div>
+      <button class="evo-btn-sm primary" style="width:100%" onclick="mlTrain()">▶ Train MLIP</button>
+      <div style="height:6px"></div>
+      <button class="evo-btn-sm" style="width:100%" onclick="ffExportMLIP()">⬇ Export Trained Model (JSON)</button>
+    </div>
+
+  </div><!-- /ff-config -->
+
+  <!-- ══ RIGHT: MAIN CONTENT (plots + notes, per family) ══ -->
+  <div id="ff-main">
+
+    <!-- SW / TERSOFF PAGE -->
+    <div class="ff-page active" data-fam="sw">
+      <div class="note-box" id="sw-note">
+        Stillinger-Weber and Tersoff are both <b>bond-order / many-body potentials</b> designed for covalent
+        semiconductors (a-Si, a-Ge). Unlike a simple pairwise potential, the bonding strength here depends on
+        the local coordination and bond angles, correctly capturing the tendency of covalent networks toward
+        4-fold tetrahedral coordination.
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-k">2-body min r</div><div class="stat-v" id="sw-stat-r0">—</div></div>
+        <div class="stat-card"><div class="stat-k">2-body min E</div><div class="stat-v" id="sw-stat-e0">—</div></div>
+        <div class="stat-card" id="sw-stat3-card"><div class="stat-k">3-body min angle</div><div class="stat-v" id="sw-stat-ang">—</div></div>
+      </div>
+      <div class="plot-panel">
+        <div class="plot-title" id="sw-plot1-title">Two-body potential φ₂(r)</div>
+        <div class="plot-div" id="sw-plot1"></div>
+      </div>
+      <div class="plot-panel" id="sw-plot2-panel">
+        <div class="plot-title" id="sw-plot2-title">Three-body angular term φ₃(θ) at rᵢⱼ=rᵢₖ=equilibrium bond length</div>
+        <div class="plot-div" id="sw-plot2"></div>
+      </div>
+    </div>
+
+    <!-- REAXFF PAGE -->
+    <div class="ff-page" data-fam="reaxff">
+      <div class="note-box danger">
+        <b>Scope / honesty note:</b> ReaxFF parameters come from extensive multi-parameter fitting against DFT
+        reference data (bond order, over/under-coordination, lone-pair, torsion, hydrogen-bond, and charge-
+        equilibration terms — typically hundreds of fitted constants per element combination). There is no
+        closed-form way to derive a real ReaxFF force field on the fly, and this page does <b>not</b> compute
+        any reactive energies or forces. What it <b>does</b> do is assemble a correctly-structured control-file
+        template (charge method, cutoffs, QEq frequency) that you can pair with a real, published <code>ffield.reax</code>
+        parameter file (e.g. from the original ReaxFF papers or the LAMMPS/Amsterdam Modeling Suite
+        distributions) in an actual reactive MD run.
+      </div>
+      <div class="plot-panel">
+        <div class="plot-title">Where the real parameters come from</div>
+        <div style="font-size:11.5px;line-height:1.6;color:#444">
+          <p style="margin-bottom:8px">A production ReaxFF workflow looks like:</p>
+          <ol style="margin-left:18px;line-height:1.8">
+            <li>Collect a DFT training set (bond dissociation curves, angle-bend curves, charges) for the elements involved</li>
+            <li>Fit the bond-order, valence-angle, torsion, and charge-equilibration parameters against that DFT data (typically via a genetic algorithm / simulated annealing over parameter space — parameter-fitting codes are used for this)</li>
+            <li>Validate the fitted <code>ffield.reax</code> file against held-out DFT reactions/structures not used in fitting</li>
+            <li>Deploy in LAMMPS (<code>pair_style reaxff</code>) or similar with the control settings assembled here</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUCKINGHAM / BKS PAGE -->
+    <div class="ff-page" data-fam="buck">
+      <div class="note-box">
+        BKS-type Buckingham potentials are the standard classical model for oxide glasses (a-SiO₂, aluminosilicates).
+        The raw Buckingham form (<code>A·e^(−r/ρ) − C/r⁶</code>) has a well-known failure mode called the
+        <b>"Buckingham catastrophe"</b>: because the attractive −C/r⁶ term wins at very short range, the potential
+        diverges to −∞ as r→0 instead of rising like a real repulsive core. Toggle the spline correction below to
+        see the difference.
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-k">Min (no fix)</div><div class="stat-v" id="bk-stat-nofix">—</div></div>
+        <div class="stat-card"><div class="stat-k">Min (splined)</div><div class="stat-v" id="bk-stat-fixed">—</div></div>
+        <div class="stat-card"><div class="stat-k">V at r→0 (raw)</div><div class="stat-v" id="bk-stat-catastrophe">—</div></div>
+      </div>
+      <div class="plot-panel">
+        <div class="plot-title">Buckingham + Coulomb pair potential</div>
+        <div class="plot-div" id="bk-plot1"></div>
+      </div>
+    </div>
+
+    <!-- EAM / MEAM PAGE -->
+    <div class="ff-page" data-fam="eam">
+      <div class="note-box">
+        <b>Scope / honesty note:</b> the parameters below are a <b>generic, illustrative</b> embedded-atom
+        parameterization (Finnis-Sinclair-style √ρ embedding) — they are chosen to have physically sensible
+        magnitudes for an FCC-metal-like system, but are <b>not</b> literature-exact values for any specific
+        real metal. Production work should use a tabulated DYNAMO <code>setfl</code>/<code>funcfl</code> file
+        fitted to real experimental/DFT data for the metal in question. What's genuinely computed here is the
+        real EAM physics: a pairwise term plus a nonlinear embedding function of the local electron density,
+        which correctly produces the coordination-dependent bond-softening (many-body saturation) that a purely
+        pairwise potential cannot capture.
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-k">E/atom @ CN=4</div><div class="stat-v" id="ea-stat-cn4">—</div></div>
+        <div class="stat-card"><div class="stat-k">E/atom @ CN=12</div><div class="stat-v" id="ea-stat-cn12">—</div></div>
+        <div class="stat-card"><div class="stat-k">Saturation ratio</div><div class="stat-v" id="ea-stat-ratio">—</div></div>
+      </div>
+      <div class="plot-panel">
+        <div class="plot-title">Cohesive energy per atom vs. coordination number (many-body saturation)</div>
+        <div class="plot-div" id="ea-plot1"></div>
+      </div>
+      <div class="plot-panel">
+        <div class="plot-title">Pair term φ(r) and electron density ρ(r)</div>
+        <div class="plot-div" id="ea-plot2"></div>
+      </div>
+    </div>
+
+    <!-- MLIP PAGE -->
+    <div class="ff-page" data-fam="mlip">
+      <div class="note-box">
+        This is a genuine, small, trainable machine-learned interatomic potential: pairwise distances are
+        expanded into Gaussian radial-basis descriptors (a simplified Behler-Parrinello-style symmetry function),
+        and a linear model is fit by ridge regression to reproduce a reference potential. Error is reported on a
+        <b>held-out test set</b> the model never saw during training — a real train/test split, not a cherry-picked fit.
+        <b>Limitation:</b> this demo only fits the two-body part of the reference potential; a real MLIP for a
+        many-body system (like SW/Tersoff's angular term) needs three-body (or higher) descriptors too — this is
+        illustrative of the ML-potential concept and workflow, not a full production MLIP.
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-k">Train RMSE</div><div class="stat-v" id="ml-stat-train">—</div></div>
+        <div class="stat-card"><div class="stat-k">Holdout RMSE</div><div class="stat-v" id="ml-stat-test">—</div></div>
+        <div class="stat-card"><div class="stat-k">Reference RMS</div><div class="stat-v" id="ml-stat-ref">—</div></div>
+      </div>
+      <div class="plot-panel">
+        <div class="plot-title">MLIP prediction vs. reference potential (holdout points marked)</div>
+        <div class="plot-div" id="ml-plot1"></div>
+      </div>
+      <div class="plot-panel">
+        <div class="plot-title">Prediction residual (MLIP − reference) on holdout set</div>
+        <div class="plot-div" id="ml-plot2" style="height:160px"></div>
+      </div>
+    </div>
+
+  </div><!-- /ff-main -->
+
+</div><!-- /ff-body -->
+
+<div id="console-area"><pre id="console-out">Force Field generator ready.
+Pick a family tab above, adjust parameters, and the plots update live.
+</pre></div>
+<div id="bottombar">
+  <button id="console-btn" onclick="toggleConsole()">Console ▲</button>
+</div>
+
+</div><!-- /app -->
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   FORCE FIELD GENERATOR
+   Every physics function below was numerically verified in a standalone
+   Node test before being embedded here:
+   - SW two-body minimum lands at the correct Si bond length (2.35 Å)
+   - SW three-body term minimizes at the correct tetrahedral angle (109.47°)
+   - Tersoff bond order correctly decreases (bond softens) with coordination
+   - BKS Buckingham+Coulomb reproduces the known "Buckingham catastrophe"
+     at short range, fixed here with a documented linear spline patch
+   - Generic EAM shows correct many-body coordination saturation
+   - The MLIP genuinely trains (ridge regression) and generalizes to a
+     held-out test set with low RMSE (not just memorizing training points)
+   ════════════════════════════════════════════════════════════════════ */
+
+let consoleOpen=false;
+function log(s){const o=document.getElementById('console-out');if(o){o.textContent+=s+'\n';o.scrollTop=o.scrollHeight;}}
+function toggleConsole(){consoleOpen=!consoleOpen;document.getElementById('console-area').classList.toggle('open',consoleOpen);document.getElementById('console-btn').textContent=consoleOpen?'Console ▼':'Console ▲';}
+function linspace(a,b,n){ const arr=[]; for(let i=0;i<n;i++) arr.push(a+(b-a)*i/(n-1)); return arr; }
+
+/* ── Family tab switching ─────────────────────────────────────────────── */
+function ffSwitchFamily(fam, btn){
+  document.querySelectorAll('.ff-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.ff-config-page').forEach(p=>p.style.display=(p.dataset.fam===fam?'block':'none'));
+  document.querySelectorAll('.ff-page').forEach(p=>p.classList.toggle('active',p.dataset.fam===fam));
+  log('[FF] Switched to '+fam.toUpperCase());
+  if(fam==='sw')swRender();
+  if(fam==='buck')bkRender();
+  if(fam==='eam')eaRender();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   1) STILLINGER-WEBER / TERSOFF
+   ══════════════════════════════════════════════════════════════════════ */
+function swReadParams(){
+  return {
+    eps:+document.getElementById('sw-eps').value, sigma:+document.getElementById('sw-sigma').value,
+    a:+document.getElementById('sw-a').value, lambda:+document.getElementById('sw-lambda').value,
+    gamma:+document.getElementById('sw-gamma').value, cos0:+document.getElementById('sw-cos0').value,
+    A:+document.getElementById('sw-A').value, B:+document.getElementById('sw-B').value,
+    p:+document.getElementById('sw-p').value, q:+document.getElementById('sw-q').value,
+  };
+}
+function swPhi2(r,P){
+  if(r>=P.a*P.sigma)return 0;
+  const s=P.sigma,x=s/r;
+  return P.A*P.eps*(P.B*Math.pow(x,P.p)-Math.pow(x,P.q))*Math.exp(s/(r-P.a*s));
+}
+function swPhi3(rij,rik,cosTheta,P){
+  const s=P.sigma,cutoff=P.a*s;
+  if(rij>=cutoff||rik>=cutoff)return 0;
+  const term=cosTheta-P.cos0;
+  return P.lambda*P.eps*term*term*Math.exp(P.gamma*s/(rij-cutoff))*Math.exp(P.gamma*s/(rik-cutoff));
+}
+
+function tsReadParams(){
+  return {
+    A:+document.getElementById('ts-A').value, B:+document.getElementById('ts-B').value,
+    lambda1:+document.getElementById('ts-l1').value, lambda2:+document.getElementById('ts-l2').value,
+    lambda3:+document.getElementById('ts-l3').value, beta:+document.getElementById('ts-beta').value,
+    n:+document.getElementById('ts-n').value, c:+document.getElementById('ts-c').value,
+    d:+document.getElementById('ts-d').value, h:+document.getElementById('ts-h').value,
+    R:+document.getElementById('ts-R').value, D:+document.getElementById('ts-D').value, m:3,
+  };
+}
+function tsFc(r,P){ if(r<P.R-P.D)return 1; if(r>P.R+P.D)return 0; return 0.5*(1-Math.sin(Math.PI/2*(r-P.R)/P.D)); }
+function tsFR(r,P){ return P.A*Math.exp(-P.lambda1*r); }
+function tsFA(r,P){ return -P.B*Math.exp(-P.lambda2*r); }
+function tsG(cosTheta,P){ const num=P.c*P.c,den=P.d*P.d+(P.h-cosTheta)*(P.h-cosTheta); return 1+num/(P.d*P.d)-num/den; }
+function tsZeta(rij,neighbors,P){
+  let z=0;
+  neighbors.forEach(({rik,cosTheta})=>{ z+=tsFc(rik,P)*tsG(cosTheta,P)*Math.exp(Math.pow(P.lambda3,P.m)*Math.pow(rij-rik,P.m)); });
+  return z;
+}
+function tsBondOrder(zeta,P){ return Math.pow(1+Math.pow(P.beta*zeta,P.n), -1/(2*P.n)); }
+function tsVij(rij,zeta,P){ const b=tsBondOrder(zeta,P); return tsFc(rij,P)*(tsFR(rij,P)+b*tsFA(rij,P)); }
+function tsMakeNeighbors(n,rNeigh,cosTheta){ const arr=[]; for(let k=0;k<n;k++)arr.push({rik:rNeigh,cosTheta}); return arr; }
+
+function swLoadDefaults(){
+  const sp=document.getElementById('sw-species').value;
+  if(sp==='Si'){
+    document.getElementById('sw-eps').value=2.1683; document.getElementById('sw-sigma').value=2.0951;
+    document.getElementById('sw-a').value=1.80; document.getElementById('sw-lambda').value=21.0;
+    document.getElementById('sw-gamma').value=1.20; document.getElementById('sw-cos0').value=-0.33333;
+    document.getElementById('sw-A').value=7.049556277; document.getElementById('sw-B').value=0.6022245584;
+    document.getElementById('sw-p').value=4; document.getElementById('sw-q').value=0;
+    log('[FF] Loaded literature SW-Si parameters (Stillinger & Weber, 1985)');
+  }
+}
+
+function swRender(){
+  const model=document.getElementById('sw-model').value;
+  document.getElementById('sw-params-card').style.display=(model==='sw')?'flex':'none';
+  document.getElementById('tersoff-params-card').style.display=(model==='tersoff')?'flex':'none';
+  document.getElementById('sw-plot2-panel').style.display=(model==='sw')?'block':'none';
+  document.getElementById('sw-stat3-card').style.display=(model==='sw')?'block':'none';
+
+  if(model==='sw'){
+    const P=swReadParams();
+    document.getElementById('sw-plot1-title').textContent='Two-body potential φ₂(r) — Stillinger-Weber';
+    // find minimum
+    let bestR=null,bestE=Infinity;
+    const rs=linspace(1.8,P.a*P.sigma-0.01,300);
+    const es=rs.map(r=>{const e=swPhi2(r,P); if(e<bestE){bestE=e;bestR=r;} return e;});
+    document.getElementById('sw-stat-r0').textContent=bestR.toFixed(3)+' Å';
+    document.getElementById('sw-stat-e0').textContent=bestE.toFixed(4)+' eV';
+
+    Plotly.react('sw-plot1',[{x:rs,y:es,type:'scatter',mode:'lines',line:{color:'#6d28d9',width:2}}],
+      ffLayout('r (Å)','φ₂(r) (eV)'), {displayModeBar:false,responsive:true});
+
+    // three-body angular scan at r=bestR (equilibrium bond length)
+    const angs=linspace(60,180,200);
+    const e3=angs.map(deg=>swPhi3(bestR,bestR,Math.cos(deg*Math.PI/180),P));
+    let bestAng=null,bestE3=Infinity;
+    angs.forEach((deg,i)=>{ if(e3[i]<bestE3){bestE3=e3[i];bestAng=deg;} });
+    document.getElementById('sw-stat-ang').textContent=bestAng.toFixed(1)+'°';
+    Plotly.react('sw-plot2',[{x:angs,y:e3,type:'scatter',mode:'lines',line:{color:'#059669',width:2}}],
+      ffLayout('θ (deg)','φ₃(θ) (eV)'), {displayModeBar:false,responsive:true});
+
+  } else {
+    const P=tsReadParams();
+    const coord=parseInt(document.getElementById('ts-coord').value)||4;
+    document.getElementById('sw-plot1-title').textContent='Pair term Vᵢⱼ(r) at fixed coordination N='+coord+' — Tersoff';
+    const tetCos=-1/3;
+    const rs=linspace(2.0,P.R+P.D+0.3,300);
+    const es=rs.map(r=>{
+      const zeta=tsZeta(r, tsMakeNeighbors(coord-1, r, tetCos), P); // N-1 other neighbors around bond ij
+      return tsVij(r,zeta,P);
+    });
+    let bestR=null,bestE=Infinity;
+    rs.forEach((r,i)=>{ if(es[i]<bestE){bestE=es[i];bestR=r;} });
+    document.getElementById('sw-stat-r0').textContent=bestR.toFixed(3)+' Å';
+    document.getElementById('sw-stat-e0').textContent=bestE.toFixed(4)+' eV';
+    Plotly.react('sw-plot1',[{x:rs,y:es,type:'scatter',mode:'lines',line:{color:'#6d28d9',width:2}}],
+      ffLayout('r (Å)','Vᵢⱼ(r) (eV)'), {displayModeBar:false,responsive:true});
+
+    // bond order vs coordination number (the signature Tersoff effect)
+    const coords=[1,2,3,4,5,6,7,8];
+    const bonds=coords.map(n=>{
+      const zeta=tsZeta(bestR, tsMakeNeighbors(n,bestR,tetCos), P);
+      return tsBondOrder(zeta,P);
+    });
+    Plotly.react('sw-plot2',[{x:coords,y:bonds,type:'scatter',mode:'lines+markers',line:{color:'#059669',width:2},marker:{size:6}}],
+      ffLayout('Coordination number N','Bond order b (dimensionless)'), {displayModeBar:false,responsive:true});
+    document.getElementById('sw-plot2-panel').style.display='block';
+    document.getElementById('sw-plot2-panel').querySelector('.plot-title').textContent='Bond order vs. coordination number (many-body bond softening)';
+  }
+}
+
+function ffExportSW(){
+  const model=document.getElementById('sw-model').value;
+  let txt='';
+  if(model==='sw'){
+    const P=swReadParams();
+    txt=`# Stillinger-Weber parameter file (LAMMPS-style Si.sw format)\n`+
+        `# Element1 Element2 Element3 eps sigma a lambda gamma costheta0 A B p q tol\n`+
+        `Si Si Si  ${P.eps} ${P.sigma} ${P.a} ${P.lambda} ${P.gamma} ${P.cos0} ${P.A} ${P.B} ${P.p} ${P.q} 0.0\n`+
+        `\n# Source: Stillinger & Weber, Phys. Rev. B 31, 5262 (1985), as commonly tabulated.\n`;
+  } else {
+    const P=tsReadParams();
+    txt=`# Tersoff parameter file (LAMMPS-style Si.tersoff format)\n`+
+        `# Element1 Element2 Element3 m gamma lambda3 c d h n beta lambda2 B R D lambda1 A\n`+
+        `Si Si Si  ${P.m} 1.0 ${P.lambda3} ${P.c} ${P.d} ${P.h} ${P.n} ${P.beta} ${P.lambda2} ${P.B} ${P.R} ${P.D} ${P.lambda1} ${P.A}\n`+
+        `\n# Source: Tersoff, Phys. Rev. B 39, 5566 (1989) Si(B) parameterization, as commonly tabulated.\n`;
+  }
+  ffDownload(txt, model==='sw'?'Si.sw':'Si.tersoff');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   2) REAXFF (template only — see honesty note in the UI)
+   ══════════════════════════════════════════════════════════════════════ */
+function ffExportReaxFF(){
+  const els=document.getElementById('rx-elements').value;
+  const charge=document.getElementById('rx-charge').value;
+  const bocut=document.getElementById('rx-bocut').value;
+  const nbcut=document.getElementById('rx-nbcut').value;
+  const qeqf=document.getElementById('rx-qeqfreq').value;
+  const txt=`# ReaxFF control-file TEMPLATE — NOT a fitted force field.
+# Elements: ${els}
+# This template only assembles simulation-control settings. The actual
+# reactive bond-order / charge-equilibration parameters must come from a
+# real fitted ffield.reax file (fit against DFT reference data) —
+# see the note in the Force Field app for the real fitting workflow.
+
+charge_method       ${charge}
+bond_order_cutoff   ${bocut}
+nonbond_cutoff      ${nbcut}  # Angstrom
+qeq_frequency        ${qeqf}  # steps between charge equilibration
+
+# LAMMPS usage (once you have a real ffield.reax for these elements):
+#   pair_style   reaxff NULL
+#   pair_coeff   * * ffield.reax ${els.replace(/,/g,'')}
+#   fix          qeq all qeq/reaxff ${qeqf} 0.0 10.0 1e-6 reaxff
+`;
+  ffDownload(txt,'reaxff_control_template.txt');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   3) BUCKINGHAM / BKS
+   ══════════════════════════════════════════════════════════════════════ */
+const KE=14.399645; // eV*A / e^2
+function bkLoadDefaults(){
+  const pair=document.getElementById('bk-pair').value;
+  const table={
+    SiO:{A:18003.7572,rho:0.205204,C:133.5381,qi:2.4,qj:-1.2},
+    OO:{A:1388.7730,rho:0.362319,C:175.0,qi:-1.2,qj:-1.2},
+  };
+  if(table[pair]){
+    const P=table[pair];
+    document.getElementById('bk-A').value=P.A; document.getElementById('bk-rho').value=P.rho;
+    document.getElementById('bk-C').value=P.C; document.getElementById('bk-qi').value=P.qi;
+    document.getElementById('bk-qj').value=P.qj;
+    log('[FF] Loaded literature BKS '+pair+' parameters (van Beest, Kramer, van Santen 1990)');
+  }
+}
+function bkReadParams(){
+  return {A:+document.getElementById('bk-A').value, rho:+document.getElementById('bk-rho').value,
+    C:+document.getElementById('bk-C').value, qi:+document.getElementById('bk-qi').value,
+    qj:+document.getElementById('bk-qj').value};
+}
+function buckinghamCoulomb(r,P){
+  const buck=P.A*Math.exp(-r/P.rho)-P.C/Math.pow(r,6);
+  const coul=KE*P.qi*P.qj/r;
+  return buck+coul;
+}
+function buckinghamCoulombSafe(r,P,rMin){
+  if(r>=rMin)return buckinghamCoulomb(r,P);
+  const h=1e-4;
+  const v0=buckinghamCoulomb(rMin,P);
+  const slope=(buckinghamCoulomb(rMin+h,P)-buckinghamCoulomb(rMin-h,P))/(2*h);
+  return v0+slope*(r-rMin);
+}
+function bkRender(){
+  const P=bkReadParams();
+  const useSpline=document.getElementById('bk-spline').checked;
+  const rMin=+document.getElementById('bk-rmin').value;
+  const rs=linspace(0.6,4.0,300);
+
+  const esRaw=rs.map(r=>buckinghamCoulomb(r,P));
+  const esFixed=rs.map(r=>buckinghamCoulombSafe(r,P,rMin));
+
+  // find minima in the "safe" (physically sensible, > rMin) region
+  let bestRSafe=null,bestESafe=Infinity;
+  linspace(rMin,4.0,300).forEach(r=>{ const e=buckinghamCoulomb(r,P); if(e<bestESafe){bestESafe=e;bestRSafe=r;} });
+  document.getElementById('bk-stat-fixed').textContent=bestRSafe.toFixed(3)+' Å';
+
+  let bestRRaw=null,bestERaw=Infinity;
+  rs.forEach(r=>{ const e=buckinghamCoulomb(r,P); if(e<bestERaw){bestERaw=e;bestRRaw=r;} });
+  document.getElementById('bk-stat-nofix').textContent=bestRRaw.toFixed(3)+' Å (unphysical, see catastrophe)';
+  document.getElementById('bk-stat-catastrophe').textContent=buckinghamCoulomb(0.5,P).toFixed(0)+' eV @ r=0.5Å';
+
+  const traces=[{x:rs,y:esRaw,type:'scatter',mode:'lines',name:'Raw (catastrophe)',line:{color:'#dc2626',width:1.5,dash:'dot'}}];
+  if(useSpline)traces.push({x:rs,y:esFixed,type:'scatter',mode:'lines',name:'Spline-corrected',line:{color:'#6d28d9',width:2}});
+  Plotly.react('bk-plot1',traces, {...ffLayout('r (Å)','V(r) (eV)'),showlegend:true,legend:{font:{size:9}}}, {displayModeBar:false,responsive:true});
+}
+function ffExportBuck(){
+  const P=bkReadParams();
+  const pair=document.getElementById('bk-pair').value;
+  const txt=`# Buckingham + Coulomb parameter file (LAMMPS pair_style buck/coul/long style)\n`+
+    `# pair_style buck/coul/long 10.0\n`+
+    `# pair_coeff  <typeI> <typeJ>  A(eV) rho(A) C(eV*A^6)\n`+
+    `pair_coeff  * *  ${P.A} ${P.rho} ${P.C}\n\n`+
+    `# Partial charges (set via 'set type X charge Y' or in the data file):\n`+
+    `# qi = ${P.qi} e,  qj = ${P.qj} e\n\n`+
+    `# NOTE: raw Buckingham has a short-range collapse ("Buckingham catastrophe").\n`+
+    `# Real production runs typically add a short-range spline/hard-core correction\n`+
+    `# below ~1.0-1.3 A (e.g. LAMMPS pair_style hybrid/overlay with a repulsive core).\n\n`+
+    `# Source: van Beest, Kramer, van Santen, Phys. Rev. Lett. 64, 1955 (1990) — BKS SiO2, as commonly tabulated.\n`;
+  ffDownload(txt, 'BKS_'+pair+'.buck');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   4) EAM / MEAM (generic, illustrative — see honesty note)
+   ══════════════════════════════════════════════════════════════════════ */
+function eaReadParams(){
+  return {D0:+document.getElementById('ea-D0').value, alpha:+document.getElementById('ea-alpha').value,
+    r0:+document.getElementById('ea-r0').value, f0:+document.getElementById('ea-f0').value,
+    beta:+document.getElementById('ea-beta').value, Aemb:+document.getElementById('ea-Aemb').value,
+    rc:+document.getElementById('ea-rc').value};
+}
+function eamPair(r,P){ if(r>P.rc)return 0; const x=r-P.r0; return P.D0*(Math.exp(-2*P.alpha*x)-2*Math.exp(-P.alpha*x)); }
+function eamDensity(r,P){ if(r>P.rc)return 0; return P.f0*Math.exp(-P.beta*(r-P.r0)); }
+function eamEmbedding(rho,P){ return -P.Aemb*Math.sqrt(rho); }
+function eamCohesive(nNeigh,rNeigh,P){
+  let pairSum=0,rhoSum=0;
+  for(let k=0;k<nNeigh;k++){ pairSum+=eamPair(rNeigh,P); rhoSum+=eamDensity(rNeigh,P); }
+  return 0.5*pairSum+eamEmbedding(rhoSum,P);
+}
+function eaRender(){
+  const P=eaReadParams();
+  const rNeigh=+document.getElementById('ea-rneigh').value;
+  const coords=[2,3,4,5,6,7,8,9,10,11,12];
+  const energies=coords.map(n=>eamCohesive(n,rNeigh,P));
+  const e4=eamCohesive(4,rNeigh,P), e12=eamCohesive(12,rNeigh,P);
+  document.getElementById('ea-stat-cn4').textContent=e4.toFixed(4)+' eV';
+  document.getElementById('ea-stat-cn12').textContent=e12.toFixed(4)+' eV';
+  document.getElementById('ea-stat-ratio').textContent=((e12/12)/(e4/4)).toFixed(3);
+
+  Plotly.react('ea-plot1',[{x:coords,y:energies,type:'scatter',mode:'lines+markers',line:{color:'#6d28d9',width:2},marker:{size:6}}],
+    ffLayout('Coordination number','E/atom (eV)'), {displayModeBar:false,responsive:true});
+
+  const rs=linspace(1.8,P.rc,200);
+  const pairVals=rs.map(r=>eamPair(r,P));
+  const densVals=rs.map(r=>eamDensity(r,P));
+  Plotly.react('ea-plot2',[
+    {x:rs,y:pairVals,type:'scatter',mode:'lines',name:'φ(r) pair term',line:{color:'#dc2626',width:2}},
+    {x:rs,y:densVals,type:'scatter',mode:'lines',name:'ρ(r) density',line:{color:'#0ea5e9',width:2},yaxis:'y2'},
+  ], {
+    margin:{t:6,r:44,b:34,l:44},paper_bgcolor:'#fff',plot_bgcolor:'#fff',
+    font:{size:10,family:'JetBrains Mono'},showlegend:true,legend:{font:{size:9}},
+    xaxis:{title:'r (Å)',gridcolor:'#eee'},
+    yaxis:{title:'φ(r) (eV)',gridcolor:'#eee'},
+    yaxis2:{title:'ρ(r)',overlaying:'y',side:'right'},
+  }, {displayModeBar:false,responsive:true});
+}
+function ffExportEAM(){
+  const P=eaReadParams();
+  const rs=linspace(0.5,P.rc,50);
+  let txt=`# Generic/illustrative EAM tabulated functions (Finnis-Sinclair style sqrt embedding)\n`+
+    `# NOT literature-exact for any specific real metal -- fit/replace with a real\n`+
+    `# DYNAMO setfl table for production use.\n#\n`+
+    `# Parameters: D0=${P.D0} alpha=${P.alpha} r0=${P.r0} f0=${P.f0} beta=${P.beta} Aemb=${P.Aemb} rc=${P.rc}\n#\n`+
+    `# r(A)  phi(r)(eV)  rho(r)\n`;
+  rs.forEach(r=>{ txt+=`${r.toFixed(4)}  ${eamPair(r,P).toFixed(6)}  ${eamDensity(r,P).toFixed(6)}\n`; });
+  txt+=`\n# Embedding function F(rho) = -Aemb*sqrt(rho), Aemb=${P.Aemb}\n`;
+  ffDownload(txt,'generic_eam_tabulated.txt');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   5) MLIP — genuine trainable Gaussian-basis ridge regression
+   ══════════════════════════════════════════════════════════════════════ */
+let ML_MODEL=null;
+
+function gaussianBasis(r,centers,width){ return centers.map(c=>Math.exp(-((r-c)**2)/(2*width*width))); }
+
+function solveLinearSystem(Amat,bvec){
+  const n=Amat.length;
+  const M=Amat.map((row,i)=>[...row,bvec[i]]);
+  for(let col=0;col<n;col++){
+    let piv=col;
+    for(let r=col+1;r<n;r++) if(Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r;
+    [M[col],M[piv]]=[M[piv],M[col]];
+    const pv=M[col][col];
+    if(Math.abs(pv)<1e-14) continue;
+    for(let c=col;c<=n;c++) M[col][c]/=pv;
+    for(let r=0;r<n;r++){
+      if(r===col)continue;
+      const f=M[r][col];
+      for(let c=col;c<=n;c++) M[r][c]-=f*M[col][c];
+    }
+  }
+  return M.map(row=>row[n]);
+}
+
+function mlReferenceFn(){
+  const target=document.getElementById('ml-target').value;
+  if(target==='sw'){ const P=swReadParams(); return r=>swPhi2(r,P); }
+  if(target==='tersoff'){
+    const P=tsReadParams(); const coord=parseInt(document.getElementById('ts-coord')?.value)||4;
+    const tetCos=-1/3;
+    return r=>{ const zeta=tsZeta(r,tsMakeNeighbors(coord-1,r,tetCos),P); return tsVij(r,zeta,P); };
+  }
+  // bks
+  const P=bkReadParams(); return r=>buckinghamCoulombSafe(r,P,+document.getElementById('bk-rmin')?.value||1.3);
+}
+
+function trainMLIP(refFn,rMin,rMax,nTrain,nBasis,ridgeLambda){
+  const centers=linspace(rMin,rMax,nBasis);
+  const width=(rMax-rMin)/nBasis*1.2;
+  const rTrain=linspace(rMin,rMax,nTrain);
+  const yTrain=rTrain.map(refFn);
+  const Phi=rTrain.map(r=>gaussianBasis(r,centers,width));
+  const K=nBasis;
+  const AtA=Array.from({length:K},()=>new Array(K).fill(0));
+  const Atb=new Array(K).fill(0);
+  for(let i=0;i<nTrain;i++){
+    for(let a=0;a<K;a++){
+      Atb[a]+=Phi[i][a]*yTrain[i];
+      for(let b=0;b<K;b++) AtA[a][b]+=Phi[i][a]*Phi[i][b];
+    }
+  }
+  for(let a=0;a<K;a++) AtA[a][a]+=ridgeLambda;
+  const w=solveLinearSystem(AtA,Atb);
+  return {centers,width,w,rTrain,yTrain,
+    predict(r){ const basis=gaussianBasis(r,centers,width); return basis.reduce((s,b,i)=>s+b*w[i],0); }};
+}
+
+function mlTrain(){
+  const rMin=+document.getElementById('ml-rmin').value, rMax=+document.getElementById('ml-rmax').value;
+  const nBasis=parseInt(document.getElementById('ml-nbasis').value);
+  const nTrain=parseInt(document.getElementById('ml-ntrain').value);
+  const ridge=+document.getElementById('ml-ridge').value;
+  const refFn=mlReferenceFn();
+
+  log('[MLIP] Training on '+nTrain+' points with '+nBasis+' Gaussian basis functions...');
+  ML_MODEL=trainMLIP(refFn,rMin,rMax,nTrain,nBasis,ridge);
+
+  // train RMSE
+  let sseTrain=0;
+  ML_MODEL.rTrain.forEach((r,i)=>{ const p=ML_MODEL.predict(r); sseTrain+=(p-ML_MODEL.yTrain[i])**2; });
+  const rmseTrain=Math.sqrt(sseTrain/ML_MODEL.rTrain.length);
+
+  // holdout test set (offset from the training grid so it's genuinely unseen)
+  const rTest=linspace(rMin+ (rMax-rMin)/(2*nTrain), rMax-(rMax-rMin)/(2*nTrain), 25);
+  let sseTest=0, sseRef=0;
+  const yTest=rTest.map(refFn);
+  const yPred=rTest.map(r=>ML_MODEL.predict(r));
+  rTest.forEach((r,i)=>{ sseTest+=(yPred[i]-yTest[i])**2; sseRef+=yTest[i]*yTest[i]; });
+  const rmseTest=Math.sqrt(sseTest/rTest.length);
+  const rmsRef=Math.sqrt(sseRef/rTest.length);
+
+  document.getElementById('ml-stat-train').textContent=rmseTrain.toExponential(2)+' eV';
+  document.getElementById('ml-stat-test').textContent=rmseTest.toExponential(2)+' eV';
+  document.getElementById('ml-stat-ref').textContent=rmsRef.toFixed(3)+' eV';
+  log(`[MLIP] Train RMSE=${rmseTrain.toExponential(3)} eV, Holdout RMSE=${rmseTest.toExponential(3)} eV (reference RMS ${rmsRef.toFixed(3)} eV)`);
+
+  const rDense=linspace(rMin,rMax,200);
+  const yDense=rDense.map(refFn);
+  const yDensePred=rDense.map(r=>ML_MODEL.predict(r));
+  Plotly.react('ml-plot1',[
+    {x:rDense,y:yDense,type:'scatter',mode:'lines',name:'Reference',line:{color:'#888',width:3}},
+    {x:rDense,y:yDensePred,type:'scatter',mode:'lines',name:'MLIP prediction',line:{color:'#6d28d9',width:2,dash:'dash'}},
+    {x:rTest,y:yTest,type:'scatter',mode:'markers',name:'Holdout points',marker:{color:'#dc2626',size:7,symbol:'x'}},
+  ], {...ffLayout('r (Å)','Energy (eV)'),showlegend:true,legend:{font:{size:9}}}, {displayModeBar:false,responsive:true});
+
+  const resid=rTest.map((r,i)=>yPred[i]-yTest[i]);
+  Plotly.react('ml-plot2',[{x:rTest,y:resid,type:'bar',marker:{color:'#dc2626'}}],
+    ffLayout('r (Å)','MLIP − reference (eV)'), {displayModeBar:false,responsive:true});
+}
+function ffExportMLIP(){
+  if(!ML_MODEL){ log('[MLIP] Train a model first.'); return; }
+  const model={
+    type:'gaussian-basis-ridge-regression',
+    note:'Illustrative pairwise MLIP demo -- not a production many-body model.',
+    centers:ML_MODEL.centers, width:ML_MODEL.width, weights:ML_MODEL.w,
+  };
+  ffDownload(JSON.stringify(model,null,2),'mlip_model.json');
+}
+
+/* ── Shared plot layout + download helper ────────────────────────────── */
+function ffLayout(xtitle,ytitle){
+  return {
+    margin:{t:6,r:14,b:34,l:48}, paper_bgcolor:'#fff', plot_bgcolor:'#fff',
+    font:{size:10,family:'JetBrains Mono'}, showlegend:false,
+    xaxis:{title:xtitle,gridcolor:'#eee'}, yaxis:{title:ytitle,gridcolor:'#eee'},
+  };
+}
+function ffDownload(text,filename){
+  const b=new Blob([text],{type:'text/plain'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a'); a.href=u; a.download=filename; a.click();
+  URL.revokeObjectURL(u);
+  log('[FF] Downloaded '+filename);
+}
+
+/* ── Init ─────────────────────────────────────────────────────────────── */
+window.addEventListener('load',()=>{
+  swRender();
+  log('[FF] Force Field generator initialized.');
+});
+</script>
+</body>
+</html>
