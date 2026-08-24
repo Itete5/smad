@@ -915,7 +915,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
       <button class="rp-tab active" data-rptab="md-sim" onclick="switchRpTab('md-sim',this)">MD</button>
       <button class="rp-tab" data-rptab="md-geo" onclick="switchRpTab('md-geo',this)">Geometry</button>
       <button class="rp-tab" data-rptab="md-aiff" onclick="switchRpTab('md-aiff',this)">Force-Field Gen.</button>
-      <button class="rp-tab" data-rptab="md-evo" onclick="switchRpTab('md-evo',this)">MD Evolution</button>
+      <button class="rp-tab" data-rptab="md-evo" onclick="location.href='/md/evolution'">MD Evolution</button>
       <button class="rp-tab" data-rptab="md-mc" onclick="switchRpTab('md-mc',this)">Monte Carlo</button>
 
     </div>
@@ -2208,7 +2208,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
   <div class="mm-item active" data-mode="md" onclick="selectModeItem('md',event)"><span class="mm-lbl" style="color:#34d399;font-weight:700">MD Simulations</span></div>
   <div class="mm-item" data-mode="geometry" onclick="selectModeItem('geometry',event)"><span class="mm-lbl">Geometry</span></div>
   <div class="mm-item" data-mode="aiff" onclick="selectModeItem('aiff',event)"><span class="mm-lbl">Force-Field Generator</span></div>
-  <div class="mm-item" data-mode="evolution" onclick="selectModeItem('evolution',event)"><span class="mm-lbl" style="color:#34d399;font-weight:700">⬡ MD Evolution</span></div>
+  <div class="mm-item" data-mode="evolution" onclick="location.href='/md/evolution'"><span class="mm-lbl" style="color:#34d399;font-weight:700">⬡ MD Evolution</span></div>
   <div class="mm-item" data-mode="mcevo" onclick="selectModeItem('mcevo',event)"><span class="mm-lbl" style="color:#fb923c;font-weight:700">⬡ Monte Carlo Evolution</span></div>
   <div class="mm-item" data-mode="mc" onclick="selectModeItem('mc',event)"><span class="mm-lbl" style="color:#ea580c;font-weight:700">⬡ Monte Carlo</span></div>
 </div>
@@ -2234,175 +2234,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
 Initialize a system and click Start MD.
 </pre></div>
 
-<div id="mdevo-overlay">
-
-  <!-- ── TOP CONFIG CARDS ── -->
-  <div id="mdevo-top">
-
-    <div class="evo-card" style="min-width:180px">
-      <div class="evo-card-title">① Trajectory Pool</div>
-      <div class="evo-row"><span class="evo-lbl">Initial Trajectories</span><input class="evo-inp" id="mdevo-init-trajs" type="number" value="8" min="2"/></div>
-      <div class="evo-row"><span class="evo-lbl">Pool Size</span><input class="evo-inp" id="mdevo-pool-size" type="number" value="12" min="2"/></div>
-      <div class="evo-row"><span class="evo-lbl">Max Trajectories</span><input class="evo-inp" id="mdevo-max-trajs" type="number" value="200" min="10"/></div>
-      <div class="evo-row"><span class="evo-lbl">Job Limit</span><input class="evo-inp" id="mdevo-job-limit" type="number" value="4" min="1"/></div>
-      <div class="evo-row"><span class="evo-lbl">Continuous</span><input class="evo-inp" id="mdevo-continuous" type="number" value="2" min="1"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:185px">
-      <div class="evo-card-title">② MD Run Settings</div>
-      <div class="evo-row"><span class="evo-lbl">Ensemble</span>
-        <select class="evo-sel" id="mdevo-ensemble"><option value="nve">NVE</option><option value="nvt" selected>NVT</option></select>
-      </div>
-      <div class="evo-row"><span class="evo-lbl">Temp (K)</span><input class="evo-inp" id="mdevo-temp" type="number" value="300" min="0"/></div>
-      <div class="evo-row"><span class="evo-lbl">Temp Range ±</span><input class="evo-inp" id="mdevo-temp-range" type="number" value="200" min="0"/></div>
-      <div class="evo-row"><span class="evo-lbl">Steps</span><input class="evo-inp" id="mdevo-nstep" type="number" value="50" min="5"/></div>
-      <div class="evo-row"><span class="evo-lbl">dt (a.u.)</span><input class="evo-inp" id="mdevo-dt" type="number" value="20" min="1"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:185px">
-      <div class="evo-card-title">③ Selection</div>
-      <div class="evo-row"><span class="evo-lbl">Snapshot Source</span>
-        <select class="evo-sel" id="mdevo-snapshot"><option value="lowest" selected>Lowest energy</option><option value="final">Final step</option></select>
-      </div>
-      <div class="evo-row"><span class="evo-lbl">Selection</span>
-        <select class="evo-sel" id="mdevo-selection"><option value="tournament" selected>Tournament (k=3)</option><option value="elite">Elite (top 2)</option></select>
-      </div>
-      <div class="evo-row"><span class="evo-lbl">% Perturb Temp</span><input class="evo-inp" id="mdevo-perturb-pct" type="number" value="50" min="0" max="100"/></div>
-      <div class="evo-row"><span class="evo-lbl">% Restart from Best</span><input class="evo-inp" id="mdevo-restart-pct" type="number" value="30" min="0" max="100"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:190px">
-      <div class="evo-card-title">④ Operators</div>
-      <div class="evo-sub">Velocity Perturbation</div>
-      <div class="evo-row"><span class="evo-lbl">Rescale Range %</span><input class="evo-inp" id="mdevo-rescale" type="number" value="20" min="0" max="100"/></div>
-      <div class="evo-sub">Structural Kick</div>
-      <div class="evo-row"><span class="evo-lbl">% Kick</span><input class="evo-inp" id="mdevo-kick-pct" type="number" value="20" min="0" max="100"/></div>
-      <div class="evo-row"><span class="evo-lbl">Kick Amplitude</span><input class="evo-inp" id="mdevo-kick-amp" type="number" value="0.3" step="0.05"/></div>
-      <div class="evo-row"><span class="evo-lbl">Min ΔE (Ry)</span><input class="evo-inp" id="mdevo-dup-de" type="number" value="0.001" step="0.001"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:195px">
-      <div class="evo-card-title" style="color:#7c3aed">⬡ QE Settings</div>
-      <div class="evo-row"><span class="evo-lbl">Ecut (Ry)</span><input class="evo-inp" id="mdevo-ecut" type="number" value="40" min="20"/></div>
-      <div class="evo-row"><span class="evo-lbl">k-mesh</span>
-        <div style="display:flex;gap:2px">
-          <input class="evo-inp" id="mdevo-kx" type="number" value="2" min="1" style="width:32px"/>
-          <input class="evo-inp" id="mdevo-ky" type="number" value="2" min="1" style="width:32px"/>
-          <input class="evo-inp" id="mdevo-kz" type="number" value="2" min="1" style="width:32px"/>
-        </div>
-      </div>
-      <div class="evo-chk-row"><input type="checkbox" id="mdevo-use-seed" checked><label for="mdevo-use-seed">Seed from loaded structure</label></div>
-    </div>
-
-  </div><!-- /mdevo-top -->
-
-  <!-- ── CONTROLS BAR ── -->
-  <div id="mdevo-controls-bar" style="flex-wrap:wrap;row-gap:3px;background:#c8e8d8;border-bottom:2px solid #7fbf9f;">
-    <button class="evo-run-btn start" id="mdevo-start-btn" onclick="mdevoStart()">▶ Start MD Evolution</button>
-    <button class="evo-run-btn pause" id="mdevo-pause-btn" onclick="mdevoPause()" disabled style="opacity:.5">⏸ Pause</button>
-    <button class="evo-run-btn stop"  id="mdevo-stop-btn"  onclick="mdevoStop()"  disabled style="opacity:.5">■ Stop</button>
-    <div class="evo-stat-chip" id="mdevo-state-chip" style="background:#d1fae5;color:#065f46;border-color:#6ee7b7;">Idle</div>
-    <span id="mdevo-gen-counter">Gen: 0</span>
-    <span style="color:#888;font-size:10px">Best:</span>
-    <span id="mdevo-best-energy">— Ry/atom</span>
-    <span style="color:#888;font-size:10px">Pool:</span>
-    <span id="mdevo-pool-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
-    <div style="flex:1"></div>
-    <span style="font-size:9px;color:#666;font-weight:700;flex-shrink:0">🖥 Host:</span>
-    <input id="mdevo-host-input" placeholder="http://100.127.228.36:5000"
-      style="padding:3px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;border:1px solid #bbb;border-radius:2px;width:180px;background:#fff;flex-shrink:0"
-      oninput="document.getElementById('loginNode').value=this.value"/>
-    <button class="evo-btn-sm" id="mdevo-test-btn" onclick="mdevoTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">⚡ Test</button>
-    <span id="mdevo-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;flex-shrink:0;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
-    <button class="evo-btn-sm" onclick="mdevoExportCSV()">⬇ CSV</button>
-    <button class="evo-btn-sm danger" onclick="mdevoResetAll()">✕ Reset</button>
-  </div>
-
-  <!-- ── BOTTOM THREE PANELS ── -->
-  <div id="mdevo-bottom" style="display:flex;flex:1;min-height:0;gap:0;">
-
-    <!-- LEFT: Monitor plots (reuses evo-monitor CSS) -->
-    <div id="mdevo-monitor" class="" style="width:280px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;display:flex;flex-direction:column;overflow:hidden;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;">
-        <span>MD Evolution Monitor</span>
-        <span id="mdevo-monitor-status" style="font-size:9px;color:#059669;font-weight:400">Idle</span>
-      </div>
-      <div class="evo-chart-lbl">Best Snapshot Energy / Generation</div>
-      <div class="evo-plot" id="mdevo-chart-energy" style="height:130px"></div>
-      <div class="evo-chart-lbl">Trajectory Temperature Spread</div>
-      <div class="evo-plot" id="mdevo-chart-temp" style="height:110px"></div>
-      <div style="padding:4px 8px;font-size:9px;color:#888;border-top:1px solid #ccc">
-        <div style="display:flex;justify-content:space-between"><span>Duplicates removed</span><span id="mdevo-dup-count">0</span></div>
-        <div style="display:flex;justify-content:space-between"><span>Failed jobs</span><span id="mdevo-fail-count">0</span></div>
-      </div>
-    </div>
-
-    <!-- MIDDLE: Trajectory table -->
-    <div id="mdevo-table-panel" style="flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;border-right:1px solid #c8c8c8;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        <span id="mdevo-gen-badge" style="font-size:10px;font-weight:700;color:#059669;background:#d1fae5;border:1px solid #6ee7b7;border-radius:3px;padding:2px 8px;white-space:nowrap;">Gen 0 / 0</span>
-        <input class="evo-search" id="mdevo-search" placeholder="Search ID, mutation…" oninput="mdevoFilterTable()"/>
-      </div>
-      <div style="flex:1;overflow-y:auto;overflow-x:auto;">
-        <table class="evo-pop-table" id="mdevo-pop-table">
-          <thead>
-            <tr>
-              <th onclick="mdevoSort('id')"># ID</th>
-              <th onclick="mdevoSort('gen')">Gen</th>
-              <th onclick="mdevoSort('parent')">Parent</th>
-              <th onclick="mdevoSort('mutation')">Mutation</th>
-              <th onclick="mdevoSort('temp')">Temp (K)</th>
-              <th onclick="mdevoSort('energy')">E (Ry/atom)</th>
-              <th onclick="mdevoSort('step')">Snap Step</th>
-              <th onclick="mdevoSort('fitness')">Fitness</th>
-              <th onclick="mdevoSort('status')">Status</th>
-            </tr>
-          </thead>
-          <tbody id="mdevo-pop-tbody">
-            <tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">
-              No trajectories yet — click ▶ Start MD Evolution
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div style="padding:4px 9px;background:#d8d8d8;border-top:1px solid #ccc;font-size:10px;color:#666;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <button class="evo-page-btn" id="mdevo-prev" onclick="mdevoPage(-1)">‹ Prev</button>
-        <span id="mdevo-page-info">Page 1 / 1</span>
-        <button class="evo-page-btn" id="mdevo-next" onclick="mdevoPage(1)">Next ›</button>
-        <span style="flex:1"></span>
-        <span id="mdevo-total-count">0 trajectories</span>
-      </div>
-    </div>
-
-    <!-- RIGHT: Snapshot structure viewer -->
-    <div id="mdevo-viewer-panel" style="width:340px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;">Snapshot Viewer — <span id="mdevo-sel-id" style="color:#059669">none selected</span></div>
-      <div style="padding:6px 9px;background:#e8e8e8;border-bottom:1px solid #d8d8d8;display:grid;grid-template-columns:1fr 1fr;gap:3px;">
-        <div class="evo-info-item"><span class="evo-info-k">Energy/atom</span><span class="evo-info-v" id="mdevo-info-e">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Fitness</span><span class="evo-info-v" id="mdevo-info-fit">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Temp (K)</span><span class="evo-info-v" id="mdevo-info-temp">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Snap Step</span><span class="evo-info-v" id="mdevo-info-step">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Mutation</span><span class="evo-info-v" id="mdevo-info-mut">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Parent</span><span class="evo-info-v" id="mdevo-info-par">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Status</span><span class="evo-info-v" id="mdevo-info-status">—</span></div>
-      </div>
-      <div id="mdevo-viewer-3d" style="flex:1;min-height:200px;position:relative;background:#fff;"></div>
-      <div style="padding:5px 8px;background:#d8d8d8;border-top:1px solid #ccc;display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
-        <button class="evo-btn-sm" onclick="mdevoPrevTraj()">‹ Prev</button>
-        <button class="evo-btn-sm" onclick="mdevoNextTraj()">Next ›</button>
-        <button class="evo-btn-sm" onclick="mdevoViewerReset()">⟳ Reset</button>
-        <select class="evo-sel" id="mdevo-dl-fmt" onchange="mdevoDownloadFmt(this.value);this.value=''" style="font-size:9.5px" title="Download selected structure">
-          <option value="">⬇ CIF / …</option>
-          <option value="cif">CIF</option>
-          <option value="poscar">POSCAR</option>
-          <option value="xyz">XYZ</option>
-        </select>
-      </div>
-    </div>
-
-  </div><!-- /mdevo-bottom -->
-
-</div><!-- /mdevo-overlay -->
 <div id="mcevo-overlay">
 
   <!-- ── TOP CONFIG CARDS ── -->
@@ -5112,6 +4943,7 @@ function mcevoInitCharts(){
   const layout=(y,h)=>({margin:{t:4,r:6,b:28,l:48},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'Step',gridcolor:'#ddd'},yaxis:{title:y,gridcolor:'#ddd'},showlegend:false,height:h});
   Plotly.react('mcevo-chart-energy',empty,layout('Ry/atom',128),{displayModeBar:false,responsive:true});
   Plotly.react('mcevo-chart-temp',empty,layout('T (K)',108),{displayModeBar:false,responsive:true});
+}
 
 /* ══ MODE ROUTING PATCH ══ */
 (function(){
@@ -5120,19 +4952,11 @@ function mcevoInitCharts(){
     e && e.stopPropagation && e.stopPropagation();
     closeModeMenu && closeModeMenu();
     // Hide evo overlays
-    ['mdevo-overlay','mcevo-overlay'].forEach(function(id){
+    ['mcevo-overlay'].forEach(function(id){
       var el=document.getElementById(id); if(el) el.classList.remove('active');
     });
     if (mode === 'evolution') {
-      var el=document.getElementById('mdevo-overlay');
-      if(el) el.classList.add('active');
-      var lbl=document.getElementById('bb-mode-label');
-      if(lbl) lbl.textContent='MD Evolution';
-      document.querySelectorAll('.mm-item').forEach(function(i){i.classList.toggle('active',i.dataset.mode===mode);});
-      var hi=document.getElementById('mdevo-host-input');
-      var ln=document.getElementById('md-loginNode');
-      if(hi&&ln) hi.value=ln.value;
-      if(typeof mdevoInitCharts==='function') mdevoInitCharts();
+      window.location.href='/md/evolution';
       return;
     }
     if (mode === 'mcevo') {
@@ -5159,7 +4983,7 @@ function mcevoInitCharts(){
 /* Pre-fill host on load */
 document.addEventListener('DOMContentLoaded', function(){
   var hostVal=(document.getElementById('md-loginNode')||{}).value||'http://100.127.228.36:5000';
-  ['mdevo-host-input','mcevo-host-input'].forEach(function(id){
+  ['mcevo-host-input'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value=hostVal;
   });
 });
