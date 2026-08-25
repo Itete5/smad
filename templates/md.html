@@ -915,7 +915,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
       <button class="rp-tab active" data-rptab="md-sim" onclick="switchRpTab('md-sim',this)">MD</button>
       <button class="rp-tab" data-rptab="md-aiff" onclick="location.href='/md/force-field'">Force Field</button>
       <button class="rp-tab" data-rptab="md-evo" onclick="location.href='/md/evolution'">MD Evolution</button>
-      <button class="rp-tab" data-rptab="md-mc" onclick="switchRpTab('md-mc',this)">Monte Carlo</button>
+      <button class="rp-tab" data-rptab="md-mc" onclick="location.href='/montecarlo'">Monte Carlo</button>
 
     </div>
 
@@ -1219,321 +1219,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
 
     </div><!-- /rptab-md-evo -->
 
-    <!-- ════════════════════════════════════════════════════
-         TAB: MONTE CARLO (Metropolis Structure Search)
-    ════════════════════════════════════════════════════ -->
-    <div class="rp-tabpane" id="rptab-md-mc">
-
-      <!-- STATUS STRIP (always visible) -->
-      <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#fde0c8;border-bottom:2px solid #f0a868;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#ea580c;flex-shrink:0" id="mc-status-dot"></div>
-        <span style="font-size:10px;font-weight:700;color:#9a3412" id="mc-status-lbl">Idle</span>
-        <div style="flex:1"></div>
-        <span style="font-size:9.5px;font-family:'JetBrains Mono',monospace;color:#555" id="mc-step-lbl">Step: 0</span>
-      </div>
-
-      <!-- LIVE COUNTERS (always visible) -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#ccc;border-bottom:1px solid #ccc;">
-        <div style="background:#fff;padding:5px 6px;text-align:center">
-          <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:1px">T (K)</div>
-          <div style="font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#ea580c" id="mc-cur-temp">—</div>
-        </div>
-        <div style="background:#fff;padding:5px 6px;text-align:center">
-          <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:1px">Best E</div>
-          <div style="font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#065f46" id="mc-best-e">—</div>
-        </div>
-        <div style="background:#fff;padding:5px 6px;text-align:center">
-          <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:1px">Accepted</div>
-          <div style="font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#2a9d2a" id="mc-accept-ctr">0</div>
-        </div>
-        <div style="background:#fff;padding:5px 6px;text-align:center">
-          <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:1px">Rejected</div>
-          <div style="font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#b02020" id="mc-reject-ctr">0</div>
-        </div>
-      </div>
-
-      <!-- MINI CHARTS -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#ccc;border-bottom:1px solid #ccc;">
-        <div style="background:#fff;">
-          <div style="font-size:8.5px;color:#888;padding:3px 6px;border-bottom:1px solid #eee">Energy / Step</div>
-          <div id="mc-chart-energy" style="height:70px;"></div>
-        </div>
-        <div style="background:#fff;">
-          <div style="font-size:8.5px;color:#888;padding:3px 6px;border-bottom:1px solid #eee">Temp. Annealing</div>
-          <div id="mc-chart-temp" style="height:70px;"></div>
-        </div>
-      </div>
-
-      <div style="flex:1;overflow-y:auto;overflow-x:hidden">
-
-      <!-- ① CHAIN SETUP -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('mcChainB','mcChainA')">
-          <span class="acc-arrow" id="mcChainA">▼</span>
-          <span class="acc-title">① Chain Setup</span>
-        </div>
-        <div class="acc-body" id="mcChainB">
-          <div class="field-row"><div class="field-label">Composition</div>
-            <div class="field-val"><input class="burai-input" id="mc-formula" value="Si8" style="text-align:left"/></div>
-          </div>
-          <div class="field-row"><div class="field-label">Z range</div>
-            <div class="field-val" style="gap:4px">
-              <input class="burai-input" id="mc-z-min" type="number" value="1" min="1" style="width:40px"/>
-              <span style="font-size:10px;color:#888">–</span>
-              <input class="burai-input" id="mc-z-max" type="number" value="4" min="1" style="width:40px"/>
-            </div>
-          </div>
-          <div class="sub-head">Seed Structures</div>
-          <div style="min-height:28px;background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px;font-size:10px;color:#888;margin-bottom:5px" id="mc-seed-list">No seeds added</div>
-          <div style="display:flex;gap:4px">
-            <button class="run-btn" style="flex:1;border-radius:3px;padding:4px;font-size:10px;background:#ea580c" onclick="mcAddSeed()">+ Seed</button>
-            <button style="flex:1;padding:4px;border:1px solid #ccc;border-radius:3px;background:#fff;font-size:10px;cursor:pointer" onclick="mcRemoveSeed()">Remove</button>
-          </div>
-          <div class="field-row" style="margin-top:7px"><div class="field-label">Cluster host</div>
-            <div class="field-val"><input class="burai-input" id="mc-host" value="http://100.127.228.36:5000" style="text-align:left;font-size:9px"/>
-            <button style="padding:3px 6px;background:#2e7dcc;border:none;border-radius:2px;color:#fff;font-size:9px;cursor:pointer;flex-shrink:0" onclick="mcTestHost()">Test</button></div>
-          </div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
-            <span id="mc-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:2px;background:#f0f0f0;color:#888">—</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ② METROPOLIS SETTINGS -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('mcMetroB','mcMetroA')">
-          <span class="acc-arrow" id="mcMetroA">▼</span>
-          <span class="acc-title">② Metropolis Settings</span>
-        </div>
-        <div class="acc-body" id="mcMetroB">
-          <div class="field-row"><div class="field-label">Start T₀ (K)</div>
-            <div class="field-val"><input class="burai-input" id="mc-temp" type="number" value="1000" min="1"/>
-            <button class="spin-btn" onclick="spinF('mc-temp',100)">+</button><button class="spin-btn minus" onclick="spinF('mc-temp',-100)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Cooling rate</div>
-            <div class="field-val"><input class="burai-input" id="mc-cooling" type="number" value="0.95" step="0.01" min="0.5" max="1"/>
-            <button class="spin-btn" onclick="spinF('mc-cooling',.01)">+</button><button class="spin-btn minus" onclick="spinF('mc-cooling',-.01)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Steps / gen</div>
-            <div class="field-val"><input class="burai-input" id="mc-steps-per-gen" type="number" value="1" min="1"/>
-            <button class="spin-btn" onclick="spinF('mc-steps-per-gen',1)">+</button><button class="spin-btn minus" onclick="spinF('mc-steps-per-gen',-1)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Max steps</div>
-            <div class="field-val"><input class="burai-input" id="mc-max-steps" type="number" value="200" min="10"/>
-            <button class="spin-btn" onclick="spinF('mc-max-steps',10)">+</button><button class="spin-btn minus" onclick="spinF('mc-max-steps',-10)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Min T (K)</div>
-            <div class="field-val"><input class="burai-input" id="mc-min-temp" type="number" value="1" min="0"/>
-            <button class="spin-btn" onclick="spinF('mc-min-temp',10)">+</button><button class="spin-btn minus" onclick="spinF('mc-min-temp',-10)">−</button></div>
-          </div>
-          <!-- Live annealing preview -->
-          <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:5px 8px;margin-top:5px;font-size:9.5px;color:#555">
-            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-              <span>Total chain length</span>
-              <span style="font-family:'JetBrains Mono',monospace" id="mc-chain-preview">200 steps</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-              <span>Final T estimate</span>
-              <span style="font-family:'JetBrains Mono',monospace" id="mc-final-t-preview">0.95² × 1000 K</span>
-            </div>
-            <div style="display:flex;justify-content:space-between">
-              <span>Accept. rate (T₀, ΔE=0.01 Ry)</span>
-              <span style="font-family:'JetBrains Mono',monospace" id="mc-accept-preview">—</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ③ MOVE SET (Stripple + Permustrain) -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('mcMoveB','mcMoveA')">
-          <span class="acc-arrow" id="mcMoveA">▼</span>
-          <span class="acc-title">③ Move Set</span>
-        </div>
-        <div class="acc-body" id="mcMoveB">
-          <div class="field-row"><div class="field-label">Move type</div>
-            <div class="field-val"><select class="burai-select" id="mc-move">
-              <option value="mixed" selected>Mixed (50/50)</option>
-              <option value="stripple">Stripple only</option>
-              <option value="permustrain">Permustrain only</option>
-            </select></div>
-          </div>
-          <div class="sub-head">Stripple — lattice shear + atomic displace.</div>
-          <div class="field-row"><div class="field-label">Strain range</div>
-            <div class="field-val"><input class="burai-input" id="mc-strip-strain" type="number" value="0.35" step="0.05" min="0.01" max="1.0"/>
-            <button class="spin-btn" onclick="spinF('mc-strip-strain',.05)">+</button><button class="spin-btn minus" onclick="spinF('mc-strip-strain',-.05)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">Amplitude</div>
-            <div class="field-val"><input class="burai-input" id="mc-strip-amp" type="number" value="1.0" step="0.1" min="0.01"/>
-            <button class="spin-btn" onclick="spinF('mc-strip-amp',.1)">+</button><button class="spin-btn minus" onclick="spinF('mc-strip-amp',-.1)">−</button></div>
-          </div>
-          <div class="sub-head">Permustrain — atom swap + volume strain</div>
-          <div class="field-row"><div class="field-label">Max strain</div>
-            <div class="field-val"><input class="burai-input" id="mc-perm-strain" type="number" value="0.5" step="0.05" min="0.01" max="1.0"/>
-            <button class="spin-btn" onclick="spinF('mc-perm-strain',.05)">+</button><button class="spin-btn minus" onclick="spinF('mc-perm-strain',-.05)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label"># Exchanges</div>
-            <div class="field-val"><input class="burai-input" id="mc-perm-exch" type="number" value="4" min="1" max="20"/>
-            <button class="spin-btn" onclick="spinF('mc-perm-exch',1)">+</button><button class="spin-btn minus" onclick="spinF('mc-perm-exch',-1)">−</button></div>
-          </div>
-          <!-- Move probability display -->
-          <div style="background:#f5f5f5;border:1px solid #ddd;border-radius:2px;padding:5px 8px;margin-top:5px;font-size:9.5px;color:#555">
-            <div style="display:flex;justify-content:space-between;margin-bottom:2px">
-              <span>Stripple probability</span>
-              <span id="mc-strip-prob" style="font-family:'JetBrains Mono',monospace">50%</span>
-            </div>
-            <div style="display:flex;justify-content:space-between">
-              <span>Permustrain probability</span>
-              <span id="mc-perm-prob" style="font-family:'JetBrains Mono',monospace">50%</span>
-            </div>
-            <div style="height:3px;background:#ccc;border-radius:2px;margin-top:5px;overflow:hidden">
-              <div id="mc-move-bar" style="height:100%;width:50%;background:#ea580c;border-radius:2px;transition:width .3s"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ DUPLICATE MATCHING -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('mcDupB','mcDupA')">
-          <span class="acc-arrow" id="mcDupA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">④ Duplicate Detection</span>
-        </div>
-        <div class="acc-body hidden" id="mcDupB">
-          <div class="field-row"><div class="field-label">Min ΔE (Ry)</div>
-            <div class="field-val"><input class="burai-input" id="mc-dup-de" type="number" value="0.001" step="0.001" min="0"/>
-            <button class="spin-btn" onclick="spinF('mc-dup-de',.001)">+</button><button class="spin-btn minus" onclick="spinF('mc-dup-de',-.001)">−</button></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:7px">
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;text-align:center">
-              <div style="font-size:8px;color:#888;text-transform:uppercase">Dups removed</div>
-              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace" id="mc-dup-count">0</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 6px;text-align:center">
-              <div style="font-size:8px;color:#888;text-transform:uppercase">Failed jobs</div>
-              <div style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace" id="mc-fail-count">0</div>
-            </div>
-          </div>
-          <button style="width:100%;margin-top:6px;padding:4px;border:1px solid #ccc;border-radius:3px;background:#fff;font-size:10px;cursor:pointer" onclick="mcResetDups()">↺ Reset Duplicate List</button>
-        </div>
-      </div>
-
-      <!-- ⑤ QE SETTINGS -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('mcQEB','mcQEA')">
-          <span class="acc-arrow" id="mcQEA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">⑤ QE Settings</span>
-        </div>
-        <div class="acc-body hidden" id="mcQEB">
-          <div class="field-row"><div class="field-label">Ecut (Ry)</div>
-            <div class="field-val"><input class="burai-input" id="mc-ecut" type="number" value="40" min="20"/>
-            <button class="spin-btn" onclick="spinF('mc-ecut',5)">+</button><button class="spin-btn minus" onclick="spinF('mc-ecut',-5)">−</button></div>
-          </div>
-          <div class="field-row"><div class="field-label">k-mesh</div>
-            <div class="field-val sc-row">
-              <input class="sc-inp" id="mc-kx" value="2" type="number" min="1"/>
-              <span>×</span>
-              <input class="sc-inp" id="mc-ky" value="2" type="number" min="1"/>
-              <span>×</span>
-              <input class="sc-inp" id="mc-kz" value="2" type="number" min="1"/>
-            </div>
-          </div>
-          <div class="field-row"><div class="field-label">Pseudo dir.</div>
-            <div class="field-val"><input class="burai-input" id="mc-pseudo" value="./pseudo" style="text-align:left;font-size:9.5px"/></div>
-          </div>
-          <!-- QE Input Preview -->
-          <div class="sub-head" style="margin-top:6px">QE Input Preview</div>
-          <div style="background:#1a1a1a;border-radius:2px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#7ee787;line-height:1.7;max-height:100px;overflow:auto" id="mc-qe-preview">
-            <span style="color:#6e7681">&CONTROL</span><br>
-              calculation = 'vc-relax'<br>
-            <span style="color:#6e7681">&SYSTEM</span><br>
-              ecutwfc = 40  ecutrho = 320<br>
-              occupations = 'smearing'<br>
-            <span style="color:#6e7681">K_POINTS automatic</span><br>
-              2 2 2  1 1 1
-          </div>
-          <button style="width:100%;margin-top:5px;padding:4px;border:1px solid #ccc;border-radius:3px;background:#fff;font-size:10px;cursor:pointer" onclick="mcUpdateQEPreview()">↺ Update Preview</button>
-        </div>
-      </div>
-
-      <!-- ⑥ CHAIN TABLE -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('mcTableB','mcTableA')">
-          <span class="acc-arrow" id="mcTableA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">⑥ Chain History</span>
-          <span style="margin-left:auto;font-size:9px;font-family:'JetBrains Mono',monospace;color:#555" id="mc-table-count">0 steps</span>
-        </div>
-        <div class="acc-body hidden" id="mcTableB">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px">
-            <input class="hpc-input" id="mc-search" placeholder="Search ID, move, status…" oninput="mcFilterTable()" style="flex:1;font-size:10px"/>
-            <button style="padding:3px 7px;border:1px solid #ccc;border-radius:2px;background:#fff;font-size:10px;cursor:pointer" onclick="mcExportCSV()">⬇ CSV</button>
-          </div>
-          <div style="overflow-x:auto;max-height:220px;overflow-y:auto;border:1px solid #ddd;border-radius:2px">
-            <table style="width:100%;border-collapse:collapse;font-size:9.5px;font-family:'JetBrains Mono',monospace">
-              <thead>
-                <tr style="background:#e0e0e0;position:sticky;top:0">
-                  <th onclick="mcSortTable('id')" style="padding:4px 5px;cursor:pointer;text-align:left;border-right:1px solid #ccc;white-space:nowrap"># ↕</th>
-                  <th onclick="mcSortTable('step')" style="padding:4px 5px;cursor:pointer;text-align:left;border-right:1px solid #ccc">Step ↕</th>
-                  <th onclick="mcSortTable('mutation')" style="padding:4px 5px;cursor:pointer;text-align:left;border-right:1px solid #ccc">Move ↕</th>
-                  <th onclick="mcSortTable('temp')" style="padding:4px 5px;cursor:pointer;text-align:right;border-right:1px solid #ccc">T(K) ↕</th>
-                  <th onclick="mcSortTable('energy')" style="padding:4px 5px;cursor:pointer;text-align:right;border-right:1px solid #ccc">E(Ry/at) ↕</th>
-                  <th onclick="mcSortTable('accepted')" style="padding:4px 5px;cursor:pointer;text-align:center;border-right:1px solid #ccc">Acc ↕</th>
-                  <th onclick="mcSortTable('status')" style="padding:4px 5px;cursor:pointer;text-align:left">Status ↕</th>
-                </tr>
-              </thead>
-              <tbody id="mc-table-body">
-                <tr><td colspan="7" style="padding:14px;text-align:center;color:#aaa">No steps yet — click ▶ Start MC</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:5px;font-size:10px;color:#666">
-            <button class="evo-page-btn" id="mc-prev-page" onclick="mcPage(-1)">‹</button>
-            <span id="mc-page-info" style="font-family:'JetBrains Mono',monospace">1 / 1</span>
-            <button class="evo-page-btn" id="mc-next-page" onclick="mcPage(1)">›</button>
-            <span style="flex:1"></span>
-            <span id="mc-total-count">0 steps</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑦ BEST STRUCTURE -->
-      <div class="acc-section">
-        <div class="acc-head" onclick="toggleAcc('mcBestB','mcBestA')">
-          <span class="acc-arrow" id="mcBestA" style="transform:rotate(-90deg);display:inline-block">▼</span>
-          <span class="acc-title">⑦ Best Structure</span>
-        </div>
-        <div class="acc-body hidden" id="mcBestB">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:7px">
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8px;text-transform:uppercase;color:#888">Energy/atom</div>
-              <div style="font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#065f46" id="mc-best-e-info">—</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8px;text-transform:uppercase;color:#888">Fitness</div>
-              <div style="font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace" id="mc-best-fit">—</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8px;text-transform:uppercase;color:#888">Step</div>
-              <div style="font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace" id="mc-best-step">—</div>
-            </div>
-            <div style="background:#fff;border:1px solid #ccc;border-radius:2px;padding:4px 7px">
-              <div style="font-size:8px;text-transform:uppercase;color:#888">Temp (K)</div>
-              <div style="font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace" id="mc-best-temp">—</div>
-            </div>
-          </div>
-          <div style="height:60px;background:#fff;border:1px solid #ccc;border-radius:2px;margin-bottom:5px" id="mc-best-viewer">
-            <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#bbb;font-size:10px">No structure selected</div>
-          </div>
-          <div style="display:flex;gap:4px">
-            <button class="gen-btn" style="flex:1;border-radius:3px;padding:4px;font-size:10px" onclick="mcLoadBestToMD()">⬡ Load into MD</button>
-            <button style="flex:1;padding:4px;border:1px solid #ccc;border-radius:3px;background:#fff;font-size:10px;cursor:pointer" onclick="mcExportBestCIF()">⬇ CIF</button>
-          </div>
-        </div>
-      </div>
-
-      </div><!-- /scroll -->
-    </div><!-- /rptab-md-mc -->
-
+    
     </div><!-- /rp-scroll -->
 
     <!-- Run strip (bottom of right panel — changes with mode tab) -->
@@ -1586,8 +1272,7 @@ body.mode-menu-open #bb-icon-close{display:flex}
   <div class="mm-item active" data-mode="md" onclick="selectModeItem('md',event)"><span class="mm-lbl" style="color:#34d399;font-weight:700">MD Simulations</span></div>
   <div class="mm-item" data-mode="aiff" onclick="location.href='/md/force-field'"><span class="mm-lbl">Force Field</span></div>
   <div class="mm-item" data-mode="evolution" onclick="location.href='/md/evolution'"><span class="mm-lbl" style="color:#34d399;font-weight:700">⬡ MD Evolution</span></div>
-  <div class="mm-item" data-mode="mcevo" onclick="selectModeItem('mcevo',event)"><span class="mm-lbl" style="color:#fb923c;font-weight:700">⬡ Monte Carlo Evolution</span></div>
-  <div class="mm-item" data-mode="mc" onclick="selectModeItem('mc',event)"><span class="mm-lbl" style="color:#ea580c;font-weight:700">⬡ Monte Carlo</span></div>
+    <div class="mm-item" data-mode="mc" onclick="location.href='/montecarlo'"><span class="mm-lbl" style="color:#ea580c;font-weight:700">⬡ Monte Carlo</span></div>
 </div>
 
 <!-- ══ LEFT MENU (bottom-left fly-in) ══ -->
@@ -1606,195 +1291,6 @@ body.mode-menu-open #bb-icon-close{display:flex}
   </div>
 </div>
 
-<!-- ══ CONSOLE ══ -->
-<div id="console-area"><pre id="console-out">SMAD MD Simulations — BURAI interface.
-Initialize a system and click Start MD.
-</pre></div>
-
-<div id="mcevo-overlay">
-
-  <!-- ── TOP CONFIG CARDS ── -->
-  <div id="mcevo-top">
-
-    <div class="evo-card" style="min-width:185px">
-      <div class="evo-card-title">① Chain Setup</div>
-      <div class="evo-row"><span class="evo-lbl">Composition</span><input class="evo-inp" id="mcevo-formula" type="text" value="Si8" style="text-align:left;width:80px"/></div>
-      <div class="evo-row"><span class="evo-lbl">Z range</span>
-        <div style="display:flex;gap:3px">
-          <input class="evo-inp" id="mcevo-z-min" type="number" value="1" min="1" style="width:30px"/>
-          <span style="font-size:10px;color:#888;align-self:center">–</span>
-          <input class="evo-inp" id="mcevo-z-max" type="number" value="4" min="1" style="width:30px"/>
-        </div>
-      </div>
-      <div class="evo-sub">Seed Structures</div>
-      <div class="evo-seed-list" id="mcevo-seed-list">No seeds added</div>
-      <div style="display:flex;gap:4px;margin-top:3px">
-        <button class="evo-btn-sm primary" onclick="mcevoAddSeed()" style="background:#ea580c;border-color:#c2410c">+ Seed</button>
-        <button class="evo-btn-sm" onclick="mcevoRemoveSeed()">Remove</button>
-      </div>
-    </div>
-
-    <div class="evo-card" style="min-width:195px">
-      <div class="evo-card-title">② Metropolis Settings</div>
-      <div class="evo-row"><span class="evo-lbl">Start Temp T₀ (K)</span><input class="evo-inp" id="mcevo-temp" type="number" value="1000" min="1"/></div>
-      <div class="evo-row"><span class="evo-lbl">Cooling Rate</span><input class="evo-inp" id="mcevo-cooling" type="number" value="0.95" step="0.01" min="0.5" max="1"/></div>
-      <div class="evo-row"><span class="evo-lbl">Steps / Gen</span><input class="evo-inp" id="mcevo-steps" type="number" value="1" min="1"/></div>
-      <div class="evo-row"><span class="evo-lbl">Max Steps</span><input class="evo-inp" id="mcevo-max-steps" type="number" value="200" min="10"/></div>
-      <div class="evo-row"><span class="evo-lbl">Min Temp (K)</span><input class="evo-inp" id="mcevo-min-temp" type="number" value="1" min="0"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:200px">
-      <div class="evo-card-title">③ Move Set</div>
-      <div class="evo-row"><span class="evo-lbl">Move Type</span>
-        <select class="evo-sel" id="mcevo-move">
-          <option value="mixed" selected>Mixed</option>
-          <option value="stripple">Stripple only</option>
-          <option value="permustrain">Permustrain only</option>
-        </select>
-      </div>
-      <div class="evo-sub">Stripple</div>
-      <div class="evo-row"><span class="evo-lbl">Strain Range</span><input class="evo-inp" id="mcevo-strip-strain" type="number" value="0.35" step="0.05"/></div>
-      <div class="evo-row"><span class="evo-lbl">Amplitude</span><input class="evo-inp" id="mcevo-strip-amp" type="number" value="1.0" step="0.1"/></div>
-      <div class="evo-sub">Permustrain</div>
-      <div class="evo-row"><span class="evo-lbl">Max Strain</span><input class="evo-inp" id="mcevo-perm-strain" type="number" value="0.5" step="0.05"/></div>
-      <div class="evo-row"><span class="evo-lbl"># Exchanges</span><input class="evo-inp" id="mcevo-perm-exch" type="number" value="4" min="1"/></div>
-    </div>
-
-    <div class="evo-card" style="min-width:185px">
-      <div class="evo-card-title">④ Duplicate Matching</div>
-      <div class="evo-row"><span class="evo-lbl">Min ΔE (Ry)</span><input class="evo-inp" id="mcevo-dup-de" type="number" value="0.001" step="0.001"/></div>
-      <div style="display:flex;gap:4px;margin-top:4px">
-        <button class="evo-btn-sm" onclick="mcevoResetDuplicates()">Reset Dups</button>
-      </div>
-    </div>
-
-    <div class="evo-card" style="min-width:195px">
-      <div class="evo-card-title" style="color:#ea580c">⬡ QE Settings</div>
-      <div class="evo-row"><span class="evo-lbl">Ecut (Ry)</span><input class="evo-inp" id="mcevo-ecut" type="number" value="40" min="20"/></div>
-      <div class="evo-row"><span class="evo-lbl">k-mesh</span>
-        <div style="display:flex;gap:2px">
-          <input class="evo-inp" id="mcevo-kx" type="number" value="2" min="1" style="width:32px"/>
-          <input class="evo-inp" id="mcevo-ky" type="number" value="2" min="1" style="width:32px"/>
-          <input class="evo-inp" id="mcevo-kz" type="number" value="2" min="1" style="width:32px"/>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /mcevo-top -->
-
-  <!-- ── CONTROLS BAR ── -->
-  <div id="mcevo-controls-bar" style="flex-wrap:wrap;row-gap:3px;background:#fde0c8;border-bottom:2px solid #f0a868;">
-    <button class="evo-run-btn start" id="mcevo-start-btn" onclick="mcevoStart()" style="background:#ea580c;">▶ Start Monte Carlo</button>
-    <button class="evo-run-btn pause" id="mcevo-pause-btn" onclick="mcevoPause()" disabled style="opacity:.5">⏸ Pause</button>
-    <button class="evo-run-btn stop"  id="mcevo-stop-btn"  onclick="mcevoStop()"  disabled style="opacity:.5">■ Stop</button>
-    <div class="evo-stat-chip" id="mcevo-state-chip" style="background:#ffedd5;color:#9a3412;border-color:#fdba74;">Idle</div>
-    <span id="mcevo-step-counter">Step: 0</span>
-    <span style="color:#888;font-size:10px">Temp:</span>
-    <span id="mcevo-cur-temp">— K</span>
-    <span style="color:#888;font-size:10px">Best:</span>
-    <span id="mcevo-best-energy">— Ry/atom</span>
-    <span style="color:#888;font-size:10px">Accepted:</span>
-    <span id="mcevo-accept-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#444">0 / 0</span>
-    <div style="flex:1"></div>
-    <span style="font-size:9px;color:#666;font-weight:700;flex-shrink:0">🖥 Host:</span>
-    <input id="mcevo-host-input" placeholder="http://100.127.228.36:5000"
-      style="padding:3px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;border:1px solid #bbb;border-radius:2px;width:180px;background:#fff;flex-shrink:0"
-      oninput="document.getElementById('loginNode').value=this.value"/>
-    <button class="evo-btn-sm" id="mcevo-test-btn" onclick="mcevoTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">⚡ Test</button>
-    <span id="mcevo-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;flex-shrink:0;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
-    <button class="evo-btn-sm" onclick="mcevoExportCSV()">⬇ CSV</button>
-    <button class="evo-btn-sm danger" onclick="mcevoResetAll()">✕ Reset</button>
-  </div>
-
-  <!-- ── BOTTOM THREE PANELS ── -->
-  <div id="mcevo-bottom" style="display:flex;flex:1;min-height:0;gap:0;">
-
-    <!-- LEFT: Monitor plots -->
-    <div id="mcevo-monitor" style="width:280px;flex-shrink:0;background:#e4e4e4;border-right:1px solid #c8c8c8;display:flex;flex-direction:column;overflow:hidden;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;display:flex;align-items:center;justify-content:space-between;">
-        <span>Monte Carlo Monitor</span>
-        <span id="mcevo-monitor-status" style="font-size:9px;color:#ea580c;font-weight:400">Idle</span>
-      </div>
-      <div class="evo-chart-lbl">Energy vs Step (chain trace)</div>
-      <div class="evo-plot" id="mcevo-chart-energy" style="height:130px"></div>
-      <div class="evo-chart-lbl">Annealing Temperature</div>
-      <div class="evo-plot" id="mcevo-chart-temp" style="height:110px"></div>
-      <div style="padding:4px 8px;font-size:9px;color:#888;border-top:1px solid #ccc">
-        <div style="display:flex;justify-content:space-between"><span>Accepted</span><span id="mcevo-accept-count">0</span></div>
-        <div style="display:flex;justify-content:space-between"><span>Rejected</span><span id="mcevo-reject-count">0</span></div>
-        <div style="display:flex;justify-content:space-between"><span>Duplicates removed</span><span id="mcevo-dup-count">0</span></div>
-        <div style="display:flex;justify-content:space-between"><span>Failed jobs</span><span id="mcevo-fail-count">0</span></div>
-      </div>
-    </div>
-
-    <!-- MIDDLE: Chain table -->
-    <div id="mcevo-table-panel" style="flex:1;min-width:0;display:flex;flex-direction:column;background:#eee;border-right:1px solid #c8c8c8;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        <span id="mcevo-step-badge" style="font-size:10px;font-weight:700;color:#ea580c;background:#ffedd5;border:1px solid #fdba74;border-radius:3px;padding:2px 8px;white-space:nowrap;">Step 0 / 0</span>
-        <input class="evo-search" id="mcevo-search" placeholder="Search ID, status…" oninput="mcevoFilterTable()"/>
-        <button class="evo-btn-sm" onclick="mcevoExportCSV()" title="Export table as CSV">⬇ CSV</button>
-      </div>
-      <div style="flex:1;overflow-y:auto;overflow-x:auto;">
-        <table class="evo-pop-table" id="mcevo-pop-table">
-          <thead>
-            <tr>
-              <th onclick="mcevoSort('id')"># ID</th>
-              <th onclick="mcevoSort('step')">Step</th>
-              <th onclick="mcevoSort('parent')">Parent</th>
-              <th onclick="mcevoSort('mutation')">Move</th>
-              <th onclick="mcevoSort('temp')">Temp (K)</th>
-              <th onclick="mcevoSort('energy')">E (Ry/atom)</th>
-              <th onclick="mcevoSort('fitness')">Fitness</th>
-              <th onclick="mcevoSort('accepted')">Accepted</th>
-              <th onclick="mcevoSort('status')">Status</th>
-            </tr>
-          </thead>
-          <tbody id="mcevo-pop-tbody">
-            <tr><td colspan="9" style="text-align:center;color:#aaa;padding:20px;font-size:11px">
-              No steps yet — click ▶ Start Monte Carlo
-            </td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div style="padding:4px 9px;background:#d8d8d8;border-top:1px solid #ccc;font-size:10px;color:#666;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <button class="evo-page-btn" id="mcevo-prev" onclick="mcevoPage(-1)">‹ Prev</button>
-        <span id="mcevo-page-info">Page 1 / 1</span>
-        <button class="evo-page-btn" id="mcevo-next" onclick="mcevoPage(1)">Next ›</button>
-        <span style="flex:1"></span>
-        <span id="mcevo-total-count">0 steps</span>
-      </div>
-    </div>
-
-    <!-- RIGHT: Structure viewer -->
-    <div id="mcevo-viewer-panel" style="width:340px;flex-shrink:0;display:flex;flex-direction:column;background:#eee;">
-      <div style="padding:5px 9px;background:#d8d8d8;border-bottom:1px solid #ccc;font-size:10px;font-weight:700;color:#444;">Structure Viewer — <span id="mcevo-sel-id" style="color:#ea580c">none selected</span></div>
-      <div style="padding:6px 9px;background:#e8e8e8;border-bottom:1px solid #d8d8d8;display:grid;grid-template-columns:1fr 1fr;gap:3px;">
-        <div class="evo-info-item"><span class="evo-info-k">Energy/atom</span><span class="evo-info-v" id="mcevo-info-e">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Fitness</span><span class="evo-info-v" id="mcevo-info-fit">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Temp (K)</span><span class="evo-info-v" id="mcevo-info-temp">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Step</span><span class="evo-info-v" id="mcevo-info-step">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Move</span><span class="evo-info-v" id="mcevo-info-mut">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Parent</span><span class="evo-info-v" id="mcevo-info-par">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Accepted</span><span class="evo-info-v" id="mcevo-info-acc">—</span></div>
-        <div class="evo-info-item"><span class="evo-info-k">Status</span><span class="evo-info-v" id="mcevo-info-status">—</span></div>
-      </div>
-      <div id="mcevo-viewer-3d" style="flex:1;min-height:200px;position:relative;background:#fff;"></div>
-      <div style="padding:5px 8px;background:#d8d8d8;border-top:1px solid #ccc;display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
-        <button class="evo-btn-sm" onclick="mcevoPrevStep()">‹ Prev</button>
-        <button class="evo-btn-sm" onclick="mcevoNextStep()">Next ›</button>
-        <button class="evo-btn-sm" onclick="mcevoViewerReset()">⟳ Reset</button>
-        <select class="evo-sel" id="mcevo-dl-fmt" onchange="mcevoDownloadFmt(this.value);this.value=''" style="font-size:9.5px" title="Download selected structure">
-          <option value="">⬇ CIF / …</option>
-          <option value="cif">CIF</option>
-          <option value="poscar">POSCAR</option>
-          <option value="xyz">XYZ</option>
-        </select>
-      </div>
-    </div>
-
-  </div><!-- /mcevo-bottom -->
-
-</div><!-- /mcevo-overlay -->
 </div><!-- /app -->
 
 <script>
@@ -1847,12 +1343,6 @@ function switchRpTab(tabId, btn){
       <button class="gen-btn" id="md-init-btn" onclick="mdInitSim()">⚙ Initialize</button>
       <button class="run-btn" id="md-start-btn" onclick="mdStartSim()">▶ Start MD</button>
       <button onclick="mdStopSim()" style="padding:6px 10px;border-radius:3px;background:#777;border:none;color:#fff;font-size:11px;cursor:pointer">■ Stop</button>`;
-  } else if(tabId==='md-mc'){
-    strip.innerHTML=`
-      <button class="gen-btn" id="mc-run-btn" onclick="mcStart()" style="flex:1.2">▶ Start MC</button>
-      <button id="mc-pause-btn" onclick="mcPause()" disabled style="padding:6px 8px;border-radius:3px;background:#888;border:none;color:#fff;font-size:11px;cursor:pointer">⏸ Pause</button>
-      <button onclick="mcStop()" style="padding:6px 8px;border-radius:3px;background:#ea580c;border:none;color:#fff;font-size:11px;cursor:pointer">■ Stop</button>
-      <button onclick="mcResetAll()" style="padding:6px 8px;border-radius:3px;background:#777;border:none;color:#fff;font-size:11px;cursor:pointer">↺</button>`;
   } else if(tabId==='md-evo'){
     strip.innerHTML=`
       <button class="gen-btn" id="evo-run-btn" onclick="evoStart()">▶ Run Evolution</button>
@@ -4262,6 +3752,10 @@ async function mcevoTestHost(){
 /* ── Show/hide overlay when mode changes ────────────────────────────────── */
 function mcevoOnModeChange(mode){
   const overlay=document.getElementById('mcevo-overlay');
+  if(!overlay){
+    if(mode==='mcevo'||mode==='mc') window.location.href='/montecarlo';
+    return;
+  }
   if(mode==='mcevo'){
     overlay.classList.add('active');
     mcevoInitViewer();
@@ -4319,23 +3813,15 @@ function mcevoInitCharts(){
     e && e.stopPropagation && e.stopPropagation();
     closeModeMenu && closeModeMenu();
     // Hide evo overlays
-    ['mcevo-overlay'].forEach(function(id){
+    [].forEach(function(id){
       var el=document.getElementById(id); if(el) el.classList.remove('active');
     });
     if (mode === 'evolution') {
       window.location.href='/md/evolution';
       return;
     }
-    if (mode === 'mcevo') {
-      var el=document.getElementById('mcevo-overlay');
-      if(el) el.classList.add('active');
-      var lbl=document.getElementById('bb-mode-label');
-      if(lbl) lbl.textContent='Monte Carlo Evolution';
-      document.querySelectorAll('.mm-item').forEach(function(i){i.classList.toggle('active',i.dataset.mode===mode);});
-      var hi=document.getElementById('mcevo-host-input');
-      var ln=document.getElementById('md-loginNode');
-      if(hi&&ln) hi.value=ln.value;
-      if(typeof mcevoInitCharts==='function') mcevoInitCharts();
+    if (mode === 'mcevo' || mode === 'mc') {
+      window.location.href='/montecarlo';
       return;
     }
     // Normal tab modes
@@ -4350,7 +3836,7 @@ function mcevoInitCharts(){
 /* Pre-fill host on load */
 document.addEventListener('DOMContentLoaded', function(){
   var hostVal=(document.getElementById('md-loginNode')||{}).value||'http://100.127.228.36:5000';
-  ['mcevo-host-input'].forEach(function(id){
+  [].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value=hostVal;
   });
 });
