@@ -1,4 +1,4 @@
-"""Build templates/montecarlo.html from latest Metropolis MC HTML in agent transcript."""
+"""Build templates/montecarlo.html from latest MC HTML in agent transcript."""
 from __future__ import annotations
 
 import json
@@ -12,13 +12,6 @@ TRANSCRIPT = pathlib.Path(
     r"\ed8163a6-248d-42a2-bd13-4efd38dffd1a"
     r"\ed8163a6-248d-42a2-bd13-4efd38dffd1a.jsonl"
 )
-
-TITLEBAR_NAV = """<div id="titlebar">
-  <a href="/" style="color:#fff;text-decoration:none;opacity:.9;font-size:12px;font-weight:500;margin-right:4px">SMAD</a>
-  <span style="opacity:.5;margin-right:10px">/</span>
-  <span class="ttl">Monte Carlo</span>
-  <span class="sub">DFT-Backed Metropolis Structure Search</span>
-</div>"""
 
 
 def extract_html(transcript_path: pathlib.Path) -> str:
@@ -39,9 +32,9 @@ def extract_html(transcript_path: pathlib.Path) -> str:
         text = re.sub(r"<timestamp>[^<]*</timestamp>\s*", "", text)
         if (
             "<!DOCTYPE html>" in text
-            and "mcSwitchView" in text
-            and "DFT-Backed Metropolis" in text
-            and "mcGenerateStructure" in text
+            and "SMAD — Monte Carlo" in text
+            and "btnGenerate" in text
+            and "/api/mc/start" in text
         ):
             start = text.find("<!DOCTYPE html>")
             end = text.rfind("</html>")
@@ -56,19 +49,31 @@ def integrate_site(html: str) -> str:
     if 'href="/static/favicon.png' not in html:
         html = html.replace(
             "<title>",
-            '<link rel="icon" href="/static/favicon.png?v=atom" type="image/png">\n<title>',
+            '<link rel="icon" href="/static/favicon.png?v=atom" type="image/png" />\n<title>',
             1,
         )
-    html2, n = re.subn(
-        r'<div id="titlebar">\s*<span class="ttl">[^<]*</span>\s*'
-        r'<span class="sub">[\s\S]*?</span>\s*</div>',
-        TITLEBAR_NAV,
+    html = html.replace(
+        '<div class="home-tab">⌂ SMAD Home</div>',
+        '<a href="/" class="home-tab">⌂ SMAD Home</a>',
+        1,
+    )
+    html = re.sub(
+        r"\.home-tab\{([^}]*)\}",
+        r".home-tab{\1text-decoration:none;}",
         html,
         count=1,
     )
-    if n != 1:
-        raise SystemExit(f"titlebar rewrite failed (n={n})")
-    return html2
+    html = html.replace(
+        "text-decoration:none;text-decoration:none;",
+        "text-decoration:none;",
+    )
+    if ".home-tab:hover" not in html:
+        html = html.replace(
+            ".home-tab{text-decoration:none;}",
+            ".home-tab{text-decoration:none;}\n  .home-tab:hover{background:#d8d8d8;color:#333;}",
+            1,
+        )
+    return html
 
 
 def main() -> None:

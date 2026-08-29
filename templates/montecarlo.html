@@ -1,1655 +1,694 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<link rel="icon" href="/static/favicon.png?v=atom" type="image/png">
-<title>Monte Carlo — DFT-Backed Metropolis Structure Search</title>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="/static/favicon.png?v=atom" type="image/png" />
+<title>SMAD — Monte Carlo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.1.0/3Dmol-min.js"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;font-family:'Roboto',sans-serif;font-size:13px;background:#c8c8c8;color:#222}
-button{cursor:pointer;font-family:inherit;border:none;background:none}
-input,select,textarea{font-family:inherit}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}
-:focus{outline:none}
+  :root{
+    --rust:#b3541c;
+    --rust-dark:#984a19;
+    --peach:#f6e3c9;
+    --peach-dark:#e9c99b;
+    --stop-pink:#e2938c;
+    --reset-red:#c0392b;
+    --panel-bg:#ececec;
+    --panel-header:#d6d6d6;
+    --border:#c9c9c9;
+    --ink:#2b2b2b;
+    --muted:#7a7a7a;
+    --console-bg:#1c1c1c;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);font-size:14px;}
+  .app-shell{
+    display:grid;
+    grid-template-columns:1fr 320px;
+    grid-template-rows:40px 1fr;
+    height:100vh;
+    background:#fff;
+  }
 
-#app{display:flex;flex-direction:column;height:100vh}
+  /* ---------- File tab bar ---------- */
+  .file-tabs{
+    grid-column:1 / span 2;
+    display:flex;align-items:stretch;
+    background:#e4e4e4;border-bottom:1px solid var(--border);
+  }
+  .home-tab{display:flex;align-items:center;gap:6px;padding:0 16px;color:#555;font-weight:600;text-decoration:none;}
+  .home-tab:hover{background:#d8d8d8;color:#333;}
+  .file-tab{
+    display:flex;align-items:center;gap:8px;padding:0 16px;background:#fff;
+    border-top:3px solid var(--rust);font-weight:600;color:#333;
+  }
+  .file-tab .x{color:#999;cursor:pointer;font-weight:400;}
 
-/* ══ HEADER ══ */
-#titlebar{
-  height:42px;background:#b45309;border-bottom:1px solid #92400e;
-  display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;color:#fff;
-}
-#titlebar .ttl{font-size:15px;font-weight:700;letter-spacing:.01em}
-#titlebar .sub{font-size:11px;opacity:.85;font-style:italic}
+  /* ---------- Left pane ---------- */
+  .left-pane{grid-column:1;grid-row:2;display:flex;flex-direction:column;min-width:0;}
 
-/* ══ VIEW TAB BAR ══ */
-#mc-tabbar{display:flex;background:#ddd;border-bottom:2px solid #c0c0c0;flex-shrink:0;overflow-x:auto}
-.mc-tab{padding:9px 16px;font-size:12px;font-weight:700;color:#666;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .1s}
-.mc-tab:hover:not(.active){background:#d3d3d3}
-.mc-tab.active{background:#eee;color:#b45309;border-bottom-color:#b45309}
+  .viewer-wrap{position:relative;flex:1;min-height:200px;background:#fff;}
+  #viewer{position:absolute;inset:0;}
 
-/* ══ PERSISTENT CONTROLS BAR ══ */
-#mc-controls-bar{
-  padding:7px 12px;background:#fde8cf;border-bottom:2px solid #f0be80;
-  display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;row-gap:5px;min-height:42px;
-}
-.mc-run-btn{padding:6px 16px;border-radius:3px;border:none;font-size:12px;font-weight:700;cursor:pointer}
-.mc-run-btn.start{background:#b45309;color:#fff}
-.mc-run-btn.start:hover{background:#92400e}
-.mc-run-btn.pause{background:#d97706;color:#fff}
-.mc-run-btn.pause:hover{background:#b45309}
-.mc-run-btn.stop{background:#dc2626;color:#fff}
-.mc-run-btn.stop:hover{background:#b91c1c}
-.mc-run-btn:disabled{opacity:.5;cursor:not-allowed}
-.mc-state-chip{padding:3px 10px;border-radius:10px;font-size:10.5px;font-weight:700}
-.mc-state-idle{background:#f3f4f6;color:#6b7280}
-.mc-state-running{background:#fef3c7;color:#92400e}
-.mc-state-paused{background:#ffedd5;color:#9a3412}
-.mc-state-stopped{background:#fee2e2;color:#991b1b}
-.mc-state-done{background:#d1fae5;color:#065f46}
+  .viewer-tools{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;}
+  .tool-btn{
+    width:34px;height:34px;background:#fff;border:1px solid var(--border);border-radius:6px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;
+    box-shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  .tool-btn:hover{background:#f2f2f2;}
 
-/* ══ MAIN BODY ══ */
-#mc-body{display:flex;flex:1;min-height:0;overflow:hidden}
-#mc-config{width:330px;flex-shrink:0;background:#e8e8e8;border-left:1px solid #bbb;overflow-y:auto;order:2}
-#mc-main{flex:1;min-width:0;overflow-y:auto;background:#f2f2f2;order:1}
+  .axis-indicator{position:absolute;bottom:56px;left:16px;font-size:11px;font-weight:700;pointer-events:none;}
+  .axis-indicator svg{overflow:visible;}
 
-/* ══ CRYSTALFORGE-STYLE 3D VIEWER (Monte Carlo tab) ══ */
-#mc-viewer-area{position:relative;background:#fff;overflow:hidden;height:100%;min-height:420px}
-#mc-dft-3dviewer{width:100%;height:100%;min-height:300px;position:absolute;inset:0;cursor:grab}
-#mc-dft-3dviewer:active{cursor:grabbing}
-#mc-ct-toolbar{position:absolute;top:10px;right:10px;z-index:20;display:flex;flex-direction:column;gap:3px}
-.mc-ct-btn{width:34px;height:34px;background:#fff;border:1px solid #d0d0d0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;color:#444;box-shadow:0 1px 4px rgba(0,0,0,.1)}
-.mc-ct-btn:hover{border-color:#888;background:#f5f5f5;color:#111}
-#mc-atom-pills{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:8px;pointer-events:none}
-.mc-atom-pill{display:flex;align-items:center;justify-content:center;min-width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.22);padding:0 6px}
-#mc-xyz-gizmo{position:absolute;bottom:24px;left:12px;z-index:20;pointer-events:none}
-#mc-cf-statusbar{position:absolute;bottom:0;left:0;right:0;height:22px;background:rgba(245,245,245,.92);border-top:1px solid #ddd;display:flex;align-items:center;z-index:15;font-family:'JetBrains Mono',monospace;font-size:10px;color:#555}
-.mc-cf-sb-item{padding:0 10px;border-right:1px solid #ddd;white-space:nowrap;height:100%;display:flex;align-items:center}
-.ct-dropdown-mc{display:none !important}
-.ct-dropdown-mc.open{display:block !important}
+  .legend-row{position:absolute;bottom:16px;left:0;right:0;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;pointer-events:none;}
+  .legend-pill{
+    pointer-events:auto;display:flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:50%;color:#fff;font-weight:700;font-size:12px;
+    box-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
 
-/* accordion config sections */
-.acc-section{border-bottom:1px solid #ccc}
-.acc-head{display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;user-select:none;background:#ddd;border-bottom:1px solid #ccc}
-.acc-head:hover{background:#d5d5d5}
-.acc-arrow{font-size:10px;color:#555;width:12px;flex-shrink:0}
-.acc-title{font-size:12px;font-weight:500;color:#333;letter-spacing:.01em}
-.acc-body{padding:8px 10px 10px;background:#e8e8e8}
-.acc-body.hidden{display:none}
-.evo-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:3px 0}
-.evo-lbl{font-size:11px;color:#555;white-space:nowrap;flex-shrink:0}
-.evo-inp{width:88px;padding:3px 6px;border:1px solid #c0c0c0;border-radius:2px;background:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#333;text-align:right}
-.evo-inp:focus{border-color:#b45309;outline:none}
-.evo-sel{padding:3px 5px;border:1px solid #c0c0c0;border-radius:2px;background:#fff;font-size:11px;color:#333}
-.evo-chk-row{display:flex;align-items:center;gap:6px;font-size:11px;color:#444;margin:3px 0}
-.evo-sub{font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
-.evo-btn-sm{padding:5px 10px;border-radius:2px;border:1px solid #bbb;background:#e8e8e8;font-size:11px;color:#333;cursor:pointer;white-space:nowrap}
-.evo-btn-sm:hover{background:#d8d8d8}
-.evo-btn-sm.primary{background:#b45309;border-color:#92400e;color:#fff}
-.evo-btn-sm.primary:hover{background:#92400e}
-.evo-btn-sm.danger{background:#dc2626;border-color:#b91c1c;color:#fff}
-.evo-btn-sm.danger:hover{background:#b91c1c}
-.qe-preview{background:#1a1a1a;color:#7ee787;font-family:'JetBrains Mono',monospace;font-size:9.5px;padding:8px;border-radius:3px;max-height:150px;overflow:auto;white-space:pre-wrap;line-height:1.4}
+  .empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;pointer-events:none;}
 
-/* ══ MC (GEOMETRY) VIEW ══ */
-.mc-view{display:none;flex-direction:column;gap:12px;padding:14px}
-.mc-view.active{display:flex}
-#mc-view-geo.active{padding:0;gap:0}
-#mc-view-geo #mc-viewer-area{flex:1}
-.note-box{background:#fef9e7;border:1px solid #f5d76e;border-radius:3px;padding:8px 10px;font-size:11px;color:#7a5c00;line-height:1.45}
-.note-box b{color:inherit}
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.stat-card{background:#fff;border:1px solid #ccc;border-radius:3px;padding:6px 8px;text-align:center}
-.stat-k{font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:#888}
-.stat-v{font-family:'JetBrains Mono',monospace;font-size:13.5px;font-weight:700;color:#333}
-.panel{background:#fff;border:1px solid #ccc;border-radius:4px;padding:10px 12px}
-.panel-title{font-size:11px;font-weight:700;color:#444;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
-.mc-table{width:100%;border-collapse:collapse;font-size:10.5px}
-.mc-table th{position:sticky;top:0;background:#e8d5b8;border-bottom:2px solid #d4b483;padding:4px 6px;text-align:left;font-weight:700;color:#7a4a12;font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;white-space:nowrap}
-.mc-table th:hover{background:#dcc5a0}
-.mc-table td{padding:3px 6px;border-bottom:1px solid #eee;white-space:nowrap}
-.mc-table tr{cursor:pointer;transition:background .08s}
-.mc-table tr:nth-child(even){background:#faf7f2}
-.mc-table tr:hover{background:#fdf0dd}
-.mc-table tr.active-row{background:#fde8cf;border-left:3px solid #b45309}
-.mc-status-badge{display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700}
-.mc-status-accepted{background:#d1fae5;color:#065f46}
-.mc-status-rejected{background:#fee2e2;color:#991b1b}
-.mc-status-running{background:#fef3c7;color:#92400e;animation:pulse .9s ease infinite}
-.mc-status-pending{background:#f3f4f6;color:#6b7280}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.table-scroll{max-height:340px;overflow-y:auto}
-.best-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.best-item{display:flex;flex-direction:column}
-.best-k{font-size:8.5px;text-transform:uppercase;color:#888;font-weight:700;letter-spacing:.04em}
-.best-v{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#333;font-weight:600}
+  /* ---------- console ---------- */
+  .console-bar{
+    display:flex;align-items:center;justify-content:space-between;padding:6px 12px;
+    background:#e4e4e4;border-top:1px solid var(--rust);
+  }
+  .hamburger{cursor:pointer;color:#555;font-size:16px;}
+  .console-toggle{
+    background:#2b2b2b;color:#fff;border:none;border-radius:5px;padding:5px 12px;
+    font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .console-panel{
+    display:none;height:130px;background:var(--console-bg);color:#c9c9c9;
+    font-family:"SFMono-Regular",Consolas,Menlo,monospace;font-size:12px;
+    overflow-y:auto;padding:8px 12px;
+  }
+  .console-panel.open{display:block;}
+  .console-panel .line{white-space:pre-wrap;margin-bottom:2px;}
+  .console-panel .line.err{color:#ff8a80;}
+  .console-panel .line.ok{color:#8bd18b;}
+  .console-panel .ts{color:#777;margin-right:6px;}
 
-/* ══ MC EVOLUTION VIEW (dashboard) ══ */
-#mc-evo-bottom{display:flex;height:100%;min-height:520px}
-#mc-evo-monitor{width:300px;flex-shrink:0;background:#fff;border-right:1px solid #ccc;display:flex;flex-direction:column;overflow-y:auto}
-#mc-evo-table-panel{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #ccc}
-#mc-evo-viewer-panel{width:360px;flex-shrink:0;display:flex;flex-direction:column;background:#fff}
-.panel-head{padding:6px 10px;background:#e8d5b8;border-bottom:1px solid #d4b483;font-size:10.5px;font-weight:700;color:#7a4a12}
-#mc-evo-viewer-3d{flex:1;min-height:200px;position:relative;background:#fff}
-.evo-plot{width:100%}
-.evo-chart-lbl{font-size:9.5px;color:#888;padding:5px 8px 0;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  /* ---------- MC tabs + toolbar ---------- */
+  .mc-tabs{display:flex;border-top:2px solid var(--rust);background:#f4f4f4;border-bottom:1px solid var(--border);}
+  .mc-tab{padding:10px 18px;font-weight:700;cursor:pointer;color:#777;font-size:13px;}
+  .mc-tab.active{color:var(--rust-dark);border-bottom:2px solid var(--rust-dark);}
 
-/* ══ CONSOLE / BOTTOM BAR ══ */
-#console-area{height:0;background:#1a1a1a;border-top:2px solid #b45309;transition:height .18s;overflow:hidden;flex-shrink:0}
-#console-area.open{height:130px}
-#console-out{width:100%;height:100%;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#7ee787;background:transparent;overflow-y:auto;white-space:pre-wrap}
-#bottombar{height:30px;background:#e8e8e8;border-top:1px solid #c8c8c8;display:flex;align-items:center;padding:0 10px;gap:10px;flex-shrink:0}
-#console-btn{padding:2px 10px;background:#3a3a3a;border:1px solid #555;border-radius:3px;font-size:10px;color:#aaa;cursor:pointer;height:22px;display:flex;align-items:center}
-#console-btn:hover{background:#4a4a4a;color:#fff}
+  .mc-toolbar{
+    display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--peach);
+    border-bottom:1px solid var(--border);flex-wrap:wrap;
+  }
+  .btn{border:none;border-radius:6px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;}
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+  .btn-start{background:var(--rust);color:#fff;}
+  .btn-start:hover:not(:disabled){background:var(--rust-dark);}
+  .btn-pause{background:var(--peach-dark);color:#7a5a2c;}
+  .btn-stop{background:var(--stop-pink);color:#5c1c16;}
+  .btn-ghost{background:#fff;border:1px solid var(--border);color:#333;}
+  .btn-reset{background:#fff;border:1px solid var(--reset-red);color:var(--reset-red);}
+  .state-pill{background:#fff;border:1px solid var(--border);border-radius:14px;padding:4px 12px;font-weight:700;font-size:12px;}
+  .state-pill.running{color:#1a7d3a;border-color:#1a7d3a;}
+  .state-pill.paused{color:#a06a1a;border-color:#a06a1a;}
+  .state-pill.error{color:#c0392b;border-color:#c0392b;}
+  .stat{font-size:13px;color:#4b4033;}
+  .stat b{color:#1e1a12;}
+  .spacer{flex:1;}
 
-@media (max-width:960px){
-  #mc-body{flex-direction:column;overflow-y:auto}
-  #mc-config{width:100%;border-right:none;border-bottom:1px solid #bbb}
-  #mc-evo-bottom{flex-direction:column;height:auto}
-  #mc-evo-monitor,#mc-evo-viewer-panel{width:100%}
-  #mc-evo-viewer-3d{min-height:260px}
-}
+  .evo-panel{padding:16px;flex:1;overflow:auto;}
+  .evo-panel canvas{width:100%;height:220px;background:#fff;border:1px solid var(--border);border-radius:6px;}
+
+  /* ---------- Right sidebar ---------- */
+  .sidebar{grid-column:2;grid-row:2;background:var(--panel-bg);border-left:1px solid var(--border);overflow-y:auto;padding-bottom:24px;}
+  .field-block{padding:14px 16px 4px;}
+  .field-label{font-size:11px;font-weight:700;letter-spacing:.02em;color:#555;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+  .collapse-btn{background:none;border:1px solid var(--border);border-radius:4px;width:18px;height:18px;line-height:1;cursor:pointer;color:#666;font-size:12px;}
+  .row-input{display:flex;gap:8px;}
+  input[type=text],input[type=number],select{
+    width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:5px;font-size:13px;background:#fff;color:#222;
+  }
+  .btn-test{background:#2a6ebb;color:#fff;border:none;border-radius:5px;padding:0 16px;font-weight:700;cursor:pointer;}
+  .conn-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#bbb;margin-left:6px;}
+  .conn-dot.ok{background:#2e9e3f;}
+  .conn-dot.bad{background:#c0392b;}
+
+  .section{margin-top:10px;}
+  .section-header{
+    display:flex;align-items:center;gap:6px;background:var(--panel-header);padding:7px 16px;
+    font-weight:700;font-size:13px;cursor:pointer;user-select:none;
+  }
+  .section-body{padding:12px 16px 14px;}
+  .section.collapsed .section-body{display:none;}
+  .caret{transition:transform .15s;font-size:10px;}
+  .section.collapsed .caret{transform:rotate(-90deg);}
+
+  .field{margin-bottom:10px;}
+  .field label{display:block;font-size:12.5px;color:#444;margin-bottom:4px;}
+  .zrange{display:flex;align-items:center;gap:6px;}
+  .zrange input{text-align:center;}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:13px;margin:8px 0;}
+
+  .btn-generate{
+    width:100%;background:var(--rust);color:#fff;border:none;border-radius:6px;
+    padding:10px;font-weight:700;font-size:13px;cursor:pointer;
+  }
+  .btn-generate:hover{background:var(--rust-dark);}
+  .btn-generate:disabled{opacity:.6;}
+
+  .cell-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}
+  .cell-row span:last-child{color:#333;font-variant-numeric:tabular-nums;}
+  .cell-note{font-size:11px;color:#888;margin-top:8px;line-height:1.4;font-style:italic;}
+
+  .kmesh-row{display:flex;gap:6px;}
+
+  @media (max-width:820px){
+    .app-shell{grid-template-columns:1fr;grid-template-rows:40px auto 1fr;}
+    .sidebar{grid-column:1;grid-row:3;border-left:none;border-top:1px solid var(--border);}
+    .left-pane{grid-row:2;min-height:60vh;}
+  }
 </style>
 </head>
 <body>
-<div id="app">
+<div class="app-shell">
 
-<div id="titlebar">
-  <a href="/" style="color:#fff;text-decoration:none;opacity:.9;font-size:12px;font-weight:500;margin-right:4px">SMAD</a>
-  <span style="opacity:.5;margin-right:10px">/</span>
-  <span class="ttl">Monte Carlo</span>
-  <span class="sub">DFT-Backed Metropolis Structure Search</span>
-</div>
+  <div class="file-tabs">
+    <a href="/" class="home-tab">⌂ SMAD Home</a>
+    <div class="file-tab"><span id="fileTabName">no structure</span> <span class="x">×</span></div>
+  </div>
 
-<div id="mc-tabbar">
-  <div class="mc-tab active" data-view="geo" onclick="mcSwitchView('geo',this)">Monte Carlo</div>
-  <div class="mc-tab" data-view="evo" onclick="mcSwitchView('evo',this)">Monte Carlo Evolution</div>
-</div>
+  <div class="left-pane">
+    <div class="viewer-wrap">
+      <div id="viewer"></div>
+      <div class="empty-hint" id="emptyHint">Generate a structure to see it here</div>
 
-<div id="mc-controls-bar">
-  <button class="mc-run-btn start" id="mc-start-btn" onclick="mcStart()">▶ Start Chain</button>
-  <button class="mc-run-btn pause" id="mc-pause-btn" onclick="mcPause()" disabled>⏸ Pause</button>
-  <button class="mc-run-btn stop"  id="mc-stop-btn"  onclick="mcStop()"  disabled>■ Stop</button>
-  <span class="mc-state-chip mc-state-idle" id="mc-state-chip">Idle</span>
-  <span id="mc-step-counter" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;color:#444">Step 0 / 0</span>
-  <span style="color:#888;font-size:10.5px">T:</span>
-  <span id="mc-temp-readout" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;color:#92400e">—</span>
-  <span style="color:#888;font-size:10.5px">Best:</span>
-  <span id="mc-best-energy" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;color:#065f46">—</span>
-  <span style="color:#888;font-size:10.5px">Accept:</span>
-  <span id="mc-accept-counter" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;color:#333">0 / 0</span>
-  <div style="flex:1"></div>
-  <button class="evo-btn-sm" onclick="mcExportCSV()">⬇ CSV</button>
-  <button class="evo-btn-sm danger" onclick="mcReset()">✕ Reset</button>
-</div>
-
-<div id="mc-body">
-
-  <!-- ══ PERSISTENT CONFIG PANEL (shared by both views, right-side per screenshot) ══ -->
-  <div id="mc-config">
-
-    <div class="acc-section" style="padding:10px;background:#e8e8e8">
-      <div class="evo-sub" style="margin-top:0">Cluster Host (FastAPI Bridge)</div>
-      <div style="display:flex;gap:4px;margin:4px 0 8px">
-        <input class="evo-inp" id="mc-host-input" placeholder="http://100.x.x.x:5000" style="flex:1;width:auto;text-align:left"/>
-        <button class="evo-btn-sm" onclick="mcTestHost()" style="background:#2e7dcc;color:#fff;border-color:#1a6ab8;flex-shrink:0">Test</button>
+      <div class="viewer-tools">
+        <div class="tool-btn" id="btnFullscreen" title="Fullscreen">⤢</div>
+        <div class="tool-btn" id="btnSettings" title="Display settings">⚙</div>
+        <div class="tool-btn" id="btnResetView" title="Reset view">↺</div>
+        <div class="tool-btn" id="btnScreenshot" title="Save image">📷</div>
+        <div class="tool-btn" id="btnExportCif" title="Export CIF">⇩</div>
       </div>
-      <span id="mc-conn-status" style="font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:3px;background:#f0f0f0;color:#888">—</span>
-      <div class="evo-sub">Pseudopotential Directory (on cluster)</div>
-      <input class="evo-inp" id="mc-pseudo-dir" type="text" value="./pseudo" style="width:100%;text-align:left;margin-top:4px"/>
+
+      <div class="axis-indicator">
+        <svg width="70" height="70" viewBox="0 0 70 70">
+          <line x1="30" y1="60" x2="30" y2="14" stroke="#2e9e3f" stroke-width="2"/>
+          <text x="24" y="10" fill="#2e9e3f">b</text>
+          <line x1="30" y1="60" x2="8" y2="72" stroke="#3568c9" stroke-width="2"/>
+          <text x="0" y="82" fill="#3568c9">c</text>
+          <line x1="30" y1="60" x2="58" y2="60" stroke="#c0392b" stroke-width="2"/>
+          <text x="60" y="64" fill="#c0392b">a</text>
+        </svg>
+      </div>
+
+      <div class="legend-row" id="legendRow"></div>
     </div>
 
-    <div class="acc-section">
-      <div class="acc-head" onclick="mcToggleAcc('accChain','arrChain')"><span class="acc-arrow" id="arrChain">▼</span><span class="acc-title">Crystal Generator</span></div>
-      <div class="acc-body" id="accChain">
-        <div class="evo-row"><span class="evo-lbl">Formula</span><input class="evo-inp" id="mc-formula" type="text" value="Si8" style="width:80px;text-align:left"/></div>
-        <div class="evo-row"><span class="evo-lbl">Z range</span>
-          <div style="display:flex;gap:3px"><input class="evo-inp" id="mc-z-min" type="number" value="1" min="1" style="width:38px"/><span style="align-self:center;color:#888">–</span><input class="evo-inp" id="mc-z-max" type="number" value="4" min="1" style="width:38px"/></div>
+    <div class="console-bar">
+      <span class="hamburger" id="btnHamburger">☰</span>
+      <button class="console-toggle" id="btnConsole">Console ▲</button>
+    </div>
+    <div class="console-panel" id="consolePanel"></div>
+
+    <div class="mc-tabs">
+      <div class="mc-tab active" data-tab="mc">Monte Carlo</div>
+      <div class="mc-tab" data-tab="evo">Monte Carlo Evolution</div>
+    </div>
+
+    <div class="mc-toolbar" id="mcToolbar">
+      <button class="btn btn-start" id="btnStart">▶ Start Chain</button>
+      <button class="btn btn-pause" id="btnPause" disabled>⏸ Pause</button>
+      <button class="btn btn-stop" id="btnStop" disabled>■ Stop</button>
+      <span class="state-pill" id="statePill">Idle</span>
+      <span class="stat">Step <b id="stepStat">0 / 0</b></span>
+      <span class="stat">T: <b id="tempStat">—</b></span>
+      <span class="stat">Best: <b id="bestStat">—</b></span>
+      <span class="stat">Accept: <b id="acceptStat">0 / 0</b></span>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost" id="btnCsv">↓ CSV</button>
+      <button class="btn btn-reset" id="btnReset">✕ Reset</button>
+    </div>
+
+    <div class="evo-panel" id="evoPanel" style="display:none;">
+      <canvas id="evoCanvas" width="800" height="220"></canvas>
+      <p style="color:#888;font-size:12px;">Best energy per accepted step (single-chain). A multi-chain / temperature-ladder view can be added here once the bridge supports parallel chains.</p>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="field-block">
+      <div class="field-label">
+        <span>CLUSTER HOST (FASTAPI BRIDGE)</span>
+        <button class="collapse-btn" id="collapseHost">−</button>
+      </div>
+      <div class="row-input" id="hostRow">
+        <input type="text" id="hostInput" value="http://100.x.x.x:5000" />
+        <button class="btn-test" id="btnTest">Test<span class="conn-dot" id="connDot"></span></button>
+      </div>
+    </div>
+
+    <div class="field-block" id="pseudoBlock">
+      <div class="field-label"><span>PSEUDOPOTENTIAL DIRECTORY (ON CLUSTER)</span></div>
+      <input type="text" id="pseudoInput" value="./pseudo" />
+    </div>
+
+    <div class="section" id="secGenerator">
+      <div class="section-header"><span class="caret">▼</span> Crystal Generator</div>
+      <div class="section-body">
+        <div class="field">
+          <label>Formula</label>
+          <input type="text" id="formulaInput" value="Si8" />
         </div>
-        <div class="evo-chk-row"><input type="checkbox" id="mc-use-symmetry" checked><label for="mc-use-symmetry">Symmetry-aware generation</label></div>
-        <button class="evo-btn-sm primary" style="width:100%;margin-top:8px;padding:7px" onclick="mcGenerateStructure()">⚛ Generate Structure</button>
-        <div id="mc-gen-info" style="margin-top:6px;font-size:10px;color:#666;font-family:'JetBrains Mono',monospace;min-height:14px">—</div>
-      </div>
-    </div>
-
-    <div class="acc-section">
-      <div class="acc-head" onclick="mcToggleAcc('accCell','arrCell')"><span class="acc-arrow" id="arrCell">▼</span><span class="acc-title">Cell</span></div>
-      <div class="acc-body" id="accCell">
-        <div class="evo-sub" style="margin-top:0">Lattice Constants (of currently displayed structure)</div>
-        <div class="evo-row"><span class="evo-lbl">Bravais</span><span class="best-v" id="mc-cell-bravais" style="font-size:11px">—</span></div>
-        <div class="evo-row"><span class="evo-lbl">A</span><span class="best-v" id="mc-cell-a" style="font-size:11px">—</span></div>
-        <div class="evo-row"><span class="evo-lbl">B</span><span class="best-v" id="mc-cell-b" style="font-size:11px">—</span></div>
-        <div class="evo-row"><span class="evo-lbl">C</span><span class="best-v" id="mc-cell-c" style="font-size:11px">—</span></div>
-        <div class="evo-row"><span class="evo-lbl">Alpha</span><span class="best-v" id="mc-cell-alpha" style="font-size:11px">—</span></div>
-        <div class="evo-row"><span class="evo-lbl">Beta</span><span class="best-v" id="mc-cell-beta" style="font-size:11px">—</span></div>
-        <div class="evo-row"><span class="evo-lbl">Gamma</span><span class="best-v" id="mc-cell-gamma" style="font-size:11px">—</span></div>
-        <div class="evo-sub">This is a read-only readout — the actual structure comes from Crystal Generator + the Metropolis chain, not manual cell editing.</div>
-      </div>
-    </div>
-
-    <div class="acc-section">
-      <div class="acc-head" onclick="mcToggleAcc('accElec','arrElec')"><span class="acc-arrow" id="arrElec">▼</span><span class="acc-title">Electronic</span></div>
-      <div class="acc-body" id="accElec">
-        <div class="evo-row"><span class="evo-lbl">XC</span><select class="evo-sel" id="mc-xc"><option value="pbe" selected>PBE (GGA)</option><option value="lda">LDA</option><option value="pbesol">PBEsol</option></select></div>
-        <div class="evo-row"><span class="evo-lbl">Ecutwfc (Ry)</span><input class="evo-inp" id="mc-ecut" type="number" value="60" min="20"/></div>
-        <div class="evo-row"><span class="evo-lbl">k-mesh</span>
-          <div style="display:flex;gap:2px"><input class="evo-inp" id="mc-kx" type="number" value="4" style="width:32px"/><input class="evo-inp" id="mc-ky" type="number" value="4" style="width:32px"/><input class="evo-inp" id="mc-kz" type="number" value="4" style="width:32px"/></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="acc-section">
-      <div class="acc-head" onclick="mcToggleAcc('accMetro','arrMetro')"><span class="acc-arrow" id="arrMetro">▼</span><span class="acc-title">Metropolis Settings</span></div>
-      <div class="acc-body hidden" id="accMetro">
-        <div class="evo-row"><span class="evo-lbl">Initial T (K)</span><input class="evo-inp" id="mc-t0" type="number" value="1500" min="1" onchange="mcUpdatePreview()"/></div>
-        <div class="evo-row"><span class="evo-lbl">Min T (K)</span><input class="evo-inp" id="mc-tmin" type="number" value="50" min="1" onchange="mcUpdatePreview()"/></div>
-        <div class="evo-row"><span class="evo-lbl">Cooling rate</span><input class="evo-inp" id="mc-cooling" type="number" value="0.92" step="0.01" min="0.5" max="0.999" onchange="mcUpdatePreview()"/></div>
-        <div class="evo-row"><span class="evo-lbl">Steps / generation</span><input class="evo-inp" id="mc-steps-per-gen" type="number" value="1" min="1" onchange="mcUpdatePreview()"/></div>
-        <div class="evo-row"><span class="evo-lbl">Max steps</span><input class="evo-inp" id="mc-max-steps" type="number" value="60" min="1" onchange="mcUpdatePreview()"/></div>
-        <div class="evo-sub">Preview</div>
-        <div class="evo-row"><span class="evo-lbl">Generations to T_min</span><span class="best-v" id="mc-preview-gens" style="font-size:10.5px">—</span></div>
-      </div>
-    </div>
-
-    <div class="acc-section">
-      <div class="acc-head" onclick="mcToggleAcc('accMove','arrMove')"><span class="acc-arrow" id="arrMove" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">Move Set</span></div>
-      <div class="acc-body hidden" id="accMove">
-        <div class="evo-sub" style="margin-top:0">Stripple (lattice strain + coordinate jitter)</div>
-        <div class="evo-row"><span class="evo-lbl">% chance</span><input class="evo-inp" id="mc-strip-pct" type="number" value="55" min="0" max="100"/></div>
-        <div class="evo-row"><span class="evo-lbl">Strain range</span><input class="evo-inp" id="mc-strip-strain" type="number" value="0.12" step="0.01"/></div>
-        <div class="evo-row"><span class="evo-lbl">Jitter amplitude</span><input class="evo-inp" id="mc-strip-amp" type="number" value="0.6" step="0.05"/></div>
-        <div class="evo-sub">Permustrain (species exchange + light strain)</div>
-        <div class="evo-row"><span class="evo-lbl">% chance</span><input class="evo-inp" id="mc-perm-pct" type="number" value="45" min="0" max="100"/></div>
-        <div class="evo-row"><span class="evo-lbl">Max strain</span><input class="evo-inp" id="mc-perm-strain" type="number" value="0.25" step="0.01"/></div>
-        <div class="evo-row"><span class="evo-lbl"># Exchanges</span><input class="evo-inp" id="mc-perm-exch" type="number" value="2" min="1"/></div>
-      </div>
-    </div>
-
-    <div class="acc-section">
-      <div class="acc-head" onclick="mcToggleAcc('accDup','arrDup')"><span class="acc-arrow" id="arrDup" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">Duplicate Detection</span></div>
-      <div class="acc-body hidden" id="accDup">
-        <div class="evo-row"><span class="evo-lbl">Min ΔE (Ry/atom)</span><input class="evo-inp" id="mc-dup-de" type="number" value="0.0005" step="0.0001"/></div>
-        <div class="evo-chk-row"><input type="checkbox" id="mc-dup-enable" checked><label for="mc-dup-enable">Flag near-duplicate accepted steps</label></div>
-      </div>
-    </div>
-
-    <div class="acc-section">
-      <div class="acc-head" onclick="mcToggleAcc('accQE','arrQE')"><span class="acc-arrow" id="arrQE" style="transform:rotate(-90deg);display:inline-block">▼</span><span class="acc-title">QE Input Preview</span></div>
-      <div class="acc-body hidden" id="accQE">
-        <div class="evo-sub" style="margin-top:0">vc-relax input preview</div>
-        <pre class="qe-preview" id="mc-qe-preview">—</pre>
-      </div>
-    </div>
-
-    <div style="padding:10px;display:flex;gap:6px">
-      <button class="evo-btn-sm primary" style="flex:1;padding:9px" onclick="mcStart()" id="mc-panel-start-btn">▶ Run Chain</button>
-      <button class="evo-btn-sm danger" style="padding:9px 14px" onclick="mcStop()" id="mc-panel-stop-btn">■ Stop</button>
-    </div>
-    <div style="padding:0 10px 10px;font-size:10px;color:#666;font-family:'JetBrains Mono',monospace;display:flex;gap:8px;flex-wrap:wrap" id="mc-panel-status-bar">
-      <span id="mc-panel-state">Idle</span>·<span id="mc-panel-formula">—</span>·<span id="mc-panel-kmesh">4×4×4</span>·<span id="mc-panel-ecut">60 Ry</span>
-    </div>
-
-  </div><!-- /mc-config -->
-
-  <!-- ══ RIGHT: MAIN CONTENT — swaps between Geometry and Evolution views ══ -->
-  <div id="mc-main">
-
-    <!-- MONTE CARLO VIEW: CrystalForge-style 3D viewer showing the current/latest structure -->
-    <div class="mc-view active" id="mc-view-geo" data-view="geo">
-      <div id="mc-viewer-area">
-        <div id="mc-dft-3dviewer"></div>
-        <div id="mc-ct-toolbar">
-          <button class="mc-ct-btn" onclick="mcToggleFullscreen()" title="Full screen">⤢</button>
-          <button class="mc-ct-btn" onclick="mcResetView()" title="Reset view">⟲</button>
-          <button class="mc-ct-btn" onclick="mcDoScreenshot()" title="Screenshot">📷</button>
-          <button class="mc-ct-btn" onclick="document.getElementById('mc-geo-dl-menu').classList.toggle('open')" title="Export" style="position:relative">
-            ⬇
-            <div id="mc-geo-dl-menu" class="ct-dropdown-mc" style="display:none;position:absolute;right:calc(100% + 8px);top:0;background:#fff;border:1px solid #ccc;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.18);min-width:150px;z-index:100;">
-              <div onclick="mcDownloadFmt('cif');this.parentElement.classList.remove('open')" style="padding:8px 12px;font-size:11px;cursor:pointer;border-bottom:1px solid #f0f0f0">CIF</div>
-              <div onclick="mcDownloadFmt('poscar');this.parentElement.classList.remove('open')" style="padding:8px 12px;font-size:11px;cursor:pointer;border-bottom:1px solid #f0f0f0">POSCAR</div>
-              <div onclick="mcDownloadFmt('xyz');this.parentElement.classList.remove('open')" style="padding:8px 12px;font-size:11px;cursor:pointer">XYZ</div>
-            </div>
-          </button>
-        </div>
-        <div id="mc-atom-pills"></div>
-        <canvas id="mc-xyz-gizmo" width="88" height="88"></canvas>
-        <div id="mc-cf-statusbar">
-          <div class="mc-cf-sb-item" id="mc-sb-formula">—</div>
-          <div class="mc-cf-sb-item" id="mc-sb-atoms">0 atoms</div>
-          <div class="mc-cf-sb-item" id="mc-sb-step">step —</div>
-          <div class="mc-cf-sb-item" id="mc-sb-energy" style="flex:1">—</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MONTE CARLO EVOLUTION VIEW (dashboard) -->
-    <div class="mc-view" id="mc-view-evo" data-view="evo">
-      <div id="mc-evo-bottom">
-        <div id="mc-evo-monitor">
-          <div class="panel-head">MC Monitor</div>
-          <div class="evo-chart-lbl">Energy per Atom / Step (accepted trace)</div>
-          <div class="evo-plot" id="mc-evo-chart-energy" style="height:170px"></div>
-          <div class="evo-chart-lbl">Annealing Temperature / Step</div>
-          <div class="evo-plot" id="mc-evo-chart-temp" style="height:150px"></div>
-          <div style="padding:8px 10px;font-size:10px;color:#666">
-            <div style="display:flex;justify-content:space-between;margin:2px 0"><span>Acceptance rate</span><span id="mc-evo-acc-rate" style="font-family:'JetBrains Mono',monospace">—</span></div>
-            <div style="display:flex;justify-content:space-between;margin:2px 0"><span>Duplicates flagged</span><span id="mc-evo-dup-count" style="font-family:'JetBrains Mono',monospace">0</span></div>
+        <div class="field">
+          <label>Z range</label>
+          <div class="zrange">
+            <input type="number" id="zMin" value="1" min="1" />
+            <span>–</span>
+            <input type="number" id="zMax" value="4" min="1" />
           </div>
         </div>
-        <div id="mc-evo-table-panel">
-          <div class="panel-head">Chain (compact)</div>
-          <div class="table-scroll" style="flex:1">
-            <table class="mc-table">
-              <thead><tr><th>Step</th><th>Move</th><th>E</th><th>Status</th></tr></thead>
-              <tbody id="mc-evo-table-body"><tr><td colspan="4" style="text-align:center;color:#aaa;padding:16px">—</td></tr></tbody>
-            </table>
-          </div>
+        <div class="checkline">
+          <input type="checkbox" id="symmetryCheck" checked />
+          <label for="symmetryCheck" style="margin:0;">Symmetry-aware generation</label>
         </div>
-        <div id="mc-evo-viewer-panel">
-          <div class="panel-head">Current Structure — <span id="mc-evo-sel-label" style="color:#b45309">step —</span></div>
-          <div id="mc-evo-viewer-3d"></div>
-          <div style="padding:6px 8px;background:#e8d5b8;border-top:1px solid #d4b483;display:flex;gap:5px;flex-wrap:wrap">
-            <button class="evo-btn-sm" onclick="mcViewerReset()">⟳ Reset</button>
-            <button class="evo-btn-sm" onclick="mcViewerFit()">⊡ Fit</button>
-            <select class="evo-sel" id="mc-evo-dl-fmt" onchange="mcDownloadFmt(this.value);this.value=''" style="font-size:9.5px">
-              <option value="">⬇ Download…</option><option value="cif">CIF</option><option value="poscar">POSCAR</option><option value="xyz">XYZ</option>
-            </select>
+        <button class="btn-generate" id="btnGenerate">✳ Generate Structure</button>
+      </div>
+    </div>
+
+    <div class="section" id="secCell">
+      <div class="section-header"><span class="caret">▼</span> Cell</div>
+      <div class="section-body">
+        <div style="font-size:11px;color:#666;font-weight:700;margin-bottom:6px;">
+          LATTICE CONSTANTS (OF CURRENTLY DISPLAYED STRUCTURE)
+        </div>
+        <div class="cell-row"><span>Space group</span><span id="cellSG">—</span></div>
+        <div class="cell-row"><span>A</span><span id="cellA">—</span></div>
+        <div class="cell-row"><span>B</span><span id="cellB">—</span></div>
+        <div class="cell-row"><span>C</span><span id="cellC">—</span></div>
+        <div class="cell-row"><span>Alpha</span><span id="cellAlpha">—</span></div>
+        <div class="cell-row"><span>Beta</span><span id="cellBeta">—</span></div>
+        <div class="cell-row"><span>Gamma</span><span id="cellGamma">—</span></div>
+        <div class="cell-note">THIS IS A READ-ONLY READOUT — THE ACTUAL STRUCTURE COMES FROM CRYSTAL GENERATOR + THE METROPOLIS CHAIN, NOT MANUAL CELL EDITING.</div>
+      </div>
+    </div>
+
+    <div class="section" id="secElectronic">
+      <div class="section-header"><span class="caret">▼</span> Electronic</div>
+      <div class="section-body">
+        <div class="field">
+          <label>XC</label>
+          <select id="xcSelect">
+            <option value="pbe">PBE (GGA)</option>
+            <option value="pbesol">PBEsol (GGA)</option>
+            <option value="pz">LDA (PZ)</option>
+            <option value="pw91">PW91 (GGA)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ecutwfc (Ry)</label>
+          <input type="number" id="ecutInput" value="60" />
+        </div>
+        <div class="field">
+          <label>k-mesh</label>
+          <div class="kmesh-row">
+            <input type="number" id="kx" value="4" min="1" />
+            <input type="number" id="ky" value="4" min="1" />
+            <input type="number" id="kz" value="4" min="1" />
           </div>
         </div>
       </div>
     </div>
 
-  </div><!-- /mc-main -->
-
-</div><!-- /mc-body -->
-
-<div id="console-area"><pre id="console-out">Monte Carlo ready.
-Configure chain setup / Metropolis settings / move set / QE settings, then Start Chain.
-</pre></div>
-<div id="bottombar"><button id="console-btn" onclick="toggleConsole()">Console ▲</button></div>
-
-</div><!-- /app -->
+    <div class="section" id="secMetropolis">
+      <div class="section-header"><span class="caret">▼</span> Metropolis Settings</div>
+      <div class="section-body">
+        <div class="field">
+          <label>Initial temperature (K)</label>
+          <input type="number" id="tInit" value="1000" />
+        </div>
+        <div class="field">
+          <label>Final temperature (K)</label>
+          <input type="number" id="tFinal" value="50" />
+        </div>
+        <div class="field">
+          <label>Cooling schedule</label>
+          <select id="coolingSelect">
+            <option value="geometric">Geometric</option>
+            <option value="linear">Linear</option>
+            <option value="exponential">Exponential</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Max steps</label>
+          <input type="number" id="maxSteps" value="200" min="1" />
+        </div>
+        <div class="field">
+          <label>Step size (Å, rattle stdev)</label>
+          <input type="number" id="stepSize" value="0.15" step="0.01" min="0.01" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-/* ════════════════════════════════════════════════════════════════════
-   MONTE CARLO — DFT-backed Metropolis structure search.
-
-   Design note: "Monte Carlo (Geometry)" and "Monte Carlo Evolution" are
-   two DIFFERENT PRESENTATIONS of the exact same underlying Metropolis
-   chain (same proposal moves, same acceptance criterion, same energy
-   source) rather than two separate engines — sharing one engine avoids
-   duplicated physics that could quietly drift out of sync between two
-   near-identical implementations. Geometry view is the QE-settings-
-   forward, full chain-history layout; Evolution view is the live-chart
-   + 3D-viewer dashboard. Switching tabs just changes which of these is
-   visible; Start/Pause/Stop always drives the one real chain.
-   ════════════════════════════════════════════════════════════════════ */
-
-let consoleOpen=false;
-function log(s){const o=document.getElementById('console-out');if(o){o.textContent+=s+'\n';o.scrollTop=o.scrollHeight;}}
-function logHPC(s){log(s);}
-function toggleConsole(){consoleOpen=!consoleOpen;document.getElementById('console-area').classList.toggle('open',consoleOpen);document.getElementById('console-btn').textContent=consoleOpen?'Console ▼':'Console ▲';}
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-function fetchWithTimeout(url,opts={},ms=12000){
-  const ctrl=new AbortController();
-  const id=setTimeout(()=>ctrl.abort(),ms);
-  return fetch(url,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(id));
-}
-function getHost(){
-  let h=(document.getElementById('mc-host-input').value||'').trim();
-  if(!h)return null;
-  if(!/^https?:\/\//i.test(h))h='http://'+h;
-  return h.replace(/\/+$/,'');
-}
-function mcToggleAcc(bodyId,arrowId){const body=document.getElementById(bodyId),arrow=document.getElementById(arrowId);const hidden=body.classList.toggle('hidden');arrow.style.transform=hidden?'rotate(-90deg)':'';}
-
-/* ── Element data tables ─────────────────────────────────────────────── */
-const CF_COLORS={H:'#ffffff',He:'#d9ffff',Li:'#cc80ff',Be:'#c2ff00',B:'#ffb5b5',C:'#909090',N:'#3050f8',O:'#ff0d0d',F:'#90e050',Ne:'#b3e3f5',Na:'#ab5cf2',Mg:'#8aff00',Al:'#bfa6a6',Si:'#f0c8a0',P:'#ff8000',S:'#ffff30',Cl:'#1ff01f',Ar:'#80d1e3',K:'#8f40d4',Ca:'#3dff00',Sc:'#e6e6e6',Ti:'#bfc2c7',V:'#a6a6ab',Cr:'#8a99c7',Mn:'#9c7ac7',Fe:'#e06633',Co:'#f090a0',Ni:'#50d050',Cu:'#c88033',Zn:'#7d80b0',Ga:'#c28f8f',Ge:'#668f8f',As:'#bd80e3',Se:'#ffa100',Br:'#a62929',Kr:'#5cb8d1',Rb:'#702eb0',Sr:'#00ff00',Y:'#94ffff',Zr:'#94e0e0',Nb:'#73c2c9',Mo:'#54b5b5',Ru:'#248f8f',Rh:'#0a7d8c',Pd:'#006985',Ag:'#c0c0c0',Cd:'#ffd98f',In:'#a67573',Sn:'#668080',Sb:'#9e63b5',Te:'#d47a00',I:'#940094',Xe:'#429eb0',Cs:'#57178f',Ba:'#00c900',La:'#70d4ff',Hf:'#4dc2ff',Ta:'#4da6ff',W:'#2194d6',Re:'#267dab',Os:'#266696',Ir:'#175487',Pt:'#d0d0e0',Au:'#ffd123',Hg:'#b8b8d0',Tl:'#a6544d',Pb:'#575961',Bi:'#9e4fb5',U:'#008fff',default:'#888888'};
-const CF_DISPLAY_RADIUS={H:.25,C:.35,N:.33,O:.32,F:.30,Na:.90,Mg:.80,Al:.72,Si:.68,P:.65,S:.64,Cl:.62,K:1.25,Ca:1.10,Ti:1.00,V:.96,Cr:.88,Mn:.95,Fe:.85,Co:.82,Ni:.80,Cu:.83,Zn:.80,Ga:.80,Ge:.78,As:.77,Se:.78,Br:.78,Rb:1.40,Sr:1.25,Zr:1.10,Nb:1.04,Mo:.98,Ru:.93,Rh:.90,Pd:.88,Ag:.93,Cd:.94,Sn:.90,Sb:.90,Te:.89,I:.90,Cs:1.65,Ba:1.40,La:1.35,Hf:1.10,W:1.04,Re:.98,Os:.92,Ir:.90,Pt:.88,Au:.88,Pb:.98,Bi:1.00,U:1.28,default:.78};
-const CF_CRADII={H:.31,He:.28,Li:1.28,Be:.96,B:.84,C:.77,N:.71,O:.66,F:.57,Ne:.58,Na:1.66,Mg:1.41,Al:1.21,Si:1.11,P:1.07,S:1.05,Cl:1.02,Ar:1.06,K:2.03,Ca:1.76,Sc:1.70,Ti:1.60,V:1.53,Cr:1.39,Mn:1.50,Fe:1.32,Co:1.26,Ni:1.24,Cu:1.32,Zn:1.22,Ga:1.22,Ge:1.20,As:1.19,Se:1.20,Br:1.20,Kr:1.16,Rb:2.20,Sr:1.95,Y:1.90,Zr:1.75,Nb:1.64,Mo:1.54,Tc:1.47,Ru:1.46,Rh:1.42,Pd:1.39,Ag:1.45,Cd:1.44,In:1.42,Sn:1.39,Sb:1.39,Te:1.38,I:1.39,Xe:1.40,Cs:2.44,Ba:2.15,La:2.07,Hf:1.75,Ta:1.70,W:1.62,Re:1.51,Os:1.44,Ir:1.41,Pt:1.36,Au:1.36,Hg:1.32,Tl:1.45,Pb:1.46,Bi:1.48,U:1.96,default:1.20};
-const MASS={H:1.008,C:12.011,N:14.007,O:15.999,Li:6.941,Na:22.99,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.065,Cl:35.45,K:39.098,Ca:40.078,Ti:47.867,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.63,As:74.922,Sb:121.76,Mo:95.96,Ba:137.33,Au:196.97,Sr:87.62};
-const CELL_VECS={FCC:[[0,.5,.5],[.5,0,.5],[.5,.5,0]],BCC:[[-.5,.5,.5],[.5,-.5,.5],[.5,.5,-.5]],SC:[[1,0,0],[0,1,0],[0,0,1]],HEX:[[1,0,0],[-.5,.8660254037844386,0],[0,0,1]],TET:[[1,0,0],[0,1,0],[0,0,1]],ORTH:[[1,0,0],[0,1,0],[0,0,1]],MONO:[[1,0,0],[0,1,0],[.1,0,1]],TRI:[[1,0,0],[.2,.98,0],[.1,.1,.99]]};
-
-const CF_METALS = new Set(['Li','Na','K','Rb','Cs','Fr','Be','Mg','Ca','Sr','Ba','Ra',
-  'Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd',
-  'Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Al','Ga','In','Sn','Tl','Pb','Bi']);
-const CF_MAXCOORD = { H:1,F:1,Cl:1,Br:1,I:1, O:2,S:2,Se:2,Te:2, N:3,P:3,As:3,Sb:3,B:4, C:4,Si:4,Ge:4, default:6 };
-function cfComputeChemBonds(atoms, tol){
-  tol = tol ?? 0.4;
-  const candidates=[];
-  for(let i=0;i<atoms.length;i++)for(let j=i+1;j<atoms.length;j++){
-    const ai=atoms[i],aj=atoms[j];
-    const ri=CF_CRADII[ai.el]||CF_CRADII.default;
-    const rj=CF_CRADII[aj.el]||CF_CRADII.default;
-    const cut=(ri+rj)+tol;
-    const dx=ai.x-aj.x,dy=ai.y-aj.y,dz=ai.z-aj.z;
-    const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
-    if(d<=0.3||d>cut)continue;
-    if(ai.el===aj.el&&CF_METALS.has(ai.el))continue;
-    candidates.push({i,j,dist:d});
-  }
-  candidates.sort((a,b)=>a.dist-b.dist);
-  const count=new Array(atoms.length).fill(0);
-  const bonds=[];
-  candidates.forEach(({i,j,dist})=>{
-    const maxI=CF_MAXCOORD[atoms[i].el]||CF_MAXCOORD.default;
-    const maxJ=CF_MAXCOORD[atoms[j].el]||CF_MAXCOORD.default;
-    if(count[i]>=maxI||count[j]>=maxJ)return;
-    count[i]++;count[j]++;
-    bonds.push({i,j,dist});
-  });
-  return bonds;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   SYMMETRY-CONSTRAINED RANDOM STRUCTURE GENERATOR
-   (verbatim, numerically-verified block reused from the SMAD Crystal
-   Generator / Evolution engine — same USPEX-style symmetric-Wyckoff-
-   fill + CALYPSO-style volume estimate + AIRSS-style P1 fallback.)
-   ════════════════════════════════════════════════════════════════════ */
-const SYMM_CRADII = {
-  H:.31,He:.28,Li:1.28,Be:.96,B:.84,C:.77,N:.71,O:.66,F:.57,Ne:.58,
-  Na:1.66,Mg:1.41,Al:1.21,Si:1.11,P:1.07,S:1.05,Cl:1.02,Ar:1.06,
-  K:2.03,Ca:1.76,Sc:1.70,Ti:1.60,V:1.53,Cr:1.39,Mn:1.50,Fe:1.32,Co:1.26,
-  Ni:1.24,Cu:1.32,Zn:1.22,Ga:1.22,Ge:1.20,As:1.19,Se:1.20,Br:1.20,
-  Rb:2.20,Sr:1.95,Y:1.90,Zr:1.75,Nb:1.64,Mo:1.54,Ru:1.46,Rh:1.42,Pd:1.39,
-  Ag:1.45,Cd:1.44,In:1.42,Sn:1.39,Sb:1.39,Te:1.38,I:1.39,
-  Cs:2.44,Ba:2.15,La:2.07,Hf:1.75,Ta:1.70,W:1.62,Re:1.51,Os:1.44,Ir:1.41,
-  Pt:1.36,Au:1.36,Hg:1.32,Tl:1.45,Pb:1.46,Bi:1.48,U:1.96,
-  default:1.20,
+/* ------------------------------------------------------------------ *
+ *  Config / state
+ * ------------------------------------------------------------------ */
+const CPK = {
+  H:"#FFFFFF",He:"#D9FFFF",Li:"#CC80FF",Be:"#C2FF00",B:"#909090",C:"#909090",
+  N:"#3050F8",O:"#FF0D0D",F:"#90E050",Ne:"#B3E3F5",Na:"#AB5CF2",Mg:"#8AFF00",
+  Al:"#BFA6A6",Si:"#F0C8A0",P:"#FF8000",S:"#FFFF30",Cl:"#1FF01F",K:"#8F40D4",
+  Ca:"#3DFF00",Ti:"#BFC2C7",Fe:"#E06633",Cu:"#C88033",Zn:"#7D80B0"
 };
-function cfPermSignOps3() {
-  const perms = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
-  const signs = [[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]];
-  const ops = [];
-  perms.forEach(p => signs.forEach(s => {
-    ops.push((x, y, z) => {
-      const v = [x, y, z];
-      return [s[0]*v[p[0]], s[1]*v[p[1]], s[2]*v[p[2]]];
-    });
-  }));
-  return ops;
-}
-function cfTetragonalOps() {
-  const perms = [[0,1],[1,0]];
-  const signs = [[1,1],[1,-1],[-1,1],[-1,-1]];
-  const base = [];
-  perms.forEach(p => signs.forEach(s => {
-    base.push((x, y) => { const v = [x, y]; return [s[0]*v[p[0]], s[1]*v[p[1]]]; });
-  }));
-  const ops = [];
-  base.forEach(fn => {
-    ops.push((x, y, z) => { const [nx, ny] = fn(x, y); return [nx, ny, z]; });
-    ops.push((x, y, z) => { const [nx, ny] = fn(x, y); return [nx, ny, -z]; });
-  });
-  return ops;
-}
-function cfHexInPlane2D(fold6) {
-  const rotSeq = [];
-  let v = (x, y) => [x, y];
-  for (let k = 0; k < 6; k++) {
-    const prev = v;
-    rotSeq.push(prev);
-    v = (x, y) => { const [px, py] = prev(x, y); return [px - py, px]; };
-  }
-  const rotOnly = fold6 ? rotSeq : [rotSeq[0], rotSeq[2], rotSeq[4]];
-  const mirror = (x, y) => [y, x];
-  const ops2d = [];
-  rotOnly.forEach(fn => ops2d.push(fn));
-  rotOnly.forEach(fn => ops2d.push((x, y) => { const [rx, ry] = fn(x, y); return mirror(rx, ry); }));
-  return ops2d;
-}
-function cfHexOps3D(fold6, zFlip) {
-  const ops2d = cfHexInPlane2D(fold6);
-  const ops = [];
-  ops2d.forEach(fn => {
-    ops.push((x, y, z) => { const [nx, ny] = fn(x, y); return [nx, ny, z]; });
-    if (zFlip) ops.push((x, y, z) => { const [nx, ny] = fn(x, y); return [nx, ny, -z]; });
-  });
-  return ops;
-}
-const SYMM_CENTERING = {
-  P: [[0,0,0]],
-  I: [[0,0,0],[0.5,0.5,0.5]],
-  F: [[0,0,0],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5]],
-  R: [[0,0,0],[2/3,1/3,1/3],[1/3,2/3,2/3]],
-};
-const SYMM_SPACEGROUPS = [
-  { name:'Pm-3m',        number:221, system:'cubic',      centering:'P', ops:cfPermSignOps3() },
-  { name:'Im-3m',        number:229, system:'cubic',      centering:'I', ops:cfPermSignOps3() },
-  { name:'Fm-3m',        number:225, system:'cubic',      centering:'F', ops:cfPermSignOps3() },
-  { name:'Fd-3m*',       number:227, system:'cubic',      centering:'F', ops:cfPermSignOps3(),
-    note:'approximated via Fm-3m operations; the true diamond glide is not modeled' },
-  { name:'P4/mmm',       number:123, system:'tetragonal', centering:'P', ops:cfTetragonalOps() },
-  { name:'I4/mmm',       number:139, system:'tetragonal', centering:'I', ops:cfTetragonalOps() },
-  { name:'P6/mmm',       number:191, system:'hexagonal',  centering:'P', ops:cfHexOps3D(true,  true) },
-  { name:'P-3m1',        number:164, system:'hexagonal',  centering:'P', ops:cfHexOps3D(false, true) },
-  { name:'P3m1',         number:156, system:'hexagonal',  centering:'P', ops:cfHexOps3D(false, false) },
-  { name:'R-3m',         number:166, system:'hexagonal',  centering:'R', ops:cfHexOps3D(false, true) },
-];
-const SYMM_CELL_VECS = {
-  SC:  [[1,0,0],[0,1,0],[0,0,1]],
-  TET: [[1,0,0],[0,1,0],[0,0,1]],
-  HEX: [[1,0,0],[-0.5,0.8660254037844386,0],[0,0,1]],
-};
-function symmFracToCart(f, bravais, a0, cz) {
-  const cell = SYMM_CELL_VECS[bravais];
-  const [fx, fy, fz] = f;
-  return [
-    (cell[0][0]*fx + cell[1][0]*fy + cell[2][0]*fz) * a0,
-    (cell[0][1]*fx + cell[1][1]*fy + cell[2][1]*fz) * a0,
-    (cell[0][2]*fx + cell[1][2]*fy + cell[2][2]*fz) * cz,
-  ];
-}
-function symmCz(bravais, a, c) { return (bravais === 'TET' || bravais === 'HEX') ? c : a; }
-function symmParseFormula(f) {
-  const re = /([A-Z][a-z]?)(\d*)/g, out = [];
-  let m;
-  while ((m = re.exec(f)) !== null) if (m[1]) out.push({ el: m[1], n: parseInt(m[2] || '1') });
-  return out;
-}
-function symmEstimateVolume(elementCounts) {
-  let sphereVol = 0;
-  elementCounts.forEach(({ el, count }) => {
-    const r = SYMM_CRADII[el] || SYMM_CRADII.default;
-    sphereVol += count * (4/3) * Math.PI * r*r*r;
-  });
-  const packingFactor = 1.6 + Math.random() * 1.4;
-  return sphereVol * packingFactor;
-}
-function symmGenerateLattice(system, targetVolume) {
-  if (system === 'cubic') {
-    const a = Math.cbrt(targetVolume);
-    return { a, c: a };
-  }
-  if (system === 'tetragonal') {
-    const ratio = 0.6 + Math.random() * 1.2;
-    const a = Math.cbrt(targetVolume / ratio);
-    return { a, c: ratio * a };
-  }
-  if (system === 'hexagonal') {
-    const ratio = 0.6 + Math.random() * 2.0;
-    const k = Math.sqrt(3) / 2;
-    const a = Math.cbrt(targetVolume / (k * ratio));
-    return { a, c: ratio * a };
-  }
-  throw new Error('unsupported system ' + system);
-}
-function symmMinDistOK(atomsFrac, bravais, a, c, tolFactor) {
-  const cz = symmCz(bravais, a, c);
-  const cart = atomsFrac.map(at => symmFracToCart(at.f, bravais, a, cz));
-  const shifts = [-1, 0, 1];
-  for (let i = 0; i < atomsFrac.length; i++) {
-    for (let j = i; j < atomsFrac.length; j++) {
-      for (const sx of shifts) for (const sy of shifts) for (const sz of shifts) {
-        if (i === j && sx === 0 && sy === 0 && sz === 0) continue;
-        const fj = [atomsFrac[j].f[0]+sx, atomsFrac[j].f[1]+sy, atomsFrac[j].f[2]+sz];
-        const pj = symmFracToCart(fj, bravais, a, cz);
-        const dx = cart[i][0]-pj[0], dy = cart[i][1]-pj[1], dz = cart[i][2]-pj[2];
-        const d = Math.sqrt(dx*dx+dy*dy+dz*dz);
-        const ri = SYMM_CRADII[atomsFrac[i].el] || SYMM_CRADII.default;
-        const rj = SYMM_CRADII[atomsFrac[j].el] || SYMM_CRADII.default;
-        const minD = (ri + rj) * tolFactor;
-        if (d > 1e-4 && d < minD) return false;
-      }
-    }
-  }
-  return true;
-}
-const SYMM_CANDIDATE_SPECIAL_POINTS = [
-  [0,0,0], [0.5,0.5,0.5], [0.5,0.5,0], [0.5,0,0.5], [0,0.5,0.5],
-  [0.5,0,0], [0,0.5,0], [0,0,0.5],
-  [0.25,0.25,0.25], [0.75,0.75,0.75], [0.25,0.75,0.75], [0.75,0.25,0.75],
-  [0.75,0.75,0.25], [0.25,0.25,0.75], [0.75,0.25,0.25], [0.25,0.75,0.25],
-  [1/3,2/3,0], [2/3,1/3,0], [1/3,2/3,0.5], [2/3,1/3,0.5],
-  [0,0,0.25], [0,0,0.75],
-];
-function symmOrbitOf(sg, seedPoint) {
-  const centerings = SYMM_CENTERING[sg.centering];
-  const seen = new Map();
-  for (const op of sg.ops) {
-    const [ox, oy, oz] = op(seedPoint[0], seedPoint[1], seedPoint[2]);
-    for (const ct of centerings) {
-      const fx = ((ox+ct[0]) % 1 + 1) % 1;
-      const fy = ((oy+ct[1]) % 1 + 1) % 1;
-      const fz = ((oz+ct[2]) % 1 + 1) % 1;
-      const key = fx.toFixed(4) + ',' + fy.toFixed(4) + ',' + fz.toFixed(4);
-      if (!seen.has(key)) seen.set(key, [fx, fy, fz]);
-    }
-  }
-  return [...seen.values()];
-}
-function symmBuildWyckoffTable(sg) {
-  const table = {};
-  const generalMult = sg.ops.length * SYMM_CENTERING[sg.centering].length;
-  table[generalMult] = [null];
-  SYMM_CANDIDATE_SPECIAL_POINTS.forEach(p => {
-    const m = symmOrbitOf(sg, p).length;
-    if (!table[m]) table[m] = [];
-    if (table[m].length < 4 && !table[m].includes(p)) table[m].push(p);
-  });
-  return table;
-}
-function symmFindMultiplicityCombo(availableMults, target, maxSites = 4) {
-  const mults = [...new Set(availableMults)].sort((a, b) => b - a);
-  function dfs(remaining, sitesLeft, startIdx) {
-    if (remaining === 0) return [];
-    if (sitesLeft === 0) return null;
-    for (let i = startIdx; i < mults.length; i++) {
-      const m = mults[i];
-      if (m <= remaining) {
-        const rest = dfs(remaining - m, sitesLeft - 1, i);
-        if (rest !== null) return [m, ...rest];
-      }
-    }
-    return null;
-  }
-  return dfs(target, maxSites, 0);
-}
-function symmFillWyckoff(sg, elementCounts) {
-  if (!sg._wyckoffTable) sg._wyckoffTable = symmBuildWyckoffTable(sg);
-  const table = sg._wyckoffTable;
-  const availableMults = Object.keys(table).map(Number);
-  const atoms = [];
-  for (const ec of elementCounts) {
-    const combo = symmFindMultiplicityCombo(availableMults, ec.count);
-    if (!combo) return null;
-    for (const m of combo) {
-      const seeds = table[m];
-      const seed = seeds[Math.floor(Math.random() * seeds.length)];
-      const point = seed === null ? [Math.random(), Math.random(), Math.random()] : seed;
-      symmOrbitOf(sg, point).forEach(f => atoms.push({ el: ec.el, f }));
-    }
-  }
-  return atoms;
-}
-function symmFallbackP1(elementCounts, tolFactor, maxTries = 300) {
-  for (let t = 0; t < maxTries; t++) {
-    const vol = symmEstimateVolume(elementCounts) * (1 + t*0.01);
-    const a = Math.cbrt(vol);
-    const atoms = [];
-    elementCounts.forEach(ec => {
-      for (let i = 0; i < ec.count; i++) atoms.push({ el: ec.el, f: [Math.random(), Math.random(), Math.random()] });
-    });
-    if (symmMinDistOK(atoms, 'SC', a, a, tolFactor)) {
-      return {
-        formula: elementCounts.map(e => e.el + e.count).join(''),
-        bravais: 'SC', a, c: a, atoms,
-        _meta: { spacegroup: 'P1 (fallback, no symmetry)', spacegroupNumber: 1 },
-      };
-    }
-  }
-  const vol = symmEstimateVolume(elementCounts) * 1.6;
-  const a = Math.cbrt(vol);
-  const atoms = [];
-  elementCounts.forEach(ec => { for (let i = 0; i < ec.count; i++) atoms.push({ el: ec.el, f: [Math.random(), Math.random(), Math.random()] }); });
-  return {
-    formula: elementCounts.map(e => e.el + e.count).join(''),
-    bravais: 'SC', a, c: a, atoms,
-    _meta: { spacegroup: 'P1 (fallback, unconstrained)', spacegroupNumber: 1 },
-  };
-}
-const SymmetryStructureGenerator = {
-  generate(formulaStr, zMin, zMax, opts = {}) {
-    const tolFactor = opts.tolFactor ?? 0.55;
-    const maxSpacegroupAttempts = opts.maxSpacegroupAttempts ?? 40;
-    const maxLatticeAttempts = opts.maxLatticeAttempts ?? 3;
-    const maxCoordAttemptsPerLattice = opts.maxCoordAttemptsPerLattice ?? 15;
+function colorFor(el){ return CPK[el] || "#c9a25c"; }
 
-    const baseEls = symmParseFormula(formulaStr);
-    if (!baseEls.length) baseEls.push({ el: 'Si', n: 1 });
-    const z = zMin + Math.floor(Math.random() * (zMax - zMin + 1));
-    const elementCounts = baseEls.map(e => ({ el: e.el, count: e.n * z }));
-    const totalAtoms = elementCounts.reduce((s, e) => s + e.count, 0);
+let host = document.getElementById("hostInput").value.trim();
+let viewer = null;
+let pollTimer = null;
+let currentEnergyLog = [];
 
-    const pool = [...SYMM_SPACEGROUPS].sort(() => Math.random() - 0.5);
-
-    for (let attempt = 0; attempt < maxSpacegroupAttempts; attempt++) {
-      const sg = pool[attempt % pool.length];
-      if (!sg._wyckoffTable) sg._wyckoffTable = symmBuildWyckoffTable(sg);
-      const availableMults = Object.keys(sg._wyckoffTable).map(Number);
-      const feasible = elementCounts.every(ec => symmFindMultiplicityCombo(availableMults, ec.count) !== null);
-      if (!feasible) continue;
-
-      for (let latticeTry = 0; latticeTry < maxLatticeAttempts; latticeTry++) {
-        const vol = symmEstimateVolume(elementCounts);
-        const { a, c } = symmGenerateLattice(sg.system, vol);
-        const bravais = sg.system === 'cubic' ? 'SC' : sg.system === 'tetragonal' ? 'TET' : 'HEX';
-
-        for (let coordTry = 0; coordTry < maxCoordAttemptsPerLattice; coordTry++) {
-          const atoms = symmFillWyckoff(sg, elementCounts);
-          if (!atoms || atoms.length !== totalAtoms) continue;
-          if (symmMinDistOK(atoms, bravais, a, c, tolFactor)) {
-            return {
-              formula: elementCounts.map(e => e.el + e.count).join(''),
-              bravais, a, c, atoms,
-              _meta: { spacegroup: sg.name, spacegroupNumber: sg.number, z, volumeEstimate: vol },
-            };
-          }
-        }
-      }
-    }
-    return symmFallbackP1(elementCounts, tolFactor);
-  },
-};
-const StructureGenerator = {
-  random(formula, zMin, zMax, useSymmetry) {
-    if (useSymmetry === false) {
-      const z = zMin + Math.floor(Math.random() * (zMax - zMin + 1));
-      const els = symmParseFormula(formula);
-      if (!els.length) els.push({ el: 'Si', n: 1 });
-      const bravais = ['FCC','BCC','SC','HEX','TET','ORTH'][Math.floor(Math.random()*6)];
-      const a = 3.5 + Math.random()*4.5;
-      const c = ['HEX','TET'].includes(bravais) ? a*(0.8+Math.random()*1.2) : a;
-      const atoms = [];
-      els.forEach(({ el, n }) => { for (let i=0;i<n*z;i++) atoms.push({ el, f:[Math.random(),Math.random(),Math.random()] }); });
-      return { formula: els.map(e=>e.el+e.n).join(''), bravais, a: parseFloat(a.toFixed(4)), c: parseFloat(c.toFixed(4)), atoms };
-    }
-    const result = SymmetryStructureGenerator.generate(formula, zMin, zMax);
-    if (typeof log === 'function') {
-      log(`[symgen] ${result.formula} via ${result._meta.spacegroup} (SG#${result._meta.spacegroupNumber}, Z=${result._meta.z ?? '—'}) — ${result.atoms.length} atoms, a=${result.a.toFixed(3)}Å, c=${result.c.toFixed(3)}Å`);
-    }
-    return { formula: result.formula, bravais: result.bravais, a: result.a, c: result.c, atoms: result.atoms };
-  },
-};
-
-/* ── Generic periodic minimum-distance validator (any Bravais type) ──── */
-function mcGenericMinDistOK(atomsFrac, bravais, a, c, tolFactor){
-  const cell=CELL_VECS[bravais]||CELL_VECS.SC;
-  const cz=['HEX','TET'].includes(bravais)?c:a;
-  const toCart=f=>[
-    (cell[0][0]*f[0]+cell[1][0]*f[1]+cell[2][0]*f[2])*a,
-    (cell[0][1]*f[0]+cell[1][1]*f[1]+cell[2][1]*f[2])*a,
-    (cell[0][2]*f[0]+cell[1][2]*f[1]+cell[2][2]*f[2])*cz,
-  ];
-  const shifts=[-1,0,1];
-  for(let i=0;i<atomsFrac.length;i++){
-    const pi=toCart(atomsFrac[i].f);
-    for(let j=i;j<atomsFrac.length;j++){
-      for(const sx of shifts)for(const sy of shifts)for(const sz of shifts){
-        if(i===j&&sx===0&&sy===0&&sz===0)continue;
-        const fj=[atomsFrac[j].f[0]+sx,atomsFrac[j].f[1]+sy,atomsFrac[j].f[2]+sz];
-        const pj=toCart(fj);
-        const dx=pi[0]-pj[0],dy=pi[1]-pj[1],dz=pi[2]-pj[2];
-        const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
-        const ri=SYMM_CRADII[atomsFrac[i].el]||SYMM_CRADII.default;
-        const rj=SYMM_CRADII[atomsFrac[j].el]||SYMM_CRADII.default;
-        if(d>1e-4&&d<(ri+rj)*tolFactor)return false;
-      }
-    }
-  }
-  return true;
+function log(msg, kind){
+  const panel = document.getElementById("consolePanel");
+  const line = document.createElement("div");
+  line.className = "line" + (kind ? " " + kind : "");
+  const ts = new Date().toLocaleTimeString();
+  line.innerHTML = `<span class="ts">${ts}</span>${msg}`;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   GENUINE LOCAL ENERGY PROXY (used when no DFT cluster is connected)
-   A real periodic pairwise (Lennard-Jones-style) energy — verified
-   numerically to show a real minimum vs. lattice constant (steep
-   repulsive wall at short range, smooth attractive tail), so local-demo
-   Monte Carlo actually anneals meaningfully instead of random-walking.
-   ══════════════════════════════════════════════════════════════════════ */
-function mcSigmaFor(el){ return (SYMM_CRADII[el]||SYMM_CRADII.default)/SYMM_CRADII['Si']; }
-function mcLocalEnergy(s, rcut){
-  rcut = rcut ?? 8.0;
-  const brav=s.bravais||'SC', cell=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=s.a||4, cz=['HEX','TET'].includes(brav)?(s.c||a0):a0;
-  const av=[cell[0][0]*a0,cell[0][1]*a0,cell[0][2]*cz];
-  const bv=[cell[1][0]*a0,cell[1][1]*a0,cell[1][2]*cz];
-  const cv=[cell[2][0]*a0,cell[2][1]*a0,cell[2][2]*cz];
-  const cart = s.atoms.map(at=>{
-    const f=at.f;
-    return [ av[0]*f[0]+bv[0]*f[1]+cv[0]*f[2], av[1]*f[0]+bv[1]*f[1]+cv[1]*f[2], av[2]*f[0]+bv[2]*f[1]+cv[2]*f[2] ];
-  });
-  const n=s.atoms.length;
-  const shifts=[-1,0,1];
-  let E=0;
-  for(let i=0;i<n;i++){
-    const sigI=mcSigmaFor(s.atoms[i].el);
-    for(let j=0;j<n;j++){
-      const sigJ=mcSigmaFor(s.atoms[j].el);
-      const sigma=0.5*(sigI+sigJ), eps=1.0;
-      for(const sx of shifts)for(const sy of shifts)for(const sz of shifts){
-        if(i===j&&sx===0&&sy===0&&sz===0)continue;
-        const dx=cart[i][0]-(cart[j][0]+sx*av[0]+sy*bv[0]+sz*cv[0]);
-        const dy=cart[i][1]-(cart[j][1]+sx*av[1]+sy*bv[1]+sz*cv[1]);
-        const dz=cart[i][2]-(cart[j][2]+sx*av[2]+sy*bv[2]+sz*cv[2]);
-        const r2=dx*dx+dy*dy+dz*dz;
-        if(r2>rcut*rcut||r2<1e-8)continue;
-        const r=Math.sqrt(r2);
-        const sr6=Math.pow(sigma/r,6), sr12=sr6*sr6;
-        E += 4*eps*(sr12-sr6);
-      }
-    }
-  }
-  return E/2/n; // per atom, /2 for double-counted pairs
-}
-
-/* ── Structure export helpers (generic, any Bravais type) ────────────── */
-function evoCellFromStructure(s){
-  const brav=s.bravais||'SC', cellTpl=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=s.a||4, c0=s.c||a0, cz=['HEX','TET'].includes(brav)?c0:a0;
-  const vecs=cellTpl.map((row,i)=>row.map(x=>x*(i===2?cz:a0)));
-  const len=u=>Math.sqrt(u[0]*u[0]+u[1]*u[1]+u[2]*u[2]);
-  const dot=(u,w)=>u[0]*w[0]+u[1]*w[1]+u[2]*w[2];
-  const ang=(u,w)=>{const d=len(u)*len(w);return d<1e-12?90:Math.acos(Math.max(-1,Math.min(1,dot(u,w)/d)))*180/Math.PI;};
-  return { a:len(vecs[0]), b:len(vecs[1]), c:len(vecs[2]), alpha:ang(vecs[1],vecs[2]), beta:ang(vecs[0],vecs[2]), gamma:ang(vecs[0],vecs[1]), vecs };
-}
-function evoStructureToCIF(s, meta={}){
-  if(!s||!s.atoms?.length)return null;
-  const cell=evoCellFromStructure(s);
-  const name=(s.formula||'structure').replace(/\s+/g,'_');
-  const sg=meta.sg||'P 1';
-  let cif=`# Monte Carlo${meta.id!=null?' step '+meta.id:''}${meta.energy!=null?', E='+meta.energy.toFixed(5)+' Ry/atom':''}\n`;
-  cif+=`data_${name}\n_chemical_formula_sum '${s.formula||name}'\n`;
-  cif+=`_cell_length_a ${cell.a.toFixed(6)}\n_cell_length_b ${cell.b.toFixed(6)}\n_cell_length_c ${cell.c.toFixed(6)}\n`;
-  cif+=`_cell_angle_alpha ${cell.alpha.toFixed(4)}\n_cell_angle_beta ${cell.beta.toFixed(4)}\n_cell_angle_gamma ${cell.gamma.toFixed(4)}\n`;
-  cif+=`_symmetry_space_group_name_H-M '${sg}'\nloop_\n_atom_site_label\n_atom_site_type_symbol\n_atom_site_fract_x\n_atom_site_fract_y\n_atom_site_fract_z\n`;
-  const counts={};
-  s.atoms.forEach(a=>{
-    const el=a.el||'X';
-    counts[el]=(counts[el]||0)+1;
-    const f=a.f||[0,0,0];
-    cif+=`${(el+counts[el]).padEnd(8)} ${el.padEnd(4)} ${(+f[0]).toFixed(6)}  ${(+f[1]).toFixed(6)}  ${(+f[2]).toFixed(6)}\n`;
-  });
-  return cif;
-}
-function evoStructureToPOSCAR(s){
-  if(!s||!s.atoms?.length)return null;
-  const cell=evoCellFromStructure(s);
-  const els=[]; const counts={};
-  s.atoms.forEach(a=>{const el=a.el||'X'; if(!counts[el]){counts[el]=0;els.push(el);} counts[el]++;});
-  let t=`${s.formula||'structure'}  # Monte Carlo\n1.0\n`;
-  cell.vecs.forEach(v=>{t+=`  ${v.map(x=>x.toFixed(8).padStart(14)).join(' ')}\n`;});
-  t+=els.join('  ')+'\n'+els.map(e=>counts[e]).join('  ')+'\nDirect\n';
-  els.forEach(el=>{
-    s.atoms.filter(a=>(a.el||'X')===el).forEach(a=>{
-      const f=a.f||[0,0,0];
-      t+=`  ${(+f[0]).toFixed(8).padStart(12)}  ${(+f[1]).toFixed(8).padStart(12)}  ${(+f[2]).toFixed(8).padStart(12)}\n`;
-    });
-  });
-  return t;
-}
-function evoStructureToXYZ(s){
-  if(!s||!s.atoms?.length)return null;
-  const cell=evoCellFromStructure(s);
-  const v=cell.vecs;
-  let t=`${s.atoms.length}\n${s.formula||'structure'} Lattice="${v.flat().map(x=>x.toFixed(6)).join(' ')}" Properties=species:S:1:pos:R:3 pbc="T T T"\n`;
-  s.atoms.forEach(a=>{
-    const f=a.f||[0,0,0];
-    const x=v[0][0]*f[0]+v[1][0]*f[1]+v[2][0]*f[2];
-    const y=v[0][1]*f[0]+v[1][1]*f[1]+v[2][1]*f[2];
-    const z=v[0][2]*f[0]+v[1][2]*f[1]+v[2][2]*f[2];
-    t+=`${(a.el||'X').padEnd(4)} ${x.toFixed(6).padStart(12)} ${y.toFixed(6).padStart(12)} ${z.toFixed(6).padStart(12)}\n`;
-  });
-  return t;
-}
-function evoTriggerDownload(text, filename){
-  const b=new Blob([text],{type:'text/plain'});
-  const u=URL.createObjectURL(b);
-  const a=document.createElement('a');a.href=u;a.download=filename;a.click();
-  URL.revokeObjectURL(u);
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   MC STATE + MOVE SET + METROPOLIS ENGINE
-   ══════════════════════════════════════════════════════════════════════ */
-const MC = {
-  running:false, paused:false,
-  chain:[],         // array of {step, structure, energy, temp, move, status, deltaE, paccept, sg}
-  step:0, generation:0, maxSteps:0,
-  temp:0,
-  best:null,
-  acceptedCount:0, dupCount:0,
-  sortKey:'step', sortDir:1,
-  qeJobId:null,
-};
-const KB_RY = 6.333630e-6; // Boltzmann constant in Ry/K
-
-function mcReadParams(){
-  return {
-    formula: document.getElementById('mc-formula').value||'Si8',
-    zMin: parseInt(document.getElementById('mc-z-min').value)||1,
-    zMax: parseInt(document.getElementById('mc-z-max').value)||4,
-    useSymmetry: document.getElementById('mc-use-symmetry').checked,
-    t0: parseFloat(document.getElementById('mc-t0').value)||1500,
-    tmin: parseFloat(document.getElementById('mc-tmin').value)||50,
-    cooling: parseFloat(document.getElementById('mc-cooling').value)||0.92,
-    stepsPerGen: parseInt(document.getElementById('mc-steps-per-gen').value)||1,
-    maxSteps: parseInt(document.getElementById('mc-max-steps').value)||60,
-    stripPct: parseFloat(document.getElementById('mc-strip-pct').value)||55,
-    stripStrain: parseFloat(document.getElementById('mc-strip-strain').value)||0.12,
-    stripAmp: parseFloat(document.getElementById('mc-strip-amp').value)||0.6,
-    permStrain: parseFloat(document.getElementById('mc-perm-strain').value)||0.25,
-    permExch: parseInt(document.getElementById('mc-perm-exch').value)||2,
-    dupDE: parseFloat(document.getElementById('mc-dup-de').value)||0.0005,
-    dupEnable: document.getElementById('mc-dup-enable').checked,
-    ecut: document.getElementById('mc-ecut').value||60,
-    kx: document.getElementById('mc-kx').value||4, ky: document.getElementById('mc-ky').value||4, kz: document.getElementById('mc-kz').value||4,
-    pseudoDir: document.getElementById('mc-pseudo-dir').value||'./pseudo',
-  };
-}
-function mcUpdatePreview(){
-  const p=mcReadParams();
-  if(p.cooling>=1){ document.getElementById('mc-preview-gens').textContent='cooling rate must be < 1'; return; }
-  const gens=Math.ceil(Math.log(p.tmin/p.t0)/Math.log(p.cooling));
-  document.getElementById('mc-preview-gens').textContent=isFinite(gens)?gens+' generations':'—';
-}
-
-/* ── Move set ─────────────────────────────────────────────────────────── */
-function mcStripple(structure, p){
-  const s=JSON.parse(JSON.stringify(structure));
-  s.a*=(1+p.stripStrain*(Math.random()-.5));
-  s.c=(s.c||s.a)*(1+p.stripStrain*(Math.random()-.5));
-  s.atoms=s.atoms.map(a=>({...a,f:a.f.map(x=>((x+p.stripAmp*0.05*(Math.random()-.5)+1)%1))}));
-  return s;
-}
-function mcPermustrain(structure, p){
-  const s=JSON.parse(JSON.stringify(structure));
-  s.a*=(1+p.permStrain*(Math.random()-.5)*0.3);
-  for(let i=0;i<p.permExch&&s.atoms.length>=2;i++){
-    const ia=Math.floor(Math.random()*s.atoms.length);
-    const ib=Math.floor(Math.random()*s.atoms.length);
-    if(ia!==ib)[s.atoms[ia].el,s.atoms[ib].el]=[s.atoms[ib].el,s.atoms[ia].el];
-  }
-  return s;
-}
-function mcProposeMove(current, p){
-  const dice=Math.random()*100;
-  let structure, moveName;
-  const tryMove=(fn,name,maxTries)=>{
-    for(let t=0;t<maxTries;t++){
-      const cand=fn(current,p);
-      if(mcGenericMinDistOK(cand.atoms, cand.bravais||'SC', cand.a||4, cand.c||cand.a||4, 0.55)) return {structure:cand,moveName:name};
-    }
-    return null;
-  };
-  let result;
-  if(dice<p.stripPct) result=tryMove(mcStripple,'Stripple',8);
-  else result=tryMove(mcPermustrain,'Permustrain',8);
-  if(!result){
-    // both operators failed distance validity repeatedly -- repair via a
-    // fresh symmetry-constrained structure (same principle as initial seed)
-    logHPC('[MC] Move produced an invalid structure after retries — repairing via symmetry-constrained generation');
-    structure=StructureGenerator.random(p.formula,p.zMin,p.zMax,true);
-    moveName='Repair (symgen)';
-  } else {
-    structure=result.structure; moveName=result.moveName;
-  }
-  return {structure,moveName};
-}
-
-/* ── QE input + local demo energy ────────────────────────────────────── */
-function mcBuildQEInput(structure, p, stepId){
-  const brav=structure.bravais||'SC', cell=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=structure.a||4, c0=structure.c||a0, cz=['HEX','TET'].includes(brav)?c0:a0;
-  const seen={},atsym=[]; structure.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;atsym.push(a.el);}});
-  let t=`! Monte Carlo step ${stepId}\n&CONTROL\n  calculation='vc-relax'\n  prefix='mc_${stepId}'\n  outdir='/tmp/mc_${stepId}'\n  pseudo_dir='${p.pseudoDir}'\n/\n&SYSTEM\n  ibrav=0\n  nat=${structure.atoms.length}\n  ntyp=${atsym.length}\n  ecutwfc=${p.ecut}\n  ecutrho=${parseInt(p.ecut)*8}\n  occupations='smearing'\n  smearing='mp'\n  degauss=0.02\n/\n&ELECTRONS\n  conv_thr=1.0e-6\n/\n&IONS\n/\n&CELL\n  cell_dofree='all'\n/\nCELL_PARAMETERS angstrom\n`;
-  cell.forEach((v,i)=>{const sc=(i===2)?cz:a0;t+=`  ${v.map(x=>(x*sc).toFixed(8).padStart(14)).join(' ')}\n`;});
-  t+=`ATOMIC_SPECIES\n`;atsym.forEach(sym=>{t+=`  ${sym.padEnd(4)} ${(MASS[sym]||28).toFixed(3).padStart(8)}   ${sym.toLowerCase()}.pbe-n-rrkjus_psl.1.0.0.UPF\n`;});
-  t+=`ATOMIC_POSITIONS crystal\n`;structure.atoms.forEach(a=>{t+=`  ${a.el.padEnd(4)}  ${a.f.map(x=>x.toFixed(8).padStart(12)).join('  ')}\n`;});
-  t+=`K_POINTS automatic\n  ${p.kx} ${p.ky} ${p.kz}  1 1 1\n`;
-  return t;
-}
-function mcUpdateQEPreview(){
-  const p=mcReadParams();
-  const dummy = MC.chain.length? MC.chain[MC.chain.length-1].structure : {formula:p.formula,bravais:'SC',a:5,atoms:[{el:'Si',f:[0,0,0]}]};
-  document.getElementById('mc-qe-preview').textContent = mcBuildQEInput(dummy,p,MC.step).split('\n').slice(0,18).join('\n')+'\n...';
-}
-async function mcEvaluateEnergy(structure, p, stepId){
-  const h=getHost();
-  if(!h){
-    await sleep(120); // small delay for UX so the "running" status is visible
-    return mcLocalEnergy(structure);
-  }
-  // Real DFT via cluster bridge
-  const input=mcBuildQEInput(structure,p,stepId);
-  const fd=new FormData();
-  fd.append('input_text',input); fd.append('nodes','1'); fd.append('ntasks','44'); fd.append('job_name','mc_'+stepId);
-  const r=await fetchWithTimeout(h+'/submit',{method:'POST',body:fd},30000);
-  if(!r.ok)throw new Error('HTTP '+r.status);
-  const d=await r.json();
-  const jobId=d.job_id;
-  logHPC('[MC] step '+stepId+' submitted -> job_id='+jobId);
-  for(let i=0;i<200;i++){
-    await sleep(5000);
-    const rp=await fetchWithTimeout(`${h}/status/${jobId}`,{},15000);
-    if(!rp.ok)throw new Error('HTTP '+rp.status);
-    const dp=await rp.json();
-    if(dp.status==='done'||dp.status==='completed'||dp.converged){
-      const out=dp.output_tail||'';
-      const eM=out.match(/!\s+total energy\s+=\s+([\-\d.]+)\s+Ry/);
-      if(eM) return parseFloat(eM[1])/structure.atoms.length;
-      throw new Error('could not parse total energy from QE output');
-    }
-    if(dp.status==='failed'||dp.status==='error') throw new Error('QE job failed');
-  }
-  throw new Error('poll timeout');
-}
-
-/* ── Metropolis acceptance ───────────────────────────────────────────── */
-function mcAccept(deltaE, tempK){
-  if(deltaE<=0) return {accept:true, p:1.0};
-  const p=Math.exp(-deltaE/(KB_RY*Math.max(tempK,1e-6)));
-  return {accept: Math.random()<p, p};
-}
-
-/* ── Main run loop (sequential -- MC chains are inherently serial) ───── */
-async function mcRunLoop(){
-  const p=mcReadParams();
-  if(!MC.chain.length){
-    MC.step=0; MC.generation=0; MC.temp=p.t0; MC.acceptedCount=0; MC.dupCount=0; MC.best=null;
-    const seed = MC_PREVIEW_STRUCTURE || StructureGenerator.random(p.formula,p.zMin,p.zMax,p.useSymmetry);
-    if(MC_PREVIEW_STRUCTURE)logHPC('[MC] Using previously generated structure as chain seed');
-    MC_PREVIEW_STRUCTURE=null; // consumed
-    logHPC('[MC] Evaluating seed structure...');
-    const e0=await mcEvaluateEnergy(seed,p,0);
-    const entry={step:0,structure:seed,energy:e0,temp:p.t0,move:'Seed',status:'accepted',deltaE:0,paccept:1,sg:seed._meta?.spacegroup||'—'};
-    MC.chain.push(entry); MC.best=entry; MC.acceptedCount=1;
-    mcRenderAll();
-  }
-  MC.maxSteps=p.maxSteps;
-  mcSetState('running');
-
-  while(MC.running && MC.step < p.maxSteps){
-    if(MC.paused){ await sleep(200); continue; }
-
-    const current=MC.chain[MC.chain.length-1];
-    const {structure:candidate, moveName}=mcProposeMove(current.structure, p);
-    MC.step++;
-    const pendingEntry={step:MC.step,structure:candidate,energy:null,temp:MC.temp,move:moveName,status:'running',deltaE:null,paccept:null,sg:'—'};
-    MC.chain.push(pendingEntry);
-    mcRenderAll();
-
-    let eNew;
-    try{
-      eNew = await mcEvaluateEnergy(candidate,p,MC.step);
-    }catch(err){
-      pendingEntry.status='rejected'; pendingEntry.energy=null;
-      logHPC('[MC] step '+MC.step+' evaluation error: '+err.message);
-      mcRenderAll();
-      continue;
-    }
-    if(!MC.running)break;
-
-    const deltaE = eNew - current.energy;
-    const {accept,p:paccept} = mcAccept(deltaE, MC.temp);
-    pendingEntry.energy=eNew; pendingEntry.deltaE=deltaE; pendingEntry.paccept=paccept;
-
-    if(accept){
-      pendingEntry.status='accepted'; MC.acceptedCount++;
-      if(p.dupEnable && Math.abs(deltaE)<p.dupDE){
-        pendingEntry.status='duplicate'; MC.dupCount++;
-      }
-      if(!MC.best || eNew<MC.best.energy) MC.best=pendingEntry;
-    } else {
-      pendingEntry.status='rejected';
-    }
-
-    logHPC(`[MC] step ${MC.step} (${moveName}) E=${eNew.toFixed(5)} ΔE=${deltaE.toFixed(5)} P=${paccept.toFixed(3)} -> ${pendingEntry.status}`);
-
-    // Cooling schedule: geometric decay every stepsPerGen accepted-or-not steps
-    if(MC.step % p.stepsPerGen === 0){
-      MC.generation++;
-      MC.temp = Math.max(p.tmin, MC.temp*p.cooling);
-    }
-    mcRenderAll();
-    await new Promise(r=>requestAnimationFrame(r));
-  }
-
-  if(MC.running){
-    MC.running=false;
-    mcSetState('done');
-    logHPC('[MC] Chain complete — '+MC.chain.length+' steps, best E='+(MC.best?.energy?.toFixed(5)||'—')+' Ry/atom');
-  }
-  document.getElementById('mc-start-btn').disabled=false;
-  document.getElementById('mc-pause-btn').disabled=true;
-  document.getElementById('mc-stop-btn').disabled=true;
-}
-
-/* ── UI controls ─────────────────────────────────────────────────────── */
-function mcStart(){
-  if(MC.running)return;
-  MC.running=true; MC.paused=false;
-  document.getElementById('mc-start-btn').disabled=true;
-  document.getElementById('mc-pause-btn').disabled=false;
-  document.getElementById('mc-stop-btn').disabled=false;
-  mcRunLoop().catch(e=>{logHPC('[MC] Fatal error: '+e.message); console.error(e); mcSetState('stopped');});
-}
-function mcPause(){
-  MC.paused=!MC.paused;
-  document.getElementById('mc-pause-btn').textContent=MC.paused?'▶ Resume':'⏸ Pause';
-  mcSetState(MC.paused?'paused':'running');
-}
-function mcStop(){
-  MC.running=false; MC.paused=false;
-  document.getElementById('mc-start-btn').disabled=false;
-  document.getElementById('mc-pause-btn').disabled=true;
-  document.getElementById('mc-stop-btn').disabled=true;
-  document.getElementById('mc-pause-btn').textContent='⏸ Pause';
-  mcSetState('stopped');
-  logHPC('[MC] Stopped');
-}
-function mcReset(){
-  mcStop();
-  MC.chain=[]; MC.step=0; MC.generation=0; MC.temp=0; MC.best=null; MC.acceptedCount=0; MC.dupCount=0;
-  mcSetState('idle');
-  document.getElementById('mc-step-counter').textContent='Step 0 / 0';
-  document.getElementById('mc-temp-readout').textContent='—';
-  document.getElementById('mc-best-energy').textContent='—';
-  document.getElementById('mc-accept-counter').textContent='0 / 0';
-  mcRenderAll();
-  logHPC('[MC] Reset');
-}
-function mcSetState(state){
-  const chip=document.getElementById('mc-state-chip');
-  const labels={idle:'Idle',running:'⟳ Running',paused:'⏸ Paused',stopped:'■ Stopped',done:'✓ Done'};
-  chip.textContent=labels[state]||state;
-  chip.className='mc-state-chip mc-state-'+state;
-}
-
-/* ── Rendering (updates both view containers so switching tabs is instant) ── */
-function mcRenderAll(){
-  document.getElementById('mc-step-counter').textContent=`Step ${MC.step} / ${MC.maxSteps}`;
-  document.getElementById('mc-temp-readout').textContent=MC.temp?MC.temp.toFixed(1)+' K':'—';
-  document.getElementById('mc-best-energy').textContent=MC.best?MC.best.energy.toFixed(5)+' Ry/atom':'—';
-  document.getElementById('mc-accept-counter').textContent=`${MC.acceptedCount} / ${MC.chain.length}`;
-
-  mcRenderTable();
-
-  const acc=MC.chain.length?  (MC.acceptedCount/MC.chain.length*100).toFixed(1)+'%' : '—';
-  const accEl=document.getElementById('mc-evo-acc-rate'); if(accEl)accEl.textContent=acc;
-  const dupEl=document.getElementById('mc-evo-dup-count'); if(dupEl)dupEl.textContent=MC.dupCount;
-
-  mcUpdateCharts();
-  mcUpdateQEPreview();
-  mcUpdatePanelStatusBar();
-
-  // Keep both viewers (Monte Carlo tab's CF viewer, Evolution tab's dashboard
-  // viewer) showing the latest chain structure, so switching tabs never shows
-  // stale geometry.
-  if(MC.chain.length){
-    const latest=MC.chain[MC.chain.length-1];
-    document.getElementById('mc-evo-sel-label').textContent='step '+latest.step;
-    mcLoad3D(latest.structure);
-    mcvLoadStructure(latest.structure, latest);
-  } else if(MC_PREVIEW_STRUCTURE){
-    mcvLoadStructure(MC_PREVIEW_STRUCTURE, null);
-  }
-}
-
-function mcUpdatePanelStatusBar(){
-  const state=document.getElementById('mc-state-chip')?.textContent || 'Idle';
-  document.getElementById('mc-panel-state').textContent=state;
-  const p=mcReadParams();
-  document.getElementById('mc-panel-formula').textContent=p.formula;
-  document.getElementById('mc-panel-kmesh').textContent=`${p.kx}×${p.ky}×${p.kz}`;
-  document.getElementById('mc-panel-ecut').textContent=p.ecut+' Ry';
-}
-
-function mcSort(key){
-  if(MC.sortKey===key)MC.sortDir*=-1; else {MC.sortKey=key;MC.sortDir=1;}
-  mcRenderTable();
-}
-function mcRenderTable(){
-  const filter=(document.getElementById('mc-geo-search')?.value||'').toLowerCase();
-  let rows=[...MC.chain];
-  if(filter){ rows=rows.filter(r=>String(r.step).includes(filter)||r.move.toLowerCase().includes(filter)||r.status.includes(filter)); }
-  rows.sort((a,b)=>{
-    let va=a[MC.sortKey], vb=b[MC.sortKey];
-    if(va===null||va===undefined)va=MC.sortDir>0?Infinity:-Infinity;
-    if(vb===null||vb===undefined)vb=MC.sortDir>0?Infinity:-Infinity;
-    return (va<vb?-1:va>vb?1:0)*MC.sortDir;
-  });
-  const statusBadge=s=>{
-    const cls={accepted:'mc-status-accepted',rejected:'mc-status-rejected',running:'mc-status-running',duplicate:'mc-status-rejected'}[s]||'mc-status-pending';
-    return `<span class="mc-status-badge ${cls}">${s}</span>`;
-  };
-  const fmt=v=>v===null||v===undefined?'—':(typeof v==='number'?v.toFixed(5):v);
-
-  const geoBody=document.getElementById('mc-geo-table-body');
-  if(geoBody){
-    geoBody.innerHTML = rows.length ? rows.map(r=>`
-      <tr class="${MC.best&&MC.best.step===r.step?'active-row':''}">
-        <td>#${r.step}</td><td>${r.move}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(r.energy)}</td>
-        <td style="font-family:'JetBrains Mono',monospace">${r.temp.toFixed(1)}</td>
-        <td style="font-family:'JetBrains Mono',monospace">${fmt(r.deltaE)}</td>
-        <td style="font-family:'JetBrains Mono',monospace">${r.paccept!==null?r.paccept.toFixed(3):'—'}</td>
-        <td>${statusBadge(r.status)}</td>
-      </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px">Start the chain to populate history</td></tr>';
-  }
-  const evoBody=document.getElementById('mc-evo-table-body');
-  if(evoBody){
-    evoBody.innerHTML = rows.length ? rows.slice(-40).reverse().map(r=>`
-      <tr><td>#${r.step}</td><td>${r.move}</td><td style="font-family:'JetBrains Mono',monospace">${fmt(r.energy)}</td><td>${statusBadge(r.status)}</td></tr>
-    `).join('') : '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:16px">—</td></tr>';
-  }
-}
-
-function mcUpdateCharts(){
-  const view=document.querySelector('.mc-tab.active')?.dataset.view;
-  if(view!=='evo')return; // save perf -- only render charts when visible
-  const accepted=MC.chain.filter(r=>r.status==='accepted'||r.status==='duplicate');
-  const steps=accepted.map(r=>r.step), energies=accepted.map(r=>r.energy);
-  const allSteps=MC.chain.map(r=>r.step), temps=MC.chain.map(r=>r.temp);
-  const plotCfg={displayModeBar:false,responsive:true};
-  const layout=(ytitle)=>({margin:{t:4,r:6,b:26,l:44},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{size:9,family:'JetBrains Mono'},xaxis:{title:'step',gridcolor:'#ddd',tickfont:{size:8}},yaxis:{title:ytitle,gridcolor:'#ddd',tickfont:{size:8}},showlegend:false});
-  Plotly.react('mc-evo-chart-energy',[{x:steps,y:energies,type:'scatter',mode:'lines+markers',line:{color:'#b45309',width:1.5},marker:{size:4}}],layout('E/atom (Ry)'),plotCfg);
-  Plotly.react('mc-evo-chart-temp',[{x:allSteps,y:temps,type:'scatter',mode:'lines',line:{color:'#dc2626',width:1.5}}],layout('T (K)'),plotCfg);
-}
-
-/* ── View switching ───────────────────────────────────────────────────── */
-function mcSwitchView(view,btn){
-  document.querySelectorAll('.mc-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.mc-view').forEach(v=>v.classList.toggle('active',v.dataset.view===view));
-  if(view==='evo'){ mcInitViewer(); mcUpdateCharts(); if(MC.chain.length)mcLoad3D(MC.chain[MC.chain.length-1].structure); }
-  if(view==='geo'){
-    mcvInitViewer();
-    setTimeout(()=>{
-      const c=document.getElementById('mc-dft-3dviewer');
-      if(c&&MCV.renderer){const W=c.clientWidth,H=c.clientHeight; if(W>0&&H>0){MCV.camera.aspect=W/H;MCV.camera.updateProjectionMatrix();MCV.renderer.setSize(W,H);}}
-    },50);
-  }
-  log('[MC] Switched to '+(view==='geo'?'Monte Carlo':'Monte Carlo Evolution')+' view');
-}
-
-/* ── Cluster host test ────────────────────────────────────────────────── */
-async function mcTestHost(){
-  const status=document.getElementById('mc-conn-status');
-  const h=getHost();
-  if(!h){ status.textContent='No host'; status.style.background='#fee2e2'; status.style.color='#991b1b'; return; }
-  status.textContent='…'; status.style.background='#fef9c3'; status.style.color='#854d0e';
+async function api(path, opts={}){
+  const url = host.replace(/\/+$/,"") + path;
   try{
-    const r=await fetchWithTimeout(h+'/health',{},5000);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    status.textContent='✓ Connected'; status.style.background='#d1fae5'; status.style.color='#065f46';
-    logHPC('[MC] Host connected: '+JSON.stringify(d));
-  }catch(e){
-    status.textContent='✗ '+e.message.slice(0,26); status.style.background='#fee2e2'; status.style.color='#991b1b';
-    logHPC('[MC] Host test failed: '+e.message+' — falling back to local energy proxy');
+    const res = await fetch(url, {
+      headers: {"Content-Type":"application/json"},
+      ...opts,
+    });
+    if(!res.ok){
+      const detail = await res.text();
+      throw new Error(`${res.status} ${detail}`);
+    }
+    const ct = res.headers.get("content-type") || "";
+    if(ct.includes("application/json")) return await res.json();
+    return await res.text();
+  } catch(err){
+    log(`✖ ${opts.method||"GET"} ${path} — ${err.message}`, "err");
+    throw err;
   }
 }
 
-/* ── Export ───────────────────────────────────────────────────────────── */
-function mcExportCSV(){
-  const header='Step,Move,Energy,Temp,DeltaE,Paccept,Status\n';
-  const rows=MC.chain.map(r=>[r.step,r.move,r.energy??'',r.temp.toFixed(2),r.deltaE??'',r.paccept??'',r.status].join(',')).join('\n');
-  evoTriggerDownload(header+rows,'monte_carlo_chain.csv');
-  logHPC('[MC] Exported chain CSV');
-}
-function mcDownloadFmt(fmt){
-  if(!fmt||!MC.best)return;
-  const s=MC.best.structure;
-  const base='mc_step'+MC.best.step+'_'+(s.formula||'structure');
-  let text=null, filename=base;
-  if(fmt==='cif'){ text=evoStructureToCIF(s,{id:MC.best.step,energy:MC.best.energy,sg:MC.best.sg}); filename=base+'.cif'; }
-  else if(fmt==='poscar'){ text=evoStructureToPOSCAR(s); filename=base+'.POSCAR'; }
-  else if(fmt==='xyz'){ text=evoStructureToXYZ(s); filename=base+'.xyz'; }
-  if(!text)return;
-  evoTriggerDownload(text,filename);
-  logHPC('[MC] Downloaded '+filename);
+/* ------------------------------------------------------------------ *
+ *  Viewer
+ * ------------------------------------------------------------------ */
+function initViewer(){
+  if(typeof $3Dmol === "undefined"){
+    log("3Dmol.js failed to load from CDN — viewer disabled, everything else still works.", "err");
+    return;
+  }
+  viewer = $3Dmol.createViewer("viewer", {backgroundColor:"white"});
 }
 
-/* ── 3D viewer (Evolution view) ───────────────────────────────────────── */
-let MC_THREE={scene:null,camera:null,renderer:null,animId:null,sph:{theta:.6,phi:1.1,r:12},target:new THREE.Vector3(),drag:false,last:{x:0,y:0}};
-function mcInitViewer(){
-  if(MC_THREE.renderer)return;
-  const c=document.getElementById('mc-evo-viewer-3d'); if(!c||!window.THREE)return;
-  const W=c.clientWidth||320,H=c.clientHeight||200;
-  MC_THREE.scene=new THREE.Scene(); MC_THREE.scene.background=new THREE.Color(0xfafafa);
-  MC_THREE.camera=new THREE.PerspectiveCamera(38,W/H,.05,500);
-  MC_THREE.renderer=new THREE.WebGLRenderer({antialias:true});
-  MC_THREE.renderer.setSize(W,H); MC_THREE.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  c.appendChild(MC_THREE.renderer.domElement);
-  MC_THREE.scene.add(new THREE.AmbientLight(0xffffff,.5));
-  const d=new THREE.DirectionalLight(0xffffff,.8); d.position.set(3,5,4); MC_THREE.scene.add(d);
-  const el=MC_THREE.renderer.domElement;
-  el.addEventListener('mousedown',e=>{MC_THREE.drag=true;MC_THREE.last={x:e.clientX,y:e.clientY};});
-  window.addEventListener('mouseup',()=>{MC_THREE.drag=false;});
-  window.addEventListener('mousemove',e=>{
-    if(!MC_THREE.drag)return;
-    const dx=(e.clientX-MC_THREE.last.x)*.007,dy=(e.clientY-MC_THREE.last.y)*.007;
-    MC_THREE.last={x:e.clientX,y:e.clientY};
-    MC_THREE.sph.theta-=dx; MC_THREE.sph.phi=Math.max(.1,Math.min(Math.PI-.1,MC_THREE.sph.phi+dy));
-    mcUpdateCam();
-  });
-  el.addEventListener('wheel',e=>{e.preventDefault();MC_THREE.sph.r=Math.max(1.5,MC_THREE.sph.r*Math.exp(e.deltaY*.001));mcUpdateCam();},{passive:false});
-  new ResizeObserver(()=>{const W=c.clientWidth,H=c.clientHeight;MC_THREE.camera.aspect=W/H;MC_THREE.camera.updateProjectionMatrix();MC_THREE.renderer.setSize(W,H);}).observe(c);
-  (function loop(){MC_THREE.animId=requestAnimationFrame(loop);if(MC_THREE.renderer&&MC_THREE.scene&&MC_THREE.camera)MC_THREE.renderer.render(MC_THREE.scene,MC_THREE.camera);}());
-  mcUpdateCam();
-  setTimeout(()=>{
-    const W2=c.clientWidth||320,H2=c.clientHeight||200;
-    if(W2>0&&H2>0){MC_THREE.camera.aspect=W2/H2;MC_THREE.camera.updateProjectionMatrix();MC_THREE.renderer.setSize(W2,H2);}
-  },300);
-}
-function mcUpdateCam(){
-  if(!MC_THREE.camera)return;
-  const{theta,phi,r}=MC_THREE.sph,t=MC_THREE.target;
-  MC_THREE.camera.position.set(t.x+r*Math.sin(phi)*Math.sin(theta),t.y+r*Math.cos(phi),t.z+r*Math.sin(phi)*Math.cos(theta));
-  MC_THREE.camera.lookAt(t); MC_THREE.camera.updateMatrixWorld(true);
-}
-function mcLoad3D(structure){
-  if(!MC_THREE.scene)mcInitViewer();
-  if(!MC_THREE.scene||!structure?.atoms?.length)return;
-  const toRem=[]; MC_THREE.scene.children.forEach(c=>{if(c.isLight)return;toRem.push(c);});
-  toRem.forEach(o=>{MC_THREE.scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
+function renderCif(cifText, formula){
+  if(!viewer) return;
+  document.getElementById("emptyHint").style.display = "none";
+  viewer.clear();
+  const model = viewer.addModel(cifText, "cif", {doAssembly:true});
+  viewer.setStyle({}, {sphere:{scale:0.35, colorfunc: a => colorFor(a.elem)}});
+  try{ viewer.addUnitCell(model, {box:{color:"#bbbbbb"}}); }catch(e){}
+  viewer.zoomTo();
+  viewer.render();
 
-  const brav=structure.bravais||'SC', cell=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=structure.a||4, c0=structure.c||a0, cz=['HEX','TET'].includes(brav)?c0:a0;
-  const pts=structure.atoms.map(at=>{
-    const f=at.f;
-    return {el:at.el,
-      x:cell[0][0]*a0*f[0]+cell[1][0]*a0*f[1]+cell[2][0]*a0*f[2],
-      y:cell[0][1]*a0*f[0]+cell[1][1]*a0*f[1]+cell[2][1]*a0*f[2],
-      z:cell[0][2]*cz*f[0]+cell[1][2]*cz*f[1]+cell[2][2]*cz*f[2]};
-  });
-  let cx=0,cy=0,czc=0; pts.forEach(p=>{cx+=p.x;cy+=p.y;czc+=p.z;});
-  if(pts.length){cx/=pts.length;cy/=pts.length;czc/=pts.length;}
-  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=czc;});
-
-  const byEl={}; pts.forEach(p=>{(byEl[p.el]||(byEl[p.el]=[])).push(p);});
-  Object.entries(byEl).forEach(([el,ats])=>{
-    const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*0.9;
-    const color=new THREE.Color(CF_COLORS[el]||CF_COLORS.default);
-    const geo=new THREE.SphereGeometry(r,18,13);
-    const mat=new THREE.MeshStandardMaterial({color,roughness:0.28,metalness:0.05});
-    const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
-    ats.forEach((a,i)=>mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z)));
-    mesh.instanceMatrix.needsUpdate=true;
-    MC_THREE.scene.add(mesh);
-
-    const outlineGeo=new THREE.SphereGeometry(r*1.08,14,10);
-    const outlineMat=new THREE.MeshBasicMaterial({color:0x14141c,side:THREE.BackSide});
-    const outlineMesh=new THREE.InstancedMesh(outlineGeo,outlineMat,ats.length);
-    ats.forEach((a,i)=>outlineMesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z)));
-    outlineMesh.instanceMatrix.needsUpdate=true;
-    MC_THREE.scene.add(outlineMesh);
+  const elems = new Set();
+  model.selectedAtoms({}).forEach(a => elems.add(a.elem));
+  const legend = document.getElementById("legendRow");
+  legend.innerHTML = "";
+  elems.forEach(el=>{
+    const pill = document.createElement("div");
+    pill.className = "legend-pill";
+    pill.style.background = colorFor(el);
+    pill.textContent = el;
+    legend.appendChild(pill);
   });
 
-  const bonds=cfComputeChemBonds(pts,0.4);
-  bonds.forEach(({i,j})=>{
-    const mid={x:(pts[i].x+pts[j].x)/2,y:(pts[i].y+pts[j].y)/2,z:(pts[i].z+pts[j].z)/2};
-    [[pts[i],mid],[mid,pts[j]]].forEach(([p1,p2],hi)=>{
-      const el=hi===0?pts[i].el:pts[j].el;
-      const dir=new THREE.Vector3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
-      const len=dir.length(); if(len<0.001)return;
-      const geo=new THREE.CylinderGeometry(0.08,0.08,len,10);
-      const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||'#aaaaaa'),roughness:0.4});
-      const m=new THREE.Mesh(geo,mat);
-      m.position.set((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
-      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
-      MC_THREE.scene.add(m);
-    });
-  });
-
-  // crystallographic unit cell wireframe
-  const ax=new THREE.Vector3(cell[0][0]*a0,cell[0][1]*a0,cell[0][2]*cz);
-  const ay=new THREE.Vector3(cell[1][0]*a0,cell[1][1]*a0,cell[1][2]*cz);
-  const az=new THREE.Vector3(cell[2][0]*a0,cell[2][1]*a0,cell[2][2]*cz);
-  const O=ax.clone().add(ay).add(az).multiplyScalar(-0.5);
-  const corners=[O.clone(),O.clone().add(ax),O.clone().add(ay),O.clone().add(az),
-    O.clone().add(ax).add(ay),O.clone().add(ax).add(az),O.clone().add(ay).add(az),O.clone().add(ax).add(ay).add(az)];
-  [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(([a,b])=>{
-    const dir=new THREE.Vector3().subVectors(corners[b],corners[a]);
-    const len=dir.length(); if(len<0.001)return;
-    const geo=new THREE.CylinderGeometry(0.025,0.025,len,6);
-    const mat=new THREE.MeshStandardMaterial({color:0x4488cc,roughness:.8,transparent:true,opacity:.65});
-    const m=new THREE.Mesh(geo,mat);
-    m.position.copy(new THREE.Vector3().addVectors(corners[a],corners[b]).multiplyScalar(.5));
-    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
-    MC_THREE.scene.add(m);
-  });
-
-  MC_THREE.sph.r=Math.max(4,a0*3.2);
-  MC_THREE.target.set(0,0,0);
-  mcUpdateCam();
-}
-function mcViewerReset(){MC_THREE.sph={theta:.6,phi:1.1,r:Math.max(4,(MC.chain[MC.chain.length-1]?.structure?.a||4)*3.2)};MC_THREE.target.set(0,0,0);mcUpdateCam();}
-function mcViewerFit(){MC_THREE.sph.r=Math.max(4,(MC.chain[MC.chain.length-1]?.structure?.a||4)*3.2);mcUpdateCam();}
-
-/* ══════════════════════════════════════════════════════════════════════
-   MCV — CrystalForge-style 3D viewer for the "Monte Carlo" tab.
-   Separate Three.js instance from MC_THREE (which stays dedicated to the
-   Evolution tab's dashboard viewer, untouched) so both can run
-   independently regardless of which tab is visible.
-   ══════════════════════════════════════════════════════════════════════ */
-const MCV={scene:null,camera:null,renderer:null,animId:null,
-  spherical:{theta:.65,phi:1.05,r:20},target:new THREE.Vector3(),
-  isDragging:false,lastMouse:{x:0,y:0},instancedAtoms:{},bondGroup:null,cellGroup:null,
-  atoms:[],bonds:[]};
-let MC_PREVIEW_STRUCTURE=null;
-let MCV_CURRENT=null; // the structure object currently displayed
-
-function mcvInitViewer(){
-  if(MCV.renderer)return;
-  const container=document.getElementById('mc-dft-3dviewer');
-  if(!container||!window.THREE)return;
-  const W=container.clientWidth||900,H=container.clientHeight||600;
-  MCV.scene=new THREE.Scene(); MCV.scene.background=new THREE.Color(0xffffff);
-  MCV.camera=new THREE.PerspectiveCamera(36,W/H,0.05,2000);
-  mcvUpdateCamera();
-  MCV.renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
-  MCV.renderer.setSize(W,H); MCV.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  container.appendChild(MCV.renderer.domElement);
-  MCV.scene.add(new THREE.AmbientLight(0xffffff,0.45));
-  const key=new THREE.DirectionalLight(0xffffff,0.85); key.position.set(6,9,7); MCV.scene.add(key);
-  const fill=new THREE.DirectionalLight(0xd6e8ff,0.45); fill.position.set(-5,2,-4); MCV.scene.add(fill);
-  MCV.scene.add(new THREE.HemisphereLight(0xffffff,0xeeeeee,0.28));
-
-  const el=MCV.renderer.domElement;
-  let clickPending=false,lastDown={x:0,y:0};
-  el.addEventListener('mousedown',e=>{MCV.isDragging=false;MCV.lastMouse={x:e.clientX,y:e.clientY};clickPending=true;lastDown={x:e.clientX,y:e.clientY};});
-  window.addEventListener('mouseup',()=>{MCV.isDragging=false;clickPending=false;});
-  window.addEventListener('mousemove',e=>{
-    if(!MCV.isDragging&&clickPending){const dx=e.clientX-lastDown.x,dy=e.clientY-lastDown.y; if(Math.hypot(dx,dy)>4)MCV.isDragging=true;}
-    if(!MCV.isDragging)return;
-    const dx=(e.clientX-MCV.lastMouse.x)*.006,dy=(e.clientY-MCV.lastMouse.y)*.006;
-    MCV.lastMouse={x:e.clientX,y:e.clientY};
-    MCV.spherical.theta-=dx; MCV.spherical.phi=Math.max(.06,Math.min(Math.PI-.06,MCV.spherical.phi+dy));
-    mcvUpdateCamera();
-  });
-  el.addEventListener('wheel',e=>{e.preventDefault();MCV.spherical.r=Math.max(1.2,MCV.spherical.r*Math.exp(e.deltaY*.0009));mcvUpdateCamera();mcvDrawGizmo();},{passive:false});
-  el.addEventListener('contextmenu',e=>e.preventDefault());
-
-  new ResizeObserver(()=>{
-    const W=container.clientWidth,H=container.clientHeight;
-    if(W>0&&H>0){MCV.camera.aspect=W/H;MCV.camera.updateProjectionMatrix();MCV.renderer.setSize(W,H);}
-  }).observe(container);
-
-  (function loop(){MCV.animId=requestAnimationFrame(loop);MCV.renderer.render(MCV.scene,MCV.camera);mcvDrawGizmo();}());
-  log('[MCV] Viewer ready');
-}
-function mcvUpdateCamera(){
-  if(!MCV.camera)return;
-  const{theta,phi,r}=MCV.spherical,t=MCV.target;
-  MCV.camera.position.set(t.x+r*Math.sin(phi)*Math.sin(theta),t.y+r*Math.cos(phi),t.z+r*Math.sin(phi)*Math.cos(theta));
-  MCV.camera.lookAt(t); MCV.camera.updateMatrixWorld(true);
-}
-function mcResetView(){
-  const a=MCV_CURRENT?.a||4;
-  MCV.spherical={theta:.65,phi:1.05,r:Math.max(6,a*3.5)};
-  MCV.target.set(0,0,0); mcvUpdateCamera(); mcvDrawGizmo();
-}
-function mcToggleFullscreen(){const el=document.getElementById('mc-viewer-area');if(!document.fullscreenElement)el.requestFullscreen?.();else document.exitFullscreen?.();}
-function mcDoScreenshot(){
-  if(!MCV.renderer)return;
-  MCV.renderer.render(MCV.scene,MCV.camera);
-  const a=document.createElement('a'); a.href=MCV.renderer.domElement.toDataURL('image/png');
-  a.download=(MCV_CURRENT?.formula||'structure')+'.png'; a.click();
-}
-function mcvDrawGizmo(){
-  const cv=document.getElementById('mc-xyz-gizmo'); if(!cv||!MCV.camera)return;
-  const ctx=cv.getContext('2d'),W=88,H=88,cx=W/2,cy=H/2,L=24;
-  ctx.clearRect(0,0,W,H);
-  const inv=new THREE.Matrix4().extractRotation(MCV.camera.matrixWorldInverse);
-  const axes=[{v:new THREE.Vector3(1,0,0),c:'#dd2222',l:'a'},{v:new THREE.Vector3(0,1,0),c:'#22aa22',l:'b'},{v:new THREE.Vector3(0,0,1),c:'#2244cc',l:'c'}];
-  axes.map(a=>{const w=a.v.clone().applyMatrix4(inv);return{c:a.c,l:a.l,px:cx+w.x*L,py:cy-w.y*L,z:w.z};})
-    .sort((a,b)=>a.z-b.z)
-    .forEach(({c,l,px,py})=>{
-      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.strokeStyle=c;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
-      const ang=Math.atan2(py-cy,px-cx),al=7;
-      ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-al*Math.cos(ang-.4),py-al*Math.sin(ang-.4));ctx.lineTo(px-al*Math.cos(ang+.4),py-al*Math.sin(ang+.4));ctx.closePath();ctx.fillStyle=c;ctx.fill();
-      ctx.fillStyle=c;ctx.font='bold 11px Roboto,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(l,px+(px-cx)*.34,py+(py-cy)*.34);
-    });
-}
-function mcvBuildPositions(structure){
-  const brav=structure.bravais||'SC', cell=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=structure.a||4, cz=['HEX','TET'].includes(brav)?(structure.c||a0):a0;
-  const pts=structure.atoms.map((at,idx)=>{
-    const f=at.f;
-    return {el:at.el, idx,
-      x:cell[0][0]*a0*f[0]+cell[1][0]*a0*f[1]+cell[2][0]*a0*f[2],
-      y:cell[0][1]*a0*f[0]+cell[1][1]*a0*f[1]+cell[2][1]*a0*f[2],
-      z:cell[0][2]*cz*f[0]+cell[1][2]*cz*f[1]+cell[2][2]*cz*f[2]};
-  });
-  let cx=0,cy=0,ccz=0; pts.forEach(p=>{cx+=p.x;cy+=p.y;ccz+=p.z;});
-  if(pts.length){cx/=pts.length;cy/=pts.length;ccz/=pts.length;}
-  pts.forEach(p=>{p.x-=cx;p.y-=cy;p.z-=ccz;});
-  return pts;
-}
-function mcvDrawCell(structure){
-  const brav=structure.bravais||'SC', cell=CELL_VECS[brav]||CELL_VECS.SC;
-  const a0=structure.a||4, c0=structure.c||a0, cz=['HEX','TET'].includes(brav)?c0:a0;
-  const ax=new THREE.Vector3(cell[0][0]*a0,cell[0][1]*a0,cell[0][2]*cz);
-  const ay=new THREE.Vector3(cell[1][0]*a0,cell[1][1]*a0,cell[1][2]*cz);
-  const az=new THREE.Vector3(cell[2][0]*a0,cell[2][1]*a0,cell[2][2]*cz);
-  const O=ax.clone().add(ay).add(az).multiplyScalar(-.5);
-  const corners=[O.clone(),O.clone().add(ax),O.clone().add(ay),O.clone().add(az),
-    O.clone().add(ax).add(ay),O.clone().add(ax).add(az),O.clone().add(ay).add(az),O.clone().add(ax).add(ay).add(az)];
-  [[0,1],[0,2],[0,3],[1,4],[1,5],[2,4],[2,6],[3,5],[3,6],[4,7],[5,7],[6,7]].forEach(([a,b])=>{
-    const dir=new THREE.Vector3().subVectors(corners[b],corners[a]);
-    const len=dir.length(); if(len<.001)return;
-    const geo=new THREE.CylinderGeometry(.025,.025,len,8);
-    const mat=new THREE.MeshStandardMaterial({color:0x777777,roughness:.8,transparent:true,opacity:.75});
-    const m=new THREE.Mesh(geo,mat);
-    m.position.copy(new THREE.Vector3().addVectors(corners[a],corners[b]).multiplyScalar(.5));
-    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
-    MCV.cellGroup.add(m);
-  });
-}
-function mcvUpdatePills(structure){
-  const seen={},ordered=[]; structure.atoms.forEach(a=>{if(!seen[a.el]){seen[a.el]=true;ordered.push(a.el);}});
-  document.getElementById('mc-atom-pills').innerHTML=ordered.map(el=>{
-    const c=CF_COLORS[el]||CF_COLORS.default;
-    const light=parseInt(c.slice(1,3),16)*299+parseInt(c.slice(3,5),16)*587+parseInt(c.slice(5,7),16)*114;
-    return `<div class="mc-atom-pill" style="background:${c};color:${light/1000>155?'#222':'#fff'}">${el}</div>`;
-  }).join('');
-}
-function mcvUpdateCellReadout(structure){
-  const brav=structure.bravais||'SC', a0=structure.a||4, c0=structure.c||a0;
-  document.getElementById('mc-cell-bravais').textContent=brav;
-  document.getElementById('mc-cell-a').textContent=a0.toFixed(5)+' Å';
-  document.getElementById('mc-cell-b').textContent=a0.toFixed(5)+' Å';
-  document.getElementById('mc-cell-c').textContent=c0.toFixed(5)+' Å';
-  document.getElementById('mc-cell-alpha').textContent='90.00000°';
-  document.getElementById('mc-cell-beta').textContent='90.00000°';
-  document.getElementById('mc-cell-gamma').textContent=(brav==='HEX'?'120.00000°':'90.00000°');
-}
-function mcvUpdateStatusBar(structure, entry){
-  document.getElementById('mc-sb-formula').textContent=structure.formula||'—';
-  document.getElementById('mc-sb-atoms').textContent=structure.atoms.length+' atoms';
-  document.getElementById('mc-sb-step').textContent=entry?('step '+entry.step+' · '+entry.move):'seed (not yet in chain)';
-  document.getElementById('mc-sb-energy').textContent=entry&&entry.energy!=null?('E='+entry.energy.toFixed(5)+' Ry/atom · T='+entry.temp.toFixed(1)+'K'):'—';
-}
-function mcvLoadStructure(structure, entry){
-  MCV_CURRENT=structure;
-  if(!MCV.scene){mcvInitViewer(); if(!MCV.scene){return;}}
-  Object.values(MCV.instancedAtoms).forEach(({mesh,outlineMesh})=>{
-    MCV.scene.remove(mesh); mesh.geometry.dispose(); mesh.material.dispose();
-    if(outlineMesh){MCV.scene.remove(outlineMesh); outlineMesh.geometry.dispose(); outlineMesh.material.dispose();}
-  });
-  MCV.instancedAtoms={};
-  if(MCV.bondGroup){MCV.scene.remove(MCV.bondGroup); MCV.bondGroup.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();});}
-  if(MCV.cellGroup){MCV.scene.remove(MCV.cellGroup); MCV.cellGroup.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();});}
-
-  MCV.atoms=mcvBuildPositions(structure);
-  MCV.bonds=cfComputeChemBonds(MCV.atoms,0.4);
-
-  const byEl={}; MCV.atoms.forEach(a=>{(byEl[a.el]||(byEl[a.el]=[])).push(a);});
-  Object.entries(byEl).forEach(([el,ats])=>{
-    const r=(CF_DISPLAY_RADIUS[el]||CF_DISPLAY_RADIUS.default)*0.95;
-    const geo=new THREE.SphereGeometry(r,24,18);
-    const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||CF_COLORS.default),roughness:0.28,metalness:0.06});
-    const mesh=new THREE.InstancedMesh(geo,mat,ats.length);
-    ats.forEach((a,i)=>mesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z)));
-    mesh.instanceMatrix.needsUpdate=true;
-    MCV.scene.add(mesh);
-    const outlineGeo=new THREE.SphereGeometry(r*1.08,16,12);
-    const outlineMat=new THREE.MeshBasicMaterial({color:0x14141c,side:THREE.BackSide});
-    const outlineMesh=new THREE.InstancedMesh(outlineGeo,outlineMat,ats.length);
-    ats.forEach((a,i)=>outlineMesh.setMatrixAt(i,new THREE.Matrix4().setPosition(a.x,a.y,a.z)));
-    outlineMesh.instanceMatrix.needsUpdate=true;
-    MCV.scene.add(outlineMesh);
-    MCV.instancedAtoms[el]={mesh,outlineMesh};
-  });
-
-  MCV.bondGroup=new THREE.Group();
-  MCV.bonds.forEach(({i,j})=>{
-    const ai=MCV.atoms[i],aj=MCV.atoms[j];
-    const mid={x:(ai.x+aj.x)/2,y:(ai.y+aj.y)/2,z:(ai.z+aj.z)/2};
-    [[ai,mid,ai.el],[mid,aj,aj.el]].forEach(([p1,p2,el])=>{
-      const dir=new THREE.Vector3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
-      const len=dir.length(); if(len<.001)return;
-      const geo=new THREE.CylinderGeometry(0.09,0.09,len,10);
-      const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(CF_COLORS[el]||CF_COLORS.default),roughness:.5});
-      const m=new THREE.Mesh(geo,mat); m.position.set((p1.x+p2.x)/2,(p1.y+p2.y)/2,(p1.z+p2.z)/2);
-      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
-      MCV.bondGroup.add(m);
-    });
-  });
-  MCV.scene.add(MCV.bondGroup);
-
-  MCV.cellGroup=new THREE.Group();
-  mcvDrawCell(structure);
-  MCV.scene.add(MCV.cellGroup);
-
-  mcvUpdatePills(structure);
-  mcvUpdateCellReadout(structure);
-  mcvUpdateStatusBar(structure, entry);
-  mcResetView();
+  document.getElementById("fileTabName").textContent = (formula || "structure") + ".cif";
 }
 
-/* ── Generate Structure button (Crystal Generator section) ───────────── */
-function mcGenerateStructure(){
-  const formula=(document.getElementById('mc-formula').value||'').trim()||'Si8';
-  const zMin=parseInt(document.getElementById('mc-z-min').value)||1;
-  const zMax=Math.max(zMin,parseInt(document.getElementById('mc-z-max').value)||zMin);
-  const useSymmetry=document.getElementById('mc-use-symmetry').checked;
-  const infoEl=document.getElementById('mc-gen-info');
-  infoEl.textContent='Generating…';
-  setTimeout(()=>{
-    try{
-      const t0=performance.now();
-      const result=StructureGenerator.random(formula,zMin,zMax,useSymmetry);
-      const dt=(performance.now()-t0).toFixed(0);
-      if(!result||!result.atoms||!result.atoms.length){
-        infoEl.textContent='✗ Generation failed — try a different formula/Z range';
-        return;
-      }
-      MC_PREVIEW_STRUCTURE=result; // used as the chain's seed if Run Chain is clicked next
-      mcvLoadStructure(result,null);
-      infoEl.textContent=`✓ ${result.formula} · ${result.bravais} · ${result.atoms.length} atoms · ${dt}ms`;
-      logHPC(`[MC] Generated preview ${result.formula} (${result.bravais}, ${result.atoms.length} atoms) — will seed the chain on Run`);
-    }catch(e){
-      infoEl.textContent='✗ Error: '+e.message;
-      logHPC('[MC] Generate error: '+e.message);
-    }
-  },10);
+/* ------------------------------------------------------------------ *
+ *  Cell readout
+ * ------------------------------------------------------------------ */
+function updateCell(payload){
+  document.getElementById("cellSG").textContent = payload.space_group ?? "—";
+  const l = payload.lattice || {};
+  document.getElementById("cellA").textContent = l.a?.toFixed?.(3) ?? "—";
+  document.getElementById("cellB").textContent = l.b?.toFixed?.(3) ?? "—";
+  document.getElementById("cellC").textContent = l.c?.toFixed?.(3) ?? "—";
+  document.getElementById("cellAlpha").textContent = l.alpha?.toFixed?.(2) ?? "—";
+  document.getElementById("cellBeta").textContent = l.beta?.toFixed?.(2) ?? "—";
+  document.getElementById("cellGamma").textContent = l.gamma?.toFixed?.(2) ?? "—";
 }
 
-/* ── Init ─────────────────────────────────────────────────────────────── */
-window.addEventListener('load',()=>{
-  mcvInitViewer();
-  mcUpdatePreview();
-  mcRenderAll();
-  log('[MC] Monte Carlo ready.');
+/* ------------------------------------------------------------------ *
+ *  Cluster host / test
+ * ------------------------------------------------------------------ */
+document.getElementById("hostInput").addEventListener("change", e=>{
+  host = e.target.value.trim();
 });
+document.getElementById("btnTest").addEventListener("click", async ()=>{
+  const dot = document.getElementById("connDot");
+  try{
+    await api("/api/health");
+    dot.className = "conn-dot ok";
+    log("✓ Connected to " + host, "ok");
+  }catch(e){
+    dot.className = "conn-dot bad";
+  }
+});
+document.getElementById("collapseHost").addEventListener("click", ()=>{
+  const row = document.getElementById("hostRow");
+  row.style.display = row.style.display === "none" ? "flex" : "none";
+});
+
+document.getElementById("pseudoInput").addEventListener("change", async e=>{
+  try{
+    await api("/api/config", {method:"POST", body: JSON.stringify({pseudo_dir: e.target.value})});
+    log("Pseudopotential directory set to " + e.target.value);
+  }catch(e){}
+});
+
+/* ------------------------------------------------------------------ *
+ *  Collapsible sections
+ * ------------------------------------------------------------------ */
+document.querySelectorAll(".section-header").forEach(h=>{
+  h.addEventListener("click", ()=> h.parentElement.classList.toggle("collapsed"));
+});
+
+/* ------------------------------------------------------------------ *
+ *  Crystal generator
+ * ------------------------------------------------------------------ */
+document.getElementById("btnGenerate").addEventListener("click", async ()=>{
+  const btn = document.getElementById("btnGenerate");
+  const formula = document.getElementById("formulaInput").value.trim();
+  const zMin = parseInt(document.getElementById("zMin").value, 10);
+  const zMax = parseInt(document.getElementById("zMax").value, 10);
+  const symmetry = document.getElementById("symmetryCheck").checked;
+  btn.disabled = true; btn.textContent = "Generating…";
+  try{
+    const payload = await api("/api/structure/generate", {
+      method:"POST",
+      body: JSON.stringify({formula, z_min:zMin, z_max:zMax, symmetry_aware:symmetry})
+    });
+    renderCif(payload.cif, formula);
+    updateCell(payload);
+    log(`✓ Generated ${formula} (Z=${payload.z}, SG ${payload.space_group})`, "ok");
+  }catch(e){
+    /* already logged */
+  }finally{
+    btn.disabled = false; btn.textContent = "✳ Generate Structure";
+  }
+});
+
+/* ------------------------------------------------------------------ *
+ *  Electronic settings -> backend config
+ * ------------------------------------------------------------------ */
+function pushElectronicConfig(){
+  const xc = document.getElementById("xcSelect").value;
+  const ecutwfc = parseFloat(document.getElementById("ecutInput").value);
+  const kmesh = [ "kx","ky","kz" ].map(id=> parseInt(document.getElementById(id).value,10));
+  api("/api/config", {method:"POST", body: JSON.stringify({xc, ecutwfc, kmesh})})
+    .then(()=> log(`Electronic settings updated (XC=${xc}, Ecutwfc=${ecutwfc}, k=${kmesh.join("x")})`))
+    .catch(()=>{});
+}
+["xcSelect","ecutInput","kx","ky","kz"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", pushElectronicConfig);
+});
+
+/* ------------------------------------------------------------------ *
+ *  Monte Carlo tabs
+ * ------------------------------------------------------------------ */
+document.querySelectorAll(".mc-tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".mc-tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    const isEvo = tab.dataset.tab === "evo";
+    document.getElementById("mcToolbar").style.display = isEvo ? "none" : "flex";
+    document.getElementById("evoPanel").style.display = isEvo ? "block" : "none";
+    if(isEvo) drawEvolution();
+  });
+});
+
+function drawEvolution(){
+  const canvas = document.getElementById("evoCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(currentEnergyLog.length < 2){
+    ctx.fillStyle = "#999"; ctx.font="13px sans-serif";
+    ctx.fillText("Run a chain to see best-energy evolution here.", 16, 30);
+    return;
+  }
+  const xs = currentEnergyLog.map(r=>r.step);
+  const ys = currentEnergyLog.map(r=>r.best_energy);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const pad = 24;
+  const w = canvas.width - 2*pad, h = canvas.height - 2*pad;
+  ctx.strokeStyle = "#b3541c"; ctx.lineWidth = 2; ctx.beginPath();
+  xs.forEach((x,i)=>{
+    const px = pad + (x/xs[xs.length-1])*w;
+    const py = pad + h - ((ys[i]-minY)/((maxY-minY)||1))*h;
+    i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  });
+  ctx.stroke();
+}
+
+/* ------------------------------------------------------------------ *
+ *  Monte Carlo controls
+ * ------------------------------------------------------------------ */
+function readMetropolisSettings(){
+  return {
+    t_init: parseFloat(document.getElementById("tInit").value),
+    t_final: parseFloat(document.getElementById("tFinal").value),
+    cooling: document.getElementById("coolingSelect").value,
+    max_steps: parseInt(document.getElementById("maxSteps").value,10),
+    step_size: parseFloat(document.getElementById("stepSize").value),
+  };
+}
+
+function setButtons(state){
+  const start = document.getElementById("btnStart");
+  const pause = document.getElementById("btnPause");
+  const stop = document.getElementById("btnStop");
+  const pill = document.getElementById("statePill");
+  pill.className = "state-pill " + (state==="running"?"running":state==="paused"?"paused":state==="error"?"error":"");
+  pill.textContent = state.charAt(0).toUpperCase()+state.slice(1);
+  start.disabled = state === "running";
+  pause.disabled = state !== "running" && state !== "paused";
+  pause.textContent = state === "paused" ? "▶ Resume" : "⏸ Pause";
+  stop.disabled = state === "idle";
+}
+
+function applyStatus(s){
+  setButtons(s.state);
+  document.getElementById("stepStat").textContent = `${s.step} / ${s.total_steps}`;
+  document.getElementById("tempStat").textContent = s.temperature ? s.temperature.toFixed(1) : "—";
+  document.getElementById("bestStat").textContent = (s.best_energy!==null && s.best_energy!==undefined) ? s.best_energy.toFixed(5)+" eV" : "—";
+  document.getElementById("acceptStat").textContent = `${s.accepted} / ${s.proposed}`;
+  if(s.state === "error" && s.error) log("✖ MC error: " + s.error, "err");
+}
+
+async function pollStatus(){
+  try{
+    const s = await api("/api/mc/status");
+    applyStatus(s);
+    if(s.state !== "running"){
+      clearInterval(pollTimer); pollTimer = null;
+    }
+    try{
+      const logResp = await api("/api/mc/log");
+      currentEnergyLog = logResp.rows || [];
+      if(document.getElementById("evoPanel").style.display !== "none") drawEvolution();
+    }catch(e){}
+  }catch(e){
+    clearInterval(pollTimer); pollTimer = null;
+  }
+}
+
+document.getElementById("btnStart").addEventListener("click", async ()=>{
+  try{
+    const s = await api("/api/mc/start", {method:"POST", body: JSON.stringify(readMetropolisSettings())});
+    applyStatus(s);
+    log("▶ Monte Carlo chain started", "ok");
+    if(!pollTimer) pollTimer = setInterval(pollStatus, 800);
+  }catch(e){}
+});
+document.getElementById("btnPause").addEventListener("click", async ()=>{
+  const isPaused = document.getElementById("btnPause").textContent.includes("Resume");
+  const path = isPaused ? "/api/mc/start" : "/api/mc/pause";
+  const body = isPaused ? JSON.stringify(readMetropolisSettings()) : undefined;
+  const s = await api(path, {method:"POST", body});
+  applyStatus(s);
+  if(s.state === "running" && !pollTimer) pollTimer = setInterval(pollStatus, 800);
+});
+document.getElementById("btnStop").addEventListener("click", async ()=>{
+  const s = await api("/api/mc/stop", {method:"POST"});
+  applyStatus(s);
+  log("■ Monte Carlo chain stopped");
+});
+document.getElementById("btnReset").addEventListener("click", async ()=>{
+  const s = await api("/api/mc/reset", {method:"POST"});
+  applyStatus(s);
+  currentEnergyLog = [];
+  log("Chain reset");
+});
+document.getElementById("btnCsv").addEventListener("click", ()=>{
+  window.open(host.replace(/\/+$/,"") + "/api/mc/csv", "_blank");
+});
+
+/* ------------------------------------------------------------------ *
+ *  Console + viewer tool buttons
+ * ------------------------------------------------------------------ */
+document.getElementById("btnConsole").addEventListener("click", ()=>{
+  document.getElementById("consolePanel").classList.toggle("open");
+});
+document.getElementById("btnHamburger").addEventListener("click", ()=>{
+  document.getElementById("consolePanel").classList.toggle("open");
+});
+document.getElementById("btnFullscreen").addEventListener("click", ()=>{
+  const el = document.querySelector(".viewer-wrap");
+  if(document.fullscreenElement) document.exitFullscreen();
+  else el.requestFullscreen?.();
+});
+document.getElementById("btnResetView").addEventListener("click", ()=>{
+  if(viewer){ viewer.zoomTo(); viewer.render(); }
+});
+document.getElementById("btnScreenshot").addEventListener("click", ()=>{
+  if(!viewer) return;
+  const uri = viewer.pngURI();
+  const a = document.createElement("a");
+  a.href = uri; a.download = "structure.png"; a.click();
+});
+document.getElementById("btnExportCif").addEventListener("click", async ()=>{
+  try{
+    const payload = await api("/api/structure/current");
+    const blob = new Blob([payload.cif], {type:"chemical/x-cif"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (payload.formula || "structure") + ".cif";
+    a.click();
+  }catch(e){}
+});
+document.getElementById("btnSettings").addEventListener("click", ()=>{
+  if(!viewer) return;
+  viewer.setStyle({}, {sphere:{scale: Math.random()*0.2+0.25, colorfunc:a=>colorFor(a.elem)}});
+  viewer.render();
+  log("Sphere scale adjusted");
+});
+
+/* ------------------------------------------------------------------ *
+ *  Boot
+ * ------------------------------------------------------------------ */
+initViewer();
+log("SMAD Monte Carlo interface ready. Set the cluster host and click Test to connect.");
 </script>
 </body>
 </html>
