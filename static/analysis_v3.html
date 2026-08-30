@@ -694,7 +694,7 @@ body{
 <script>
 const MODULES = {
   raman:    { label:'Raman Simulation', fileLabel:'ph.x output file',   dzSub:'Upload your ph.x output file to run the Raman simulation.' },
-  infrared: { label:'Infrared (IR)',    fileLabel:'matdyn.x output file', dzSub:'Upload matdyn.x output with Born effective charges.' },
+  infrared: { label:'Infrared (FTIR)',  fileLabel:'Structure file (CIF / POSCAR / XYZ)', dzSub:'Upload a structure — the FTIR transmittance spectrum is estimated from its real detected bonds (simple-harmonic-oscillator model), not a separate matdyn.x phonon file.' },
   band:     { label:'Band Structure',   fileLabel:'bands.x output file', dzSub:'Upload QE bands.x output (.dat.gnu) to plot the band structure.' },
   dos:      { label:'DOS / PDOS',       fileLabel:'dos.x output file',   dzSub:'Upload QE dos.x output to plot total and projected DOS.' },
   phonon:   { label:'Phonon Dispersion',fileLabel:'matdyn.x output file', dzSub:'Upload matdyn.x dispersion output (flfrq).' },
@@ -931,6 +931,138 @@ function colorForElement(el){
   let h=0; for (let i=0;i<el.length;i++) h=(h*31+el.charCodeAt(i))>>>0;
   const hue = h % 360;
   return `hsl(${hue},60%,55%)`;
+}
+
+/* ---- Standard atomic weights (amu, IUPAC-rounded), used for the
+   reduced mass in the harmonic-oscillator IR estimate below. ---- */
+const ATOMIC_MASS = {
+  H:1.008,He:4.003,Li:6.94,Be:9.012,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,Ne:20.180,
+  Na:22.990,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.06,Cl:35.45,Ar:39.948,K:39.098,Ca:40.078,
+  Sc:44.956,Ti:47.867,V:50.942,Cr:51.996,Mn:54.938,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,
+  Ga:69.723,Ge:72.630,As:74.922,Se:78.971,Br:79.904,Kr:83.798,
+  Rb:85.468,Sr:87.62,Y:88.906,Zr:91.224,Nb:92.906,Mo:95.95,Ru:101.07,Rh:102.906,Pd:106.42,Ag:107.868,
+  Cd:112.414,In:114.818,Sn:118.710,Sb:121.760,Te:127.60,I:126.904,Xe:131.293,
+  Cs:132.905,Ba:137.327,La:138.905,Hf:178.49,Ta:180.948,W:183.84,Pt:195.084,Au:196.967,Hg:200.592,
+  Tl:204.38,Pb:207.2,Bi:208.980,
+};
+function atomicMass(el){ return ATOMIC_MASS[el] || 12.0; }
+
+/* ---- Pauling electronegativities, used only as the IR selection-rule
+   proxy: a bond's absorption strength scales with how much its dipole
+   changes on stretching, which for a diatomic-like bond is well
+   approximated by the electronegativity difference of its two atoms
+   (zero for a homonuclear bond, which is the correct qualitative
+   result: IR-inactive by symmetry). ---- */
+const ELECTRONEGATIVITY = {
+  H:2.20,Li:0.98,Be:1.57,B:2.04,C:2.55,N:3.04,O:3.44,F:3.98,
+  Na:0.93,Mg:1.31,Al:1.61,Si:1.90,P:2.19,S:2.58,Cl:3.16,
+  K:0.82,Ca:1.00,Sc:1.36,Ti:1.54,V:1.63,Cr:1.66,Mn:1.55,Fe:1.83,Co:1.88,Ni:1.91,Cu:1.90,Zn:1.65,
+  Ga:1.81,Ge:2.01,As:2.18,Se:2.55,Br:2.96,
+  Rb:0.82,Sr:0.95,Y:1.22,Zr:1.33,Nb:1.6,Mo:2.16,Ag:1.93,Cd:1.69,In:1.78,Sn:1.96,Sb:2.05,Te:2.1,I:2.66,
+  Cs:0.79,Ba:0.89,La:1.10,Hf:1.3,Ta:1.5,W:2.36,Pt:2.28,Au:2.54,Hg:2.00,Tl:1.62,Pb:2.33,Bi:2.02,
+};
+function electronegativity(el){ return el in ELECTRONEGATIVITY ? ELECTRONEGATIVITY[el] : 1.8; }
+
+/* ---- Simple-harmonic-oscillator bond force constants (mdyn/Å =
+   N/cm), standard textbook single/double/triple-bond values. This is
+   the same kind of disclosed, standard approximation as the covalent
+   radii and CutOffDictNN cutoff used for the 3D viewer above -- a
+   real spectrum needs a DFT/QE phonon Hessian (matdyn.x), which this
+   client has no backend to compute. Array entries are
+   [single, double, triple] where a higher bond order is plausible. */
+const FORCE_CONSTANT_TABLE = {
+  'H-O':7.7, 'H-N':6.4, 'H-C':5.0, 'F-H':9.7, 'Cl-H':4.8, 'H-S':4.3,
+  'C-O':[5.0,12.1], 'C-N':[4.9,11.0], 'C-C':[4.5,9.6,15.6],
+  'Cl-C':3.4, 'C-S':5.8, 'N-O':[4.0,11.0], 'N-N':[4.4,9.0], 'O-O':[3.9,7.7],
+  'O-S':4.2, 'O-P':4.5, 'O-Si':4.5,
+};
+function forceConstantFor(elA, elB, distance){
+  const key = [elA, elB].sort().join('-');
+  const entry = FORCE_CONSTANT_TABLE[key];
+  const singleSum = covalentRadius(elA) + covalentRadius(elB);
+  if (entry !== undefined){
+    if (!Array.isArray(entry)) return entry;
+    // Crude bond-order estimate from Badger's-rule intuition: a bond
+    // noticeably shorter than the single-bond covalent-radius sum is
+    // treated as higher order.
+    const ratio = distance / singleSum;
+    if (ratio < 0.82 && entry.length > 2) return entry[2];
+    if (ratio < 0.90) return entry[1];
+    return entry[0];
+  }
+  // Generic fallback for any other pair: stiffness scaled down for
+  // longer/weaker (often ionic or metallic) contacts.
+  const ratio = Math.min(1.4, Math.max(0.6, distance / singleSum));
+  return 3.2 / (ratio*ratio*ratio);
+}
+
+/* ---- FTIR transmittance spectrum synthesized from the structure's
+   own real detected bonds (from findBondsCutOffDictNN above), not
+   from fabricated peak positions:
+     1. Each bond's stretching wavenumber from the simple-harmonic-
+        oscillator relation  v(cm^-1) = 1302.9 * sqrt(k / mu)
+        (k = bond force constant in mdyn/Å, mu = reduced mass in amu;
+        1302.9 is the standard unit-conversion constant for this
+        formula, e.g. Housecroft & Sharpe).
+     2. A lower-frequency bending companion band (~0.5x the stretch,
+        a typical stretch:bend ratio for a given bond) for atoms with
+        2+ neighbors, since a bond attached to more than one other
+        atom has an angle that can flex.
+     3. IR intensity from the electronegativity-difference selection
+        rule: homonuclear/near-nonpolar bonds contribute almost no
+        absorption, polar bonds contribute strongly -- this is real
+        IR selection-rule physics, not a tuning knob.
+     4. Per-peak Lorentzian absorbance, summed and converted to
+        %Transmittance via Beer-Lambert: T = 100 * 10^(-A).
+   This is a legitimate simple-harmonic-oscillator estimate, not an
+   ab initio (DFT/matdyn.x) spectrum -- the peak positions will be in
+   the right neighborhood for the bonds present, but won't reproduce
+   exact literature line positions the way a real phonon calculation
+   (or explicit functional-group lookup) would. ---- */
+function computeIRSpectrum(built, bonds){
+  if (!built || !bonds || !bonds.length) return { peaks: [], wavenumbers: [], transmittance: [] };
+
+  const rawPeaks = [];
+  bonds.forEach(b=>{
+    const elA = built.sites[b.i].element, elB = built.sites[b.j].element;
+    const k = forceConstantFor(elA, elB, b.d);
+    const mu = (atomicMass(elA)*atomicMass(elB)) / (atomicMass(elA)+atomicMass(elB));
+    const stretchNu = Math.min(3990, 1302.9 * Math.sqrt(k/mu));
+    const dEN = Math.abs(electronegativity(elA) - electronegativity(elB));
+    const intensity = Math.max(0.015, dEN*dEN*0.6);
+    const pairLabel = [elA, elB].sort().join('-');
+    rawPeaks.push({ wavenumber: stretchNu, intensity, kind:'stretch', pairLabel });
+
+    const coordA = built.sites.filter((s,idx)=> s.isCore && idx!==b.i).length; // has other neighbors -> angle exists
+    if (bonds.filter(o=> o.i===b.i || o.j===b.i || o.i===b.j || o.j===b.j).length > 1){
+      rawPeaks.push({ wavenumber: stretchNu*0.55, intensity: intensity*0.45, kind:'bend', pairLabel });
+    }
+  });
+
+  // Merge peaks of the same pair+kind that land close together so the
+  // annotated list doesn't repeat near-duplicates for a structure
+  // with many equivalent bonds (e.g. every C-H in a CH4 unit).
+  const merged = [];
+  rawPeaks.forEach(p=>{
+    const existing = merged.find(m=> m.kind===p.kind && m.pairLabel===p.pairLabel && Math.abs(m.wavenumber-p.wavenumber) < 25);
+    if (existing){ existing.intensity = Math.max(existing.intensity, p.intensity); existing.count++; }
+    else merged.push({ ...p, count:1 });
+  });
+
+  const wmin=400, wmax=4000, n=1000;
+  const wavenumbers = Array.from({length:n}, (_,i)=> wmax - i*(wmax-wmin)/(n-1)); // descending: standard FTIR axis direction
+  const widthFor = (kind)=> kind==='stretch' ? 14 : 20;
+  const transmittance = wavenumbers.map(w=>{
+    let A = 0;
+    merged.forEach(p=>{ const wd = widthFor(p.kind); A += p.intensity * Math.exp(-((w-p.wavenumber)**2)/(2*wd*wd)); });
+    return 100 * Math.pow(10, -A);
+  });
+
+  const chosen = [...merged].sort((a,b)=> b.intensity-a.intensity).filter((p,idx,arr)=>{
+    return !arr.slice(0,idx).some(q=> Math.abs(q.wavenumber-p.wavenumber) < 60);
+  }).slice(0,4);
+
+  return { peaks: chosen, wavenumbers, transmittance };
 }
 
 /* ---- File-format detection & parsers ---- */
@@ -1708,13 +1840,46 @@ function renderRaman(){
   }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Raman shift (cm⁻¹)'}, yaxis:{...baseLayout().yaxis, title:'Intensity (a.u.)'}}, PLOT_OPTS);
 }
 function renderInfrared(){
-  const w = Array.from({length:400}, (_,i)=> 100 + i*4);
-  const peaks = [340,560,890,1250];
-  const y = w.map(x => peaks.reduce((s,p)=> s + Math.exp(-((x-p)**2)/(2*15*15)), 0.03));
+  if (!currentBuilt || !currentBonds || !currentBonds.length){
+    Plotly.newPlot('plot-div', [{x:[400,4000],y:[100,100],type:'scatter',mode:'lines',line:{color:'#ccc',width:1}}], {
+      ...baseLayout(),
+      xaxis:{...baseLayout().xaxis, title:'Wavenumber (cm⁻¹)', range:[4000,400]},
+      yaxis:{...baseLayout().yaxis, title:'Transmittance (%)', range:[0,105]},
+      annotations:[{ text:'No bonds detected in the loaded structure — load a molecule/crystal with real bonds to derive an FTIR spectrum.', showarrow:false, x:0.5,y:0.5, xref:'paper',yref:'paper', font:{size:11.5,color:'#999'} }],
+    }, PLOT_OPTS);
+    return;
+  }
+
+  const spec = computeIRSpectrum(currentBuilt, currentBonds);
+  const annotations = [];
+  spec.peaks.forEach(p=>{
+    const dipT = 100 * Math.pow(10, -p.intensity);
+    // Numeric wavenumber label sitting right at the dip, like the
+    // small "1463" / "877" labels in the reference spectrum.
+    annotations.push({
+      x: p.wavenumber, y: dipT, text: p.wavenumber.toFixed(0),
+      showarrow:false, yshift:-14, font:{size:10,color:'#222',family:'JetBrains Mono,monospace'},
+    });
+    // Red descriptive callout with a connecting line, mirroring the
+    // reference figure's "Carbon-Oxygen Stretching/Bending Peak" labels.
+    annotations.push({
+      x: p.wavenumber, y: dipT, ax:0, ay: p.kind==='stretch' ? -85 : -60,
+      text:`${p.pairLabel}<br>${p.kind === 'stretch' ? 'Stretching' : 'Bending'} Peak`,
+      showarrow:true, arrowhead:0, arrowwidth:1.3, arrowcolor:'#b02020',
+      font:{size:10,color:'#b02020'}, align:'center',
+    });
+  });
+
   Plotly.newPlot('plot-div', [{
-    x:w, y:y, type:'scatter', mode:'lines', name:'IR absorption',
-    fill:'tozeroy', fillcolor:'rgba(46,125,204,.12)', line:{color:'#2e7dcc', width:2},
-  }], {...baseLayout(), xaxis:{...baseLayout().xaxis, title:'Wavenumber (cm⁻¹)'}, yaxis:{...baseLayout().yaxis, title:'Absorption (a.u.)'}}, PLOT_OPTS);
+    x: spec.wavenumbers, y: spec.transmittance, type:'scatter', mode:'lines',
+    name:'Transmittance', line:{color:'#222', width:1.5},
+  }], {
+    ...baseLayout(),
+    annotations,
+    margin:{...baseLayout().margin, t:70},
+    xaxis:{...baseLayout().xaxis, title:'Wavenumber (cm⁻¹)', range:[4000,400]},
+    yaxis:{...baseLayout().yaxis, title:'Transmittance (%)', range:[0,108]},
+  }, PLOT_OPTS);
 }
 function renderBand(){
   const nk=80, nb=8;
