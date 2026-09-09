@@ -58,6 +58,11 @@ def extract_html() -> str:
                 score += 1_500_000
             if "evoDownloadFmt" in html:
                 score += 1_200_000
+            # Prefer loadStructure → evo-formula sync (Start Evolution uses loaded composition)
+            if "evoFormulaEl" in html and "s.formula)evoFormulaEl.value=s.formula" in html:
+                score += 4_000_000
+            if "Push whatever's now on the main viewer into the Evolution" in html:
+                score += 3_500_000
             if score > best_score:
                 best_score = score
                 best = html
@@ -95,6 +100,8 @@ def main():
         "generateCrystal",
         "evoDownloadFmt",
         "Crystal Generator",
+        "evoFormulaEl",
+        "Push whatever's now on the main viewer into the Evolution",
     ]:
         print(f"  {s}: {s in html}")
 
