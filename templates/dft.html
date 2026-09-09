@@ -3748,7 +3748,14 @@ function evoAddSeed(){
   if(!current||!current.atoms.length){logHPC('[Evo] No structure loaded to use as seed');return;}
   EVO.seeds.push(JSON.parse(JSON.stringify(current)));
   document.getElementById('evo-seed-list').textContent=EVO.seeds.map((s,i)=>`${i+1}. ${s.formula||'unknown'}`).join('\n');
-  logHPC('[Evo] Seed added: '+current.formula);
+  // Push the seed's composition into the search-box (evo-formula) so the
+  // rest of the initial population is generated for the SAME composition
+  // as the seed, instead of silently staying on whatever formula was
+  // typed there before (e.g. the "Si8" default). The field remains a
+  // normal editable text input — the user can override it afterwards.
+  const formulaInput=document.getElementById('evo-formula');
+  if(formulaInput&&current.formula)formulaInput.value=current.formula;
+  logHPC('[Evo] Seed added: '+current.formula+' — Composition set to '+current.formula);
 }
 function evoRemoveSeed(){EVO.seeds.pop();document.getElementById('evo-seed-list').textContent=EVO.seeds.length?EVO.seeds.map((s,i)=>`${i+1}. ${s.formula}`).join('\n'):'No seeds added';}
 
@@ -3899,6 +3906,16 @@ function evoOnModeChange(mode){
     const mainHost=document.getElementById('loginNode').value||'';
     const evoInput=document.getElementById('evo-host-input');
     if(evoInput&&mainHost)evoInput.value=mainHost;
+    // Push the currently-loaded main-viewer structure's formula into the
+    // Composition box the first time Evolution mode is opened with no
+    // seeds yet, so the search box reflects what's on screen (e.g.
+    // MgB2.cif) instead of defaulting to "Si8". Still freely editable —
+    // this only runs once, before any seed has been explicitly added.
+    if(!EVO.seeds.length&&!EVO._formulaSynced&&current&&current.formula){
+      const formulaInput=document.getElementById('evo-formula');
+      if(formulaInput)formulaInput.value=current.formula;
+      EVO._formulaSynced=true;
+    }
     // Wire buttons
     const sb=document.getElementById('evo-start-btn');
     const pb=document.getElementById('evo-pause-btn');

@@ -50,6 +50,14 @@ def extract_html() -> str:
                 score += 2_000_000
             if "evoGenerateValidVariant" in html:
                 score += 2_000_000
+            if "SymmetryStructureGenerator" in html:
+                score += 3_000_000
+            if "symmBuildWyckoffTable" in html:
+                score += 2_500_000
+            if "generateCrystal" in html:
+                score += 1_500_000
+            if "evoDownloadFmt" in html:
+                score += 1_200_000
             if score > best_score:
                 best_score = score
                 best = html
@@ -82,6 +90,11 @@ def main():
         "evoStart",
         "dft-3dviewer",
         "home-tab",
+        "SymmetryStructureGenerator",
+        "cfComputeChemBonds",
+        "generateCrystal",
+        "evoDownloadFmt",
+        "Crystal Generator",
     ]:
         print(f"  {s}: {s in html}")
 
