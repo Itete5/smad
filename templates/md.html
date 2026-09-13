@@ -23,10 +23,21 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,'Segoe UI',Robot
 /* ══ Mode switcher — full-width bottom bar + fly-in menu (matches the original SMAD control) ══ */
 #mode-bar{
   height:30px;flex-shrink:0;background:#e8e8e8;border-top:1px solid #c8c8c8;
-  display:flex;align-items:center;justify-content:flex-end;gap:8px;
-  padding:0 12px;cursor:pointer;user-select:none;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:0;user-select:none;
 }
-#mode-bar:hover{background:#dedede}
+#home-tab{
+  height:100%;display:flex;align-items:center;gap:6px;padding:0 14px;
+  background:#ccc;color:#444;text-decoration:none;cursor:pointer;
+  font-size:12px;font-weight:500;border-right:1px solid #bbb;flex-shrink:0;
+}
+#home-tab:hover{background:#bbb;color:#222}
+#home-tab svg{flex-shrink:0}
+#mode-bar-toggle{
+  height:100%;display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  padding:0 12px;cursor:pointer;margin-left:auto;
+}
+#mode-bar-toggle:hover{background:#dedede}
 #mode-bar-label{font-size:13px;font-weight:700;font-style:italic;color:#222;letter-spacing:.01em}
 #mode-bar-icon{display:flex;align-items:center}
 #mode-bar.open #mode-bar-lines{display:none}
@@ -69,14 +80,38 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,'Segoe UI',Robot
   </div>
 
   <div id="mode-bar">
-    <span id="mode-bar-label">MD Simulations</span>
-    <div id="mode-bar-icon">
-      <svg id="mode-bar-lines" width="18" height="12" viewBox="0 0 18 12">
-        <line x1="0" y1="1" x2="18" y2="1" stroke="#555" stroke-width="2" stroke-linecap="round"/>
-        <line x1="0" y1="6" x2="13" y2="6" stroke="#555" stroke-width="2" stroke-linecap="round"/>
-        <line x1="0" y1="11" x2="15" y2="11" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+    <a href="/" id="home-tab" title="SMAD Home">
+      <svg width="14" height="14" viewBox="0 0 367 232" fill="currentColor" aria-hidden="true">
+        <g transform="translate(0,232) scale(0.1,-0.1)">
+          <path d="M1710 1954 c-484 -254 -619 -324 -629 -324 -7 0 -11 37 -11 110 l0
+110 -155 0 -155 0 0 -198 0 -197 -287 -150 -288 -150 178 -3 c161 -2 182 -1
+210 17 29 17 1034 544 1199 628 l67 35 83 -42 c46 -24 128 -66 183 -95 55 -29
+240 -126 410 -215 454 -238 515 -270 570 -301 49 -27 54 -28 232 -31 99 -2
+179 0 177 3 -2 4 -160 88 -351 188 -192 100 -395 206 -453 237 -208 111 -848
+444 -852 444 -1 0 -59 -30 -128 -66z M1800 1662 c-19 -10 -177 -91 -350 -180
+-173 -88 -394 -201 -490 -251 l-175 -90 -3 -500 -2 -501 85 0 85 0 2 451 3
+451 145 74 c80 41 279 143 443 227 l298 152 197 -101 c108 -56 308 -158 445
+-228 l247 -127 0 -450 0 -449 85 0 85 0 0 499 0 499 -212 110 c-339 174 -845
+432 -849 432 -2 0 -20 -8 -39 -18z M1885 932 c-3 -3 -5 -70 -5 -149 l0 -143
+150 0 150 0 0 28 c0 41 -53 142 -96 184 -22 20 -57 45 -79 54 -46 19 -112 34
+-120 26z M1665 902 c-92 -44 -153 -126 -168 -224 l-6 -38 150 0 149 0 0 145 0
+145 -32 0 c-18 0 -60 -13 -93 -28z M1490 395 l0 -145 150 0 150 0 0 145 0 145
+-150 0 -150 0 0 -145z M1882 398 l3 -143 148 -3 147 -3 0 146 0 145 -150 0
+-151 0 3 -142z"/>
+        </g>
       </svg>
-      <div id="mode-bar-close">×</div>
+      SMAD Home
+    </a>
+    <div id="mode-bar-toggle">
+      <span id="mode-bar-label">MD Simulations</span>
+      <div id="mode-bar-icon">
+        <svg id="mode-bar-lines" width="18" height="12" viewBox="0 0 18 12">
+          <line x1="0" y1="1" x2="18" y2="1" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="6" x2="13" y2="6" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+          <line x1="0" y1="11" x2="15" y2="11" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div id="mode-bar-close">×</div>
+      </div>
     </div>
   </div>
 
@@ -129,9 +164,12 @@ function toggleModeMenu(open){
   chip.classList.toggle('open', isOpen);
 }
 
-document.getElementById('mode-bar').addEventListener('click', (e) => {
+document.getElementById('mode-bar-toggle').addEventListener('click', (e) => {
   e.stopPropagation();
   toggleModeMenu();
+});
+document.getElementById('home-tab').addEventListener('click', (e) => {
+  e.stopPropagation();
 });
 document.querySelectorAll('.mm-item').forEach(item => {
   item.addEventListener('click', (e) => {
