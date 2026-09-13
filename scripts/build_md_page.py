@@ -60,6 +60,12 @@ def extract_html() -> str:
                 score += 500_000
             if "update MD Simulations" in raw:
                 score += 5_000_000
+            if "update MD page again" in raw:
+                score += 6_000_000
+            if "mdEnforceWalls" in html:
+                score += 3_000_000
+            if "mdSafetyCheck" in html:
+                score += 1_000_000
             if score > best_score:
                 best_score = score
                 best = html
@@ -163,6 +169,28 @@ def ensure_smad_home(html: str) -> str:
     return html
 
 
+def fix_iframe_home_links(html: str) -> str:
+    """Make SMAD Home / breadcrumb links leave the iframe, not navigate inside it."""
+    # Escaped forms inside SRC_* string literals
+    replacements = [
+        (
+            '<a href=\\"/\\" class=\\"home-tab\\" title=\\"SMAD Home\\">',
+            '<a href=\\"/\\" class=\\"home-tab\\" title=\\"SMAD Home\\" target=\\"_top\\">',
+        ),
+        (
+            '<a href=\\"/\\" style=\\"color:#fff;text-decoration:none;opacity:.9;font-size:12px;font-weight:500;margin-right:4px\\">SMAD</a>',
+            '<a href=\\"/\\" target=\\"_top\\" style=\\"color:#fff;text-decoration:none;opacity:.9;font-size:12px;font-weight:500;margin-right:4px\\">SMAD</a>',
+        ),
+        (
+            '<a href=\\"/md\\" style=\\"color:#fff;text-decoration:none;opacity:.9;font-size:12px;font-weight:500;margin:0 4px\\">MD</a>',
+            '<a href=\\"/md\\" target=\\"_top\\" style=\\"color:#fff;text-decoration:none;opacity:.9;font-size:12px;font-weight:500;margin:0 4px\\">MD</a>',
+        ),
+    ]
+    for old, new in replacements:
+        html = html.replace(old, new)
+    return html
+
+
 def fix_html(html: str) -> str:
     if 'rel="icon"' not in html:
         html = html.replace(
@@ -172,6 +200,7 @@ def fix_html(html: str) -> str:
             1,
         )
     html = ensure_smad_home(html)
+    html = fix_iframe_home_links(html)
     return html.strip() + "\n"
 
 
@@ -193,6 +222,10 @@ def main() -> None:
         "Not implemented in this build yet",
         'id="home-tab"',
         "SMAD Home",
+        "mdEnforceWalls",
+        "mdSafetyCheck",
+        "licorice",
+        'target=\\"_top\\"',
     ]:
         print(f"  {s}: {s in html}")
 
